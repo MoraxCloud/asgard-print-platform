@@ -19,8 +19,7 @@ AI 编程工具的「集成提示词」。提示词内置技能安装引导，�
 
 | 技能 | 覆盖范围 | 适用文档 |
 | --- | --- | --- |
-| `worm-print-platform-integration` | NPM 宿主集成：`canvas/vue3` 组件门面、`<print-designer>` 契约、三条打印链路、全栈宿主最小清单、故障排查 | vue3.md |
-| `worm-print-platform-common` | 浏览器直挂与 Vue 2 / React 等非 Vue 3 宿主：`registerAll()` + property 注入、框架专属坑、打印链路 | vue2.md / react.md / jquery.md |
+| `worm-print-platform-integration` | 全形态宿主集成：NPM 宿主的 `canvas/vue3` 组件门面与 `<print-designer>` 契约、浏览器直挂 / 无打包器与 Vue 2 / React / jQuery、三条打印链路、全栈宿主最小清单、宿主 MCP、故障排查 | 四份文档共用 |
 | `worm-print-platform-mcp` | 桌面 MCP 工具：AI 实时读写画布、模板生成校验、视觉回读与参考图比对 | 可选增强，任何框架 |
 
 ## 技能安装方法（提示词「第 0 步」的通用说明）

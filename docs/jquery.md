@@ -95,12 +95,12 @@ B 服务端 PDF：同源 `/render-api/*` 由宿主后端代理到 `services/rend
 
 ## 5. AI 工具集成提示词（复制给 AI 编程工具即可）
 
-对应技能：**`worm-print-platform-common`**（安装方法见 [README](./README.md#技能安装方法提示词第-0-步的通用说明)）。
+对应技能：**`worm-print-platform-integration`**（安装方法见 [README](./README.md#技能安装方法提示词第-0-步的通用说明)）。
 
 ```text
 【第 0 步 · 门控：未完成禁止改代码】
 1. 安装接入技能：从 https://github.com/worm-longliu/worm-print-platform 仓库取
-   skills/worm-print-platform-common 整个目录，复制到你的技能目录并重载
+   skills/worm-print-platform-integration 整个目录，复制到你的技能目录并重载
    （Qoder：~/.qoder/skills/；Claude Code：~/.claude/skills/；或项目级同名目录）。
    无法安装时降级：完整阅读该目录下 SKILL.md 与 references/ 全部文档后再动手。
 2. 完成后输出「已读规范确认」：逐个列出文件路径 + 与本任务相关的 3 条以上约束。

@@ -1,0 +1,3 @@
+interface:
+  display_name: "worm-print-platform 集成支持"
+  short_description: "辅助在各类宿主中选择 NPM/直挂安装并用 <print-designer> 集成打印模板能力"
