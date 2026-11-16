@@ -656,7 +656,7 @@ export class PrintDesignerElement extends HTMLElement {
     // 表格右键菜单每帧出图（不可见时返回 ''，但会登记状态引用供 table.ts 改写）
     const tableMenuNode = renderTableContextMenu(this.store, (a, b) => this.fire(a, b), this.tableMenu)
     if (tableMenuNode) render(tableMenuNode, shell)
-    hydrateCodes(this.root, this.store.elements)
+    hydrateCodes(this.root, this.store.elements, this.designData)
     // 属性台搜索：门控在分组构建时已生效，这里再重放一次，覆盖重绘与输入两条路径
     applyPropertySearch(this.root, this.state.propSearch)
     this.applyShrinkFit()

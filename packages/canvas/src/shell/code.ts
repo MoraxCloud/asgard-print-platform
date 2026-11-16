@@ -23,10 +23,11 @@ const FIT_TO_PAR: Record<string, string> = {
   'scale-down': 'xMidYMid meet',
 }
 
-function codeText(el: RuntimeElement): string {
+function codeText(el: RuntimeElement, listSource?: readonly Record<string, unknown>[]): string {
   const o = el.options
-  // 与 Vue 3 轨 元素级、表格单元格同口径：内容先按 demo 数据求值，求不到才拿 testData/title 当示例码值
-  return resolveBarcodeDesignValue(o.formatter, undefined, String(o.testData || o.title || '')) || '条码'
+  // 与 Vue 3 轨 元素级、表格单元格同口径：内容先按数据源求值，求不到才拿 testData/title 当示例码值；
+  // 兜底必须是一维码可编码的 ASCII 码值（中文占位会让 JsBarcode 抛错、画布空白）
+  return resolveBarcodeDesignValue(o.formatter, listSource, String(o.testData || o.title || '')) || '1234567890128'
 }
 
 export function renderQrcode(el: RuntimeElement) {
@@ -53,13 +54,13 @@ function readViewBox(svg: SVGSVGElement): { width: number; height: number } | nu
   return { width: parts[2]!, height: parts[3]! }
 }
 
-function drawBarcode(el: RuntimeElement, svg: SVGSVGElement) {
+function drawBarcode(el: RuntimeElement, svg: SVGSVGElement, listSource?: readonly Record<string, unknown>[]) {
   const o = el.options
   const unitPerModule = barcodeUnitsPerModule(o.barWidth)
   const quietModules = barcodeQuietZoneModules(o.barQuietZone)
   /** 生成一趟码面并读回 viewBox：条区模块数由 core 的条高布局给出，未填条高只走一趟 */
   const measure = (barHeightModules: number) => {
-    JsBarcode(svg, codeText(el), {
+    JsBarcode(svg, codeText(el, listSource), {
       format: String(o.barcodeType || 'CODE128'),
       width: unitPerModule,
       height: barHeightModules * unitPerModule,
@@ -93,9 +94,9 @@ function drawBarcode(el: RuntimeElement, svg: SVGSVGElement) {
   svg.setAttribute('shape-rendering', 'crispEdges')
 }
 
-function drawQrcode(el: RuntimeElement, box: HTMLElement) {
+function drawQrcode(el: RuntimeElement, box: HTMLElement, listSource?: readonly Record<string, unknown>[]) {
   const o = el.options
-  const text = resolveBarcodeDesignValue(o.formatter, undefined, String(o.testData || o.title || '')) || '二维码'
+  const text = resolveBarcodeDesignValue(o.formatter, listSource, String(o.testData || o.title || '')) || '二维码'
   box.replaceChildren()
   try {
     // 与出纸同源（core/browser）：同一份 SVG、同一静区，矢量图形不随元素盒大小重出图
@@ -116,17 +117,21 @@ function drawQrcode(el: RuntimeElement, box: HTMLElement) {
   } catch { /* 码值非法：留空，与设计态不弹错 */ }
 }
 
-/** DOM 落位后绘制所有码类元素 */
-export function hydrateCodes(root: ShadowRoot, elements: RuntimeElement[]) {
+/** DOM 落位后绘制所有码类元素；listSource 为宿主注入的设计态数据（画布文本、插件元素同源） */
+export function hydrateCodes(
+  root: ShadowRoot,
+  elements: RuntimeElement[],
+  listSource?: readonly Record<string, unknown>[],
+) {
   for (const holder of Array.from(root.querySelectorAll<HTMLElement>('[data-code-kind]'))) {
     const id = holder.dataset.codeId
     const el = elements.find(e => e.id === id)
     if (!el) continue
     if (holder.dataset.codeKind === 'barcode') {
       const svg = holder.querySelector('svg')
-      if (svg) drawBarcode(el, svg as unknown as SVGSVGElement)
+      if (svg) drawBarcode(el, svg as unknown as SVGSVGElement, listSource)
     } else {
-      drawQrcode(el, holder)
+      drawQrcode(el, holder, listSource)
     }
   }
 }

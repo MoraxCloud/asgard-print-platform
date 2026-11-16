@@ -39,14 +39,18 @@ export function resolveTextBinding(
   return ''
 }
 
-/** 按路径取 demo 数据值，数组节点取首项 */
-function lookupDemoPath(path: string): any {
-  let cur: any = DEFAULT_DEMO_DATA
+/** 按路径取数据根上的值，数组节点取首项 */
+function lookupPath(root: any, path: string): any {
+  let cur: any = root
   for (const seg of path.split('.')) {
     if (cur == null) return undefined
     cur = Array.isArray(cur) ? cur[0]?.[seg] : cur[seg]
   }
   return cur
+}
+
+function lookupDemoPath(path: string): any {
+  return lookupPath(DEFAULT_DEMO_DATA, path)
 }
 
 /**
@@ -57,7 +61,7 @@ function lookupDemoPath(path: string): any {
  */
 export function resolveBarcodeDesignValue(
   formatter: string | undefined,
-  listSource?: Record<string, any>[],
+  listSource?: readonly Record<string, any>[],
   fallback = '1234567890128',
 ): string {
   const first = listSource?.[0]
@@ -65,7 +69,7 @@ export function resolveBarcodeDesignValue(
     .replace(/\{([^{}]+)\}/g, (_, expr: string) => {
       const key = expr.trim()
       const v = key.includes('.')
-        ? lookupDemoPath(key)
+        ? (lookupPath(first, key) ?? lookupDemoPath(key))
         : (first?.[key] ?? lookupDemoPath(key))
       return v == null ? '' : String(v)
     })

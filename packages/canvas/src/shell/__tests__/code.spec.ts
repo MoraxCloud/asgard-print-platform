@@ -448,5 +448,29 @@ describe('本包 设计态码值实时刷新（元素级）', () => {
     expect((await paintBarcode({ formatter: '{不存在字段}' })).userUnits, '取不到值应回退 testData')
       .toBe(99)
   })
+
+  it('宿主 designData 注入 hydrateCodes 后，绑定字段按业务数据出图', async () => {
+    const el = makeBarcode({ formatter: '{material.code}', testData: '' })
+    const host = document.createElement('div')
+    document.body.replaceChildren(host)
+    render(renderBarcode(el), host)
+    hydrateCodes(host as unknown as ShadowRoot, [el], [{ material: { code: 'WL-2026-00318' } }])
+    await new Promise(r => setTimeout(r, 300))
+    const svg = host.querySelector('svg')!
+    expect(Number(String(svg.getAttribute('viewBox')).split(/[\s,]+/)[2]))
+      .toBe(modulesOf('WL-2026-00318') + 20)
+  })
+
+  it('求值与 testData 都落空时兜底 ASCII 示例码值出图，不再因中文占位留白', async () => {
+    const el = makeBarcode({ formatter: '{material.code}', testData: '' })
+    const host = document.createElement('div')
+    document.body.replaceChildren(host)
+    render(renderBarcode(el), host)
+    hydrateCodes(host as unknown as ShadowRoot, [el])
+    await new Promise(r => setTimeout(r, 300))
+    const svg = host.querySelector('svg')!
+    expect(Number(String(svg.getAttribute('viewBox')).split(/[\s,]+/)[2]))
+      .toBe(modulesOf('1234567890128') + 20)
+  })
 })
 

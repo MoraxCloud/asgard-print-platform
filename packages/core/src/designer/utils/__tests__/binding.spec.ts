@@ -40,6 +40,17 @@ describe('resolveBarcodeDesignValue', () => {
     expect(resolveBarcodeDesignValue('{不存在字段}', undefined, 'qrcode')).toBe('qrcode')
   })
 
+  it('宿主注入 designData 后点路径字段按宿主数据求值，缺的键回落 demo 数据', () => {
+    const host = [{ material: { code: 'WL-2026-00318' } }]
+    expect(resolveBarcodeDesignValue('{material.code}', host, 'qrcode')).toBe('WL-2026-00318')
+    expect(resolveBarcodeDesignValue('{order.no}', host, 'qrcode')).toBe('PO20260801001')
+  })
+
+  it('宿主 designData 的非点路径字段同样优先于 demo 数据', () => {
+    const host = [{ trackingNo: 'TN98765' }]
+    expect(resolveBarcodeDesignValue('{trackingNo}', host, 'qrcode')).toBe('TN98765')
+  })
+
   it('兜底传空串表示「不给示例码值」，交给调用方的最终回退', () => {
     expect(resolveBarcodeDesignValue('', undefined, '')).toBe('')
   })
