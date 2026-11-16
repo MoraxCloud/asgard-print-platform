@@ -67,6 +67,7 @@ npm test           # 全量测试（含 render 的 Playwright 集成测试，需
 
 宿主接入看 [demos](./demos/README.md)：四个互相独立的工程（Vue 3 / Vue 2.7 / React 18 / jQuery），
 各自摊开「注册元素 → 注入模板与字段 → 听事件 → 出纸」全过程，照抄其中一个即可落地。
+各框架的最小接入操作方法与 AI 编程工具集成提示词（含技能安装引导）见 [docs](./docs/README.md)。
 
 ```bash
 npm run dev:demos:all          # 四个包 watch 构建 + 四个宿主 demo + :9300 总览页（改 packages/*/src 自动热更新）
