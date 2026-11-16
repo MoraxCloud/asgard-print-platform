@@ -51,8 +51,9 @@ import '@worm-print-platform/echarts/ui'
 | `packages/mcp` | `@worm-print-platform/mcp` | 桌面客户端 MCP（AI 助手）协议实现，不发布（随 client 打包） |
 | `services/render` | `@worm-print-platform/render` | 基于 Playwright（Headless Chromium）的 PDF/截图打印渲染微服务，Docker 部署 |
 | `clients/client` | `@worm-print-platform/client` | 跨平台静默打印桌面客户端（Electron，本地 WebSocket + core 同构渲染） |
+| `packages/skills` | `@worm-print-platform/skills` | 命令行技能安装器（bin：`worm-print-skills`，npx 调用）：从 GitHub / Gitee 仓库安装技能到 `.agents/skills/` 等目录 |
 
-发布到 npm 的正式包为 `core`、`plugin-kit`、`canvas`、`echarts` 四个（`contract`、`mcp` 随客户端打包，不发布）。
+发布到 npm 的正式包为 `core`、`plugin-kit`、`canvas`、`echarts`、`skills` 五个（`contract`、`mcp` 随客户端打包，不发布）。
 
 ## 边界约定
 
@@ -81,17 +82,88 @@ npm run dev:render             # 服务端 PDF 渲染微服务（:3001）
 npm run dev:client             # Electron 静默打印客户端
 ```
 
+## 各框架接入操作方法与 AI 提示词
+
+面向宿主开发者的接入文档：每个 UI 框架一份文件，包含「最小接入操作方法」与可直接复制给
+AI 编程工具的「集成提示词」。提示词内置技能安装引导，让 AI agent 先装规范再动手。
+
+| 框架 | 文档 | 接入形态 | 可运行示例 | 端口 |
+| --- | --- | --- | --- | --- |
+| Vue 3 | [vue3.md](./docs/vue3.md) | `@worm-print-platform/canvas/vue3` 组件门面（原 `@worm-vue3-print/canvas` 用户迁移零业务改动） | `demos/apps/vue3` | 9331 |
+| Vue 2.7 | [vue2.md](./docs/vue2.md) | `<print-designer>` 自定义元素 + `registerAll()` | `demos/apps/vue2` | 9332 |
+| React 18 | [react.md](./docs/react.md) | `<print-designer>` 自定义元素 + `addEventListener` | `demos/apps/react` | 9335 |
+| jQuery / 原生 JS | [jquery.md](./docs/jquery.md) | UMD 直挂（无打包器，`window.WormPrintCanvas` 全局） | `demos/apps/jquery` | 9334 |
+
+老用户迁移：[migration-worm-vue3-print.md](./docs/migration-worm-vue3-print.md)
+—— 包名映射、三条迁移路径、行为差异要点与 AI 迁移提示词。
+
+四个示例工程互跳总览页在 `:9300`，一条命令全部拉起：`npm run dev:demos:all`。
+每个 demo 的验收脚本：`node demos/scripts/verify-demo.mjs http://localhost:<端口>/`。
+完整版见 [docs/README.md](./docs/README.md)。
+
+### 配套技能（AI agent 接入用的规范包）
+
+仓库随源码维护两个技能（`skills/` 目录，源随仓库分发），是 AI agent 接入时「先读规范再动手」的单一真源：
+
+| 技能 | 覆盖范围 | 适用文档 |
+| --- | --- | --- |
+| `worm-print-platform-integration` | 全形态宿主集成：NPM 宿主的 `canvas/vue3` 组件门面与 `<print-designer>` 契约、浏览器直挂 / 无打包器与 Vue 2 / React / jQuery、三条打印链路、全栈宿主最小清单、宿主 MCP、故障排查 | 四份文档共用 |
+| `worm-print-platform-mcp` | 桌面 MCP 工具：AI 实时读写画布、模板生成校验、视觉回读与参考图比对 | 可选增强，任何框架 |
+
+技能安装方法（提示词「第 0 步」）：在**当前项目根目录**逐条执行，默认装到
+`.agents/skills/<技能名>/`：
+
+```bash
+npx @worm-print-platform/skills worm-print-platform-integration
+npx @worm-print-platform/skills worm-print-platform-mcp
+```
+
+默认源 GitHub、失败回退 Gitee；可用 `--repo` 指定任意仓库、`--dir` 指定技能目录、
+`--force` 覆盖已有技能。无 npm / git 环境时也可从仓库 `skills/<技能名>/` 手动取用。详见
+[docs/README.md 技能安装方法](./docs/README.md#技能安装方法提示词第-0-步的通用说明)。
+
+### 打印链路速记
+
+三条链路吃同一份 `templateJson + printData + baseUrl`，可单选可并存：
+
+- **A 浏览器打印**：core 同构渲染进 iframe → `contentWindow.print()`，零额外基础设施（各文档默认接入）。
+- **B 服务端 PDF**：部署 `services/render` 微服务，后端持密钥代理，产出可下载 PDF。
+- **C 桌面客户端静默打印**：本机 Electron 客户端（`127.0.0.1:17521`）+ `PrintClient.printHtml()`，无对话框直接出纸。
+
+细节见 integration 技能的 `references/server-render.md` 与 `references/silent-print.md`。
+
 ## 发布
 
 ```bash
 npm run publish:dry-run        # 干跑（build + test + 逐包 publish --dry-run）
-npm run publish:npm            # core → plugin-kit → canvas → echarts 按依赖序同批发布
+npm run publish:npm            # core → plugin-kit → canvas → echarts → skills 按依赖序同批发布
 npm run publish:canvas         # 仅补发 canvas（core / plugin-kit / canvas 构建 + 测试 + 发布）
 ```
 
 - CI 手动发布走 `.github/workflows/publish-npm.yml`：认证优先 Trusted Publishing（OIDC），
   需在 npmjs.com 各包 Settings → Trusted Publisher 绑定本 workflow；`NODE_AUTH_TOKEN` 仅作回退。
 - `contract` / `mcp` / `render` / `client` 不发布到 npm，随客户端 Electron 打包分发。
+
+## 仓库地址
+
+- 本仓 Gitee：https://gitee.com/liulong_oschina/worm-print-platform
+- 本仓 GitHub：https://github.com/worm-longliu/worm-print-platform
+- 旧仓 worm-vue3-print（Gitee）：https://gitee.com/liulong_oschina/worm-vue3-print/tree/master
+- 旧仓 worm-vue3-print（GitHub）：https://github.com/worm-longliu/worm-vue3-print
+
+## 抖音 & 赞赏
+
+本项目基于 MIT 协议免费开源，赞赏纯属自愿、与授权和服务无关。
+
+如果这套工具帮到了你，欢迎扫码请作者喝杯咖啡；赞赏后请在 [Issue](https://github.com/worm-longliu/worm-print-platform/issues) 留言昵称，我会登记进赞赏名单（仅公开昵称与日期，金额私有不公示）。
+
+<p align="center">
+  <img src="./douyin.png" width="180" alt="抖音码" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/images/wpay.png" width="180" alt="微信赞赏码" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/images/alipay.jpg" width="180" alt="支付宝赞赏码" />
+</p>
 
 ## License
 

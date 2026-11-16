@@ -14,6 +14,19 @@ ref 方法一致），原 Vue 3 项目只换依赖与 import 即可迁移，模�
 本仓没有 `common` 包（那是拆仓前 worm-vue3-print 的旧包），零框架 / 非 Vue 3 宿主统一消费
 canvas 主入口或其 UMD 产物。框架接入操作方法与 AI 集成提示词见 [docs](../docs/README.md)。
 
+## 安装
+
+在目标项目根目录用命令行安装器（`@worm-print-platform/skills`，随仓库 `packages/skills` 维护）：
+
+```bash
+npx @worm-print-platform/skills worm-print-platform-integration
+npx @worm-print-platform/skills worm-print-platform-mcp --dir .agents/skills
+```
+
+默认装到当前项目 `.agents/skills/<技能名>/`，源为 GitHub、失败回退 Gitee。可用
+`--repo` 指定任意 GitHub/Gitee 仓库、`--dir` 指定技能目录、`--force` 覆盖已有目录；
+离线时也可直接从仓库手动下载本目录。详见 [docs/README.md 技能安装方法](../docs/README.md#技能安装方法提示词第-0-步的通用说明)。
+
 两个技能由 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print) 的同名分发技能迁移而来
 （原 `common` 直挂技能已并入 `integration`），已按当前仓库的包名（`@worm-print-platform/*`）、
 包结构（`packages/core` / `canvas` / `contract` / `mcp` / `plugin-kit`、`services/render`、

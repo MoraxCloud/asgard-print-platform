@@ -28,7 +28,7 @@ common 生态独立拆仓而来，npm scope 从 `@worm-vue3-print/*` 迁移为 `
 | `@worm-vue3-print/echarts`（源码引入） | `@worm-print-platform/echarts` | 升级为 npm 正式包；`/kit` 子路径保留，新增 `/ui` |
 | `@worm-vue3-print/echarts-common`（源码引入） | （并入 `@worm-print-platform/echarts` 的 `/ui`） | 一行 `import '@worm-print-platform/echarts/ui'` 替代两个旧包 |
 | `@worm-vue3-print/plugin-kit`（源码引入） | `@worm-print-platform/plugin-kit` | 升级为 npm 正式包，契约与注册表同名同形 |
-| `@worm-vue3-print/skills`（npx 安装器） | 本仓 `skills/` 目录（源码分发） | 不再经 npm 安装，方法见 [README](./README.md#技能安装方法提示词第-0-步的通用说明) |
+| `@worm-vue3-print/skills`（npx 安装器） | `@worm-print-platform/skills`（npx 安装器，本仓 `packages/skills`）+ `skills/` 目录（源） | 命令由 `@worm-vue3-print/skills` 换成 `@worm-print-platform/skills`，默认 GitHub→Gitee 双源，方法见 [README](./README.md#技能安装方法提示词第-0-步的通用说明) |
 | `@worm-vue3-print/render`（私有） | `@worm-print-platform/render`（`services/render`） | 服务端 PDF 微服务，Docker 部署 |
 | `@worm-vue3-print/print-client`（私有） | `@worm-print-platform/client`（`clients/client`） | Electron 静默打印客户端 |
 

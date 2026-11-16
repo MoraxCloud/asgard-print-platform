@@ -27,21 +27,32 @@ AI 编程工具的「集成提示词」。提示词内置技能安装引导，�
 
 ## 技能安装方法（提示词「第 0 步」的通用说明）
 
-技能未发布到任何技能市场，以仓库源码分发。给 AI agent 的安装动作是：
+技能以仓库为源，通过命令行安装器安装到当前项目（推荐），也可从仓库源码手动取用（离线回退）。
 
-1. 取技能目录：从 [GitHub 仓库](https://github.com/worm-longliu/worm-print-platform) 的
-   `skills/<技能名>/` 拿到整个目录（含 `SKILL.md` 与 `references/`）。
-2. 复制到所用 AI 编程工具的技能目录并重载：
+### 方式 A：npx 安装器（推荐）
 
-   | 工具 | 用户级目录 | 项目级目录 |
-   | --- | --- | --- |
-   | Qoder | `~/.qoder/skills/<技能名>/` | `.qoder/skills/<技能名>/` |
-   | Claude Code | `~/.claude/skills/<技能名>/` | `.claude/skills/<技能名>/` |
+在**当前项目根目录**逐条执行（`<技能名>` 见上表）：
 
-   其他工具按其技能目录约定放置即可；装好后按该工具方式调用（如 Qoder 的技能列表、
-   Claude Code 的 Skill 工具）。
-3. 无法安装技能时，提示词会降级为「完整阅读该目录下 `SKILL.md` 与 `references/` 全部文档」，
-   门控效果等价。
+```bash
+npx @worm-print-platform/skills worm-print-platform-integration
+npx @worm-print-platform/skills worm-print-platform-mcp
+```
+
+- 默认装到当前项目的 `.agents/skills/<技能名>/`，含 `SKILL.md` 与 `references/` 全部文件。
+- 默认源为 GitHub，失败自动回退 Gitee 镜像；两者都不通时可用 `--repo` 指定任意 GitHub /
+  Gitee 仓库（或 `owner/repo` 简写）。
+- 其他技能目录用 `--dir` 指定，例如 Qoder 项目级目录 `--dir .qoder/skills`，
+  Claude Code 用 `--dir .claude/skills`；用户级目录可传绝对路径。
+- 目标已存在时默认拒绝覆盖并报错，确认覆盖才加 `--force`。
+- 完整参数见 `npx @worm-print-platform/skills --help`。
+
+### 方式 B：仓库源码手动取用（离线回退）
+
+无 npm / git 环境时，从 [GitHub](https://github.com/worm-longliu/worm-print-platform) 或
+[Gitee](https://gitee.com/liulong_oschina/worm-print-platform) 仓库的 `skills/<技能名>/`
+目录手动下载整个目录，放到所用 AI 编程工具的技能目录并重载。
+安装器不可用或网络受限时，提示词降级为「完整阅读该目录下 `SKILL.md` 与 `references/`
+全部文档」，门控效果等价。
 
 ## 打印链路速记
 

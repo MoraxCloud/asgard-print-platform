@@ -1,0 +1,50 @@
+{
+  "name": "@worm-print-platform/skills",
+  "version": "1.5.0",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "type": "module",
+  "description": "worm-print-platform 官方技能安装器：从 GitHub / Gitee 仓库把技能安装到本地项目的 .agents/skills/ 或指定目录。",
+  "license": "MIT",
+  "author": "worm <liu_long_qqcom@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/worm-longliu/worm-print-platform.git"
+  },
+  "keywords": [
+    "skills",
+    "cli",
+    "worm-print-platform"
+  ],
+  "bin": {
+    "worm-print-skills": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run typecheck",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^1.6.0"
+  }
+}
