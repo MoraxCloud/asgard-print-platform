@@ -10,8 +10,8 @@
       h1 { margin: 0 0 4px; font-size: 20px; }
       h1 span { color: #165dff; }
       p.lead { margin: 0 0 24px; color: #5a667f; }
-      .warn { margin: 8px 0 16px; padding: 10px 14px; border: 1px solid #ffd8bf; border-radius: 8px;
-              background: #fff7e6; color: #ad4200; }
+      .note { margin: 8px 0 16px; padding: 10px 14px; border: 1px solid #b7ebd8; border-radius: 8px;
+              background: #f0fbf6; color: #1a7a52; }
       .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
       .card { background: #fff; border: 1px solid #e5e8ef; border-radius: 10px; padding: 16px 18px; }
       .card h2 { margin: 0 0 6px; font-size: 16px; }
@@ -36,11 +36,11 @@
       打开任意一个页面都能用顶栏的「宿主示例」下拉切到其余三个。
     </p>
 
-    <p class="warn">
-      <strong>⚠ 实验性质</strong>：<code>@worm-print-platform/canvas</code> 尚未定版，接口与产物形态仍可能调整，
-      <strong>不建议应用到生产环境</strong>；Vue 3 项目可使用成熟方案
-      <code>@worm-vue3-print/canvas</code>（见 <a href="https://github.com/worm-longliu/worm-vue3-print">worm-vue3-print</a>）。
-      本组示例仅供评估与非生产环境的集成验证。
+    <p class="note">
+      <strong>稳定版本</strong>：本仓 <code>@worm-print-platform/canvas</code> 已作为设计器权威实现正式发布（1.5.x 主线），
+      是后续维护与迭代的主版本，可用于生产环境。旧仓
+      <code>@worm-vue3-print/canvas</code>（见 <a href="https://github.com/worm-longliu/worm-vue3-print">worm-vue3-print</a>）
+      进入维护状态；Vue 3 老项目可经 <code>/vue3</code> 兼容门面零业务改动迁移。
     </p>
 
     <div class="grid">

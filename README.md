@@ -7,7 +7,13 @@
 同一份模板与数据，浏览器预览打印、服务端 PDF、桌面客户端静默打印三条链路产出完全一致。
 
 > 由 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print) 的 common 生态独立拆仓而来，
-> npm scope 迁移为 `@worm-print-platform/*`。
+> npm scope 迁移为 `@worm-print-platform/*`。本仓为设计器权威实现与后续维护迭代的**稳定主版本**（`1.5.x` 主线），
+> 旧仓进入维护状态。
+
+## 当前版本与下载
+
+当前主线版本 **1.5.1**。桌面客户端安装包（mac / Windows / Linux）及校验清单见下方
+[下载客户端安装包](#下载客户端安装包)。版本历史见 [CHANGELOG](./CHANGELOG.md)。
 
 ## 在线演示
 
@@ -131,6 +137,32 @@ npx @worm-print-platform/skills worm-print-platform-mcp
 - **C 桌面客户端静默打印**：本机 Electron 客户端（`127.0.0.1:17521`）+ `PrintClient.printHtml()`，无对话框直接出纸。
 
 细节见 integration 技能的 `references/server-render.md` 与 `references/silent-print.md`。
+
+## 下载客户端安装包
+
+桌面客户端用于**链路 C（静默打印）**。当前版本 **1.5.1**，安装包托管在本仓 GitHub Releases：
+<https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.5.1>
+
+| 平台 | 架构 | 安装包 |
+| --- | --- | --- |
+| macOS | x64 (Intel) | [WormPrintClient-1.5.1-mac-x64.dmg](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-mac-x64.dmg) |
+| macOS | arm64 (Apple Silicon) | [WormPrintClient-1.5.1-mac-arm64.dmg](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-mac-arm64.dmg) |
+| Windows | x64 | [WormPrintClient-1.5.1-win-x64.exe](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-win-x64.exe) |
+| Linux | x64 (deb) | [WormPrintClient-1.5.1-linux-amd64.deb](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-amd64.deb) |
+| Linux | x64 (rpm) | [WormPrintClient-1.5.1-linux-x86_64.rpm](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-x86_64.rpm) |
+| Linux | x64 (AppImage) | [WormPrintClient-1.5.1-linux-x86_64.AppImage](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-x86_64.AppImage) |
+
+校验清单：[SHA256SUMS.txt](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/SHA256SUMS.txt)（下载后用 `shasum -a 256` / `sha256sum` 核对）。
+
+说明：
+
+- **下载慢或中断**：可用迅雷、IDM、qBittorrent 等支持续传的工具复制上方直链下载。
+- **macOS 未签名 / 未公证**：安装包带 Electron 预编译的临时签名，首次打开若提示"无法验证开发者"，
+  在「系统设置 → 隐私与安全性」中允许打开即可（右键 → 打开也可）。这是未做 Apple 公证的预期提示，不影响功能。
+- **Linux 三包未经真机验证**：deb / rpm / AppImage 在容器中交叉构建，未在真实 Linux 桌面逐一跑通；
+  AppImage 可能需要 `--appimage-extract-and-run` 或安装 fuse；部分发行版需处理 sandbox 权限，遇到问题欢迎提 Issue。
+- 安装后用设置页配置本地服务端口（默认 `127.0.0.1:17521`）与 MCP/AI 助手；接入方法见
+  [客户端 README](./clients/client/README.md) 与 [静默打印技能](./skills/worm-print-platform-integration/references/silent-print.md)。
 
 ## 发布
 

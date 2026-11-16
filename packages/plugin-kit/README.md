@@ -9,7 +9,7 @@
 | `@worm-print-platform/canvas` | 零框架原生挂载：素材卡、画布、属性台「自定义属性」页签直接使用 UI |
 | `@worm-vue3-print/canvas` | Vue 3 桥接：`useElementExtensionRegistry` 自动生成画布组件与属性页签组件 |
 
-> 状态：随工作区主线开发，**尚未发布到 npm**；通过 workspace / `file:` 依赖接入。
+> 状态：已作为正式包发布到 npm（与主线同号，`1.5.x`），`npm i @worm-print-platform/plugin-kit` 即可；工作区内也可通过 workspace / `file:` 依赖接入。
 
 ## 与 core 插件描述符的关系
 

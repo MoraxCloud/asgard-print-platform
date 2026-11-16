@@ -21,7 +21,7 @@
 npm i @worm-print-platform/canvas @worm-print-platform/core
 ```
 
-`canvas` 与主线同号发布正式版，安装直接取 `latest`（工作区为 `1.5.0` 待发），不需要 `@next`；`core` 装同版本即可，出纸链路也要直接用它。本包现为设计器的**权威实现**，技术主站 `demo/` 与四个宿主示例工程均已接入；`/vue3` 门面与 `@worm-vue3-print/canvas` 是 Vue 3 兼容轨。注意 `plugin-kit` 是本包的运行时依赖，1.5.0 起六包同号同批发版，安装时不要只锁 `core` + `canvas` 两个版本号。
+`canvas` 与主线同号发布正式版，安装直接取 `latest`（当前主线 `1.5.1`），不需要 `@next`；`core` 装同版本即可，出纸链路也要直接用它。本包是设计器的**权威实现**、后续维护迭代的稳定主版本，四个宿主示例工程均已接入；`/vue3` 门面与 `@worm-vue3-print/canvas` 是 Vue 3 兼容轨。注意 `plugin-kit` 是本包的运行时依赖，1.5.x 起各包同号同批发版，安装时不要只锁 `core` + `canvas` 两个版本号。
 
 本页包含三种 NPM 宿主的最小接入示例：[Vue 3](#vue-3) · [Vue 2.7](#vue-27) · [React 18](#react-18)；无打包器宿主见下文「浏览器直挂」。
 

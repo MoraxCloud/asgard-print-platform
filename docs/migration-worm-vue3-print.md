@@ -15,8 +15,8 @@ common 生态独立拆仓而来，npm scope 从 `@worm-vue3-print/*` 迁移为 `
 - **插件化元素正式化**：`plugin-kit`（插件设计器 UI 契约）与 `echarts`（图表元素可选包）从
   「工作区源码包」升级为 npm 正式包。
 
-口径：本仓 `@worm-print-platform/canvas` 尚在实验期（与 demos 总览页的提示一致），
-`@worm-vue3-print/canvas` 继续可用；迁移是**可选升级**，迁移完成后业务代码零改动。
+口径：本仓 `@worm-print-platform/canvas` 已正式发布（1.5.x 主线），是后续维护迭代的**稳定主版本**（与 demos 总览页的提示一致）；
+`@worm-vue3-print/canvas` 进入维护状态、继续可用；迁移是**可选升级**，迁移完成后业务代码零改动。
 
 ## 2. 包名映射总表
 

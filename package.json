@@ -1,6 +1,6 @@
 {
   "name": "worm-print-platform",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "type": "module",
   "description": "跨框架可视化打印模板设计器（Web Components）+ 表达式引擎 + 同构渲染管线 + 渲染微服务 + 静默打印客户端（开源 monorepo）",

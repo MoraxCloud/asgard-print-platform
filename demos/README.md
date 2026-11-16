@@ -1,6 +1,6 @@
 # demos · 四个宿主的打印设计器集成示例
 
-> ⚠️ 演示对象 `@worm-print-platform/canvas` 为**实验性质**，不建议应用到生产环境；Vue 3 项目也可使用成熟方案 `@worm-vue3-print/canvas`（见 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print)）。
+> 演示对象 `@worm-print-platform/canvas` 已作为设计器权威实现正式发布（1.5.x 主线），是本仓后续维护迭代的**稳定主版本**，可用于生产环境。旧仓 `@worm-vue3-print/canvas`（见 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print)）进入维护状态，Vue 3 老项目可经 `/vue3` 兼容门面零业务改动迁移。
 
 `@worm-print-platform/canvas`（`<print-designer>`）在 **Vue 3 / Vue 2.7 / React 18 / jQuery** 四种宿主里的接入示例。
 每个 `apps/<宿主>` 都是一个独立 npm 工程，把自己宿主的集成代码全部写在自家文件里，

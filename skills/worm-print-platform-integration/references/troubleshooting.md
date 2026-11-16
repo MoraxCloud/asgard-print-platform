@@ -121,9 +121,10 @@
 - **MCP 写回受限**：UMD 未导出 `findBlockedElementPaths`，直挂宿主拿不到时 MCP 写回保持只读（只处理 `template.get`），见 [宿主 MCP 集成](mcp-host-integration.md)。
 - **jQuery 事件 detail 是 undefined**：`.on('save', e => …)` 包了一层，取 `e.originalEvent.detail`。
 
-## 生产风险
+## 生产使用建议
 
-canvas 当前为实验性质；选型前评估，Vue 3 项目可考虑成熟方案，非 Vue 3 宿主接入时先跑通最小链路再上量。
+canvas 已作为设计器权威实现正式发布（1.5.x 主线），是本仓后续维护迭代的稳定主版本，可用于生产环境。
+非 Vue 3 宿主首次接入仍建议先跑通最小链路（设计 → 保存 → 预览出纸）再上量。
 
 ## MCP 实时会话
 
