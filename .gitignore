@@ -22,7 +22,7 @@ demos/apps/*/public/fonts/
 # electron-builder 本地下载缓存（构建时自动生成，不入库）
 .cache/
 
-# 教学视频运行目录：本仓库无相关技能源
+# 教学视频运行目录（技能源在 .agents/skills/making-douyin-videos，运行产物不入库）
 .video/
 .video-*/
 

@@ -1,0 +1,344 @@
+{
+  "title": "worm-print-platform 整页旋转效果",
+  "coverTitle": "整页旋转",
+  "coverSub": "效果演示 · 90° / 180° / 270° 换向出纸",
+  "coverVerdict": "横版设计、竖版出纸，内容不缩放不裁切",
+  "coverVersion": "待发布",
+  "coverCards": [
+    {
+      "num": "90°",
+      "label": "整页旋转",
+      "pct": "纸张长宽互换"
+    },
+    {
+      "num": "180°",
+      "label": "倒置出纸",
+      "pct": "方向翻转"
+    },
+    {
+      "num": "270°",
+      "label": "反向出纸",
+      "pct": "纸张长宽互换"
+    }
+  ],
+  "read": [
+    [
+      "旋转",
+      "keep",
+      "旋转的转读三声（zhuǎn），引擎按上下文判定"
+    ],
+    [
+      "模板",
+      "keep",
+      "模板读 mú，引擎按上下文判定"
+    ],
+    [
+      "长宽",
+      "chang2",
+      "长宽的长读 cháng，替换为同音字"
+    ]
+  ],
+  "accept": [
+    [
+      "载",
+      "zai4",
+      "加载读 zài"
+    ],
+    [
+      "相",
+      "xiang1",
+      "相反读 xiāng"
+    ]
+  ],
+  "voice": "zh-CN-YunxiNeural",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "margin": 32
+  },
+  "baseUrl": "http://localhost:9331",
+  "scenes": [
+    {
+      "name": "加载模板",
+      "voiceover": "这一期只看整页旋转的效果。加载销售出库单，这是一张 A5 竖版模板，一共两页。",
+      "steps": [
+        {
+          "do": "assert",
+          "selector": ".designer-container"
+        },
+        {
+          "do": "click",
+          "selector": ".demo-topbar button:has-text(\"加载示例\")",
+          "s": 1
+        },
+        {
+          "do": "assert",
+          "selector": ".gallery-panel"
+        },
+        {
+          "do": "click",
+          "selector": ".gallery-tab:has-text(\"单据\")"
+        },
+        {
+          "do": "click",
+          "selector": ".sample-card:has(.sample-name:text-is(\"销售出库单\"))"
+        },
+        {
+          "do": "click",
+          "selector": ".gallery-panel button:has-text(\"使用该模板\")"
+        },
+        {
+          "do": "assert",
+          "selector": ".demo-badge:has-text(\"业务类型：销售出库单\")"
+        },
+        {
+          "do": "click",
+          "selector": ".prop-tabs .pd-tab:has-text(\"页面属性\")",
+          "ms": 500
+        },
+        {
+          "do": "highlight",
+          "selector": ".pd-field:has-text(\"内容旋转角度\")",
+          "ms": 2400,
+          "s": 1
+        }
+      ]
+    },
+    {
+      "name": "90 度",
+      "voiceover": "页面属性里的内容旋转角度有四档。选 90 度，打开预览，整页内容顺时针旋转九十度，纸张长宽互换，从竖版变成横版。",
+      "steps": [
+        {
+          "do": "click",
+          "selector": ".pd-field:has-text(\"内容旋转角度\") .pd-radio:has-text(\"90°\")",
+          "ms": 600
+        },
+        {
+          "do": "click",
+          "selector": ".designer-toolbar button:has-text(\"预览\")",
+          "s": 1
+        },
+        {
+          "do": "assert",
+          "selector": ".preview-mask"
+        },
+        {
+          "do": "waitForPreview"
+        },
+        {
+          "do": "measureCss",
+          "in": "preview",
+          "sel": ".print-page-rotor",
+          "prop": "transform",
+          "expectContains": "matrix(0, 1, -1, 0,",
+          "s": 1
+        },
+        {
+          "do": "measureBox",
+          "in": "preview",
+          "sel": ".print-page",
+          "expectW": 793.7,
+          "expectH": 559.4,
+          "s": 1
+        },
+        {
+          "do": "highlight",
+          "selector": ".preview-body",
+          "ms": 2600,
+          "s": 1
+        },
+        {
+          "do": "key",
+          "keys": "Escape",
+          "ms": 700
+        }
+      ]
+    },
+    {
+      "name": "180 度",
+      "voiceover": "再选 180 度，整页内容倒置。纸张方向保持竖版不变。",
+      "steps": [
+        {
+          "do": "click",
+          "selector": ".pd-field:has-text(\"内容旋转角度\") .pd-radio:has-text(\"180°\")",
+          "ms": 500
+        },
+        {
+          "do": "click",
+          "selector": ".designer-toolbar button:has-text(\"预览\")",
+          "s": 1
+        },
+        {
+          "do": "assert",
+          "selector": ".preview-mask"
+        },
+        {
+          "do": "waitForPreview"
+        },
+        {
+          "do": "measureCss",
+          "in": "preview",
+          "sel": ".print-page-rotor",
+          "prop": "transform",
+          "expectContains": "matrix(-1, 0, 0, -1,",
+          "s": 1
+        },
+        {
+          "do": "measureBox",
+          "in": "preview",
+          "sel": ".print-page",
+          "expectW": 559.4,
+          "expectH": 793.7,
+          "s": 1
+        },
+        {
+          "do": "highlight",
+          "selector": ".preview-body",
+          "ms": 2400,
+          "s": 1
+        },
+        {
+          "do": "key",
+          "keys": "Escape",
+          "ms": 700
+        }
+      ]
+    },
+    {
+      "name": "270 度",
+      "voiceover": "270 度和 90 度方向相反，纸张同样长宽互换。内容从另一个方向填满横版纸面。",
+      "steps": [
+        {
+          "do": "click",
+          "selector": ".pd-field:has-text(\"内容旋转角度\") .pd-radio:has-text(\"270°\")",
+          "ms": 500
+        },
+        {
+          "do": "click",
+          "selector": ".designer-toolbar button:has-text(\"预览\")",
+          "s": 1
+        },
+        {
+          "do": "assert",
+          "selector": ".preview-mask"
+        },
+        {
+          "do": "waitForPreview"
+        },
+        {
+          "do": "measureCss",
+          "in": "preview",
+          "sel": ".print-page-rotor",
+          "prop": "transform",
+          "expectContains": "matrix(0, -1, 1, 0,",
+          "s": 1
+        },
+        {
+          "do": "measureBox",
+          "in": "preview",
+          "sel": ".print-page",
+          "expectW": 793.7,
+          "expectH": 559.4,
+          "s": 1
+        },
+        {
+          "do": "highlight",
+          "selector": ".preview-body",
+          "ms": 2400,
+          "s": 1
+        },
+        {
+          "do": "key",
+          "keys": "Escape",
+          "ms": 700
+        }
+      ]
+    },
+    {
+      "name": "回到 0 度",
+      "voiceover": "最后回到 0 度，恢复原方向。整页旋转只改出纸方向，内容不缩放也不裁切。",
+      "steps": [
+        {
+          "do": "click",
+          "selector": ".pd-field:has-text(\"内容旋转角度\") .pd-radio:has-text(\"0°\")",
+          "ms": 500
+        },
+        {
+          "do": "click",
+          "selector": ".designer-toolbar button:has-text(\"预览\")",
+          "s": 1
+        },
+        {
+          "do": "assert",
+          "selector": ".preview-mask"
+        },
+        {
+          "do": "waitForPreview"
+        },
+        {
+          "do": "measureCount",
+          "in": "preview",
+          "sel": ".print-page-rotor",
+          "expect": 0,
+          "s": 1
+        },
+        {
+          "do": "measureBox",
+          "in": "preview",
+          "sel": ".print-page",
+          "expectW": 559.4,
+          "expectH": 793.7,
+          "s": 1
+        },
+        {
+          "do": "highlight",
+          "selector": ".preview-body",
+          "ms": 2200,
+          "s": 1
+        },
+        {
+          "do": "key",
+          "keys": "Escape",
+          "ms": 700
+        }
+      ]
+    }
+  ],
+  "subtitle": {
+    "lineWidth": 20,
+    "maxLines": 2
+  },
+  "douyin": {
+    "titles": [
+      "竖版单据怎么横着出纸？整页旋转一次看懂",
+      "整页旋转90度，横版设计也能竖版出纸",
+      "0°、90°、180°、270°：整页换向出纸",
+      "出纸方向反了？整页旋转四档一键换向",
+      "不重排版式，整页内容旋转后直接出纸"
+    ],
+    "description": "竖版排好版的单据，要横着出纸，不用重排内容。\n\n片子用 A5 竖版销售出库单走一遍页面属性的内容旋转角度：0°保持原方向，90°与270°交换纸张长宽，180°整页倒置。设计画布保持设计方向，实际效果看预览与出纸。\n\n发布前必须重新核对本示例的版本与源码口径。",
+    "tags": [
+      "打印模板",
+      "整页旋转",
+      "Vue3",
+      "前端开发",
+      "开源项目"
+    ],
+    "pinnedComment": "入口：页面属性 → 内容旋转角度。90°与270°交换纸张长宽，180°只翻转内容。连续纸与小票纸没有旋转概念；拼版后按每格内容生效。",
+    "sources": [
+      {
+        "claim": "页面属性提供0°/90°/180°/270°四档",
+        "evidence": "packages/canvas/src/shell/property-panel.ts"
+      },
+      {
+        "claim": "旋转由核心渲染CSS与出纸HTML共同实现",
+        "evidence": "packages/core/src/render/rotation.ts；packages/core/src/render/css-builder.ts；packages/core/src/render/html-generator.ts"
+      },
+      {
+        "claim": "发布版本必须在出片前重新核验",
+        "evidence": "package.json；git tag；npm view @worm-print-platform/core version"
+      }
+    ]
+  }
+}
