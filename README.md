@@ -9,6 +9,11 @@
 > 由 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print) 的 common 生态独立拆仓而来，
 > npm scope 迁移为 `@worm-print-platform/*`。
 
+## 在线演示
+
+GitHub Pages 静态演示：<https://worm-longliu.github.io/worm-print-platform/>
+（总览页与四个宿主 `canvas/{vue3,vue2,react,jquery}/`，对应 [demos](./demos/README.md) 四工程）
+
 ## 插件化自定义元素
 
 设计器只保留通用机制，具体元素由插件包提供。内置 11 类元素与第三方插件走**同一张注册表、同权扩展**：
@@ -84,7 +89,8 @@ npm run publish:npm            # core → plugin-kit → canvas → echarts 按�
 npm run publish:canvas         # 仅补发 canvas（core / plugin-kit / canvas 构建 + 测试 + 发布）
 ```
 
-- CI 手动发布走 `.github/workflows/publish-npm.yml`（需要仓库 secret `NPM_TOKEN`）。
+- CI 手动发布走 `.github/workflows/publish-npm.yml`：认证优先 Trusted Publishing（OIDC），
+  需在 npmjs.com 各包 Settings → Trusted Publisher 绑定本 workflow；`NODE_AUTH_TOKEN` 仅作回退。
 - `contract` / `mcp` / `render` / `client` 不发布到 npm，随客户端 Electron 打包分发。
 
 ## License
