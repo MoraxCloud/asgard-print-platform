@@ -41,6 +41,17 @@ describe('tokenize', () => {
     ])
   })
 
+  it('tokenizes Chinese identifiers and dotted Chinese keys', () => {
+    expect(tokenize('姓名')).toEqual([
+      { type: 'ident', value: '姓名', position: 0 },
+    ])
+    expect(tokenize('supplier.名称')).toEqual([
+      { type: 'ident', value: 'supplier', position: 0 },
+      { type: 'punc', value: '.', position: 8 },
+      { type: 'ident', value: '名称', position: 9 },
+    ])
+  })
+
   it('tokenizes operators', () => {
     expect(tokenize('1 + 2')).toEqual([
       { type: 'num', value: '1', position: 0 },

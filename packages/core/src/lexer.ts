@@ -54,10 +54,12 @@ export function tokenize(input: string): Token[] {
       continue
     }
 
-    // 标识符
-    if (/[A-Za-z_$]/.test(ch)) {
+    // 标识符：ASCII 之外允许 CJK 统一汉字，使 {姓名}、{supplier.名称} 这类
+    // 中文 key 在平铺上下文中可直接引用（与宿主字段 fieldKey 的中文场景对齐）。
+    // 注意标识符规则须与 parser 成员访问、detectFlowListKey 的中文段保持一致。
+    if (/[A-Za-z_$\u4e00-\u9fff]/.test(ch)) {
       let j = i
-      while (j < n && /[A-Za-z0-9_$]/.test(input[j])) j++
+      while (j < n && /[A-Za-z0-9_$\u4e00-\u9fff]/.test(input[j])) j++
       const word = input.slice(i, j)
 
       if (RESERVED_WORDS.has(word)) {

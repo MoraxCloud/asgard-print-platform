@@ -186,6 +186,13 @@ function cursorRegion(text: string, caret: number): { insideBlock: boolean; insi
   return { insideBlock, insideParens }
 }
 
+/** 字段 key 是否含中文（与 lexer 的 CJK 标识符范围一致），用于决定要不要提示写法 */
+const hasChineseKey = (key: string): boolean => /[\u4e00-\u9fff]/.test(key)
+
+/** 中文 key 的正确表达式写法提示（双击插入时即时显示 + 帮助区常驻） */
+const chineseKeyHint = (key: string): string =>
+  `字段「${key}」含中文，请用 {${key}} 引用（函数参数内写 ${key}）；中文可直接在 {} 中使用，无需 data['...'] 方括号`
+
 /** 单一 {字段} 形式才回写 binding/title（对应 Vue 3 轨 拖字段时 formatter + title 同源） */
 function pureFieldBinding(expr: string, fields: PrintBusinessField[]): PrintBusinessField | null {
   const matched = /^\{\s*([^{}]+?)\s*\}$/.exec(expr.trim())
@@ -230,6 +237,7 @@ function helpSection(): El {
         '静态数据直接输入即可，如：供应商名称',
         '动态解析字段、变量、函数必须用 {} 包裹',
         '示例：{SUM(supplier.name)}',
+        '中文 key 直接写 {字段名}，如 {姓名}、{supplier.名称}',
         '注意：只能嵌套一层',
       ]),
       helpCard('ee-help-function', '函数使用', [
@@ -266,6 +274,8 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
     binding: target.binding,
     /** 最近一次复制成功的字段 key：按钮图标 1.2s 内显示对勾（对齐 Vue 3 轨的 copiedKey） */
     copiedFieldKey: '',
+    /** 双击插入中文 key 后的格式提示；插入英文字段/手动编辑时清空 */
+    keyHint: '',
   }
 
   const query = <T extends Element>(root: ParentNode, selector: string) => root.querySelector<T>(selector)
@@ -279,13 +289,21 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
     el.classList.toggle('ee-preview-error', text === ERROR_PREVIEW)
   }
 
+  /** 重绘格式提示条：仅双击插入中文 key 时显示正确写法，其余情况隐藏 */
+  const updateKeyHint = (root: ParentNode) => {
+    const el = query<HTMLElement>(root, '.ee-key-hint')
+    if (!el) return
+    el.textContent = state.keyHint
+    el.style.display = state.keyHint ? '' : 'none'
+  }
+
   const listItems = (): unknown[] => {
     if (state.activeTab === 'variable') {
       return matchKeyword(SYSTEM_VARIABLES, state.searchText).map(sv => h('div', {
         class: 'ee-list-item',
         onDblclick: (ev: Event) => {
           const { insideParens } = region(ev)
-          insert(scope(ev), insideParens ? sv.template.replace(/^\{|\}$/g, '') : sv.template)
+          insert(scope(ev), insideParens ? sv.template.replace(/^\{|\}$/g, '') : sv.template, undefined, '')
         },
       }, [itemInfo(sv.label, sv.template)]))
     }
@@ -297,7 +315,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
           onDblclick: (ev: Event) => {
             const { insideBlock } = region(ev)
             const text = insideBlock ? fn.template : `{${fn.template}}`
-            insert(scope(ev), text, text.indexOf('(') + 1)
+            insert(scope(ev), text, text.indexOf('(') + 1, '')
           },
         }, [itemInfo(fn.label, `${fn.name}()`)])),
       ]))
@@ -323,10 +341,12 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
             const mod = ev as MouseEvent
             if (mod.ctrlKey || mod.metaKey) {
               const name = field.fieldLabel || field.fieldKey
-              insert(scope(ev), insideParens ? `"${name}"` : name)
+              insert(scope(ev), insideParens ? `"${name}"` : name, undefined, '')
               return
             }
-            insert(scope(ev), insideParens ? field.fieldKey : `{${field.fieldKey}}`)
+            // 中文 key：插入后提示正确写法，避免误用 data['...'] 方括号（平铺上下文取不到值）
+            insert(scope(ev), insideParens ? field.fieldKey : `{${field.fieldKey}}`, undefined,
+              hasChineseKey(field.fieldKey) ? chineseKeyHint(field.fieldKey) : '')
           },
         }, [
           itemInfo(field.fieldLabel, field.fieldKey),
@@ -368,6 +388,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
       for (const item of listItems()) render(item as El, list)
     }
     updatePreview(root)
+    updateKeyHint(root)
   }
 
   /** 单击字段右侧复制按钮：复制字段中文名，图标变对勾 1.2s 后复原（整体重绘模型，状态外置在 state） */
@@ -392,12 +413,14 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
     return cursorRegion(state.expression, caret)
   }
 
-  /** 在光标处插入文本并把光标放到 caretOffset */
-  const insert = (root: ParentNode, text: string, caretOffset = text.length) => {
+  /** 在光标处插入文本并把光标放到 caretOffset；keyHint 传入时同步格式提示条 */
+  const insert = (root: ParentNode, text: string, caretOffset = text.length, keyHint?: string) => {
+    if (keyHint !== undefined) state.keyHint = keyHint
     const ta = query<HTMLTextAreaElement>(root, '.ee-textarea')
     if (!ta) {
       state.expression += text
       updatePreview(root)
+      updateKeyHint(root)
       return
     }
     const start = ta.selectionStart ?? state.expression.length
@@ -409,6 +432,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
     ta.focus()
     ta.selectionStart = ta.selectionEnd = caret
     updatePreview(root)
+    updateKeyHint(root)
   }
 
   /** 确定：先回写再关闭（对齐 Vue 3 轨的 emit('update:expression') + visible=false） */
@@ -462,8 +486,15 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
         text: state.expression,
         onInput: (ev: Event) => {
           state.expression = (ev.target as HTMLTextAreaElement).value
+          state.keyHint = ''
           updatePreview(scope(ev))
+          updateKeyHint(scope(ev))
         },
+      }),
+      h('div', {
+        class: 'pd-hint ee-key-hint',
+        style: { display: 'none', color: 'var(--pd-accent, #165DFF)' },
+        text: '',
       }),
     ]),
     h('div', { class: 'ee-editor-section' }, [

@@ -17,6 +17,18 @@ describe('TemplateEngine', () => {
     expect(engine.evaluate('supplier.name', { supplier: { name: 'ACME' } })).toBe('ACME')
   })
 
+  it('evaluates Chinese keys on flat and nested context', () => {
+    expect(engine.evaluate('姓名', { '姓名': '张三' })).toBe('张三')
+    expect(engine.evaluate('supplier.名称', { supplier: { '名称': '鑫达' } })).toBe('鑫达')
+  })
+
+  it('renders template with Chinese keys', () => {
+    expect(engine.render('姓名: {姓名} / 供应商: {supplier.名称}', {
+      '姓名': '张三',
+      supplier: { '名称': '鑫达' },
+    })).toBe('姓名: 张三 / 供应商: 鑫达')
+  })
+
   it('evaluates with custom function', () => {
     const eng = new TemplateEngine({
       functions: { MONEY: (x: number) => x.toFixed(2) },
