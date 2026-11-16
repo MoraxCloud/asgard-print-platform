@@ -118,6 +118,7 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 - 链路 B：密钥只在服务端/代理层，不进前端 bundle；render 服务 `/health` 可达，Linux 已装中文字体。
 - 链路 C：`PrintClient.connect()` 握手成功、`listPrinters()` 能枚举、`print()`/`printHtml()` 指定打印机/份数出纸；`BUSY` 时由宿主侧重试，客户端不排队。
 - 表格数据：明细 `fieldType:'list'`、列表达式用完整路径（如 `{goods.name}`）、printData 对应字段为数组。
+- 表格下方元素：`top` ≥ 表格设计底部（`top + max(height, 行高合计)`）+ 1~2mm 间隙；动态表格（`dataSource`）的 `height` 按画布展开态声明，否则设计器保存回写实测高后下方元素掉出跟随区、渲染落进表格（三链路同判据，刻意层叠覆盖例外）。
 
 ## 7. 关键约束
 

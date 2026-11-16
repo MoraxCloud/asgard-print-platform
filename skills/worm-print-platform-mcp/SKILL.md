@@ -35,7 +35,7 @@ description: Use when 用户需要通过浏览器设计器、桌面客户端和 
 3. 调用 `print_element_kinds` 核对当前契约（含可选包注册的元素类型与必填属性），不要把元素种类写死。
 4. 小改把全部 `updateElement/moveElement` 操作一次交给 `print_patch_open_template`；工具内部会执行契约和封禁元素校验。连续修改直接使用上次返回的新 revision，不重复读取完整模板。
 5. 新模板或复杂重排才读取完整快照：**有设计稿时先用 `print_analyze_reference_image` 拿线条/表格坐标**，据此手排 elements 或选用匹配的 `preset`，不要凭目测估坐标；保留宿主业务字段，执行 `print_validate_template` 和 `print_inspect_layout`。
-6. `print_preview_template` 看渲染图自评版式（对齐、密度、留白、溢出、条码），并用返回的 `elementBoxes` 核对实际落位是否等于模板里写的坐标；有参考稿时再调 `print_compare_with_reference` 做逐线验收。发现问题先修再预览。建议传样例 `printData`，否则表格与绑定渲染为空。
+6. `print_preview_template` 看渲染图自评版式（对齐、密度、留白、溢出、条码），并用返回的 `elementBoxes` 核对实际落位是否等于模板里写的坐标；有参考稿时再调 `print_compare_with_reference` 做逐线验收。发现问题先修再预览。**必须传足量样例 `printData`**（表格要真实展开数行）：表格下方元素的落位、跟随区下移只有展开后才验得出，静态体检不判；缺数据时表格与绑定渲染为空。
 7. 整份替换才用 `print_apply_open_template`（携带 `baseRevision`）；成功后以返回的新 revision 和模板为准。
 8. 在设计器核对画布与预览。移动元素后若需静态体检，读取最新完整快照再检查；静态体检不等于真实分页。
 
@@ -55,4 +55,5 @@ description: Use when 用户需要通过浏览器设计器、桌面客户端和 
 - 表达式写 `{order.no}` 或 `{MONEY(amount)}`，不写 `${...}` 或 JavaScript 控制流。
 - 模板只描述版式，业务数据单独提供；保留宿主已有业务字段和未要求修改的布局。
 - **手排 elements 整份写回时按[设计态兜底](references/template-schema.md)给默认值**：码类 `testData`、表格非空 `tableRows` + `tableColWidths`、图片 `src`——否则画布不显示真实内容（码只出文字、表格无行、图片只有占位框）；`print_draft_template` 生成的元素已由元素工厂补默认值，无需重复给。
+- **表格下方元素的 `top` ≥ 表格设计底部（`top + max(height, tableRows 行高合计)`）+ 1~2mm 间隙**，才会进跟随区随数据展开下移；`dataSource` 表的 `height` 按画布展开态声明（≈ 表头 + data 行高 × 画布预览行数 + 小计/合计）。判据不成立时下方元素按绝对定位渲染，真实数据展开后落进表格；刻意层叠覆盖（水印、角标）例外。详见[布局配方避坑 11](references/layout-recipes.md)。
 - MCP 不调用模型、不持有模型密钥；模型和工具循环归宿主 Agent。

@@ -191,6 +191,11 @@ Chromium 会合成粗体，度量漂移会静默改分页。
   空值与含页码表达式（`pageIndex`/`totalPages`）的列不参与；各列独立归并。**归并产生的占位格
   不写入模板 JSON**（与静态合并不同）。
 - 列宽和应等于 `width`、行高和应等于 `height`。
+- **表格设计底部 = `top + max(height, 行高合计)`**：表格下方元素的 `top` 必须落在它之下（留 1~2mm
+  间隙）且横向相交，才会进表格跟随区、随数据展开与切片移页整体下移（详见
+  [布局配方避坑 11](layout-recipes.md#避坑清单每条都对应真实故障)）。`dataSource` 表的 `height`
+  按**画布展开态**声明（≈ 表头 + data 行高 × 画布预览行数 + 小计/合计），只写静态行高合计时，
+  设计器按预览数据展开回写实测 height 后，下方元素会掉出跟随区、渲染落进表格。刻意层叠覆盖例外。
 - 单元格常用字段：`formatter`、`cellType`（`text`/`barcode`/`qrcode`/`image`）、`align`（`left`/`center`/`right`/`justify`）、`valign`、
   `fontSize`、`fontWeight`、`color`、`backgroundColor`、`padding`、`borders`（`{top,right,bottom,left}`，
   每边 `{width(pt), style, color}`）、`colspan`、`rowspan`
