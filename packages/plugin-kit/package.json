@@ -20,7 +20,7 @@
   "author": "worm <liu_long_qqcom@qq.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://gitee.com/liulong_oschina/worm-print-platform.git"
+    "url": "git+https://github.com/worm-longliu/worm-print-platform.git"
   },
   "keywords": [
     "print",

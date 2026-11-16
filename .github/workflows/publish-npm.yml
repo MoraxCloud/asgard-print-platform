@@ -6,8 +6,9 @@ name: Publish npm
 # 首次验证用 dry_run=true；确认无误后再用 dry_run=false 真正上传。
 # 四个代码包（core / plugin-kit / common / echarts）按依赖顺序同批发布，
 # echarts 内含 Web Components 适配层（./ui 子路径）。
-# 若之后建好 npm-publish 环境并加入同名环境密钥，给 job 加 environment: npm-publish 即可，
-# 环境密钥会覆盖仓库级 NPM_TOKEN，无需改发布步骤。
+# 认证：优先 Trusted Publishing（OIDC，需在 npmjs.com 各包 Settings → Trusted Publisher 绑定本 workflow），
+# 环境变量 NODE_AUTH_TOKEN 仅作为 OIDC 未配置时的回退。
+# 若之后建好 npm-publish 环境并加入同名环境密钥，给 job 加 environment: npm-publish 即可。
 on:
   workflow_dispatch:
     inputs:
@@ -22,6 +23,7 @@ on:
         type: boolean
 
 permissions:
+  id-token: write # Trusted Publishing（OIDC）必需：GitHub Actions 生成短时身份令牌
   contents: read
 
 jobs:
@@ -34,9 +36,10 @@ jobs:
           ref: ${{ inputs.tag }}
 
       - name: 安装 Node.js
+        # Trusted Publishing 要求 npm CLI ≥ 11.5.1 且 Node ≥ 22.14.0，用 24 保证内置 npm 满足
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
 
