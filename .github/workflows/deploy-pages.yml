@@ -1,0 +1,88 @@
+name: Deploy Pages
+
+# 四个宿主 demo 的 GitHub Pages 静态演示：
+#   /                      ← demos/index.html 导航页
+#   /canvas/{vue3,vue2,react,jquery}/ ← 各宿主（vite demo 用 PAGES_BASE 构建注入子路径）
+# 服务端 PDF 与桌面客户端静默打印在访客机器上不可达，demo 自带降级提示，不影响静态演示。
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # demos 的 file: 依赖指向 packages/*/dist，先构建 workspace
+      - name: 构建 workspace 包
+        run: npm ci && npm run build
+
+      - name: 安装四个 demo 依赖
+        run: |
+          for app in vue3 vue2 react jquery; do
+            npm ci --prefix demos/apps/$app
+          done
+
+      # base 必须带尾斜杠；与各宿主 App 内写死的互跳路径 /canvas/<host>/ 保持一致
+      - name: 构建三个 vite 宿主
+        run: |
+          PAGES_BASE=/worm-print-platform/canvas/vue3/ npm run build --prefix demos/apps/vue3
+          PAGES_BASE=/worm-print-platform/canvas/vue2/ npm run build --prefix demos/apps/vue2
+          PAGES_BASE=/worm-print-platform/canvas/react/ npm run build --prefix demos/apps/react
+
+      - name: 组装 jQuery 直挂宿主
+        run: |
+          node demos/apps/jquery/scripts/sync-assets.mjs
+          mkdir -p site/canvas/jquery
+          cp demos/apps/jquery/index.html site/canvas/jquery/
+          cp -r demos/apps/jquery/src site/canvas/jquery/src
+          cp -r demos/apps/jquery/public/* site/canvas/jquery/
+
+      - name: 组装站点目录
+        run: |
+          mkdir -p site/canvas
+          cp demos/index.html site/index.html
+          cp -r demos/apps/vue3/dist site/canvas/vue3
+          cp -r demos/apps/vue2/dist site/canvas/vue2
+          cp -r demos/apps/react/dist site/canvas/react
+          ls -R site | head -40
+
+      - name: 烟雾测试（导航页与四个宿主入口可达）
+        run: |
+          cd site
+          python3 -m http.server 8123 --bind 127.0.0.1 &
+          sleep 1
+          for path in "" canvas/vue3/ canvas/vue2/ canvas/react/ canvas/jquery/; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8123/$path")
+            echo "/$path → $code"
+            test "$code" = "200" || exit 1
+          done
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

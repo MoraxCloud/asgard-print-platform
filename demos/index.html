@@ -50,7 +50,7 @@
         <pre>cd demos/apps/vue3
 npm install
 npm run dev   # :9331</pre>
-        <a class="go" href="http://localhost:9331/">打开 →</a>
+        <a class="go" data-host="vue3" href="http://localhost:9331/">打开 →</a>
       </div>
 
       <div class="card">
@@ -59,7 +59,7 @@ npm run dev   # :9331</pre>
         <pre>cd demos/apps/vue2
 npm install
 npm run dev   # :9332</pre>
-        <a class="go" href="http://localhost:9332/">打开 →</a>
+        <a class="go" data-host="vue2" href="http://localhost:9332/">打开 →</a>
       </div>
 
       <div class="card">
@@ -68,7 +68,7 @@ npm run dev   # :9332</pre>
         <pre>cd demos/apps/react
 npm install
 npm run dev   # :9335</pre>
-        <a class="go" href="http://localhost:9335/">打开 →</a>
+        <a class="go" data-host="react" href="http://localhost:9335/">打开 →</a>
       </div>
 
       <div class="card">
@@ -76,9 +76,9 @@ npm run dev   # :9335</pre>
         <p>无打包器：一个 <code>&lt;link&gt;</code> + 一个 <code>&lt;script&gt;</code>，业务代码只用全局
           <code>WormPrintCanvas</code> 与 <code>$</code>。</p>
         <pre>cd demos/apps/jquery
-npm install     # postinstall 拷 dist 两份文件
+npm install     # sync-assets 拷三份 vendor 文件
 npm run dev     # :9334（node server.mjs 纯静态）</pre>
-        <a class="go" href="http://localhost:9334/">打开 →</a>
+        <a class="go" data-host="jquery" href="http://localhost:9334/">打开 →</a>
       </div>
     </div>
 
@@ -91,5 +91,15 @@ npm run dev     # :9334（node server.mjs 纯静态）</pre>
       两者不在时「打印输出」弹窗显示「离线」并给出可读提示。
       验收：<code>node demos/scripts/verify-demo.mjs http://localhost:&lt;端口&gt;/</code>（四个宿主同一套 34 项 UI 级断言）。
     </footer>
+
+    <script>
+      // 本地 dev：四个工程各占一个端口；GitHub Pages（项目站点子路径）：demo 位于 canvas/<host>/。
+      // 判定口径与各宿主 App 内的「宿主示例」下拉一致。
+      if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.hostname)) {
+        document.querySelectorAll('a.go[data-host]').forEach(a => {
+          a.setAttribute('href', 'canvas/' + a.dataset.host + '/')
+        })
+      }
+    </script>
   </body>
 </html>
