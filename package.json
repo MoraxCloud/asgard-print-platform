@@ -11,7 +11,7 @@
     "clients/*"
   ],
   "scripts": {
-    "dev:core": "npm run build -w @worm-print-platform/core -- --watch",
+    "dev:core": "npm run dev -w @worm-print-platform/core",
     "predev:render": "npm install && npm run build -w @worm-print-platform/core && npm run build -w @worm-print-platform/plugin-kit && npm run build -w @worm-print-platform/echarts",
     "dev:render": "npm run dev -w @worm-print-platform/render",
     "predev:client": "npm install && npm run build -w @worm-print-platform/core && npm run build -w @worm-print-platform/contract && npm run build -w @worm-print-platform/mcp && npm run build -w @worm-print-platform/echarts",

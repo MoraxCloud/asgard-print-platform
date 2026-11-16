@@ -51,6 +51,7 @@
     "svg"
   ],
   "scripts": {
+    "dev": "tsup --watch",
     "build": "vite build && tsc -p tsconfig.build.json && tsup && node ../../scripts/inject-license-banner.mjs dist",
     "test": "vitest run",
     "test:watch": "vitest"

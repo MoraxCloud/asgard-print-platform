@@ -30,6 +30,7 @@
     "framework-agnostic"
   ],
   "scripts": {
+    "dev": "tsup --watch",
     "build": "tsup && node ../../scripts/inject-license-banner.mjs dist",
     "test": "vitest run",
     "test:watch": "vitest"

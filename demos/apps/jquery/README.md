@@ -9,6 +9,7 @@
 ```bash
 npm install        # postinstall 会执行 scripts/sync-assets.mjs
 npm run dev        # http://localhost:9334（node server.mjs：纯静态 + /render-api 透传）
+npm run dev:watch  # 同上并开启热更新：demo 源码 / canvas 包产物变化自动同步 vendor 并刷新页面
 ```
 
 验收（另起终端）：

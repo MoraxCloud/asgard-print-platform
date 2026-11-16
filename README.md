@@ -69,7 +69,8 @@ npm test           # 全量测试（含 render 的 Playwright 集成测试，需
 各自摊开「注册元素 → 注入模板与字段 → 听事件 → 出纸」全过程，照抄其中一个即可落地。
 
 ```bash
-npm run dev:demos:all          # 四个宿主 demo + :9300 总览页
+npm run dev:demos:all          # 四个包 watch 构建 + 四个宿主 demo + :9300 总览页（改 packages/*/src 自动热更新）
+npm run dev:core               # 仅 core 包 watch 构建（tsup --watch）
 npm run dev:render             # 服务端 PDF 渲染微服务（:3001）
 npm run dev:client             # Electron 静默打印客户端
 ```

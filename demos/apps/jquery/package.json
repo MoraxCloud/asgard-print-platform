@@ -8,6 +8,7 @@
     "sync": "node scripts/sync-assets.mjs",
     "postinstall": "node scripts/sync-assets.mjs",
     "dev": "node scripts/sync-assets.mjs && node server.mjs",
+    "dev:watch": "node scripts/sync-assets.mjs && node server.mjs --watch",
     "build": "echo 本工程无构建步骤：直挂形态只产 public/vendor 两份文件",
     "preview": "node server.mjs"
   },
