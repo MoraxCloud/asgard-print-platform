@@ -8,6 +8,7 @@ import { initPrintDialog, openPrintDialog } from './print-dialog.js'
 import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-render.js'
 import { setVisible, setNotice, downloadJson, nextFrame } from './ui.js'
 import { initTopbarOverflow } from './topbar-overflow.js'
+import { createTemplateSession } from './mcp-session.js'
 
 const W = window.WormPrintCanvas
 
@@ -434,5 +435,27 @@ $(function () {
   $('#custom-apply').on('click', onApplyCustom)
   // 进入页面自动载入第一个示例（与 demo 自动载入综合示例同口径）
   applySample(SAMPLES[0])
+
+  // AI 助手（MCP 模板会话）：直挂 UMD 只读，AI 可读取当前模板（写回需 NPM 宿主）
+  const aiSession = createTemplateSession({
+    readSnapshot: () => ({
+      templateJson: currentTemplateJson(),
+      templateName: state.currentSample?.name,
+      fields: state.fields,
+      printData: printData(),
+    }),
+  })
+  aiSession.onStatusChange((status, error) => {
+    const el = document.getElementById('ai-status')
+    if (!el) return
+    const text = status === 'attached' ? '已连接' : status === 'idle' ? '待配对' : '未连接'
+    el.textContent = `AI 助手：${text}`
+    el.classList.toggle('is-attached', status === 'attached')
+    el.classList.toggle('is-idle', status === 'idle')
+    el.title = error || '启动桌面客户端并开启「AI 助手」后自动连接；直挂形态仅支持 AI 读取模板'
+  })
+  aiSession.start()
+  $(window).on('beforeunload', () => aiSession.stop())
+
   console.log('[demo] 设计器已挂载：registerAll() 在入口调用一次，直挂形态只依赖全局 WormPrintCanvas')
 })

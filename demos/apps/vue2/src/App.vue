@@ -10,6 +10,7 @@ import SampleThumb from './SampleThumb.vue'
 import { checkRenderHealth, openPdfBlob, requestServerPdf } from './render-client'
 import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-render'
 import { initTopbarOverflow } from './topbar-overflow.js'
+import { createTemplateSession } from './mcp-session'
 
 /**
  * 宿主基址：模板里的相对路径图片（/images/xxx）按它拼接。
@@ -81,6 +82,9 @@ export default {
       currentSample: null,
       customDataActive: false,
       batchEnabled: false,
+      // AI 助手（MCP 模板会话）状态
+      aiStatus: 'unreachable',
+      aiStatusError: '',
       // 顶栏隐藏文件输入
       // （通过 ref="fileInput" 访问，无需放进 data）
       // 全屏预览
@@ -181,12 +185,30 @@ export default {
       getTemplate: () => this.previewTemplate,
       measureContainer: () => (this.$refs.previewBody ? this.$refs.previewBody.clientWidth : 0),
     })
+    // AI 助手会话：独立 client，读快照/写回都用 this 取最新数据（Options API 无需 ref 桥接）
+    this.aiSession = createTemplateSession({
+      readSnapshot: () => ({
+        templateJson: this.currentTemplateJson(),
+        templateName: this.currentSample && this.currentSample.name,
+        fields: this.fields,
+        printData: this.printData,
+      }),
+      writeTemplate: async json => {
+        this.templateData = json
+        this.currentSample = null
+        await this.$nextTick()
+        this.syncDesigner()
+        return { freshTemplateJson: this.currentTemplateJson() }
+      },
+      onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
+    })
   },
   beforeDestroy() {
     clearTimeout(this.renderErrorTimer)
     clearTimeout(this.clientMsgTimer)
     window.removeEventListener('keydown', this.onPreviewKeydown)
     window.removeEventListener('resize', this.onPreviewResize)
+    this.aiSession.stop()
   },
   methods: {
     // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
@@ -550,6 +572,11 @@ export default {
     el.uploadDesignBackground = this.uploadImage
     // 进入页面自动载入第一个示例（与 demo 自动载入综合示例同口径）
     this.applySample(SAMPLES[0])
+    this.aiSession.onStatusChange((status, error) => {
+      this.aiStatus = status
+      this.aiStatusError = error || ''
+    })
+    this.aiSession.start()
     console.log('[demo] 设计器已挂载：registerAll() 与 Vue.config.ignoredElements 在 main.js 处理')
   }
 }
@@ -573,6 +600,7 @@ export default {
       </details></span>
       <span class="demo-ou" data-overflow-unit="biz"><span class="demo-badge">业务类型：{{ currentSample ? currentSample.name : '空白模板' }}</span></span>
       <span class="demo-ou" data-overflow-unit="host-badge"><span class="demo-badge">宿主：Vue 2 + Web Component</span></span>
+      <span class="demo-ai-status" :class="{ 'is-attached': aiStatus === 'attached', 'is-idle': aiStatus === 'idle' }" :title="aiStatusError || '启动桌面客户端并开启「AI 助手」后自动连接'">AI 助手：{{ aiStatus === 'attached' ? '已连接' : aiStatus === 'idle' ? '待配对' : '未连接' }}</span>
       <span class="demo-spacer" data-overflow-spacer />
       <span class="demo-ou" data-overflow-unit="custom"><button type="button" class="demo-print-btn" @click="customDialogVisible = true">自定义字段与数据</button></span>
       <span class="demo-ou" data-overflow-unit="gallery"><button type="button" class="demo-print-btn" @click="galleryVisible = true">加载示例</button></span>

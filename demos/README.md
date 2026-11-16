@@ -19,14 +19,28 @@
 的参考实现：页面侧接入 MCP 的完整会话生命周期（重试、revision 冲突拒绝、封禁元素拒绝、写回校验），
 客户端集成测试也复用同一份源码。
 
+**四个 demo 均已接入该通道**：每个工程自带 `src/mcp-session.js`（vue3 / vue2 / react 为完整读写，
+jquery 直挂为只读，见下），页面加载即连接桌面客户端并 `template.attach` 签到；顶栏
+`.demo-ai-status` 徽标显示「未连接 / 待配对 / 已连接」。会话用独立 `PrintClient`，与打印输出
+弹窗里的打印 client 互不干扰。
+
+| 工程 | MCP 会话模块 | 能力 |
+| --- | --- | --- |
+| `apps/vue3` | `src/mcp-session.js` | 读写：`template.get` 返回实时快照 + 稳定 revision；`template.apply` 做 revision 冲突拒绝、`findBlockedElementPaths` 封禁拒绝、结构校验、深拷贝写回并从画布重读 |
+| `apps/vue2` | `src/mcp-session.js` | 同 vue3（Options API 直接读 `this` 数据） |
+| `apps/react` | `src/mcp-session.js` | 同 vue3（用 ref 桥接最新 fields / printData / 当前示例，StrictMode 下 effect cleanup 成对 start/stop） |
+| `apps/jquery` | `src/mcp-session.js` | **只读**：直挂 UMD 只导出 `PrintClient` / `WormPrintError`，无 `MESSAGE_TYPES` / `findBlockedElementPaths`，按官方规范 `template.get` 可读、`template.apply` 明确拒绝；需要 AI 写回请用前三个 NPM 宿主 |
+
+会话模块是宿主接线代码、非库公开 API，与参考实现同口径但各自内联一份，符合「四工程无共用壳层」的约定。
+
 ## 工程与端口
 
 | 工程 | 端口 | 接入形态 | 集成代码所在 |
 | --- | --- | --- | --- |
-| `apps/vue3` | 9331 | NPM 包 + SFC | `src/App.vue`（版式骨架 + property 注入 + 事件 + 三条打印链路）、`src/SampleThumb.vue`、`src/{render-client,browser-render}.js` |
-| `apps/vue2` | 9332 | NPM 包 + SFC（`@vitejs/plugin-vue2`，runtime-only 构建，Options API） | 同上（`src/App.vue` + `src/SampleThumb.vue`；入口 `src/main.js` 只做注册与挂载） |
-| `apps/react` | 9335 | NPM 包 + hooks | `src/App.jsx` + `src/components/*.jsx`（三个弹窗）+ `src/SampleThumb.jsx` |
-| `apps/jquery` | 9334 | **JS + CSS 直挂**（无打包器、不 import 插件） | `index.html`（版式骨架，弹层用 `hidden` 切换）+ `src/{app,gallery,thumb,print-dialog,ui}.js` |
+| `apps/vue3` | 9331 | NPM 包 + SFC | `src/App.vue`（版式骨架 + property 注入 + 事件 + 三条打印链路 + MCP 会话接线）、`src/SampleThumb.vue`、`src/{render-client,browser-render,mcp-session}.js` |
+| `apps/vue2` | 9332 | NPM 包 + SFC（`@vitejs/plugin-vue2`，runtime-only 构建，Options API） | 同上（`src/App.vue` + `src/SampleThumb.vue` + `src/mcp-session.js`；入口 `src/main.js` 只做注册与挂载） |
+| `apps/react` | 9335 | NPM 包 + hooks | `src/App.jsx` + `src/components/*.jsx`（三个弹窗）+ `src/SampleThumb.jsx` + `src/mcp-session.js` |
+| `apps/jquery` | 9334 | **JS + CSS 直挂**（无打包器、不 import 插件） | `index.html`（版式骨架，弹层用 `hidden` 切换）+ `src/{app,gallery,thumb,print-dialog,ui,mcp-session}.js` |
 
 `index.html` 是这四个示例工程的静态导航页；
 `node scripts/serve-nav.mjs`（或根目录 `npm run dev:demos:nav`）把它挂在 **:9300**，`dev-all.mjs` 会顺带起它。

@@ -17,6 +17,7 @@
       </details></span>
       <span class="demo-ou" data-overflow-unit="biz"><span class="demo-badge">业务类型：{{ currentSample ? currentSample.name : '空白模板' }}</span></span>
       <span class="demo-ou" data-overflow-unit="host-badge"><span class="demo-badge">宿主：Vue 3 + Web Component</span></span>
+      <span class="demo-ai-status" :class="aiStatusClass" :title="aiStatusTitle">AI 助手：{{ aiStatusText }}</span>
       <span class="demo-spacer" data-overflow-spacer />
       <span class="demo-ou" data-overflow-unit="custom"><button type="button" class="demo-print-btn" @click="customDialogVisible = true">自定义字段与数据</button></span>
       <span class="demo-ou" data-overflow-unit="gallery"><button type="button" class="demo-print-btn" @click="galleryVisible = true">加载示例</button></span>
@@ -242,7 +243,7 @@
 // Vue 3 宿主集成 @worm-print-platform/canvas 的完整链路示例。
 // 版式与 ./demo（Vue 3 设计器示例）完全一致：样式由 sync-demo-styles.mjs 从 demo 逐字抽取生成，
 // 本文件不写任何私有样式；事件不走侧栏面板，而是与 demo 同口径写控制台 + 下载 + alert。
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { initTopbarOverflow } from './topbar-overflow.js'
 import { createDefaultTemplate } from '@worm-print-platform/canvas'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
@@ -254,6 +255,7 @@ const SAMPLE_LIBRARY = [...SAMPLES, ...CHART_SAMPLES]
 import SampleThumb from './SampleThumb.vue'
 import { checkRenderHealth, openPdfBlob, requestServerPdf } from './render-client'
 import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-render'
+import { createTemplateSession } from './mcp-session'
 
 /**
  * 宿主基址：模板里的相对路径图片（/images/xxx）按它拼接。
@@ -788,6 +790,44 @@ async function onClientPrint() {
   }
 }
 
+// ────────────────── AI 助手（MCP 模板会话）──────────────────
+// 把当前画布接入桌面客户端「AI 助手」通道：AI 可读取实时模板、生成/校验后写回。
+// 独立 client（打印 client 是弹窗懒加载，会话需页面加载即连接），两者互不干扰。
+const aiStatus = ref('unreachable')
+const aiStatusError = ref('')
+const aiStatusText = computed(() =>
+  aiStatus.value === 'attached' ? '已连接'
+    : aiStatus.value === 'idle' ? '待配对'
+      : '未连接',
+)
+const aiStatusClass = computed(() => ({
+  'is-attached': aiStatus.value === 'attached',
+  'is-idle': aiStatus.value === 'idle',
+}))
+const aiStatusTitle = computed(() =>
+  aiStatus.value === 'attached' ? '桌面客户端 AI 助手已就绪，AI 可读写当前画布'
+    : aiStatusError.value || '启动桌面客户端并开启「AI 助手」后自动连接',
+)
+
+const aiSession = createTemplateSession({
+  // 每次都从实时 ref 读取，避免闭包捕获首次渲染的旧值
+  readSnapshot: () => ({
+    templateJson: currentTemplateJson(),
+    templateName: currentSample.value?.name,
+    fields: fields.value,
+    printData: printData.value,
+  }),
+  // 整份写回：赋新引用触发设计器重载，再从画布重读实际结果作为新 revision
+  writeTemplate: async json => {
+    templateData.value = json
+    currentSample.value = null
+    await nextTick()
+    syncDesigner()
+    return { freshTemplateJson: currentTemplateJson() }
+  },
+  onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
+})
+
 onMounted(() => {
   initTopbarOverflow()
   const el = designerRef.value
@@ -796,6 +836,11 @@ onMounted(() => {
   el.uploadDesignBackground = uploadImage
   // 进入页面自动载入第一个示例（与 demo 自动载入综合示例同口径）
   applySample(SAMPLE_LIBRARY[0])
+  aiSession.onStatusChange((status, error) => {
+    aiStatus.value = status
+    aiStatusError.value = error ?? ''
+  })
+  aiSession.start()
   console.log('[demo] 设计器已挂载：registerAll() 在 main.js 调用一次，元素由 isCustomElement 放行')
 })
 
@@ -803,6 +848,7 @@ onBeforeUnmount(() => {
   clearTimeout(renderErrorTimer)
   clearTimeout(clientMsgTimer)
   window.removeEventListener('keydown', onPreviewKeydown)
+  aiSession.stop()
 })
 </script>
 

@@ -8,6 +8,7 @@ import TemplateGalleryDialog from './components/TemplateGalleryDialog'
 import CustomDataDialog from './components/CustomDataDialog'
 import PrintOutputDialog from './components/PrintOutputDialog'
 import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-render'
+import { createTemplateSession } from './mcp-session'
 
 /**
  * 宿主基址：模板里的相对路径图片（/images/xxx）按它拼接。
@@ -95,6 +96,13 @@ export default function App() {
   // 事件只注册一次（StrictMode 下靠 cleanup 保证不重复），但需读到最后 printData，用 ref 桥接
   const printDataRef = useRef(printData)
   printDataRef.current = printData
+  // AI 助手会话的快照桥接：会话只创建一次，回调里读这些 ref 拿最新值
+  const fieldsRef = useRef(fields)
+  fieldsRef.current = fields
+  const currentSampleRef = useRef(currentSample)
+  currentSampleRef.current = currentSample
+  const [aiStatus, setAiStatus] = useState('unreachable')
+  const [aiStatusError, setAiStatusError] = useState('')
 
   // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
   // <print-designer> 是原生自定义元素：template={obj} 这类绑定会走 setAttribute，
@@ -329,6 +337,37 @@ export default function App() {
     syncDesigner(nextFields, templateData)
   }
 
+  // AI 助手（MCP 模板会话）：独立 client，页面加载即连接；StrictMode 双跑靠 cleanup 成对 start/stop
+  useEffect(() => {
+    const session = createTemplateSession({
+      readSnapshot: () => {
+        const json = designerRef.current?.getTemplateJson?.()
+        return {
+          templateJson: json ? JSON.parse(json) : templateData,
+          templateName: currentSampleRef.current?.name,
+          fields: fieldsRef.current,
+          printData: printDataRef.current,
+        }
+      },
+      writeTemplate: async json => {
+        setTemplateData(json)
+        setCurrentSample(null)
+        // React 状态异步，直接注入元素再重读，保证 revision 来自真实画布
+        syncDesigner(fieldsRef.current, json)
+        const fresh = designerRef.current?.getTemplateJson?.()
+        return { freshTemplateJson: fresh ? JSON.parse(fresh) : json }
+      },
+      onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
+    })
+    const off = session.onStatusChange((status, error) => {
+      setAiStatus(status)
+      setAiStatusError(error || '')
+    })
+    session.start()
+    return () => { off(); session.stop() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // 进入页面自动载入第一个示例，并挂上设计器事件
   useEffect(() => {
     applySample(SAMPLES[0])
@@ -356,6 +395,7 @@ export default function App() {
         </details></span>
         <span className="demo-ou" data-overflow-unit="biz"><span className="demo-badge">业务类型：{currentSample ? currentSample.name : '空白模板'}</span></span>
         <span className="demo-ou" data-overflow-unit="host-badge"><span className="demo-badge">宿主：React + Web Component</span></span>
+        <span className={`demo-ai-status${aiStatus === 'attached' ? ' is-attached' : aiStatus === 'idle' ? ' is-idle' : ''}`} title={aiStatusError || '启动桌面客户端并开启「AI 助手」后自动连接'}>AI 助手：{aiStatus === 'attached' ? '已连接' : aiStatus === 'idle' ? '待配对' : '未连接'}</span>
         <span className="demo-spacer" data-overflow-spacer />
         <span className="demo-ou" data-overflow-unit="custom"><button type="button" className="demo-print-btn" onClick={() => setCustomDialogVisible(true)}>自定义字段与数据</button></span>
         <span className="demo-ou" data-overflow-unit="gallery"><button type="button" className="demo-print-btn" onClick={() => setGalleryVisible(true)}>加载示例</button></span>
