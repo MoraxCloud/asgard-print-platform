@@ -25,11 +25,12 @@ export default defineConfig([
   {
     // 注入用产物：三端页面上下文共用同一份图表执行器（echarts 随包打入 IIFE）
     // tsup 对 iife 格式固定追加 .global.js 后缀 → dist/executor.iife.global.js
+    // target 须 ≥ es2020：iife 会全量内联 core 产物，其 decimal 实现含 BigInt（ES2020）字面量
     entry: { 'executor.iife': 'src/browser/executor.iife.ts' },
     format: ['iife'],
     globalName: '__wormEchartsExecutor',
     platform: 'browser',
-    target: 'es2018',
+    target: 'es2020',
     dts: false,
     clean: false,
     minify: true,
@@ -49,7 +50,7 @@ export default defineConfig([
     entry: { ui: 'src/ui.ts' },
     format: ['esm', 'cjs'],
     platform: 'browser',
-    target: 'es2018',
+    target: 'es2020',
     dts: false,
     clean: false,
     shims: true,
