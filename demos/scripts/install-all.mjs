@@ -9,12 +9,12 @@ const ROOT = join(HERE, '..')
 const APPS = ['apps/vue3', 'apps/vue2', 'apps/react', 'apps/jquery']
 const REPO = join(ROOT, '..')
 
-/** 宿主 import 前必须存在的 dist 产物：按依赖顺序构建（plugin-kit 先于 common 与 echarts） */
+/** 宿主 import 前必须存在的 dist 产物：按依赖顺序构建（plugin-kit 先于 canvas 与 echarts） */
 const REQUIRED_BUILDS = [
   { file: 'packages/plugin-kit/dist/index.js', pkg: '@worm-print-platform/plugin-kit' },
   { file: 'packages/core/dist/designer/index.js', pkg: '@worm-print-platform/core' },
-  // jQuery 工程直挂的是 common 的 dist 产物
-  { file: 'packages/common/dist/common.js', pkg: '@worm-print-platform/common' },
+  // jQuery 工程直挂的是 canvas 的 dist 产物
+  { file: 'packages/canvas/dist/canvas.js', pkg: '@worm-print-platform/canvas' },
   // vue3 宿主额外 import 图表 UI（依赖 echarts 的 /kit 与 /ui 子路径产物）
   { file: 'packages/echarts/dist/kit.js', pkg: '@worm-print-platform/echarts' },
   { file: 'packages/echarts/dist/ui.js', pkg: '@worm-print-platform/echarts' },

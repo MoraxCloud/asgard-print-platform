@@ -1,7 +1,7 @@
 // 设计器里「复制一段文本到系统剪贴板」的唯一实现：素材台字段单击复制、
 // 表达式弹窗字段复制按钮都走这里，避免两套宿主各写一份口径（Gitee #IKRIZM）。
 //
-// 两个宿主（canvas 的 Vue 壳、common 的无框架外壳）都跑在浏览器里：
+// 两个宿主（Vue 3 轨的 Vue 壳、本包的无框架外壳）都跑在浏览器里：
 //   · 安全上下文（https / localhost）直接用 navigator.clipboard.writeText；
 //   · 非安全上下文（http 局域网地址、Electron 部分装载方式）该 API 不可用或被拒，
 //     回退到临时 textarea + execCommand('copy')，失败返回 false 由调用方决定要不要给反馈。

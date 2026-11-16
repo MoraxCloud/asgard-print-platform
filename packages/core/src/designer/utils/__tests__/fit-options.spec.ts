@@ -1,5 +1,5 @@
 // print-core/src/designer/utils/__tests__/fit-options.spec.ts
-// 缩放模式档位表与说明文案的唯一来源：canvas 三处 + common 三处曾各抄一份，改名必漏。
+// 缩放模式档位表与说明文案的唯一来源：Vue 3 轨三处 + 本包三处曾各抄一份，改名必漏。
 import { describe, it, expect } from 'vitest'
 import { IMAGE_FIT_OPTIONS } from '../crop-anchor.js'
 import { propertyTip } from '../property-search.js'

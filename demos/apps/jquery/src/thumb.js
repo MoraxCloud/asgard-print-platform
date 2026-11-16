@@ -1,8 +1,8 @@
 // 示例卡片缩略图：按模板元素坐标等比绘制版式示意（不渲染真实条码/二维码），口径与 demo 的 SampleThumb.vue 一致。
-// 无打包器形态下，纸张尺寸与取值工具全部来自全局 WormPrintCommon（core 已内联进同一份 dist/common.js）。
+// 无打包器形态下，纸张尺寸与取值工具全部来自全局 WormPrintCanvas（core 已内联进同一份 dist/canvas.js）。
 // 只做版式示意，出纸效果以「预览」为准。
 
-const W = window.WormPrintCommon
+const W = window.WormPrintCanvas
 
 /** 缩略图舞台尺寸（px）：纸张等比缩放后居中放置 */
 const STAGE_W = 148

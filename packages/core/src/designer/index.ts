@@ -53,7 +53,7 @@ export * from './utils/zone-layout.js'
 export * from './utils/ruler.js'
 export * from './utils/preset-colors.js'
 export * from './utils/property-search.js'
-// 素材卡标签「文本较长」判据：canvas 素材台与 common 零框架外壳共用同一份
+// 素材卡标签「文本较长」判据：Vue 3 轨素材台与本包零框架外壳共用同一份
 export * from './utils/material-label.js'
 export * from './utils/crop-anchor.js'
 export * from './utils/field-groups.js'

@@ -432,7 +432,7 @@ textarea.pd-input {
  *
  * 背景：canvas 的 scoped 样式编译成 `.foo[data-v-hash]`，派生时剥掉作用域属性后
  * 规则会**跨组件命中**同名类；canvas 运行时却不会。这类差异 DOM 断言看不出来，
- * 只能靠成对截图 + computed style 实测（口径见 packages/print-common/PARITY.md §〇）。
+ * 只能靠成对截图 + computed style 实测（口径见 packages/canvas/PARITY.md §〇）。
  *
  * 维护：canvas 改样式后重跑 `node demos/scripts/style-scope-audit.mjs` 列出候选，
  * 再用 `node demos/scripts/tiling-parity.mjs`（含本区断言）与成对截图确认是否需要在下方补条目。

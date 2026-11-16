@@ -6,7 +6,7 @@ import { DEFAULT_SHRINK_MIN_FONT_SIZE_PT } from '../../render/text-fit.js'
 export interface PropertyItem {
   key: string
   keywords: string[]
-  /** 字段说明文案：挂在标签后的帮助图标上（悬浮/点击显示），元素台与单元格台、canvas 与 common 共用同一份 */
+  /** 字段说明文案：挂在标签后的帮助图标上（悬浮/点击显示），元素台与单元格台、Vue 3 轨与本包共用同一份 */
   tip?: string
   /** 「恢复默认值」提示语里的数值。**仅用于生成文案，重置行为不读它**——
    *  落点一律派生自该元素类型的出厂值（createDefaultOptions / WATERMARK_DEFAULTS / TILE_DEFAULTS）。

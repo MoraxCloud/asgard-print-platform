@@ -37,7 +37,7 @@
     </p>
 
     <p class="warn">
-      <strong>⚠ 实验性质</strong>：<code>@worm-print-platform/common</code> 尚未定版，接口与产物形态仍可能调整，
+      <strong>⚠ 实验性质</strong>：<code>@worm-print-platform/canvas</code> 尚未定版，接口与产物形态仍可能调整，
       <strong>不建议应用到生产环境</strong>；Vue 3 项目可使用成熟方案
       <code>@worm-vue3-print/canvas</code>（见 <a href="https://github.com/worm-longliu/worm-vue3-print">worm-vue3-print</a>）。
       本组示例仅供评估与非生产环境的集成验证。
@@ -74,7 +74,7 @@ npm run dev   # :9335</pre>
       <div class="card">
         <h2>jQuery<span class="tag direct">JS + CSS 直挂</span></h2>
         <p>无打包器：一个 <code>&lt;link&gt;</code> + 一个 <code>&lt;script&gt;</code>，业务代码只用全局
-          <code>WormPrintCommon</code> 与 <code>$</code>。</p>
+          <code>WormPrintCanvas</code> 与 <code>$</code>。</p>
         <pre>cd demos/apps/jquery
 npm install     # postinstall 拷 dist 两份文件
 npm run dev     # :9334（node server.mjs 纯静态）</pre>
@@ -85,7 +85,7 @@ npm run dev     # :9334（node server.mjs 纯静态）</pre>
     <footer>
       四个 demo 都能单独跑，本页由 <code>node demos/scripts/serve-nav.mjs</code> 挂在 <code>:9300</code>；
       <code>npm run dev:demos:all</code> 会顺带起它。
-      <code>@worm-print-platform/common</code> 是零框架 Web Component，设计器样式内置在组件 Shadow DOM；
+      <code>@worm-print-platform/canvas</code> 是零框架 Web Component，设计器样式内置在组件 Shadow DOM；
       <code>@worm-print-platform/core</code> 提供同构出纸管线（<code>renderHtmlPages</code> / <code>PrintClient</code>）。
       可选依赖：<code>npm run dev:render</code>（服务端 PDF，:3001）、本机 print-client 桌面客户端（:17521）；
       两者不在时「打印输出」弹窗显示「离线」并给出可读提示。

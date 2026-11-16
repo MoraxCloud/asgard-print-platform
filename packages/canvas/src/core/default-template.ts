@@ -1,0 +1,15 @@
+import type { TemplateData } from '@worm-print-platform/core/designer'
+
+/** 默认模板：与 Vue 3 轨的 createDefaultTemplate 同结构，保证两侧序列化一致 */
+export function createDefaultTemplate(): TemplateData {
+  return {
+    paperSize: 'A4',
+    orientation: 'portrait',
+    unit: 'mm',
+    margins: { top: 10, right: 10, bottom: 10, left: 10 },
+    header: { height: 10, elements: [] },
+    footer: { height: 10, elements: [] },
+    elements: [],
+    watermark: {},
+  }
+}

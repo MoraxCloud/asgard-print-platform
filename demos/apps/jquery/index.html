@@ -5,21 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>jQuery 宿主 · Web Component 打印设计器 Demo</title>
     <!--
-      直挂形态的外部资源就这两行：插件的 css + js（来自 npm 包 @worm-print-platform/common 的 dist），
+      直挂形态的外部资源就这两行：插件的 css + js（来自 npm 包 @worm-print-platform/canvas 的 dist），
       再加一份与 demo 同源的宿主样式 demo-ui.css（由 scripts/sync-demo-styles.mjs 从 demo 逐字抽取）。
       传统项目直接从制品库拿这两个文件丢进静态目录即可，不需要任何打包器。
     -->
-    <link rel="stylesheet" href="./vendor/worm-print-common.css" />
+    <link rel="stylesheet" href="./vendor/worm-print-canvas.css" />
     <link rel="stylesheet" href="./src/styles/demo-ui.css" />
     <link rel="stylesheet" href="./src/styles/topbar-overflow.css" />
-    <!-- host-links 运行时：dev 用 localhost:93xx，Pages 用 /worm-print-platform/common/xxx/ -->
+    <!-- host-links 运行时：dev 用 localhost:93xx，Pages 用 /worm-print-platform/canvas/xxx/ -->
     <script>
     function initHostLinks() {
       var hosts = {
-        vue3:   { port: 9331, path: '/common/vue3/' },
-        vue2:   { port: 9332, path: '/common/vue2/' },
-        react:  { port: 9335, path: '/common/react/' },
-        jquery: { port: 9334, path: '/common/jquery/' },
+        vue3:   { port: 9331, path: '/canvas/vue3/' },
+        vue2:   { port: 9332, path: '/canvas/vue2/' },
+        react:  { port: 9335, path: '/canvas/react/' },
+        jquery: { port: 9334, path: '/canvas/jquery/' },
       };
       var isLocal = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.host);
       var base = isLocal ? '' : '/worm-print-platform';
@@ -220,7 +220,7 @@
     </div>
 
     <script src="./vendor/jquery.min.js"></script>
-    <script src="./vendor/worm-print-common.js"></script>
+    <script src="./vendor/worm-print-canvas.js"></script>
     <script type="module" src="./src/app.js"></script>
   </body>
 </html>

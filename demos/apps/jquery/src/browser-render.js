@@ -1,8 +1,8 @@
 // 浏览器侧渲染封装：调用 core 同构管线的浏览器适配器，在本页完成两遍渲染（测量 → 分页 → 最终 HTML）。
-// 直挂形态下 core 已内联进 dist/common.js，能力全部从全局 WormPrintCommon 上取，没有 bare import。
+// 直挂形态下 core 已内联进 dist/canvas.js，能力全部从全局 WormPrintCanvas 上取，没有 bare import。
 // 产物既用于「打印预览」写入 iframe，也直送打印客户端，客户端不再执行模板渲染。
 
-const W = window.WormPrintCommon
+const W = window.WormPrintCanvas
 
 /**
  * @param templateJson 当前画布模板 JSON（单模板或 { pages } 多页面模板）
@@ -33,7 +33,7 @@ export function writeHtmlToFrame(frame, html) {
 
 /**
  * 预览的「查看缩放」控制器：档位表、点阵倍率、纸宽结算与守卫样式全在 core 的 designer/preview-zoom，
- * 与 demo 用的 PrintHtmlPreview 同一份判据；直挂形态从全局 WormPrintCommon 上取，本函数只负责
+ * 与 demo 用的 PrintHtmlPreview 同一份判据；直挂形态从全局 WormPrintCanvas 上取，本函数只负责
  * 宿主侧的取模板、量容器宽与写文档。
  */
 export function createPreviewZoom({ getTemplate, measureContainer }) {

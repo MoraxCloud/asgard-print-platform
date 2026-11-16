@@ -31,7 +31,7 @@ describe('T-01 长文本首行缩进落纸（单位 em）', () => {
   it('未设 longTextIndent → 不输出 text-indent（存量模板零变化）', () => {
     expect(renderOne('longText', { testData: '中文段落' })).not.toContain('text-indent')
   })
-  it('普通 text 元素带 longTextIndent 也不输出——与画布/common 同语义（仅 longText 消费）', () => {
+  it('普通 text 元素带 longTextIndent 也不输出——与画布/本包同语义（仅 longText 消费）', () => {
     expect(renderOne('text', { testData: '短文本', longTextIndent: 2 })).not.toContain('text-indent')
   })
   it('缩进与字号同源：textFit=shrink 时 em 随实测字号走（输出仍为 em，交由浏览器换算）', () => {

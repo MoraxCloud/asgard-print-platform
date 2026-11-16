@@ -9,8 +9,8 @@ const APP = join(HERE, '..')
 const OUT = join(APP, 'public', 'vendor')
 
 const FILES = [
-  { from: '@worm-print-platform/common/dist/common.js', to: 'worm-print-common.js' },
-  { from: '@worm-print-platform/common/dist/common.css', to: 'worm-print-common.css' },
+  { from: '@worm-print-platform/canvas/dist/canvas.js', to: 'worm-print-canvas.js' },
+  { from: '@worm-print-platform/canvas/dist/canvas.css', to: 'worm-print-canvas.css' },
   { from: 'jquery/dist/jquery.min.js', to: 'jquery.min.js' },
 ]
 
@@ -21,7 +21,7 @@ for (const file of FILES) {
     await copyFile(abs, join(OUT, file.to))
     console.log(`[sync] node_modules/${file.from} → public/vendor/${file.to}`)
   } catch {
-    console.error(`[sync] 缺少 ${file.from}：先 npm install（common 包需已 npm run build）`)
+    console.error(`[sync] 缺少 ${file.from}：先 npm install（canvas 包需已 npm run build）`)
     process.exit(1)
   }
 }

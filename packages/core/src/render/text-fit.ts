@@ -48,7 +48,7 @@ export function resolveElementWhiteSpace(
 }
 
 /**
- * 元素级「不换行」判据：单点在此。出纸 html-generator、画布 Text/LongTextElement、print-common textLikeStyle
+ * 元素级「不换行」判据：单点在此。出纸 html-generator、画布 Text/LongTextElement、本包 textLikeStyle
  * 三端此前各写一份 `opts.wordWrap === false`，T-27 那条分叉就是因为三份里只有出纸端漏了才存在。
  * 只有显式 false 才算关（手写 JSON 塞字符串不生效），与「自动换行」缺省 true 一致。
  */
@@ -117,7 +117,7 @@ export function parseCellFitKey(
 
 /**
  * 单元格图片外框要不要钉在可用框高上：只有「剪裁」（`fit: 'cover'`）钉，其余档逐字保持
- * 「td 高度由内容决定」的存量形态。出纸、画布与 common 三端都取这一份判据，避免各写一遍漂移。
+ * 「td 高度由内容决定」的存量形态。出纸、画布与本包三端都取这一份判据，避免各写一遍漂移。
  * 返回 undefined 表示不钉盒。
  */
 export function cellImageBoxMm(

@@ -1,5 +1,5 @@
 {
-  "$comment": "设计器图标清单的单一来源。common 由 gen-icons.mjs 派生 SVG；canvas 直接 import lucide-vue-next 同名图标。",
+  "$comment": "设计器图标清单的单一来源。canvas（本包）由 gen-icons.mjs 派生 SVG；Vue 3 轨直接 import lucide-vue-next 同名图标。",
   "icons": [
     "AlignCenterHorizontal",
     "AlignCenterVertical",

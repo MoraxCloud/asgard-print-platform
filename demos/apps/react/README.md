@@ -1,6 +1,6 @@
 # apps/react · React 18 宿主集成示例
 
-独立 npm 工程，只用公开包 `@worm-print-platform/common` + `@worm-print-platform/core`，
+独立 npm 工程，只用公开包 `@worm-print-platform/canvas` + `@worm-print-platform/core`，
 把集成过程全摊开：设计器挂载、模板/字段注入、宿主回调、事件、三条打印链路。
 界面版式与 `../../../demo`（Vue 3 打印设计器示例）**完全一致**，样式为同源单一文件。
 
@@ -23,7 +23,7 @@ npm run dev -w @worm-print-platform/render     # 服务端 PDF（3001）
 
 | 位置 | 内容 |
 | --- | --- |
-| `npm i @worm-print-platform/common @worm-print-platform/core` | 两个包，无 UI 组件库依赖（`common` 与主线同号发布正式版，取 `latest`，但仍属实验性质） |
+| `npm i @worm-print-platform/canvas @worm-print-platform/core` | 两个包，无 UI 组件库依赖（`canvas` 与主线同号发布正式版，取 `latest`，但仍属实验性质） |
 | `src/main.jsx` | `registerAll()` 一次 + `import './styles/demo-ui.css'` |
 | `src/styles/demo-ui.css` | demo 同源样式（由 `demos/scripts/sync-demo-styles.mjs` 逐字抽取，四个工程同 MD5，**勿手改**） |
 | `src/App.jsx` | 顶栏 + `<print-designer>` + 预览层 + property 注入 + 事件监听 + 出纸调用 |

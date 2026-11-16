@@ -200,7 +200,7 @@ function compareCanvasOrder(orderIndex: Map<string, number>) {
 
 /**
  * 跟随区成员 id 集合（spec 契约四）：这类元素 v1 **忽略元素级旋转**——渲染不转、属性台不出输入框。
- * 判据与分页内部完全同源（同一条排序、同一个 buildFollowMap），供 canvas / print-common 直接调用，
+ * 判据与分页内部完全同源（同一条排序、同一个 buildFollowMap），供 Vue 3 轨与本包直接调用，
  * 禁止宿主各自另抄「表格下方且横向相交」规则，否则设计器与出纸会再次分叉。
  */
 export function collectFollowMemberIds<E extends { id?: string }>(

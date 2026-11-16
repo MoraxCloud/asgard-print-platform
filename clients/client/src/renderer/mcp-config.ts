@@ -35,9 +35,9 @@ export const MCP_PROMPT_SCENARIOS = [
     skills: ['worm-print-platform-mcp', 'worm-print-platform-integration'],
   },
   {
-    id: 'common',
-    label: 'Common 项目接入',
-    skills: ['worm-print-platform-mcp', 'worm-print-platform-common'],
+    id: 'canvas',
+    label: 'Canvas 项目接入',
+    skills: ['worm-print-platform-mcp', 'worm-print-platform-canvas'],
   },
 ] as const
 

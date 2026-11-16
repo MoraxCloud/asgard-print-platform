@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { registerAll } from '@worm-print-platform/common'
+import { registerAll } from '@worm-print-platform/canvas'
 import App from './App'
 import './styles/demo-ui.css'
 import './styles/topbar-overflow.css'

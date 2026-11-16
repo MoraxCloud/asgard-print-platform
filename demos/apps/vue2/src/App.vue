@@ -1,8 +1,8 @@
 <script>
-// Vue 2.7 宿主集成 @worm-print-platform/common 的完整链路示例（Options API 单文件组件）。
+// Vue 2.7 宿主集成 @worm-print-platform/canvas 的完整链路示例（Options API 单文件组件）。
 // 版式与 ./demo（Vue 3 设计器示例）完全一致：样式由 sync-demo-styles.mjs 从 demo 逐字抽取生成，
 // 本文件不写任何私有样式；事件不走侧栏面板，而是与 demo 同口径写控制台 + 下载 + alert。
-import { createDefaultTemplate } from '@worm-print-platform/common'
+import { createDefaultTemplate } from '@worm-print-platform/canvas'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
 import { SAMPLES } from './templates'
 import SampleThumb from './SampleThumb.vue'
@@ -12,7 +12,7 @@ import { initTopbarOverflow } from './topbar-overflow.js'
 
 /**
  * 宿主基址：模板里的相对路径图片（/images/xxx）按它拼接。
- * import.meta.env.BASE_URL 在 vite build 时注入正确前缀（Pages: /worm-print-platform/common/vue2/）。
+ * import.meta.env.BASE_URL 在 vite build 时注入正确前缀（Pages: /worm-print-platform/canvas/vue2/）。
  */
 const BASE_URL = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -30,10 +30,10 @@ const HOST_LINKS = _isLocalhost
       { key: 'jquery', label: 'jQuery 宿主',                 href: 'http://localhost:9334/' },
     ]
   : [
-      { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/common/vue3/` },
-      { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/common/vue2/` },
-      { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/common/react/` },
-      { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/common/jquery/` },
+      { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/canvas/vue3/` },
+      { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/canvas/vue2/` },
+      { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/canvas/react/` },
+      { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/canvas/jquery/` },
     ]
 const CURRENT_HOST = 'vue2'
 

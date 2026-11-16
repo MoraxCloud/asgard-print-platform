@@ -9,7 +9,7 @@
 // - 纯 TS，不依赖 Vue / DOM / 渲染库；服务端、浏览器、设计器、MCP 加载的是同一份口径。
 // - 注册表挂 globalThis 固定 Symbol，避免 monorepo 多打包副本造成「注册在这份、查表在那份」。
 // - 所有消费点必须提供 fallback：未注册类型按历史默认行为处理，保证存量模板零回归。
-// - 能力位是「语义声明」，不是 UI 实现；画布/属性台由 plugin-kit + common 的 UI 注册表消费。
+// - 能力位是「语义声明」，不是 UI 实现；画布/属性台由 plugin-kit + 本包（canvas）的 UI 注册表消费。
 
 import type { ElementOptions, TextFit } from './types.js'
 import type { BindingDescriptor } from './types.js'

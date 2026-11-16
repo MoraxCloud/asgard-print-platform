@@ -1,6 +1,6 @@
 /**
  * 裁剪锚点（图片剪裁）的结构化读写与逐轴可挪余量判定。
- * canvas 与 common 两套宿主共用，避免两端各写一遍判据而漂移。
+ * Vue 3 轨与本包两套宿主共用，避免两端各写一遍判据而漂移。
  */
 import { evaluateTemplate } from './expression-eval.js'
 import { DEFAULT_DEMO_DATA } from './demo-data.js'
@@ -189,7 +189,7 @@ export const CROP_GRID_OPTIONS: Array<{ x: number; y: number; label: string }> =
  * 缩放模式档位表：value 仍是 CSS object-fit 原值（模板 JSON 不变），
  * 只有 cover 对用户改称「剪裁」——它是唯一真会裁掉画面的档位，也只有这一档给「裁剪锚点」行：
  * 剪裁把图铺满框后必然溢出一条边，锚点挪的就是那条边；其余档图比框小或刚好铺满，没有可裁的边。
- * 画布、单元格台、码值台、common 三处都取这一份，改名不再需要六处同步。
+ * 画布、单元格台、码值台、本包三处都取这一份，改名不再需要六处同步。
  */
 export const IMAGE_FIT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'contain', label: '包含（保持比例）' },

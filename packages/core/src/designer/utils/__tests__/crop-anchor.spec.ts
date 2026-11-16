@@ -1,5 +1,5 @@
 // print-core/src/designer/utils/__tests__/crop-anchor.spec.ts
-// 裁剪锚点的结构化读写与「逐轴可挪余量」判定：canvas 与 common 共用同一份判据，避免两端各写一遍漂移。
+// 裁剪锚点的结构化读写与「逐轴可挪余量」判定：Vue 3 轨与本包共用同一份判据，避免两端各写一遍漂移。
 // 数值判据用 35×45mm 框手推：cover 竖图 60×90 垂直 7.5mm、方图 120×120 水平 10mm、contain 方图垂直空位 10mm。
 import { describe, it, expect } from 'vitest'
 import { buildCropAnchor, parseCropAnchor, resolveCropTravel, cropWindow, CROP_GRID_OPTIONS, cropAxisLabel, cropAxisNote, cropPresetOptions, cropAxisFields, resolveDesignImageSrc, resolveCropPreview, CROP_SAMPLE_IMAGE } from '../crop-anchor.js'

@@ -3,14 +3,14 @@
   "version": "1.4.0",
   "private": true,
   "type": "module",
-  "description": "Vue 3 宿主集成 @worm-print-platform/common 的独立示例：设计器挂载、事件、浏览器预览打印、服务端 PDF、客户端静默打印",
+  "description": "Vue 3 宿主集成 @worm-print-platform/canvas 的独立示例：设计器挂载、事件、浏览器预览打印、服务端 PDF、客户端静默打印",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 9331"
   },
   "dependencies": {
-    "@worm-print-platform/common": "file:../../../packages/common",
+    "@worm-print-platform/canvas": "file:../../../packages/canvas",
     "@worm-print-platform/core": "file:../../../packages/core",
     "@worm-print-platform/echarts": "file:../../../packages/echarts",
     "@worm-print-platform/plugin-kit": "file:../../../packages/plugin-kit",

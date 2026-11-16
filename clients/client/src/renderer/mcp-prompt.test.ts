@@ -62,7 +62,7 @@ describe('buildMcpAgentPrompt', () => {
       giteeCommands: [
         'npx @worm-print-platform/skills worm-print-platform-mcp --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
       ],
-      excluded: ['worm-print-platform-integration', 'worm-print-platform-common'],
+      excluded: ['worm-print-platform-integration', 'worm-print-platform-canvas'],
     },
     {
       scenario: 'vue3',
@@ -74,17 +74,17 @@ describe('buildMcpAgentPrompt', () => {
         'npx @worm-print-platform/skills worm-print-platform-mcp --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
         'npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
       ],
-      excluded: ['npx @worm-print-platform/skills worm-print-platform-common'],
+      excluded: ['npx @worm-print-platform/skills worm-print-platform-canvas'],
     },
     {
-      scenario: 'common',
+      scenario: 'canvas',
       commands: [
         'npx @worm-print-platform/skills worm-print-platform-mcp',
-        'npx @worm-print-platform/skills worm-print-platform-common',
+        'npx @worm-print-platform/skills worm-print-platform-canvas',
       ],
       giteeCommands: [
         'npx @worm-print-platform/skills worm-print-platform-mcp --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
-        'npx @worm-print-platform/skills worm-print-platform-common --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
+        'npx @worm-print-platform/skills worm-print-platform-canvas --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
       ],
       excluded: ['npx @worm-print-platform/skills worm-print-platform-integration'],
     },

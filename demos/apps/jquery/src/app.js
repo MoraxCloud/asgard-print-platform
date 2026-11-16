@@ -1,7 +1,7 @@
-// jQuery 宿主直挂集成 @worm-print-platform/common 的完整链路示例（无打包器、无框架封装）。
+// jQuery 宿主直挂集成 @worm-print-platform/canvas 的完整链路示例（无打包器、无框架封装）。
 // 版式与 ./demo（Vue 3 打印设计器示例）完全一致：样式来自 sync-demo-styles.mjs 抽取的 demo-ui.css，
 // 本文件不写任何私有样式；宿主事件只进控制台，不做侧栏日志面板。
-// 插件能力全部来自 window.WormPrintCommon（<script src="/vendor/worm-print-common.js"> 挂上的全局）。
+// 插件能力全部来自 window.WormPrintCanvas（<script src="/vendor/worm-print-canvas.js"> 挂上的全局）。
 import { SAMPLES } from './templates.js'
 import { initGallery, openGallery } from './gallery.js'
 import { initPrintDialog, openPrintDialog } from './print-dialog.js'
@@ -9,12 +9,12 @@ import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-
 import { setVisible, setNotice, downloadJson, nextFrame } from './ui.js'
 import { initTopbarOverflow } from './topbar-overflow.js'
 
-const W = window.WormPrintCommon
+const W = window.WormPrintCanvas
 
 /**
  * 宿主基址：模板里的相对路径图片（/images/xxx）按它拼接。
  * dev: http://localhost:9334  → /images/xxx 拼成 http://localhost:9334/images/xxx
- * Pages: .../worm-print-platform/common/jquery → /images/xxx 拼成 .../worm-print-platform/common/jquery/images/xxx
+ * Pages: .../worm-print-platform/canvas/jquery → /images/xxx 拼成 .../worm-print-platform/canvas/jquery/images/xxx
  */
 const BASE_URL = window.location.origin + window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '')
 
@@ -411,7 +411,7 @@ function bindTopbar() {
 
 // ────────────────── 入口 ──────────────────
 $(function () {
-  // 全局由 <script src="/vendor/worm-print-common.js"> 提供；注册一次即可
+  // 全局由 <script src="/vendor/worm-print-canvas.js"> 提供；注册一次即可
   W.registerAll()
   mountDesigner()
   initGallery({
@@ -434,5 +434,5 @@ $(function () {
   $('#custom-apply').on('click', onApplyCustom)
   // 进入页面自动载入第一个示例（与 demo 自动载入综合示例同口径）
   applySample(SAMPLES[0])
-  console.log('[demo] 设计器已挂载：registerAll() 在入口调用一次，直挂形态只依赖全局 WormPrintCommon')
+  console.log('[demo] 设计器已挂载：registerAll() 在入口调用一次，直挂形态只依赖全局 WormPrintCanvas')
 })

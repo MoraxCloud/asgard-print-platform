@@ -3,7 +3,7 @@
   "version": "1.4.0",
   "private": true,
   "type": "module",
-  "description": "jQuery 宿主直挂集成 @worm-print-platform/common 的独立示例：无打包器，一个 <script> + 一个 <link>，含浏览器预览打印、服务端 PDF、客户端静默打印",
+  "description": "jQuery 宿主直挂集成 @worm-print-platform/canvas 的独立示例：无打包器，一个 <script> + 一个 <link>，含浏览器预览打印、服务端 PDF、客户端静默打印",
   "scripts": {
     "sync": "node scripts/sync-assets.mjs",
     "postinstall": "node scripts/sync-assets.mjs",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@worm-print-platform/core": "file:../../../packages/core",
-    "@worm-print-platform/common": "file:../../../packages/common",
+    "@worm-print-platform/canvas": "file:../../../packages/canvas",
     "jquery": "^3.7.1"
   },
   "allowScripts": {

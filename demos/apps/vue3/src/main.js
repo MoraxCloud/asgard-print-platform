@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
-import { registerAll } from '@worm-print-platform/common'
+import { registerAll } from '@worm-print-platform/canvas'
 // 图表插件适配包：import 即注册（core 插件描述符 + plugin-kit 设计器 UI 一并生效）。
-// 不装它时设计器仍是纯 common 能力；装了之后素材台「图表」分组出现十张图表卡。
+// 不装它时设计器仍是纯 canvas 能力；装了之后素材台「图表」分组出现十张图表卡。
 import '@worm-print-platform/echarts/ui'
 import App from './App.vue'
 

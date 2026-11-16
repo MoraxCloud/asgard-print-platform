@@ -6,8 +6,8 @@
 
 | 宿主 | 消费方式 |
 | --- | --- |
-| `@worm-print-platform/common` | 零框架原生挂载：素材卡、画布、属性台「自定义属性」页签直接使用 UI |
-| `@worm-print-platform/canvas` | Vue 3 桥接：`useElementExtensionRegistry` 自动生成画布组件与属性页签组件 |
+| `@worm-print-platform/canvas` | 零框架原生挂载：素材卡、画布、属性台「自定义属性」页签直接使用 UI |
+| `@worm-vue3-print/canvas` | Vue 3 桥接：`useElementExtensionRegistry` 自动生成画布组件与属性页签组件 |
 
 > 状态：随工作区主线开发，**尚未发布到 npm**；通过 workspace / `file:` 依赖接入。
 
@@ -67,9 +67,9 @@ registerElementUI(MY_ELEMENT_UI)
 | `data` | 宿主注入的设计态示例数据；未注入时回落 core 的 `DEFAULT_DEMO_DATA` | 画布预览按真实业务数据出图（图表类插件的柱子/扇区由此而来） |
 | `fields` | 宿主的业务字段清单（`fieldKey` / `fieldLabel` / `fieldType`） | 生成「数据源 / 类目 / 数值字段」下拉，不必从 demo 数据的键里猜 |
 
-`@worm-print-platform/common` 宿主用 `el.designData = {...}`（或 `design-data` attribute 的 JSON 串）注入示例数据，
+`@worm-print-platform/canvas` 宿主用 `el.designData = {...}`（或 `design-data` attribute 的 JSON 串）注入示例数据，
 单对象会自动归一成 `[对象]`；`fields` 来自 `el.fields`。未注入时 `fields` 为空数组，插件应回落 `data[0]` 的键。
-Vue 3 的 `@worm-print-platform/canvas` 属性台透传宿主的 `fields`，画布组件则透传宿主的 `printData`。
+Vue 3 的 `@worm-vue3-print/canvas` 属性台透传宿主的 `fields`，画布组件则透传宿主的 `printData`。
 
 ### 属性写回
 

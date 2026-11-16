@@ -2,13 +2,13 @@ name: npm dist-tag
 
 # dist-tag 运维（如移除首发自动生成的 latest）。需要 npm 包维护者权限，走仓库 NPM_TOKEN。
 # 触发：
-#   gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/common -f action=rm -f tag=latest
-#   gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/common -f action=add -f tag=next -f version=1.5.0
+#   gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/canvas -f action=rm -f tag=latest
+#   gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/canvas -f action=add -f tag=next -f version=1.5.0
 on:
   workflow_dispatch:
     inputs:
       pkg:
-        description: '完整包名（如 @worm-print-platform/common）'
+        description: '完整包名（如 @worm-print-platform/canvas）'
         required: true
         type: string
       action:

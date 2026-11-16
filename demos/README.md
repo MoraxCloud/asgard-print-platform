@@ -1,8 +1,8 @@
 # demos · 四个宿主的打印设计器集成示例
 
-> ⚠️ 演示对象 `@worm-print-platform/common` 为**实验性质**，不建议应用到生产环境；Vue 3 项目也可使用成熟方案 `@worm-vue3-print/canvas`（见 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print)）。
+> ⚠️ 演示对象 `@worm-print-platform/canvas` 为**实验性质**，不建议应用到生产环境；Vue 3 项目也可使用成熟方案 `@worm-vue3-print/canvas`（见 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print)）。
 
-`@worm-print-platform/common`（`<print-designer>`）在 **Vue 3 / Vue 2.7 / React 18 / jQuery** 四种宿主里的接入示例。
+`@worm-print-platform/canvas`（`<print-designer>`）在 **Vue 3 / Vue 2.7 / React 18 / jQuery** 四种宿主里的接入示例。
 每个 `apps/<宿主>` 都是一个独立 npm 工程，把自己宿主的集成代码全部写在自家文件里，
 **没有任何共用壳层**——想接哪个宿主，就把那个工程整份抄进你的项目改数据源。
 
@@ -48,7 +48,7 @@ node scripts/dev-all.mjs       # 一次起四个 dev server + :9300 总览页
 cd apps/vue3 && npm install && npm run dev
 ```
 
-jQuery 那份没有构建步骤：`npm install` 的 postinstall 会把包里的 `dist/common.js`、`dist/common.css`
+jQuery 那份没有构建步骤：`npm install` 的 postinstall 会把包里的 `dist/canvas.js`、`dist/canvas.css`
 拷进 `public/vendor/`，`npm run dev` 用一个 40 行的 `server.mjs` 提供静态服务 + `/render-api` 透传。
 
 ## 每个 demo 都摊开了什么

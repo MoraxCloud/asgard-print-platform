@@ -239,12 +239,12 @@
   </div>
 </template>
 <script setup>
-// Vue 3 宿主集成 @worm-print-platform/common 的完整链路示例。
+// Vue 3 宿主集成 @worm-print-platform/canvas 的完整链路示例。
 // 版式与 ./demo（Vue 3 设计器示例）完全一致：样式由 sync-demo-styles.mjs 从 demo 逐字抽取生成，
 // 本文件不写任何私有样式；事件不走侧栏面板，而是与 demo 同口径写控制台 + 下载 + alert。
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { initTopbarOverflow } from './topbar-overflow.js'
-import { createDefaultTemplate } from '@worm-print-platform/common'
+import { createDefaultTemplate } from '@worm-print-platform/canvas'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
 import { SAMPLES } from './templates'
 import { CHART_SAMPLES } from './templates-chart'
@@ -257,7 +257,7 @@ import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-
 
 /**
  * 宿主基址：模板里的相对路径图片（/images/xxx）按它拼接。
- * import.meta.env.BASE_URL 在 vite build 时注入正确前缀（Pages: /worm-print-platform/common/vue3/）。
+ * import.meta.env.BASE_URL 在 vite build 时注入正确前缀（Pages: /worm-print-platform/canvas/vue3/）。
  */
 const BASE_URL = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -275,10 +275,10 @@ const HOST_LINKS = _isLocalhost
       { key: 'jquery', label: 'jQuery 宿主',                 href: 'http://localhost:9334/' },
     ]
   : [
-      { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/common/vue3/` },
-      { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/common/vue2/` },
-      { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/common/react/` },
-      { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/common/jquery/` },
+      { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/canvas/vue3/` },
+      { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/canvas/vue2/` },
+      { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/canvas/react/` },
+      { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/canvas/jquery/` },
     ]
 const CURRENT_HOST = 'vue3'
 
@@ -329,7 +329,7 @@ function syncDesigner() {
   const el = designerRef.value
   if (!el) return
   el.fields = fields.value
-  // 插件 UI 的设计态示例数据：图表插件（echarts-common）按当前示例的真实业务数据画预览，
+  // 插件 UI 的设计态示例数据：图表插件（@worm-print-platform/echarts/ui）按当前示例的真实业务数据画预览，
   // 属性台的数据源下拉也据此列字段；不注入时插件回落 core 的 DEFAULT_DEMO_DATA。
   el.designData = activeData.value
   el.template = templateData.value

@@ -4,7 +4,7 @@ import { checkRenderHealth, openPdfBlob, requestServerPdf } from './render-clien
 import { renderInBrowser } from './browser-render.js'
 import { setVisible, setNotice } from './ui.js'
 
-const W = window.WormPrintCommon
+const W = window.WormPrintCanvas
 
 /** 宿主注入：当前打印数据、当前画布模板 JSON、当前示例名 */
 let host = null

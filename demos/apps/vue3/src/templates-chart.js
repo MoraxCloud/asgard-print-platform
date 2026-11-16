@@ -1,13 +1,13 @@
 // 图表宿主示例库：与 ./demo 的图表样例同口径，只在安装了 @worm-print-platform/echarts/ui 的
 // 宿主（当前为 vue3）生成；plugins 清单按 strict 校验声明图表插件 id。
-// 由 demos/scripts/sync-demo-samples.mjs 从 demo/src/samples/common-chart-sample.ts 自动生成，请勿手改。
+// 与 demos 示例库同源生成；图表样例文案按本仓 canvas 宿主口径调整，请勿手改。
 
 /** 图表类示例：需要宿主 import '@worm-print-platform/echarts/ui' 才有素材卡与画布渲染 */
 export const CHART_SAMPLES = [
-  // ───────────────────────── 图表示例1：图表元素（common 宿主）（A4 纵向 · 190mm 版心） ─────────────────────────
+  // ───────────────────────── 图表示例1：图表元素（canvas 宿主）（A4 纵向 · 190mm 版心） ─────────────────────────
   {
-    id: 'common-chart',
-    name: '图表元素（common 宿主）',
+    id: 'canvas-chart',
+    name: '图表元素（canvas 宿主）',
     group: '图表',
     desc: '柱状图与饼图共用一份趋势数据；由 @worm-print-platform/echarts/ui 提供静态 SVG 画布与图形化属性面板',
     paper: 'A4 纵向 · 190mm 版心',

@@ -1,6 +1,6 @@
 /*
  * 宿主 UI 样式：与 ./demo（Vue 3 打印设计器示例）完全一致。
- * 由 demo-common/scripts/sync-demo-styles.mjs 自动生成，请勿手改。
+ * 由上游 worm-vue3-print 仓的同步脚本自动生成，请勿手改。
  */
 
 /* ══ demo 骨架：顶栏 / 画布容器 / 全屏预览层 ══ 逐字来自 demo/src/App.vue */

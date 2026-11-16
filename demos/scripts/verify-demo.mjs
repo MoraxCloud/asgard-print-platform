@@ -437,7 +437,7 @@ if (await page.locator('.demo-batch-switch input').isChecked()) {
 await page.waitForTimeout(400)
 const wrapCanvas = await page.evaluate(() => {
   const root = document.querySelector('print-designer').shadowRoot ?? document
-  // print-common 的内联样式落在文本叶子节点（.print-longtext），外层 .print-element 只是定位包装
+  // 设计器的内联样式落在文本叶子节点（.print-longtext），外层 .print-element 只是定位包装
   const pick = txt => [...root.querySelectorAll('.print-element *')].find(e => e.children.length === 0 && (e.textContent || '').startsWith(txt))
   const keep = pick('温馨提示')
   const nowrap = pick('关掉自动换行')

@@ -56,7 +56,7 @@ print-core/
 
 | 导出 | 契约要点 |
 | --- | --- |
-| `resolveToolbarOverflow(input)` | 顶栏自适应收纳的**唯一判据**：入参含可折叠单元、可用宽与「更多」钮预算，返回收起集合与 `is-tight`；canvas（Teleport 搬运）、print-common（后置遍搬运）与四个宿主直挂形态都调它，**链序属稳定面** |
+| `resolveToolbarOverflow(input)` | 顶栏自适应收纳的**唯一判据**：入参含可折叠单元、可用宽与「更多」钮预算，返回收起集合与 `is-tight`；canvas/vue3 门面（Teleport 搬运）、canvas 主入口（后置遍搬运）与四个宿主直挂形态都调它，**链序属稳定面** |
 | `resolveElementTextFit(type, opts)` / `resolveCellTextFit(cell)` | 元素级与单元格级的显示形式（`clip` / `shrink` / `autoHeight`），缺省值同样是契约 |
 | `resolveElementWhiteSpace(opts)` / `resolveElementNowrap(opts)` | 「保留换行符」与「不换行」两条判据：前者只在 `keepLineBreaks === true` 且未关自动换行时返回 `'pre-wrap'`；后者只在显式 `wordWrap === false` 时返回 `'nowrap'` |
 | `resolvePrinterDpi` / `zoomPresets` / `defaultZoomKey` / `viewZoomHint` / `resolveZoomKey` / `zoomValueOf` / `applyPreviewViewZoom` / `paperWidthPx` | 预览缩放：五档（点阵 / 适配 / 100% / 200% / 400%），默认档恒为 100%（`defaultZoomKey` 的 `dpi` 形参保留但不参与判定）、点阵档提示文案与「打印复位」守卫，四宿主与 canvas 同源 |
@@ -72,16 +72,16 @@ const pages = paginate(bound, measured, options)
 const html = generateHtml(pages)
 ```
 
-## 在 Vue 3 项目中使用（与 `@worm-print-platform/canvas` 配合）
+## 在 Vue 3 项目中使用（与 `@worm-vue3-print/canvas` 配合）
 
-`core` 的同构渲染管线由 `@worm-print-platform/canvas` 的 `PrintHtmlPreview` 组件内部调用，
-浏览器端接入无需直接调用 `core` API。以下配置与仓库 `demo/App.vue` 保持一致：
+`core` 的同构渲染管线由 `@worm-vue3-print/canvas` 的 `PrintHtmlPreview` 组件内部调用，
+浏览器端接入无需直接调用 `core` API。以下配置与仓库 `demos/apps/vue3/src/App.vue` 保持一致：
 
 ```ts
-import { PrintDesigner, PrintHtmlPreview, createDefaultTemplate } from '@worm-print-platform/canvas'
-import type { PrintBusinessField, TemplateData } from '@worm-print-platform/canvas'
+import { PrintDesigner, PrintHtmlPreview, createDefaultTemplate } from '@worm-vue3-print/canvas'
+import type { PrintBusinessField, TemplateData } from '@worm-vue3-print/canvas'
 // 设计器控件样式（发布包唯一对外样式入口），需全局引入一次
-import '@worm-print-platform/canvas/style.css'
+import '@worm-vue3-print/canvas/style.css'
 ```
 
 ```vue

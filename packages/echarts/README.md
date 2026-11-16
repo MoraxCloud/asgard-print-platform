@@ -15,7 +15,7 @@ npm i @worm-print-platform/echarts
 ```
 
 `echarts`（^6.1.0，Apache-2.0）由本包作为 dependency 安装；`@worm-print-platform/core`、
-`@worm-print-platform/canvas`、`vue` 为 peerDependencies。
+`@worm-print-platform/plugin-kit` 同样以 dependency 引入。
 
 ## 十个元素
 
@@ -73,7 +73,7 @@ import {
 } from '@worm-print-platform/echarts/kit'
 ```
 
-`@worm-print-platform/echarts-common` 就是基于 `/kit` + `@worm-print-platform/plugin-kit` 的 common 适配包
+`/ui` 就是基于 `/kit` + `@worm-print-platform/plugin-kit` 的适配层（拆仓前旧名 `echarts-common`）
 （静态 SVG 画布 + 原生 DOM 属性面板）；框架无关宿主不必重复实现面板读取/写回逻辑。
 
 ## 配置（`configureChartPlugin`）

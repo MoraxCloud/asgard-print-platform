@@ -1,5 +1,5 @@
 // 打印预览的「查看缩放」纯逻辑：只作用于屏幕，不参与出纸。
-// 下沉 core 的原因是三端同源：canvas 的 PrintHtmlPreview、print-common 的 UMD 直挂命名空间、
+// 下沉 core 的原因是三端同源：Vue 3 轨的 PrintHtmlPreview、本包的 UMD 直挂命名空间、
 // 以及四个宿主 demo 各自复刻的预览层都要用同一份档位与纸宽结算，不能再各写一份纸型表。
 //
 // 为什么要点阵档：CSS 的 mm 恒按 96px/in 换算（与打印机物理 DPI 无关）。95mm 纸在屏幕上只有

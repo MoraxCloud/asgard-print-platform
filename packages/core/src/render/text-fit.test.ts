@@ -313,7 +313,7 @@ describe('longText 缺省行高', () => {
   const longEl = (options: Record<string, any> = {}): TemplateElement =>
     ({ ...textElement(options), type: 'longText' }) as TemplateElement
 
-  it('未设 lineHeight 时出无单位 1.5（与画布 LongTextElement、common textLikeStyle 同值）', () => {
+  it('未设 lineHeight 时出无单位 1.5（与画布 LongTextElement、本包 textLikeStyle 同值）', () => {
     expect(render(longEl({}))).toContain('line-height:1.5;')
   })
 

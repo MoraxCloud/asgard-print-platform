@@ -1,4 +1,4 @@
-/* 设计器主题令牌的单一来源。canvas（全局 CSS）与 common（Shadow DOM :host）都从这里取值。 */
+/* 设计器主题令牌的单一来源。Vue 3 轨（全局 CSS）与本包（Shadow DOM :host）都从这里取值。 */
 /* 只声明变量，不声明排版；宿主可在 <print-designer> 或 .designer-container 上逐位覆盖。 */
 :root {
   --pd-bg: #f3f5f9;

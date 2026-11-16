@@ -86,7 +86,7 @@ export function recommendBarcodeBarWidth(dpi?: number): BarcodeBarWidthRecommend
 }
 
 /**
- * 推荐文案（单一来源，画布与 print-common 四台共用，避免各写一套数字）。
+ * 推荐文案（单一来源，画布与本包四台共用，避免各写一套数字）。
  * 达标时只报推荐档；当前档低于下限时点明差距，并说明这里只提示不改值。
  */
 export function barcodeBarWidthRecommendText(

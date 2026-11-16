@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 // 业务场景全量回归：以示例库为数据源，逐个把模板注入 <print-designer> 并走完整出纸链路。
-// 与 verify-demo.mjs 的分工：那份验 UI 版式，这份验「任意业务模板都能被 common 正确加载、
+// 与 verify-demo.mjs 的分工：那份验 UI 版式，这份验「任意业务模板都能被 canvas 正确加载、
 // 校验、绑定、分页、出纸」；新增示例后自动纳入，不手工维护用例清单。
 // 用法：node demos/scripts/verify-business-scenarios.mjs [url] [--quick]
 //   --quick 只跑体检报告深度场景，用于四个宿主的一致性快检。

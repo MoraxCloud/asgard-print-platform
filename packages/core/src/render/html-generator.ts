@@ -368,7 +368,7 @@ const H_ALIGN_FLEX: Record<string, string> = { left: 'flex-start', center: 'cent
 
 /** 文本类元素字体/颜色/对齐内联样式（字段与前端 ElementOptions 对齐，fontSize/lineHeight 单位 pt）
  *  defaultLineHeight 给「未显式设 lineHeight」时用的无单位倍率——仅 longText 传 1.5，
- *  与画布 LongTextElement / print-common textLikeStyle 的缺省一致（此前只有出纸落回 UA normal）。
+ *  与画布 LongTextElement / 本包 textLikeStyle 的缺省一致（此前只有出纸落回 UA normal）。
  */
 function textStyle(opts: Record<string, any>, defaultLineHeight?: string): string {
   const parts: string[] = []
@@ -399,13 +399,13 @@ function textStyle(opts: Record<string, any>, defaultLineHeight?: string): strin
   return parts.length ? parts.join(';') + ';' : ''
 }
 
-/** 长文本首行缩进：仅 longText 分支消费，与画布/common 同口径（em 随字号走） */
+/** 长文本首行缩进：仅 longText 分支消费，与画布/本包同口径（em 随字号走） */
 function indentStyle(opts: Record<string, any>): string {
   return opts.longTextIndent ? `text-indent:${opts.longTextIndent}em;` : ''
 }
 
 /**
- * 保留换行符档（text/longText）：判据单点在 core `resolveElementWhiteSpace`，画布与 print-common 引同一份。
+ * 保留换行符档（text/longText）：判据单点在 core `resolveElementWhiteSpace`，画布与本包引同一份。
  * 缺省不出任何声明——存量模板的出纸逐字不变。刻意排在 `elementFitStyle` 之前，
  * 让「自动换行」关掉时既有的 `nowrap` 仍按源序胜出（两档冲突时单行优先，与判据里的让位一致）。
  */

@@ -157,7 +157,7 @@ describe('分页 × 横向越界：出纸裁切警告', () => {
 })
 
 // 跟随区归属的公开判据：spec 契约四要求「渲染不转、属性台不出输入框」，
-// 设计器（canvas / print-common 画布与属性台）必须与出纸用同一实现，不得各自另抄。
+// 设计器（Vue 3 轨与本包的画布与属性台）必须与出纸用同一实现，不得各自另抄。
 describe('collectFollowMemberIds：跟随区归属单点判据', () => {
   const table = (over: Record<string, any> = {}) => ({
     id: 'tbl',
