@@ -363,6 +363,19 @@ describe('bindData 图片 src', () => {
     expect(bound.elements[0]!.options.src).toBe('/docfiles/20260824/1_logo.png')
   })
 
+  it('不含 / 前缀的站点相对路径同样拼接 baseUrl（Pages 子路径部署）', () => {
+    const t = makeImageTemplate('images/goods-1.png')
+    const bound = bindData(t, undefined, 'http://localhost:10103/sub/path/')
+    expect(bound.elements[0]!.options.src).toBe('http://localhost:10103/sub/path/images/goods-1.png')
+  })
+
+  it('协议相对（//）、data:、blob: 等带协议的 URL 一律不拼接', () => {
+    const base = 'http://localhost:10103/sub/'
+    expect(bindData(makeImageTemplate('//cdn.example.com/a.png'), undefined, base).elements[0]!.options.src).toBe('//cdn.example.com/a.png')
+    expect(bindData(makeImageTemplate('data:image/png;base64,AAA'), undefined, base).elements[0]!.options.src).toBe('data:image/png;base64,AAA')
+    expect(bindData(makeImageTemplate('blob:http://x/1'), undefined, base).elements[0]!.options.src).toBe('blob:http://x/1')
+  })
+
   it('模板声明字体的相对 url 拼接 baseUrl，绝对 url 原样保留', () => {
     const t = {
       ...makeImageTemplate('/docfiles/a.png'),

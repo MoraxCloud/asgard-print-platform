@@ -91,8 +91,9 @@ function bindElement(
     if (src.includes('{')) {
       src = evaluateTemplate(src, data)
     }
-    if (src && baseUrl && src.startsWith('/')) {
-      src = baseUrl.replace(/\/+$/, '') + src
+    if (src && baseUrl && !/^([a-z][a-z\d+\-.]*:|\/\/)/i.test(src)) {
+      // 完整 URL（http/协议相对/data/blob 等）原样；站点绝对路径与相对路径都拼进图片基址
+      src = baseUrl.replace(/\/+$/, '') + (src.startsWith('/') ? src : `/${src}`)
     }
     cloned.options.src = src
   }

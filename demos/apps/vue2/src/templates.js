@@ -230,7 +230,7 @@ export const SAMPLES = [
           {
             id: 'el-1787574605234-y9hbam',
             type: 'image',
-            options: { left: 46.134, top: 0, width: 22, height: 10, fit: 'contain', src: '/images/goods-1.png' },
+            options: { left: 46.134, top: 0, width: 22, height: 10, fit: 'contain', src: 'images/goods-1.png' },
             printElementType: { type: 'image', title: '图片' },
           },
           {
@@ -4858,7 +4858,7 @@ export const SAMPLES = [
       items: [
         {
           seq: 1,
-          image: '/images/goods-1.png',
+          image: 'images/goods-1.png',
           name: '蓝牙降噪头戴耳机',
           spec: 'WH-900 / 曜石黑',
           unit: '副',
@@ -4870,7 +4870,7 @@ export const SAMPLES = [
         },
         {
           seq: 2,
-          image: '/images/goods-2.png',
+          image: 'images/goods-2.png',
           name: '机械键盘（青轴）',
           spec: 'KB-104 / RGB 背光',
           unit: '把',
@@ -4882,7 +4882,7 @@ export const SAMPLES = [
         },
         {
           seq: 3,
-          image: '/images/goods-3.png',
+          image: 'images/goods-3.png',
           name: '无线双模鼠标',
           spec: 'M-620 / 2.4G+蓝牙',
           unit: '个',
@@ -4894,7 +4894,7 @@ export const SAMPLES = [
         },
         {
           seq: 4,
-          image: '/images/goods-4.png',
+          image: 'images/goods-4.png',
           name: '高速 U 盘',
           spec: 'U3-128G / USB3.2',
           unit: '个',
@@ -4906,7 +4906,7 @@ export const SAMPLES = [
         },
         {
           seq: 5,
-          image: '/images/goods-1.png',
+          image: 'images/goods-1.png',
           name: '27 英寸 4K 显示器',
           spec: 'MN-27U / IPS',
           unit: '台',
@@ -4918,7 +4918,7 @@ export const SAMPLES = [
         },
         {
           seq: 6,
-          image: '/images/goods-2.png',
+          image: 'images/goods-2.png',
           name: 'Type-C 扩展坞',
           spec: 'DK-09 / 九合一',
           unit: '个',
@@ -4930,7 +4930,7 @@ export const SAMPLES = [
         },
         {
           seq: 7,
-          image: '/images/goods-3.png',
+          image: 'images/goods-3.png',
           name: '便携充电宝',
           spec: 'PB-20K / 20000mAh',
           unit: '个',
@@ -4942,7 +4942,7 @@ export const SAMPLES = [
         },
         {
           seq: 8,
-          image: '/images/goods-4.png',
+          image: 'images/goods-4.png',
           name: '高清网络摄像头',
           spec: 'CAM-1080 / 自动对焦',
           unit: '个',
@@ -4954,7 +4954,7 @@ export const SAMPLES = [
         },
         {
           seq: 9,
-          image: '/images/goods-1.png',
+          image: 'images/goods-1.png',
           name: '桌面立体声音箱',
           spec: 'SP-S5 / 蓝牙 5.3',
           unit: '对',
@@ -4966,7 +4966,7 @@ export const SAMPLES = [
         },
         {
           seq: 10,
-          image: '/images/goods-2.png',
+          image: 'images/goods-2.png',
           name: '无线充电板',
           spec: 'WC-15 / 15W 快充',
           unit: '个',
@@ -4978,7 +4978,7 @@ export const SAMPLES = [
         },
         {
           seq: 11,
-          image: '/images/goods-3.png',
+          image: 'images/goods-3.png',
           name: 'M.2 固态硬盘盒',
           spec: 'EN-NV3 / USB3.2',
           unit: '个',
@@ -4990,7 +4990,7 @@ export const SAMPLES = [
         },
         {
           seq: 12,
-          image: '/images/goods-4.png',
+          image: 'images/goods-4.png',
           name: '铝合金笔记本支架',
           spec: 'ST-AL / 六档可调',
           unit: '个',
@@ -5002,7 +5002,7 @@ export const SAMPLES = [
         },
         {
           seq: 13,
-          image: '/images/goods-1.png',
+          image: 'images/goods-1.png',
           name: 'USB-C 数据线（2 米）',
           spec: 'CB-C2 / 100W',
           unit: '条',
@@ -5014,7 +5014,7 @@ export const SAMPLES = [
         },
         {
           seq: 14,
-          image: '/images/goods-2.png',
+          image: 'images/goods-2.png',
           name: '磁吸防蓝光窥膜',
           spec: 'PF-14 / 14 英寸',
           unit: '片',
@@ -5026,7 +5026,7 @@ export const SAMPLES = [
         },
         {
           seq: 15,
-          image: '/images/goods-3.png',
+          image: 'images/goods-3.png',
           name: '无线演示翻页笔',
           spec: 'PP-R2 / 红光',
           unit: '支',
@@ -5038,7 +5038,7 @@ export const SAMPLES = [
         },
         {
           seq: 16,
-          image: '/images/goods-4.png',
+          image: 'images/goods-4.png',
           name: '移动硬盘（1TB）',
           spec: 'HD-1T / 2.5 英寸',
           unit: '块',
@@ -5050,7 +5050,7 @@ export const SAMPLES = [
         },
         {
           seq: 17,
-          image: '/images/goods-1.png',
+          image: 'images/goods-1.png',
           name: 'USB 电容麦克风',
           spec: 'MIC-C / 心形指向',
           unit: '套',
@@ -5062,7 +5062,7 @@ export const SAMPLES = [
         },
         {
           seq: 18,
-          image: '/images/goods-2.png',
+          image: 'images/goods-2.png',
           name: '平板触控笔',
           spec: 'PEN-T / 防误触磁吸',
           unit: '支',
@@ -5074,7 +5074,7 @@ export const SAMPLES = [
         },
         {
           seq: 19,
-          image: '/images/goods-3.png',
+          image: 'images/goods-3.png',
           name: '桌面理线器套装',
           spec: 'CX-06 / 硅胶 6 件',
           unit: '套',
@@ -5086,7 +5086,7 @@ export const SAMPLES = [
         },
         {
           seq: 20,
-          image: '/images/goods-4.png',
+          image: 'images/goods-4.png',
           name: 'WiFi6 千兆路由器',
           spec: 'RT-AX6 / 3000M',
           unit: '台',
@@ -5416,7 +5416,7 @@ export const SAMPLES = [
         items: [
           {
             seq: 1,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '蓝牙降噪头戴耳机',
             spec: 'WH-900 / 曜石黑',
             unit: '副',
@@ -5428,7 +5428,7 @@ export const SAMPLES = [
           },
           {
             seq: 2,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '机械键盘（青轴）',
             spec: 'KB-104 / RGB 背光',
             unit: '把',
@@ -5440,7 +5440,7 @@ export const SAMPLES = [
           },
           {
             seq: 3,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '无线双模鼠标',
             spec: 'M-620 / 2.4G+蓝牙',
             unit: '个',
@@ -5452,7 +5452,7 @@ export const SAMPLES = [
           },
           {
             seq: 4,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '高速 U 盘',
             spec: 'U3-128G / USB3.2',
             unit: '个',
@@ -5464,7 +5464,7 @@ export const SAMPLES = [
           },
           {
             seq: 5,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '27 英寸 4K 显示器',
             spec: 'MN-27U / IPS',
             unit: '台',
@@ -5476,7 +5476,7 @@ export const SAMPLES = [
           },
           {
             seq: 6,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: 'Type-C 扩展坞',
             spec: 'DK-09 / 九合一',
             unit: '个',
@@ -5488,7 +5488,7 @@ export const SAMPLES = [
           },
           {
             seq: 7,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '便携充电宝',
             spec: 'PB-20K / 20000mAh',
             unit: '个',
@@ -5500,7 +5500,7 @@ export const SAMPLES = [
           },
           {
             seq: 8,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '高清网络摄像头',
             spec: 'CAM-1080 / 自动对焦',
             unit: '个',
@@ -5512,7 +5512,7 @@ export const SAMPLES = [
           },
           {
             seq: 9,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '桌面立体声音箱',
             spec: 'SP-S5 / 蓝牙 5.3',
             unit: '对',
@@ -5524,7 +5524,7 @@ export const SAMPLES = [
           },
           {
             seq: 10,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '无线充电板',
             spec: 'WC-15 / 15W 快充',
             unit: '个',
@@ -5536,7 +5536,7 @@ export const SAMPLES = [
           },
           {
             seq: 11,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: 'M.2 固态硬盘盒',
             spec: 'EN-NV3 / USB3.2',
             unit: '个',
@@ -5548,7 +5548,7 @@ export const SAMPLES = [
           },
           {
             seq: 12,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '铝合金笔记本支架',
             spec: 'ST-AL / 六档可调',
             unit: '个',
@@ -5560,7 +5560,7 @@ export const SAMPLES = [
           },
           {
             seq: 13,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: 'USB-C 数据线（2 米）',
             spec: 'CB-C2 / 100W',
             unit: '条',
@@ -5572,7 +5572,7 @@ export const SAMPLES = [
           },
           {
             seq: 14,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '磁吸防蓝光窥膜',
             spec: 'PF-14 / 14 英寸',
             unit: '片',
@@ -5584,7 +5584,7 @@ export const SAMPLES = [
           },
           {
             seq: 15,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '无线演示翻页笔',
             spec: 'PP-R2 / 红光',
             unit: '支',
@@ -5596,7 +5596,7 @@ export const SAMPLES = [
           },
           {
             seq: 16,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '移动硬盘（1TB）',
             spec: 'HD-1T / 2.5 英寸',
             unit: '块',
@@ -5608,7 +5608,7 @@ export const SAMPLES = [
           },
           {
             seq: 17,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: 'USB 电容麦克风',
             spec: 'MIC-C / 心形指向',
             unit: '套',
@@ -5620,7 +5620,7 @@ export const SAMPLES = [
           },
           {
             seq: 18,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '平板触控笔',
             spec: 'PEN-T / 防误触磁吸',
             unit: '支',
@@ -5632,7 +5632,7 @@ export const SAMPLES = [
           },
           {
             seq: 19,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '桌面理线器套装',
             spec: 'CX-06 / 硅胶 6 件',
             unit: '套',
@@ -5644,7 +5644,7 @@ export const SAMPLES = [
           },
           {
             seq: 20,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: 'WiFi6 千兆路由器',
             spec: 'RT-AX6 / 3000M',
             unit: '台',
@@ -5661,7 +5661,7 @@ export const SAMPLES = [
         items: [
           {
             seq: 1,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '蓝牙降噪头戴耳机',
             spec: 'WH-900 / 曜石黑',
             unit: '副',
@@ -5673,7 +5673,7 @@ export const SAMPLES = [
           },
           {
             seq: 2,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '机械键盘（青轴）',
             spec: 'KB-104 / RGB 背光',
             unit: '把',
@@ -5685,7 +5685,7 @@ export const SAMPLES = [
           },
           {
             seq: 3,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '无线双模鼠标',
             spec: 'M-620 / 2.4G+蓝牙',
             unit: '个',
@@ -5697,7 +5697,7 @@ export const SAMPLES = [
           },
           {
             seq: 4,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '高速 U 盘',
             spec: 'U3-128G / USB3.2',
             unit: '个',
@@ -5709,7 +5709,7 @@ export const SAMPLES = [
           },
           {
             seq: 5,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '27 英寸 4K 显示器',
             spec: 'MN-27U / IPS',
             unit: '台',
@@ -5721,7 +5721,7 @@ export const SAMPLES = [
           },
           {
             seq: 6,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: 'Type-C 扩展坞',
             spec: 'DK-09 / 九合一',
             unit: '个',
@@ -5733,7 +5733,7 @@ export const SAMPLES = [
           },
           {
             seq: 7,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '便携充电宝',
             spec: 'PB-20K / 20000mAh',
             unit: '个',
@@ -5745,7 +5745,7 @@ export const SAMPLES = [
           },
           {
             seq: 8,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '高清网络摄像头',
             spec: 'CAM-1080 / 自动对焦',
             unit: '个',
@@ -5757,7 +5757,7 @@ export const SAMPLES = [
           },
           {
             seq: 9,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '桌面立体声音箱',
             spec: 'SP-S5 / 蓝牙 5.3',
             unit: '对',
@@ -5769,7 +5769,7 @@ export const SAMPLES = [
           },
           {
             seq: 10,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '无线充电板',
             spec: 'WC-15 / 15W 快充',
             unit: '个',
@@ -5781,7 +5781,7 @@ export const SAMPLES = [
           },
           {
             seq: 11,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: 'M.2 固态硬盘盒',
             spec: 'EN-NV3 / USB3.2',
             unit: '个',
@@ -5793,7 +5793,7 @@ export const SAMPLES = [
           },
           {
             seq: 12,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '铝合金笔记本支架',
             spec: 'ST-AL / 六档可调',
             unit: '个',
@@ -5805,7 +5805,7 @@ export const SAMPLES = [
           },
           {
             seq: 13,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: 'USB-C 数据线（2 米）',
             spec: 'CB-C2 / 100W',
             unit: '条',
@@ -5817,7 +5817,7 @@ export const SAMPLES = [
           },
           {
             seq: 14,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '磁吸防蓝光窥膜',
             spec: 'PF-14 / 14 英寸',
             unit: '片',
@@ -5829,7 +5829,7 @@ export const SAMPLES = [
           },
           {
             seq: 15,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '无线演示翻页笔',
             spec: 'PP-R2 / 红光',
             unit: '支',
@@ -5841,7 +5841,7 @@ export const SAMPLES = [
           },
           {
             seq: 16,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '移动硬盘（1TB）',
             spec: 'HD-1T / 2.5 英寸',
             unit: '块',
@@ -5853,7 +5853,7 @@ export const SAMPLES = [
           },
           {
             seq: 17,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: 'USB 电容麦克风',
             spec: 'MIC-C / 心形指向',
             unit: '套',
@@ -5865,7 +5865,7 @@ export const SAMPLES = [
           },
           {
             seq: 18,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '平板触控笔',
             spec: 'PEN-T / 防误触磁吸',
             unit: '支',
@@ -5877,7 +5877,7 @@ export const SAMPLES = [
           },
           {
             seq: 19,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '桌面理线器套装',
             spec: 'CX-06 / 硅胶 6 件',
             unit: '套',
@@ -5889,7 +5889,7 @@ export const SAMPLES = [
           },
           {
             seq: 20,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: 'WiFi6 千兆路由器',
             spec: 'RT-AX6 / 3000M',
             unit: '台',
@@ -5906,7 +5906,7 @@ export const SAMPLES = [
         items: [
           {
             seq: 1,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '蓝牙降噪头戴耳机',
             spec: 'WH-900 / 曜石黑',
             unit: '副',
@@ -5918,7 +5918,7 @@ export const SAMPLES = [
           },
           {
             seq: 2,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '机械键盘（青轴）',
             spec: 'KB-104 / RGB 背光',
             unit: '把',
@@ -5930,7 +5930,7 @@ export const SAMPLES = [
           },
           {
             seq: 3,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '无线双模鼠标',
             spec: 'M-620 / 2.4G+蓝牙',
             unit: '个',
@@ -5942,7 +5942,7 @@ export const SAMPLES = [
           },
           {
             seq: 4,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '高速 U 盘',
             spec: 'U3-128G / USB3.2',
             unit: '个',
@@ -5954,7 +5954,7 @@ export const SAMPLES = [
           },
           {
             seq: 5,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '27 英寸 4K 显示器',
             spec: 'MN-27U / IPS',
             unit: '台',
@@ -5966,7 +5966,7 @@ export const SAMPLES = [
           },
           {
             seq: 6,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: 'Type-C 扩展坞',
             spec: 'DK-09 / 九合一',
             unit: '个',
@@ -5978,7 +5978,7 @@ export const SAMPLES = [
           },
           {
             seq: 7,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '便携充电宝',
             spec: 'PB-20K / 20000mAh',
             unit: '个',
@@ -5990,7 +5990,7 @@ export const SAMPLES = [
           },
           {
             seq: 8,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '高清网络摄像头',
             spec: 'CAM-1080 / 自动对焦',
             unit: '个',
@@ -6002,7 +6002,7 @@ export const SAMPLES = [
           },
           {
             seq: 9,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: '桌面立体声音箱',
             spec: 'SP-S5 / 蓝牙 5.3',
             unit: '对',
@@ -6014,7 +6014,7 @@ export const SAMPLES = [
           },
           {
             seq: 10,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '无线充电板',
             spec: 'WC-15 / 15W 快充',
             unit: '个',
@@ -6026,7 +6026,7 @@ export const SAMPLES = [
           },
           {
             seq: 11,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: 'M.2 固态硬盘盒',
             spec: 'EN-NV3 / USB3.2',
             unit: '个',
@@ -6038,7 +6038,7 @@ export const SAMPLES = [
           },
           {
             seq: 12,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '铝合金笔记本支架',
             spec: 'ST-AL / 六档可调',
             unit: '个',
@@ -6050,7 +6050,7 @@ export const SAMPLES = [
           },
           {
             seq: 13,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: 'USB-C 数据线（2 米）',
             spec: 'CB-C2 / 100W',
             unit: '条',
@@ -6062,7 +6062,7 @@ export const SAMPLES = [
           },
           {
             seq: 14,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '磁吸防蓝光窥膜',
             spec: 'PF-14 / 14 英寸',
             unit: '片',
@@ -6074,7 +6074,7 @@ export const SAMPLES = [
           },
           {
             seq: 15,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '无线演示翻页笔',
             spec: 'PP-R2 / 红光',
             unit: '支',
@@ -6086,7 +6086,7 @@ export const SAMPLES = [
           },
           {
             seq: 16,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: '移动硬盘（1TB）',
             spec: 'HD-1T / 2.5 英寸',
             unit: '块',
@@ -6098,7 +6098,7 @@ export const SAMPLES = [
           },
           {
             seq: 17,
-            image: '/images/goods-1.png',
+            image: 'images/goods-1.png',
             name: 'USB 电容麦克风',
             spec: 'MIC-C / 心形指向',
             unit: '套',
@@ -6110,7 +6110,7 @@ export const SAMPLES = [
           },
           {
             seq: 18,
-            image: '/images/goods-2.png',
+            image: 'images/goods-2.png',
             name: '平板触控笔',
             spec: 'PEN-T / 防误触磁吸',
             unit: '支',
@@ -6122,7 +6122,7 @@ export const SAMPLES = [
           },
           {
             seq: 19,
-            image: '/images/goods-3.png',
+            image: 'images/goods-3.png',
             name: '桌面理线器套装',
             spec: 'CX-06 / 硅胶 6 件',
             unit: '套',
@@ -6134,7 +6134,7 @@ export const SAMPLES = [
           },
           {
             seq: 20,
-            image: '/images/goods-4.png',
+            image: 'images/goods-4.png',
             name: 'WiFi6 千兆路由器',
             spec: 'RT-AX6 / 3000M',
             unit: '台',
