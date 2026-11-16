@@ -1,0 +1,386 @@
+import { bindData } from '../render/data-binder.js'
+import { generateHtml } from '../render/html-generator.js'
+import { paginate } from '../render/pagination-engine.js'
+import { composeContinuousHeight } from '../render/continuous-paper.js'
+import { getPaperDimensions, getOutputPaperDimensions, isContinuousPaper } from '../render/types.js'
+import { createCollectingCodeRenderer, createMapCodeRenderer, mergeCodeMaps } from './codes.js'
+import {
+  assetPluginTypes,
+  createAssetRenderers,
+  createCollectingAssetRenderer,
+  createMapAssetRenderer,
+  mergeAssetMaps,
+  renderAssetSpecs,
+} from './assets.js'
+import { escapeHeightMm, paperViewportPx, resolvePaperMm } from './paper.js'
+import { buildPdfTargetSpec } from './pdf-spec.js'
+import { normalizeMeasurements } from './measure.js'
+import { applyTextFitSizes } from './apply-text-fit.js'
+import { pxToMm } from './units.js'
+import type {
+  CodeRenderer,
+  ElementRenderers,
+  PageLayout,
+  TemplateData,
+} from '../render/types.js'
+import type { PrintRuntime, PrintSession } from './ports.js'
+import type { PreparedDocument, PrintJob, RenderPdfResult } from './types.js'
+import { normalizePrintData } from './normalize-print-data.js'
+import { composeBatchHtml } from './batch-compose.js'
+import type { BatchCopyInput } from './batch-compose.js'
+import { composeTiledHtml } from './tile-compose.js'
+import { computeTileLayout } from './tiling.js'
+import { composeMultiPageDocument, normalizeTemplate } from './multi-template.js'
+import type { MultiPageCopyInput } from './multi-template.js'
+
+/** 单份准备的内部结构：对外文档 + 批量合并所需的中间件 */
+interface SinglePrepared extends PreparedDocument {
+  bound: TemplateData
+  codeRenderer?: CodeRenderer
+  /** 通用扩展元素渲染器：拼版/批量/多页复用同一份映射 */
+  renderers?: ElementRenderers
+  derivedHeightMm?: number
+}
+
+/** 阶段 1–6：绑定 → 码值收集/渲染 → 测量 → 分页 → 连续纸 → 最终 HTML */
+export async function prepareDocument(job: PrintJob, runtime: PrintRuntime): Promise<PreparedDocument> {
+  return runtime.withSession(job, session => prepareWithSession(job, session))
+}
+
+/** 阶段 1–7：prepared + HTML→PDF，且与准备阶段共用同一个 driver 会话 */
+export async function renderPdf(job: PrintJob, runtime: PrintRuntime): Promise<RenderPdfResult> {
+  return runtime.withSession(job, async (session) => {
+    const prepared = await prepareWithSession(job, session)
+    const viewport = paperViewportPx(prepared.paperMm)
+    const pdf = await session.toPdf(prepared.html, buildPdfTargetSpec(prepared.paperMm), viewport)
+    return { pdf, prepared }
+  })
+}
+
+async function prepareWithSession(job: PrintJob, session: PrintSession): Promise<PreparedDocument> {
+  const pageTemplates = normalizeTemplate(job.templateJson)
+
+  // 多页面模板：每份数据 = 一份完整多页文档
+  if (pageTemplates.length > 1) {
+    const normalized = normalizePrintData(job.printData)
+    const rows = normalized.mode === 'batch' ? normalized.dataList : [normalized.data]
+    const copies: MultiPageCopyInput[] = []
+    for (let i = 0; i < rows.length; i++) {
+      try {
+        copies.push(await prepareMultiCopy(job, session, rows[i]!))
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err)
+        throw new Error(`第 ${i + 1} 份渲染失败：${reason}`)
+      }
+    }
+    const doc = composeMultiPageDocument(copies)
+    return {
+      html: doc.html,
+      pageCount: doc.pageCount,
+      paperMm: getOutputPaperDimensions(pageTemplates[0]!),
+      continuous: false,
+      heightSource: 'config',
+      pageLayouts: doc.pageLayouts,
+      copies: copies.length,
+    }
+  }
+
+  // 1 页 wrapper 归一化为单模板，走既有 single/batch/tiling 路径（行为逐字不变）
+  const singleJob: PrintJob = pageTemplates[0] !== job.templateJson
+    ? { ...job, templateJson: pageTemplates[0]! }
+    : job
+  const template = pageTemplates[0]!
+  const normalized = normalizePrintData(singleJob.printData)
+  if (normalized.mode === 'single') {
+    const single = await prepareSingleWithSession(singleJob, session, normalized.data)
+    // 单份也走拼版：1 条数据 = 1 格 = 1 张
+    if (template.tiling?.enabled === true) {
+      return composeTiledPrepared(singleJob, [{
+        bound: single.bound,
+        pageLayouts: single.pageLayouts,
+        data: normalized.data,
+        codeRenderer: single.codeRenderer,
+        renderers: single.renderers,
+        derivedHeightMm: single.derivedHeightMm,
+        paperMm: single.paperMm,
+        heightSource: single.heightSource,
+      }])
+    }
+    return toPreparedDocument(single)
+  }
+
+  // 批量：同一 session 内串行渲染各份（避免并发测量竞态），再合并为一个文档
+  const copies: BatchCopyInput[] = []
+  for (let i = 0; i < normalized.dataList.length; i++) {
+    try {
+      const single = await prepareSingleWithSession(singleJob, session, normalized.dataList[i])
+      copies.push({
+        bound: single.bound,
+        pageLayouts: single.pageLayouts,
+        data: normalized.dataList[i],
+        codeRenderer: single.codeRenderer,
+        renderers: single.renderers,
+        derivedHeightMm: single.derivedHeightMm,
+        paperMm: single.paperMm,
+        heightSource: single.heightSource,
+      })
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err)
+      throw new Error(`第 ${i + 1} 份渲染失败：${reason}`)
+    }
+  }
+  // 拼版：各份不再各自独占一张纸，而是按「列×行」铺进目标纸
+  if (template.tiling?.enabled === true) {
+    return composeTiledPrepared(singleJob, copies)
+  }
+  const merged = composeBatchHtml(copies)
+  return {
+    html: merged.html,
+    pageCount: merged.pageCount,
+    paperMm: copies[0].paperMm,
+    continuous: isContinuousPaper(copies[0].bound),
+    // 同模板同参数各份来源必然一致；不能用 derivedHeightMm 是否存在判断——
+    // 连续纸逃生门时该字段有值但来源是 config
+    heightSource: copies[0].heightSource,
+    // 各份 pageIndex 均从 0 开始，批量拼接后该字段仅作调试用途
+    pageLayouts: copies.flatMap(c => c.pageLayouts),
+    copies: copies.length,
+    copyPaperMm: merged.copyPaperMm,
+  }
+}
+
+/** 批量内部结构 → 对外 PreparedDocument（剥离中间件，补 copies=1） */
+function toPreparedDocument(s: SinglePrepared): PreparedDocument {
+  return {
+    html: s.html,
+    pageCount: s.pageCount,
+    paperMm: s.paperMm,
+    continuous: s.continuous,
+    heightSource: s.heightSource,
+    pageLayouts: s.pageLayouts,
+    copies: 1,
+  }
+}
+
+/**
+ * 拼版合成：先校验（纸面 / 列数 / 高度）+ 校验每份恰好 1 页，再铺格。
+ * 校验在合并之前完成，任一不合格立即抛错，不产出半成品文档。
+ */
+function composeTiledPrepared(job: PrintJob, copies: BatchCopyInput[]): PreparedDocument {
+  const bound = copies[0].bound
+  // 目标纸先经 paperOverride 解析，再据此算行列——保证布局与物理纸始终一致
+  const layout = computeTileLayout(bound, { paperOverride: job.paperOverride })
+
+  copies.forEach((copy, i) => {
+    // 溢出页：内容放不下但不产空白页，仍留在 1 页里 → 页数看不出来，必须靠 overflow 标记拦下
+    const overflow = copy.pageLayouts[0]?.overflow === true
+    if (copy.pageLayouts.length !== 1 || overflow) {
+      const detail = overflow ? '内容超出纸张高度' : `渲染出 ${copy.pageLayouts.length} 页`
+      throw new Error(
+        `拼版要求每份标签恰好 1 页，第 ${i + 1} 份${detail}；请缩小内容或调整标签纸张高度`,
+      )
+    }
+  })
+
+  const tiled = composeTiledHtml({
+    copies: copies.map(c => ({
+      bound: c.bound,
+      pageLayouts: c.pageLayouts,
+      data: c.data,
+      codeRenderer: c.codeRenderer,
+      renderers: c.renderers,
+    })),
+    layout,
+  })
+
+  return {
+    html: tiled.html,
+    // 语义变更：pageCount = 实际输出张数（客户端任务历史、预览「共 N 页」都按此口径）
+    pageCount: tiled.sheetCount,
+    paperMm: { width: layout.sheet.width, height: layout.sheet.height },
+    continuous: false,
+    heightSource: 'config',
+    // 调试用途；各份 pageIndex 均从 0 开始
+    pageLayouts: copies.flatMap(c => c.pageLayouts),
+    copies: copies.length,
+  }
+}
+
+async function prepareSingleWithSession(
+  job: PrintJob,
+  session: PrintSession,
+  data: Record<string, any>,
+): Promise<SinglePrepared> {
+  const bound = bindData(job.templateJson as TemplateData, data, job.baseUrl, job.fontBaseUrl)
+  const continuous = isContinuousPaper(bound)
+  const designPaper = getPaperDimensions(bound)
+  const viewport = paperViewportPx(designPaper)
+  const heightEscape = escapeHeightMm({ paperHeightMm: job.paperHeightMm, override: job.paperOverride })
+
+  // 测量 HTML：先收集码值与扩展元素资产 → 渲染 → 用真实渲染器再生成
+  const measurement = await buildHtmlWithAssets({
+    bound, job, session, data, pageLayouts: [], isMeasurementPass: true,
+  })
+  const measurements = await session.measure(measurement.html, viewport)
+  // 自动缩小（textFit='shrink'）的字号先回写模板，再据此分页与出图：
+  // 测量趟的实测高度已按缩小后字号得出，最终趟必须用同一字号渲染
+  applyTextFitSizes(bound, measurements.fits)
+  const pageLayouts = paginate(bound, normalizeMeasurements(measurements.measurements, bound))
+
+  // 最终 HTML：补齐测量趟看不到的码值（页眉/页脚中的真实页码）
+  const finalBuild = await buildHtmlWithAssets({
+    bound, job, session, data, pageLayouts, isMeasurementPass: false,
+    codeBaseMap: measurement.codeMap, assetBaseMap: measurement.assetMap,
+  })
+  let html = finalBuild.html
+
+  let derivedHeightMm: number | undefined
+  if (continuous) {
+    if (heightEscape && heightEscape > 0) {
+      derivedHeightMm = heightEscape
+    } else {
+      const bottomPx = await session.probeContentBottom(html, viewport)
+      derivedHeightMm = composeContinuousHeight(bound, pxToMm(bottomPx))
+    }
+    html = generateHtml(bound, pageLayouts, data, {
+      codeRenderer: finalBuild.codeRenderer,
+      renderers: finalBuild.renderers,
+      pageHeightMm: derivedHeightMm,
+    })
+  }
+
+  // 连续纸：paperHeightMm 逃生门与协议覆盖高度都算「显式给定」，来源记为 config；
+  // 非连续纸不使用 paperHeightMm（否则会出现 HTML 纸高与输出纸张不一致），沿用协议覆盖。
+  const overrideForPaper = continuous && heightEscape
+    ? { ...job.paperOverride, height: heightEscape }
+    : job.paperOverride
+
+  // 出纸尺寸 = 出纸旋转对应的物理纸张（90/270 时交换长宽；0/180 不变）；
+  // 连续纸无出纸旋转概念，getOutputPaperDimensions 回退设计稿尺寸，下方 heightSource 仍按连续纸推导。
+  const outputPaper = getOutputPaperDimensions(bound)
+
+  const { paperMm, heightSource } = resolvePaperMm({
+    paperMm: { width: outputPaper.width, height: derivedHeightMm ?? outputPaper.height },
+    continuous,
+    override: overrideForPaper,
+  })
+
+  return {
+    html,
+    pageCount: pageLayouts.length,
+    paperMm,
+    continuous,
+    heightSource,
+    pageLayouts,
+    copies: 1,
+    bound,
+    codeRenderer: finalBuild.codeRenderer,
+    renderers: finalBuild.renderers,
+    derivedHeightMm,
+  }
+}
+
+/** 单份数据 → 各页面模板的绑定/分页/码制产物（供 composeMultiPageDocument 组合） */
+async function prepareMultiCopy(
+  job: PrintJob,
+  session: PrintSession,
+  data: Record<string, any>,
+): Promise<MultiPageCopyInput> {
+  const templates = normalizeTemplate(job.templateJson)
+  const viewport = paperViewportPx(getPaperDimensions(templates[0]!))
+  const boundPages: TemplateData[] = []
+  const layoutsPerPage: PageLayout[][] = []
+  const codeRenderers: Array<CodeRenderer | undefined> = []
+  const renderersPerPage: Array<ElementRenderers | undefined> = []
+  for (const t of templates) {
+    const bound = bindData(t, data, job.baseUrl, job.fontBaseUrl)
+    const measurement = await buildHtmlWithAssets({ bound, job, session, data, pageLayouts: [], isMeasurementPass: true })
+    const measurements = await session.measure(measurement.html, viewport)
+    applyTextFitSizes(bound, measurements.fits)
+    const layouts = paginate(bound, normalizeMeasurements(measurements.measurements, bound))
+    const final = await buildHtmlWithAssets({
+      bound, job, session, data, pageLayouts: layouts, isMeasurementPass: false,
+      codeBaseMap: measurement.codeMap, assetBaseMap: measurement.assetMap,
+    })
+    boundPages.push(bound)
+    layoutsPerPage.push(layouts)
+    codeRenderers.push(final.codeRenderer)
+    renderersPerPage.push(final.renderers)
+  }
+  return { boundPages, layoutsPerPage, data, codeRenderers, renderersPerPage }
+}
+
+interface BuildHtmlInput {
+  bound: TemplateData
+  job: PrintJob
+  session: PrintSession
+  /** 本份业务数据（单对象；数组已在入口拆分） */
+  data: Record<string, any>
+  pageLayouts: PageLayout[]
+  isMeasurementPass: boolean
+  /** 测量趟已渲染的码值映射（最终趟复用，避免重复渲染） */
+  codeBaseMap?: Map<string, string>
+  /** 测量趟已渲染的通用扩展元素映射（P2；最终趟复用） */
+  assetBaseMap?: Map<string, string>
+}
+
+/**
+ * 生成 HTML：先跑一趟「收集型渲染器」拿到本趟真实码值/图表/扩展元素规格，
+ * 渲染后若有新规格则用完整映射再生成一次；无码无图无扩展元素的模板只生成一次。
+ * 调用方提供了 codeRenderer/renderers 时直接沿用（浏览器端既有覆盖语义）。
+ */
+async function buildHtmlWithAssets(input: BuildHtmlInput): Promise<{
+  html: string
+  codeRenderer?: CodeRenderer
+  renderers?: ElementRenderers
+  codeMap: Map<string, string>
+  assetMap: Map<string, string>
+}> {
+  const codeBaseMap = input.codeBaseMap ?? new Map<string, string>()
+  const assetBaseMap = input.assetBaseMap ?? new Map<string, string>()
+  const { job } = input
+  const assetTypes = assetPluginTypes()
+  const hostRenderers = job.renderers
+  // 两端都提供了渲染器、且没有需要两趟收集的扩展元素：单趟直出（既有覆盖语义不变）
+  if (job.codeRenderer && (assetTypes.length === 0 || hostRenderers)) {
+    const html = generateHtml(input.bound, input.pageLayouts, input.data, {
+      isMeasurementPass: input.isMeasurementPass,
+      codeRenderer: job.codeRenderer,
+      renderers: hostRenderers,
+    })
+    return {
+      html, codeRenderer: job.codeRenderer,
+      renderers: hostRenderers, codeMap: codeBaseMap, assetMap: assetBaseMap,
+    }
+  }
+  const codeCollector = createCollectingCodeRenderer(codeBaseMap)
+  const assetCollector = createCollectingAssetRenderer(assetBaseMap)
+  const codeRendererInput = job.codeRenderer ?? codeCollector.renderer
+  const draftRenderers = hostRenderers
+    ?? (assetTypes.length > 0 ? createAssetRenderers(assetCollector.renderer, assetTypes) : undefined)
+  const draft = generateHtml(input.bound, input.pageLayouts, input.data, {
+    isMeasurementPass: input.isMeasurementPass,
+    codeRenderer: codeRendererInput,
+    renderers: draftRenderers,
+  })
+  const extraCodes = job.codeRenderer ? [] : codeCollector.takeSpecs()
+  const extraAssets = hostRenderers ? [] : assetCollector.takeSpecs()
+  const [renderedCodes, renderedAssets] = await Promise.all([
+    extraCodes.length > 0 ? input.session.renderCodes(extraCodes) : Promise.resolve(new Map<string, string>()),
+    renderAssetSpecs(extraAssets, input.session),
+  ])
+  const codeMap = mergeCodeMaps(codeBaseMap, renderedCodes)
+  const assetMap = mergeAssetMaps(assetBaseMap, renderedAssets)
+  const codeRenderer = job.codeRenderer ?? (codeMap.size > 0 ? createMapCodeRenderer(codeMap) : undefined)
+  const renderers = hostRenderers
+    ?? (assetMap.size > 0 ? createAssetRenderers(createMapAssetRenderer(assetMap), assetTypes) : draftRenderers)
+  if (extraCodes.length === 0 && extraAssets.length === 0) {
+    return { html: draft, codeRenderer, renderers, codeMap, assetMap }
+  }
+  const html = generateHtml(input.bound, input.pageLayouts, input.data, {
+    isMeasurementPass: input.isMeasurementPass,
+    codeRenderer,
+    renderers,
+  })
+  return { html, codeRenderer, renderers, codeMap, assetMap }
+}

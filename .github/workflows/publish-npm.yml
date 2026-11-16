@@ -1,0 +1,112 @@
+name: Publish npm
+
+# 仅手动触发：推 tag 不会自动发布。
+# 触发：Actions → Publish npm → Run workflow，或
+#   gh workflow run publish-npm.yml -f tag=v1.5.0 -f dry_run=true
+# 首次验证用 dry_run=true；确认无误后再用 dry_run=false 真正上传。
+# 四个代码包（core / plugin-kit / common / echarts）按依赖顺序同批发布，
+# echarts 内含 Web Components 适配层（./ui 子路径）。
+# 若之后建好 npm-publish 环境并加入同名环境密钥，给 job 加 environment: npm-publish 即可，
+# 环境密钥会覆盖仓库级 NPM_TOKEN，无需改发布步骤。
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的版本标签（如 v1.5.0，需已推送到远端）'
+        required: true
+        type: string
+      dry_run:
+        description: '只打包干跑，不上传'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: 安装依赖
+        run: npm ci
+
+      # 构建顺序：core 是共享样式/能力表的载体，plugin-kit 是 common 的运行时依赖，
+      # echarts 依赖 core 与 plugin-kit（/kit、/ui 子路径产物），顺序不可调。
+      - name: 构建全量发布链（core → plugin-kit → common → echarts）
+        run: |
+          npm run build -w @worm-print-platform/core
+          npm run build -w @worm-print-platform/plugin-kit
+          npm run build -w @worm-print-platform/common
+          npm run build -w @worm-print-platform/echarts
+
+      - name: 校验标签与包版本一致
+        run: |
+          TAG="${{ inputs.tag }}"
+          TAG="${TAG#v}"
+          # 四个代码包必须同号：common 依赖 plugin-kit，echarts 依赖 core 与 plugin-kit。
+          # 漏发任何一个，宿主安装都会 404。
+          PACKAGES="core plugin-kit common echarts"
+          for pkg in $PACKAGES; do
+            VER=$(node -p "require('./packages/$pkg/package.json').version")
+            if [ "$VER" != "$TAG" ]; then
+              echo "::error::$pkg 版本 $VER 与标签 $TAG 不一致"
+              exit 1
+            fi
+          done
+          echo "标签与全量发布链版本一致：$TAG"
+
+      - name: 验证 npm 登录态
+        run: npm whoami --registry=https://registry.npmjs.org
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # echarts 依赖 core，必须先发 core
+      - name: 发布 @worm-print-platform/core
+        working-directory: packages/core
+        run: |
+          EXTRA=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
+          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # plugin-kit 是 common 的 runtime dependency，必须先于 common 发布
+      - name: 发布 @worm-print-platform/plugin-kit
+        working-directory: packages/plugin-kit
+        run: |
+          EXTRA=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
+          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 发布 @worm-print-platform/common（设计器权威实现）
+        working-directory: packages/common
+        run: |
+          EXTRA=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
+          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 发布 @worm-print-platform/echarts（含 Web Components 适配层）
+        working-directory: packages/echarts
+        run: |
+          EXTRA=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
+          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

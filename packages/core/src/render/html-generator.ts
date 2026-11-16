@@ -1,0 +1,1174 @@
+// print-core/src/render/html-generator.ts
+// 将 PageLayout[] 转为完整 HTML 字符串（同构：Node 与浏览器共用，条码经 CodeRenderer 注入）
+
+import type {
+  TemplateData,
+  TemplateElement,
+  PageLayout,
+  PageSection,
+  RenderRow,
+  RenderCell,
+  CodeRenderer,
+  ElementRenderers,
+} from './types.js'
+import { escapeInlineStyleValue, toFontFamilyStack } from '../print/fonts.js'
+import { getPaperDimensions, isContinuousPaper, getOutputRotationAngle } from './types.js'
+import { buildPageCss, elementPositionStyle, mm } from './css-builder.js'
+import { elementMarginCss, resolveElementBoxes, resolveElementMargins } from './element-margin.js'
+import {
+  cellFitCapMm,
+  cellFitKey,
+  cellFitWidthMm,
+  cellImageBoxMm,
+  resolveCellTextFit,
+  resolveElementTextFit,
+  resolveElementWhiteSpace,
+  resolveElementNowrap,
+  resolveShrinkMinFontSize,
+  roundFontSize,
+  type CellFitRowKind,
+} from './text-fit.js'
+import { buildFontFaceCss } from '../print/fonts.js'
+import { ELEMENT_BORDER_SIDES, resolveElementBorder } from './element-border.js'
+import {
+  flowGridStyle,
+  layoutFlowList,
+  resolveFlowColumns,
+  resolveFlowGapX,
+  resolveFlowMaxSpan,
+  resolveFlowPadding,
+  resolveFlowRowHeight,
+  resolveFlowLayoutMode,
+  flowContentWidthMm,
+  type FlowRenderConfig,
+  type FlowRow,
+} from './flow-list.js'
+import { cropStyleDeclarations } from './crop-style.js'
+import { injectSystemVariables } from './data-binder.js'
+import { evaluateTemplate } from './expression-eval.js'
+import { renderWatermarkLayerHtml } from './watermark.js'
+import { splittableDesignBottom } from './pagination-engine.js'
+import { buildMergeOverlay } from './row-merge.js'
+import { barcodeAvailableBoxMm } from './barcode-dot.js'
+import { resolveElementRotation } from './rotation.js'
+import { assetSpecKey } from '../print/assets.js'
+import { getElementPlugin } from '../designer/element-plugin-registry.js'
+
+/** 渲染上下文：贯穿两遍渲染的可选依赖 */
+export interface RenderCtx {
+  codeRenderer?: CodeRenderer
+  /** §4.3 兼容别名入参：P4 起扩展元素出图由插件描述符负责，此端口保留不参与分派 */
+  /** 通用扩展元素渲染器（按元素类型索引）：由打印管线按注册表收集后注入 */
+  renderers?: ElementRenderers
+  /** 连续纸探针推导出的最终纸高（mm）；水印网格与 @page 必须同源 */
+  pageHeightMm?: number
+  /** 本页页码上下文：绑定阶段页码未知，最终趟据此对引用页码的表达式求值 */
+  pageVars?: PageVars
+}
+
+/** 页码上下文：pageIndex 为 1 起的页码 */
+export interface PageVars {
+  pageIndex: number
+  totalPages: number
+  /** 业务打印数据（表达式求值上下文；批量数组取首份） */
+  data?: Record<string, any>
+}
+
+/** 页码上下文转表达式求值上下文（业务数据在前，页码变量兜底） */
+function pageVarsContext(vars: PageVars): Record<string, any> {
+  return { ...(vars.data ?? {}), pageIndex: vars.pageIndex, totalPages: vars.totalPages }
+}
+
+function pageVarsData(printData?: Record<string, any> | Record<string, any>[]): Record<string, any> {
+  if (Array.isArray(printData)) return printData[0] ?? {}
+  return printData ?? {}
+}
+
+export interface GenerateOptions {
+  /** 第一遍测量模式：所有元素在一个连续区域，不分页 */
+  isMeasurementPass?: boolean
+  /** 条码/二维码 SVG 渲染器；缺省或渲染抛错时降级为文本占位 */
+  codeRenderer?: CodeRenderer
+  /** 通用扩展元素渲染器（按元素类型索引）；由插件注册表收集后注入 */
+  renderers?: ElementRenderers
+  /** 连续纸探针推导出的最终纸高（mm）；仅最终生成时传入，使 @page/.print-page/footer 对齐 */
+  pageHeightMm?: number
+  /** 实际总页数：逐页截取场景只生成单页 HTML 时传真实值，避免页码表达式 {totalPages} 失真为 1 */
+  totalPageCount?: number
+}
+
+/**
+ * 生成完整 HTML 字符串。
+ *
+ * - 第一遍（isMeasurementPass=true）：单页连续区域，每个元素带 data-measure-id
+ * - 第二遍：按分页结果生成多页 HTML，填充 {pageIndex}/{totalPages}
+ */
+export function generateHtml(
+  template: TemplateData,
+  pageLayouts: PageLayout[],
+  printData?: Record<string, any>,
+  options?: GenerateOptions,
+): string {
+  // 模板声明的字体与页面 CSS 同批注入：测量趟与最终趟必须一致，否则分页会按兜底字体算
+  const css = buildFontFaceCss(template.fonts) + buildPageCss(template, options?.pageHeightMm)
+  const isMeasure = options?.isMeasurementPass === true
+  const totalPages = isMeasure ? 1 : (options?.totalPageCount ?? pageLayouts.length)
+  const ctx: RenderCtx = {
+    codeRenderer: options?.codeRenderer,
+    renderers: options?.renderers,
+    pageHeightMm: options?.pageHeightMm,
+  }
+
+  if (isMeasure) {
+    return generateMeasurementHtml(template, css, ctx, printData)
+  }
+  return generateFinalHtml(template, pageLayouts, css, totalPages, ctx, printData)
+}
+
+// ─── 第一遍：测量模式 ───
+
+function generateMeasurementHtml(
+  template: TemplateData,
+  css: string,
+  ctx: RenderCtx,
+  printData?: Record<string, any> | Record<string, any>[],
+): string {
+  const paper = getPaperDims(template)
+  const contentWidth = paper.width - template.margins.left - template.margins.right
+
+  // 所有元素按原始坐标渲染在一个连续区域
+  const elementsHtml = template.elements
+    .map(el => renderElement(el, true, undefined, undefined, ctx))
+    .join('\n')
+
+  // 页眉：分页变量使用占位符 "0"，避免原始文本影响测量精度
+  const headerHtml = renderAreaElements(
+    template.header?.elements ?? [],
+    contentWidth,
+    0, // pageIndex placeholder
+    0, // totalPages placeholder
+    ctx,
+  )
+
+  let html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>${css}</style>
+</head>
+<body class="measure-mode">
+<section class="print-page" data-measure-page="0">
+  ${renderWatermarkLayerHtml(template.watermark, printData, getPaperDims(template))}
+  <div class="page-header">${headerHtml}</div>
+  <div class="content-area" style="height:auto;overflow:visible;">
+    ${elementsHtml}
+  </div>
+</section>
+</body>
+</html>`
+
+  // 注入系统变量（{printDate} 等），保持与最终渲染一致
+  html = injectSystemVariables(html)
+  return html
+}
+
+// ─── 第二遍：最终渲染 ───
+
+/** renderFinalPages 的扩展选项（多页面模板：全局页码 + 页面作用域类） */
+export interface RenderFinalPagesOptions {
+  /** 全局页码偏移：模板在整份文档中的起始页号（0 基页号偏移）；缺省 0（单模板） */
+  pageOffset?: number
+  /** 整份文档总页数（多页面模板）；缺省 = 本模板页数（单模板） */
+  totalPages?: number
+  /** 追加到每个 .print-page 的类名（多页面模板 CSS 作用域，如 'mt-1'）；缺省空 */
+  pageClass?: string
+}
+
+/** 第二遍最终渲染：仅生成 body 内的 .print-page 序列（含系统变量注入），不含文档外壳 */
+export function renderFinalPages(
+  template: TemplateData,
+  pageLayouts: PageLayout[],
+  printData: Record<string, any>,
+  ctx: RenderCtx,
+  options?: RenderFinalPagesOptions,
+): string {
+  const pageOffset = options?.pageOffset ?? 0
+  const totalPages = options?.totalPages ?? pageLayouts.length
+  const pagesHtml = pageLayouts.map(page => {
+    const pageNum = page.pageIndex + 1 + pageOffset
+    return renderPage(template, page, pageNum, totalPages, ctx, printData, options?.pageClass)
+  }).join('\n')
+  return injectSystemVariables(pagesHtml)
+}
+
+/** 套上完整 HTML 文档外壳（含系统变量注入） */
+export function wrapHtmlDocument(css: string, bodyInnerHtml: string, bodyClass?: string): string {
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>${css}</style>
+</head>
+<body${bodyClass ? ` class="${bodyClass}"` : ''}>
+${bodyInnerHtml}
+</body>
+</html>`
+  return injectSystemVariables(html)
+}
+
+function generateFinalHtml(
+  template: TemplateData,
+  pageLayouts: PageLayout[],
+  css: string,
+  totalPages: number,
+  ctx: RenderCtx,
+  printData?: Record<string, any> | Record<string, any>[],
+): string {
+  // totalPages 必须显式下传（含 generateHtml 的 totalPageCount 覆盖），否则单页截取时页码失真
+  const bodyInner = renderFinalPages(template, pageLayouts, printData ?? {}, ctx, { totalPages })
+  return wrapHtmlDocument(
+    css,
+    bodyInner,
+    isContinuousPaper(template) ? 'continuous' : undefined,
+  )
+}
+
+function renderPage(
+  template: TemplateData,
+  page: PageLayout,
+  pageNum: number,
+  totalPages: number,
+  ctx: RenderCtx,
+  printData?: Record<string, any> | Record<string, any>[],
+  pageClass?: string,
+): string {
+  const paper = getPaperDims(template)
+  // 连续纸最终纸高由探针推导（options.pageHeightMm），水印网格须按同一纸高铺满
+  const paperMm = {
+    width: paper.width,
+    height: ctx.pageHeightMm && ctx.pageHeightMm > 0 ? ctx.pageHeightMm : paper.height,
+  }
+  const contentWidth = paper.width - template.margins.left - template.margins.right
+
+  // 绑定阶段页码未知，引用了 pageIndex/totalPages 的表达式保留了原始表达式（options.rawFormatter）；
+  // 此处按本页页码重新求值，使 {pageIndex + 1}、{ADD(pageIndex,1)} 一类写法逐页生效。
+  const pageVars: PageVars = { pageIndex: pageNum, totalPages, data: pageVarsData(printData) }
+  const scoped = withPageNumbers(template, pageVars)
+  const pageCtx: RenderCtx = { ...ctx, pageVars }
+
+  // 页眉（含页码变量替换）
+  const headerHtml = renderAreaElements(
+    scoped.header?.elements ?? [],
+    contentWidth,
+    pageNum,
+    totalPages,
+    pageCtx,
+  )
+
+  // 页脚（含页码变量替换）
+  const footerHtml = renderAreaElements(
+    scoped.footer?.elements ?? [],
+    contentWidth,
+    pageNum,
+    totalPages,
+    pageCtx,
+  )
+
+  // 内容区元素
+  let contentHtml = page.sections
+    .map(section => renderSection(section, scoped, pageCtx))
+    .join('\n')
+  // 内容区页码变量替换（PRD：内容区元素也支持 {pageIndex}/{totalPages}）
+  contentHtml = contentHtml.replace(/\{pageIndex\}/g, String(pageNum))
+  contentHtml = contentHtml.replace(/\{totalPages\}/g, String(totalPages))
+
+  // 设计稿整页内容（水印+三区）；出纸旋转角度非 0 时包进转子层整页旋转
+  const pageInner = `
+  ${renderWatermarkLayerHtml(template.watermark, printData, paperMm, { pageIndex: pageNum, totalPages })}
+  <div class="page-header">${headerHtml}</div>
+  <div class="content-area">
+    ${contentHtml}
+  </div>
+  <div class="page-footer">${footerHtml}</div>`
+
+  const rot = getOutputRotationAngle(template)
+  const pageBody = rot !== 0
+    ? `<div class="print-page-rotor print-page-rotor-${rot}">${pageInner}</div>`
+    : pageInner
+
+  return `<section class="print-page${pageClass ? ` ${pageClass}` : ''}" data-page="${pageNum}">
+  ${pageBody}
+</section>`
+}
+
+// ─── 页码相关的按页重算 ───
+
+/**
+ * 按本页页码重新求值引用了 pageIndex / totalPages 的元素文本（含页眉、页脚）。
+ * 无元素携带 rawFormatter 时原样返回（零开销，存量模板产物逐字不变）。
+ */
+function withPageNumbers(template: TemplateData, vars: PageVars): TemplateData {
+  if (!templateReferencesPageNumbers(template)) return template
+  const context = pageVarsContext(vars)
+  const mapEl = (el: TemplateElement): TemplateElement => {
+    const raw = el.options?.rawFormatter
+    if (typeof raw !== 'string') return el
+    return { ...el, options: { ...el.options, formatter: evaluateTemplate(raw, context) } }
+  }
+  const mapArea = (area: TemplateData['header']) =>
+    area ? { ...area, elements: (area.elements ?? []).map(mapEl) } : area
+  return {
+    ...template,
+    elements: template.elements.map(mapEl),
+    header: mapArea(template.header),
+    footer: mapArea(template.footer),
+  }
+}
+
+function templateReferencesPageNumbers(template: TemplateData): boolean {
+  const areas = [
+    template.elements,
+    template.header?.elements,
+    template.footer?.elements,
+  ]
+  return areas.some(list => (list ?? []).some(el => typeof el.options?.rawFormatter === 'string'))
+}
+
+/** 单元格文本：引用了页码的单元格按本页页码重算，其余用绑定阶段已求值的文本 */
+function resolveCellContent(cell: RenderCell, ctx?: RenderCtx): string {
+  const raw = cell.rawFormatter
+  if (typeof raw === 'string' && raw !== '' && ctx?.pageVars) {
+    return evaluateTemplate(raw, pageVarsContext(ctx.pageVars))
+  }
+  return cell.content
+}
+
+// ─── 元素渲染 ───
+
+function renderSection(section: PageSection, template: TemplateData, ctx: RenderCtx): string {
+  const el = findElement(template, section.elementId)
+  if (!el) {
+    return `<!-- element not found: ${section.elementId} -->`
+  }
+
+  if (section.type === 'table-slice') {
+    return renderTableSlice(el, section, ctx)
+  }
+  if (section.type === 'flow-list-slice') {
+    return renderFlowListSlice(el, section, ctx)
+  }
+  if (section.type === 'flow-group') {
+    return renderFlowGroup(el, section, template, ctx)
+  }
+  return renderElement(el, false, undefined, section.renderTop, ctx)
+}
+
+const V_ALIGN_FLEX: Record<string, string> = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }
+const H_ALIGN_FLEX: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end' }
+
+/** 文本类元素字体/颜色/对齐内联样式（字段与前端 ElementOptions 对齐，fontSize/lineHeight 单位 pt）
+ *  defaultLineHeight 给「未显式设 lineHeight」时用的无单位倍率——仅 longText 传 1.5，
+ *  与画布 LongTextElement / print-common textLikeStyle 的缺省一致（此前只有出纸落回 UA normal）。
+ */
+function textStyle(opts: Record<string, any>, defaultLineHeight?: string): string {
+  const parts: string[] = []
+  // 自动缩小求得字号优先：测量趟算出后回写 _fitFontSize，最终趟据此渲染。
+  // 仅缩放结果取整（与写入 DOM 的字符串逐字一致），未配置缩放时字号原样输出。
+  const fontSize = opts._fitFontSize === undefined ? opts.fontSize : roundFontSize(opts._fitFontSize)
+  if (fontSize) parts.push(`font-size:${fontSize}pt`)
+  if (opts.fontFamily) parts.push(`font-family:${escapeInlineStyleValue(toFontFamilyStack(opts.fontFamily))}`)
+  if (opts.fontWeight) parts.push(`font-weight:${opts.fontWeight}`)
+  if (opts.color) parts.push(`color:${opts.color}`)
+  if (opts.backgroundColor) parts.push(`background-color:${opts.backgroundColor}`)
+  if (opts.lineHeight) parts.push(`line-height:${opts.lineHeight}pt`)
+  else if (defaultLineHeight) parts.push(`line-height:${defaultLineHeight}`)
+  if (opts.letterSpacing) parts.push(`letter-spacing:${opts.letterSpacing}pt`)
+  if (opts.verticalAlign) {
+    // justify 要行盒取满宽才生效：横向 flex 里的匿名文本项无法拉伸，故改纵向主轴——
+    // 垂直交给 justify-content，交叉轴默认 stretch 让文本占满宽，text-align:justify 才不空转
+    if (opts.textAlign === 'justify') {
+      parts.push(`display:flex;flex-direction:column;justify-content:${V_ALIGN_FLEX[opts.verticalAlign] ?? 'flex-start'}`)
+    } else {
+      parts.push(`display:flex;align-items:${V_ALIGN_FLEX[opts.verticalAlign] ?? 'flex-start'}`)
+      parts.push(`justify-content:${H_ALIGN_FLEX[opts.textAlign ?? 'left'] ?? 'flex-start'}`)
+    }
+  }
+  if (opts.textAlign) parts.push(`text-align:${opts.textAlign}`)
+  // justify 不拉伸段落末行；单行文本里那一行就是末行，不显式声明 text-align-last 则整条 justify 空转
+  if (opts.textAlign === 'justify') parts.push('text-align-last:justify')
+  return parts.length ? parts.join(';') + ';' : ''
+}
+
+/** 长文本首行缩进：仅 longText 分支消费，与画布/common 同口径（em 随字号走） */
+function indentStyle(opts: Record<string, any>): string {
+  return opts.longTextIndent ? `text-indent:${opts.longTextIndent}em;` : ''
+}
+
+/**
+ * 保留换行符档（text/longText）：判据单点在 core `resolveElementWhiteSpace`，画布与 print-common 引同一份。
+ * 缺省不出任何声明——存量模板的出纸逐字不变。刻意排在 `elementFitStyle` 之前，
+ * 让「自动换行」关掉时既有的 `nowrap` 仍按源序胜出（两档冲突时单行优先，与判据里的让位一致）。
+ */
+function whiteSpaceStyle(opts: Record<string, any>): string {
+  const ws = resolveElementWhiteSpace(opts)
+  return ws ? `white-space:${ws};` : ''
+}
+
+/**
+ * 剪裁取位与放大的内联声明。净化与「只有剪裁消费放大比例」的判定都在 core `crop-style` 单点做完，
+ * 这里只负责把 camelCase 键转成 CSS 声明；缺省时逐字保持存量模板的居中裁剪。
+ */
+function cropStyle(fit: string | undefined, fitScale: number | undefined, objectPosition?: string): string {
+  return Object.entries(cropStyleDeclarations(fit, fitScale, objectPosition))
+    .map(([key, value]) => `${key.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)}:${escapeInlineStyleValue(value)};`)
+    .join('')
+}
+
+/**
+ * 文字溢出显示形式对应的内联样式。
+ * - 截断：容器本就裁剪（.print-element 的 overflow:hidden），仅「不换行 + 省略号」需额外声明
+ * - 自动缩小：容器同样裁剪（缩到下限仍放不下即截断），字号由测量趟的 applyTextFit 求得
+ * - 自适应行高：放开裁剪，内容撑开盒子（测量趟同时省略高度，使实测高度等于内容高度）
+ */
+function elementFitStyle(fit: string, opts: Record<string, any>): string {
+  const nowrap = resolveElementNowrap(opts) ? 'white-space:nowrap;text-overflow:ellipsis;' : ''
+  // 自适应行高只决定裁剪，与「不换行」并不互斥（画布/Common 同为两值并存），故必须与 nowrap 拼接而非提前 return
+  if (fit === 'autoHeight') return `overflow:visible;${nowrap}`
+  return nowrap
+}
+
+/**
+ * 自动缩小标记：供测量趟的 DOM 执行器读取（元素级 key 即元素 id）。
+ * 两趟都输出：测量趟据此二分字号，最终趟的字号已回写，标记在此纯属惰性残留；
+ * 一律输出可避免「某条渲染分支忘带标记 → 该分支静默不缩放」这类漏网。
+ */
+function fitAttrs(fit: string, key: string, baseFontSizePt: number, opts: Record<string, any>): string {
+  if (fit !== 'shrink') return ''
+  const min = resolveShrinkMinFontSize(opts.shrinkMinFontSize)
+  return ` data-fit="shrink" data-fit-key="${esc(key)}" data-fit-base="${baseFontSizePt}" data-fit-min="${min}"`
+}
+
+function renderElement(el: TemplateElement, isMeasure: boolean, containerStyle?: string, overrideTop?: number, ctx?: RenderCtx): string {
+  const opts = el.options ?? {}
+  const left = opts.left ?? 0
+  const top = overrideTop ?? opts.top ?? 0
+  const width = opts.width ?? 100
+  const height = opts.height ?? undefined
+  const type = el.type || el.printElementType?.type || 'text'
+  const fit = resolveElementTextFit(type, opts)
+  // 动态流式列表：容器高度由内容撑开，设计高度仅作画布初始尺寸，不写入落纸样式
+  const dynamicFlow = type === 'flowList' && resolveFlowLayoutMode(opts.flowLayoutMode) === 'dynamic'
+  // 自适应行高：不写死高度（两趟一致），盒子由内容撑开——
+  // 实测高度即内容高度，分页与连续纸探针才能拿到真实占位；设计高度仍作为分页下限保留
+  const fitHeight = fit === 'autoHeight' || dynamicFlow ? undefined : height
+  // 方案 A+B：flow-group 内跟随元素用相对容器样式（containerStyle）覆盖绝对定位
+  const baseStyle = containerStyle ?? elementPositionStyle(left, top, width, fitHeight, opts.zIndex, opts)
+  // 元素级边框统一追加（rect/oval/hline/vline/table 由 resolveElementBorder 排除，不双重边框）；
+  // 先整圈后逐边，CSS 后者覆盖前者
+  const elBorders = resolveElementBorder(type, opts)
+  let style = baseStyle
+  if (elBorders?.all) {
+    style += `border:${elBorders.all.borderWidth} ${elBorders.all.borderStyle} ${elBorders.all.borderColor};`
+  }
+  if (elBorders) {
+    for (const side of ELEMENT_BORDER_SIDES) {
+      const e = elBorders.edges[side]
+      if (e) style += `border-${side}:${e.borderWidth} ${e.borderStyle} ${e.borderColor};`
+    }
+  }
+  // 元素级旋转：测量趟不转（实测高须是设计盒高，分页才不假溢出）；flow-group 跟随成员不转（v1 排除）。
+  // 用 CSS 独立属性 rotate（绕默认 transform-origin 即盒中心），不占 style.transform——设计器拖拽写 transform，两者互不覆盖。
+  // 条码/二维码的放行档由 resolveElementRotation 单点结算（低 dpi 斜角吸附直角，见 rotation.ts）。
+  if (!isMeasure && containerStyle === undefined) {
+    const rotateDeg = resolveElementRotation(type, opts)
+    if (rotateDeg !== undefined) style += `rotate:${rotateDeg}deg;`
+  }
+  // 测量趟带 data-measure-id（供测量回填）；最终趟带 data-element-id（供预览回报每个元素的实际渲染位置）
+  const measureAttr = isMeasure ? ` data-measure-id="${el.id}"` : ` data-element-id="${el.id}"`
+  const fitAttr = fitAttrs(fit, el.id, opts.fontSize ?? 12, opts)
+
+  switch (type) {
+    case 'table':
+      // 表格内部 <table> 自带 data-element-id，外层 div 只在测量趟带 data-measure-id，
+      // 否则同一元素会输出两次标识（预览按 id 收集包围盒时会重复计数）
+      return renderTableElement(el, isMeasure, isMeasure ? measureAttr : '', ctx, overrideTop)
+    case 'image':
+      return `<div class="print-element" style="${style}"${measureAttr}>
+  <img src="${esc(opts.src ?? '')}" style="width:100%;height:100%;object-fit:${opts.fit || 'contain'};${cropStyle(opts.fit, opts.fitScale, opts.objectPosition)}" />
+</div>`
+    case 'barcode':
+    case 'qrcode': {
+      const codeValue = String(opts.formatter ?? opts.testData ?? '').trim()
+      return `<div class="print-element" style="${style}"${measureAttr}>
+  ${codeImgHtml(codeValue, type as 'barcode' | 'qrcode', opts, {
+        fallback: `<span>${esc(codeValue)}</span>`,
+        codeRenderer: ctx?.codeRenderer,
+        fit: opts.fit,
+        maxWidth: opts.maxWidth,
+        maxHeight: opts.maxHeight,
+        printerDpi: opts.printerDpi,
+        targetWidthMm: opts.width,
+        targetHeightMm: opts.height,
+      })}
+</div>`
+    }
+    case 'hline':
+      return `<div class="print-element" style="${style};border-top:${opts.borderWidth || 0.75}pt ${opts.borderStyle || 'solid'} ${opts.borderColor || '#333'};height:0;"${measureAttr}></div>`
+    case 'vline':
+      return `<div class="print-element" style="${style};border-left:${opts.borderWidth || 0.75}pt ${opts.borderStyle || 'solid'} ${opts.borderColor || '#333'};width:0;"${measureAttr}></div>`
+    case 'rect':
+      return `<div class="print-element" style="${style};border:${opts.borderWidth || 1}pt ${opts.borderStyle || 'solid'} ${opts.borderColor || '#333'};"${measureAttr}></div>`
+    case 'oval':
+      return `<div class="print-element" style="${style};border:${opts.borderWidth || 1}pt ${opts.borderStyle || 'solid'} ${opts.borderColor || '#333'};border-radius:50%;"${measureAttr}></div>`
+    case 'longText':
+      return `<div class="print-element" style="${style}${textStyle(opts, '1.5')}${indentStyle(opts)}${whiteSpaceStyle(opts)}${elementFitStyle(fit, opts)}"${measureAttr}${fitAttr}>${esc(opts.formatter ?? opts.testData ?? '')}</div>`
+    case 'flowList': {
+      const columns = resolveFlowColumns(opts.flowColumns)
+      const gapX = resolveFlowGapX(opts.flowGapX)
+      const rowHeight = resolveFlowRowHeight(opts.flowRowHeight)
+      const maxSpan = resolveFlowMaxSpan(opts.flowMaxSpan, columns)
+      const boundItems: string[] | undefined = Array.isArray(opts._flowItems) ? opts._flowItems : undefined
+      const items: string[] = boundItems && boundItems.length > 0
+        ? boundItems
+        : String(opts.testData ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+      const cfg: FlowRenderConfig = {
+        width, columns, gapX, rowHeight, maxSpan,
+        fontSizePt: opts.fontSize ?? 12,
+        autoSpan: opts.flowAutoSpan === true,
+      }
+      if (dynamicFlow) {
+        // 动态模式：绑定时已按内容宽保留排布行；逐行输出可独立测量的标记行。
+        // 测量趟与最终趟共用同一行 HTML 助手，保证行数与跨列口径一致。
+        const padding = resolveFlowPadding(opts)
+        const rows: FlowRow[] = Array.isArray(opts._flowRows)
+          ? opts._flowRows
+          : layoutFlowList(items, { ...cfg, width: flowContentWidthMm(width, padding) })
+        return `<div class="print-element" style="${style}${textStyle(opts)}display:block;box-sizing:border-box;height:auto;overflow:visible;padding:${flowMm(padding.top)} ${flowMm(padding.right)} ${flowMm(padding.bottom)} ${flowMm(padding.left)};"${measureAttr}${fitAttr}>
+  ${flowRowsHtml(rows, columns, gapX, rowHeight)}
+</div>`
+      }
+      // 一框一页：单元超出框高由 overflow:hidden 裁掉，不撑破纸面（第 8 项口径）
+      const cells = layoutFlowList(items, cfg)
+        .flatMap(row => row.cells)
+        .map(c => `<div class="print-flow-cell"${c.span > 1 ? ` style="grid-column:span ${c.span};"` : ''}>${esc(c.text)}</div>`)
+        .join('\n  ')
+      return `<div class="print-element" style="${style}${textStyle(opts)}overflow:hidden;${flowGridStyle(cfg)};"${measureAttr}${fitAttr}>
+  ${cells}
+</div>`
+    }
+    case 'html':
+      return `<div class="print-element" style="${style}"${measureAttr}>${opts.testData ?? opts.title ?? ''}</div>`
+    default: {
+      // 通用扩展元素分派（P2/P4）：插件登记了渲染能力就优先出图，未命中维持既有文本语义。
+      // 主体不认识任何具体扩展类型，只把「类型 + 绑定后选项 + 落纸尺寸」交给插件解释。
+      const plugin = getElementPlugin(type)
+      if (plugin?.render) {
+        // widthMm / heightMm 是通用落纸尺寸：插件据此做 mm→px 换算。
+        // key 只用绑定后选项计算，保证测量趟与最终趟稳定且跨进程可比对。
+        const spec = {
+          type,
+          ...opts,
+          widthMm: width,
+          heightMm: fitHeight ?? height ?? 0,
+          fontFamily: opts.fontFamily,
+          key: assetSpecKey({ type, ...opts }),
+        }
+        const renderer = ctx?.renderers?.[type]
+        try {
+          const markup = renderer ? renderer.render(spec) : plugin.render.html?.(spec)
+          if (typeof markup === 'string' && markup.length > 0) {
+            return `<div class="print-element" style="${style}"${measureAttr}>${markup}</div>`
+          }
+        } catch {
+          // 收集型渲染器第一趟的 'collect' 抛错、或插件自身渲染失败：落回文本占位，
+          // 第二趟由映射渲染器回填（与码制同口径）
+        }
+      }
+      // 普通文本（text）与未单列的类型都走这里：判据只在显式打开新档时出声明，缺省逐字不变
+      return `<div class="print-element" style="${style}${textStyle(opts)}${whiteSpaceStyle(opts)}${elementFitStyle(fit, opts)}"${measureAttr}${fitAttr}>${esc(opts.formatter ?? opts.testData ?? '')}</div>`
+    }
+  }
+}
+
+/** mm 数值落纸：钳 3 位小数，避免浮点噪声进入内联样式 */
+function flowMm(value: number): string {
+  return `${Math.round(value * 1000) / 1000}mm`
+}
+
+/** 动态模式单行网格样式：行内均分列、横向间距与固定模式同口径，行高为最小高语义 */
+function flowRowGridStyle(columns: number, gapX: number, rowHeight: number): string {
+  return [
+    'display:grid',
+    `grid-template-columns:repeat(${columns},minmax(0,1fr))`,
+    `column-gap:${flowMm(gapX)}`,
+    `min-height:${flowMm(rowHeight)}`,
+  ].join(';')
+}
+
+/**
+ * 动态模式逐行 HTML。每行独立标注 data-flow-row-index，供测量趟的 DOM 执行器
+ * 按行读取真实高度；行内单元与固定模式同一 class 与跨列声明。
+ * 测量趟与最终切片共用本助手：切片传入 startIndex 保持全局行索引（不重排行序）。
+ */
+function flowRowsHtml(
+  rows: FlowRow[],
+  columns: number,
+  gapX: number,
+  rowHeight: number,
+  startIndex = 0,
+): string {
+  return rows
+    .map((row, index) => {
+      const cells = row.cells
+        .map(c => `<div class="print-flow-cell"${c.span > 1 ? ` style="grid-column:span ${c.span};"` : ''}>${esc(c.text)}</div>`)
+        .join('\n    ')
+      return `<div class="print-flow-row" data-flow-row-index="${startIndex + index}" style="${flowRowGridStyle(columns, gapX, rowHeight)};">
+    ${cells}
+  </div>`
+    })
+    .join('\n  ')
+}
+
+/**
+ * 动态流式列表切片容器的「非定位」样式段：完整边框 + 四边内边距 + 边框闭合，
+ * 高度由本片行、内边距和边框撑开（不写死 height、不走 overflow:hidden 裁切）。
+ * 独立分节与 flow-group 内嵌切片共用，保证每片独立闭合。
+ */
+function flowSliceChromeStyle(type: string, opts: Record<string, any>): string {
+  let style = ''
+  const elBorders = resolveElementBorder(type, opts)
+  if (elBorders?.all) {
+    style += `border:${elBorders.all.borderWidth} ${elBorders.all.borderStyle} ${elBorders.all.borderColor};`
+  }
+  if (elBorders) {
+    for (const side of ELEMENT_BORDER_SIDES) {
+      const e = elBorders.edges[side]
+      if (e) style += `border-${side}:${e.borderWidth} ${e.borderStyle} ${e.borderColor};`
+    }
+  }
+  const padding = resolveFlowPadding(opts)
+  style += `${textStyle(opts)}display:block;box-sizing:border-box;height:auto;overflow:visible;padding:${flowMm(padding.top)} ${flowMm(padding.right)} ${flowMm(padding.bottom)} ${flowMm(padding.left)};`
+  return style
+}
+
+/**
+ * 动态流式列表分页切片：每片独立闭合容器（行 HTML 与测量趟同一助手）。
+ * 复用元素定位、边框、背景与文字样式及四边内边距，但不写死 height、
+ * 也不走 `.print-element` 的 overflow:hidden 裁切——容器高度由本片行撑开。
+ */
+function renderFlowListSlice(el: TemplateElement, section: PageSection, _ctx?: RenderCtx): string {
+  const opts = el.options ?? {}
+  const rows: FlowRow[] = Array.isArray(opts._flowRows) ? opts._flowRows : []
+  const startFlowRow = section.startFlowRow ?? 0
+  const endFlowRow = section.endFlowRow ?? rows.length
+  // 空行区间：不输出空切片（容器不带只有边框的页）
+  if (startFlowRow >= endFlowRow) return ''
+  const type = el.type || el.printElementType?.type || 'flowList'
+  // 续片在本页内容区从页顶(0)开始，首片用设计 top / 切片 renderTop
+  const style = elementPositionStyle(
+    opts.left ?? 0,
+    section.renderTop ?? opts.top ?? 0,
+    opts.width ?? 100,
+    undefined,
+    opts.zIndex,
+    opts,
+  )
+  const columns = resolveFlowColumns(opts.flowColumns)
+  const gapX = resolveFlowGapX(opts.flowGapX)
+  const rowHeight = resolveFlowRowHeight(opts.flowRowHeight)
+  return `<div class="print-flowlist-slice" style="${style}${flowSliceChromeStyle(type, opts)}">
+  ${flowRowsHtml(rows.slice(startFlowRow, endFlowRow), columns, gapX, rowHeight, startFlowRow)}
+</div>`
+}
+
+/** codeImgHtml 的可选参数（调用方按元素/单元格场景选择） */
+interface CodeImgOptions {
+  fallback: string
+  codeRenderer?: CodeRenderer
+  /** 缩放模式（仅二维码生效，缺省 contain；条形码尺寸由条宽与打印机 DPI 结算，不接受拉伸） */
+  fit?: string
+  /** 最大宽度（mm）：条形码把它并入可用框，作为结算尺寸的附加上限 */
+  maxWidth?: number
+  /** 最大高度（mm）：同上 */
+  maxHeight?: number
+  /**
+   * 打印机分辨率（点/英寸）：条形码的尺寸由渲染器按「条宽定首选 → 吸附整数打印点 →
+   * 框不够就等比缩小」结算，且总是输出内联 `<svg>`——`<img>` 承载 SVG 时 Chromium 会把
+   * 内在尺寸取整到整数 CSS px，结算出的 mm 会被改写（实测 24.7744mm 实画 24.60mm，
+   * 0.7% 偏差足以让「整数打印点」失效）。
+   */
+  printerDpi?: number
+  /** 目标可用宽度（mm），条形码结算尺寸用 */
+  targetWidthMm?: number
+  /** 目标可用高度（mm），条形码结算尺寸用 */
+  targetHeightMm?: number
+}
+
+/**
+ * 码值 → 出图 HTML。
+ * 条形码输出**内联 `<svg>`**：尺寸已由渲染器按 mm 结算，内联才不会被 `<img>` 的像素取整改写。
+ * 二维码沿用 URL 编码 SVG 的 `<img>`（模块数固定，尺寸由 object-fit / 最大宽高决定）。
+ * 无渲染器、码值非法或为空时降级为文本占位。
+ */
+function codeImgHtml(
+  value: string,
+  cellType: 'barcode' | 'qrcode',
+  opts: Record<string, any>,
+  io: CodeImgOptions,
+): string {
+  if (!value || !io.codeRenderer) return io.fallback
+  const { fallback, codeRenderer, fit, maxWidth, maxHeight } = io
+  const isBarcode = cellType === 'barcode'
+  try {
+    const svg = codeRenderer.render(value, cellType, {
+      barcodeType: opts.barcodeType,
+      qrCodeLevel: opts.qrCodeLevel != null ? String(opts.qrCodeLevel) : undefined,
+      // 0 是合法档（无白边），必须用 typeof 判定而非 or/?? 之类假值判断
+      qrQuietZone: typeof opts.qrQuietZone === 'number' ? opts.qrQuietZone : undefined,
+      barQuietZone: typeof opts.barQuietZone === 'number' ? opts.barQuietZone : undefined,
+      // 条高（mm）：元素台与单元格台都写 barHeight，非法/未填交由布局函数回退缺省档
+      barHeightMm: typeof opts.barHeight === 'number' ? opts.barHeight : undefined,
+      showText: opts.hideTitle !== undefined ? !opts.hideTitle : opts.showBarcodeText,
+      barWidth: typeof opts.barWidth === 'number' ? opts.barWidth : undefined,
+      // 元素台的条码文本字号是 fontSize；单元格台的文本字号是 barFontSize（单元格的 fontSize 是正文字号，不该拿来决定条码）
+      fontSize: typeof (opts.barFontSize ?? opts.fontSize) === 'number'
+        ? (opts.barFontSize ?? opts.fontSize)
+        : undefined,
+      printerDpi: isBarcode ? io.printerDpi : undefined,
+      targetWidthMm: isBarcode ? barcodeAvailableBoxMm(io.targetWidthMm, maxWidth) : undefined,
+      targetHeightMm: isBarcode ? barcodeAvailableBoxMm(io.targetHeightMm, maxHeight) : undefined,
+    })
+    // 条形码：尺寸已定死，直接内联，不能再被任何 CSS 缩放改写
+    if (isBarcode && /^<svg[\s>]/i.test(svg)) return inlineCodeSvgHtml(svg)
+    const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+    // 构建样式
+    const styleParts: string[] = []
+    // 铺满元素盒：width/height 必须显式给出。只写 max-* 时 img 停在 SVG 的内在像素尺寸
+    //（二维码 SVG 为「模块数 × 4 + 静区」，与盒子的 mm 尺寸无关），max-* 只会缩小不会放大，
+    // 盒子一旦大于该尺寸就明显不铺满，object-fit 也随之空转。
+    styleParts.push('width:100%', 'height:100%', 'max-width:100%', 'max-height:100%', 'display:block', 'margin:auto')
+    // 缩放模式：缺省与属性面板一致（contain 等比放进盒子）
+    styleParts.push(`object-fit:${fit || 'contain'}`)
+    // 应用最大宽度和高度（mm 单位）
+    if (maxWidth) {
+      styleParts.push(`max-width:${maxWidth}mm`)
+    }
+    if (maxHeight) {
+      styleParts.push(`max-height:${maxHeight}mm`)
+    }
+    const style = styleParts.join(';')
+    return `<img src="${src}" style="${style}" />`
+  } catch {
+    return fallback
+  }
+}
+
+/**
+ * 内联 SVG：按自带 mm 尺寸落纸，外层 flex 负责居中与裁剪。
+ * 内联 SVG 无 object-fit，且尺寸就是结算结果（条宽/整数打印点），故不接受 fit / 最大宽高——
+ * 最大宽高已并入可用框参与结算，再叠加 CSS 会把结算值重新缩成非整数点。
+ */
+function inlineCodeSvgHtml(svg: string): string {
+  const styled = svg.replace(/<svg\b/, '<svg style="display:block"')
+  return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">${styled}</div>`
+}
+
+/** 单元格内联样式：逐格样式 + 元素级默认值兜底 */
+function matrixCellStyle(cell: RenderCell, opts: Record<string, any>): string {
+  const parts: string[] = []
+  // 自动缩小求得字号优先：测量趟算出后回写 fittedFontSize，最终趟据此渲染
+  const fontSize = cell.fittedFontSize ?? cell.fontSize ?? opts.tableDefaultFontSize
+  const color = cell.color ?? opts.tableDefaultColor
+  const padding = cell.padding ?? opts.tableDefaultPadding ?? 1
+  const fontFamily = cell.fontFamily ?? opts.tableDefaultFontFamily
+  if (fontSize) parts.push(`font-size:${fontSize}pt`)
+  if (fontFamily) parts.push(`font-family:${escapeInlineStyleValue(toFontFamilyStack(fontFamily))}`)
+  if (cell.fontWeight) parts.push(`font-weight:${cell.fontWeight}`)
+  if (color) parts.push(`color:${color}`)
+  if (cell.backgroundColor) parts.push(`background-color:${cell.backgroundColor}`)
+  parts.push(`text-align:${cell.align ?? 'left'}`)
+  // 与文本元素同口径：justify 不拉伸段落末行，单行单元格否则毫无变化
+  if (cell.align === 'justify') parts.push('text-align-last:justify')
+  parts.push(`vertical-align:${cell.valign ?? 'middle'}`)
+  parts.push(`padding:${padding}mm`)
+  // 可换行档：pre-wrap 让表达式里的换行符落纸成多行；normal 保住英文整词不被拆开；
+  // break-word 只在一个词本身就比列宽还长、独占一行也放不下时才在行末兜底切断（Word/WPS 口径）
+  parts.push(cell.wordWrap === false
+    ? 'white-space:nowrap;overflow:hidden'
+    : 'white-space:pre-wrap;word-break:normal;overflow-wrap:break-word')
+  // 边框逐边兜底：单元格自身优先，缺的边继承元素级 tableDefaultBorders（整表统一网格，免逐格声明）
+  const cellBorders = cell.borders ?? {}
+  const defaultBorders = opts.tableDefaultBorders ?? {}
+  for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+    const border = cellBorders[side] ?? defaultBorders[side]
+    parts.push(border
+      ? `border-${side}:${border.width}pt ${border.style} ${border.color}`
+      : `border-${side}:none`)
+  }
+  return parts.join(';')
+}
+
+/** 渲染指定行区间为 <tr> 序列；merged 占位格不输出 td */
+function renderMatrixRows(
+  renderRows: RenderRow[],
+  start: number,
+  end: number,
+  opts: Record<string, any>,
+  withRowIndex: boolean,
+  ctx?: RenderCtx,
+  /** 所属元素 id 与行类别：自动缩小结果据此回写到对应渲染行 */
+  fitOwner: { elementId: string; kind: CellFitRowKind } = { elementId: '', kind: 'b' },
+  /**
+   * 行区间上界（相对 renderRows 起始）：给出时把跨出该上界的 rowspan 裁剪到边界内。
+   * 续片重复表头用——避免历史模板里跨行主格超界后吃掉后续数据行的位置。
+   */
+  rowLimit?: number,
+): string {
+  const trs: string[] = []
+  const defaultPadding = opts.tableDefaultPadding ?? 1
+  // 按值合并覆盖层：只在本次渲染区间内归并。分页在此之上切行，跨页的段于页界处断开、
+  // 续页首行重放该值（Word 口径），因此归并不会把整段锚成 keep-together 组。
+  const merge = buildMergeOverlay(renderRows, start, end)
+  for (let r = start; r < end; r++) {
+    const row = renderRows[r]
+    if (!row) continue
+    const idxAttr = withRowIndex ? ` data-row-index="${r}"` : ''
+    const tds = row.cells
+      .map((cell, ci) => ({ cell, ci }))
+      .filter(({ cell, ci }) => !cell.merged && !merge?.merged.has(`${r}:${ci}`))
+      .map(({ cell, ci }) => {
+        // 归并段的跨度优先于静态 rowspan；有效格（含 span 后的 rowspan）用于可用高度结算
+        const mergedSpan = merge?.rowspan.get(`${r}:${ci}`)
+        const rowspan = mergedSpan ?? (rowLimit === undefined
+          ? (cell.rowspan ?? 1)
+          : Math.max(1, Math.min(cell.rowspan ?? 1, rowLimit - r)))
+        const ec = mergedSpan === undefined ? cell : { ...cell, rowspan: mergedSpan }
+        const span = `${rowspan > 1 ? ` rowspan="${rowspan}"` : ''}${cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ''}`
+        const colIndex = ci
+        let inner: string
+        if (cell.cellType === 'barcode' || cell.cellType === 'qrcode') {
+          // 单元格码值：外框负责居中与裁剪；条形码尺寸由渲染器结算后内联，二维码走 <img>
+          const codeValue = resolveCellContent(cell, ctx)
+          inner = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">${codeImgHtml(codeValue, cell.cellType as 'barcode' | 'qrcode', cell, {
+            fallback: esc(codeValue),
+            codeRenderer: ctx?.codeRenderer,
+            fit: cell.fit,
+            maxWidth: cell.maxWidth,
+            maxHeight: cell.maxHeight,
+            printerDpi: cell.printerDpi,
+            // 可用框 = 单元格内容区（列宽/行高扣除内边距与塌陷边框）；列宽缺失时宽度为 0 → 不约束宽度
+            targetWidthMm: cellFitWidthMm(opts.tableColWidths ?? [], ci, cell, defaultPadding),
+            targetHeightMm: cellFitCapMm(renderRows, r, ec, defaultPadding),
+          })}</div>`
+        } else if (cell.cellType === 'image') {
+          // 图片类型单元格：渲染 <img> 标签
+          const fit = cell.fit || 'contain'
+          const maxWidth = cell.maxWidth ? `max-width:${cell.maxWidth}mm;` : 'max-width:100%;'
+          const maxHeight = cell.maxHeight ? `max-height:${cell.maxHeight}mm;` : 'max-height:100%;'
+          // 只有剪裁档钉盒：td 的高度由内容决定，外框不钉在声明行高上就没有可裁余量（其余档逐字保持存量形态）
+          const boxMm = cellImageBoxMm(fit, cellFitCapMm(renderRows, r, ec, defaultPadding))
+          const boxHeight = boxMm === undefined ? 'height:100%' : `height:${boxMm}mm`
+          const imgBox = boxMm === undefined ? '' : 'width:100%;height:100%;'
+          inner = `<div style="width:100%;${boxHeight};display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${esc(resolveCellContent(cell, ctx))}" style="${imgBox}object-fit:${fit};${cropStyle(fit, cell.fitScale, cell.objectPosition)}${maxWidth}${maxHeight}display:block;" /></div>`
+        } else {
+          inner = renderTextCellInner(renderRows, r, colIndex, ec, opts, fitOwner, defaultPadding, ctx)
+        }
+        return `<td${span} style="${matrixCellStyle(cell, opts)}">${inner}</td>`
+      })
+      .join('')
+    trs.push(`<tr${idxAttr} style="height:${row.height}mm;">${tds}</tr>`)
+  }
+  return trs.join('\n')
+}
+
+/**
+ * 文本单元格内容：
+ * - 自适应行高：直接输出文本，行高随内容增高（既有行为）
+ * - 截断 / 自动缩小：内容包一层定高容器（max-height = 可用高度），超出即裁；
+ *   自动缩小另带 data-fit 标记，由测量趟的 DOM 执行器把字号缩到放得下为止。
+ */
+function renderTextCellInner(
+  renderRows: RenderRow[],
+  rowIndex: number,
+  colIndex: number,
+  cell: RenderCell,
+  opts: Record<string, any>,
+  fitOwner: { elementId: string; kind: CellFitRowKind },
+  defaultPadding: number,
+  ctx?: RenderCtx,
+): string {
+  const fit = resolveCellTextFit(cell)
+  const text = esc(resolveCellContent(cell, ctx))
+  if (fit === 'autoHeight') return text
+  const capMm = cellFitCapMm(renderRows, rowIndex, cell, defaultPadding)
+  const nowrap = cell.wordWrap === false
+  const style = [
+    `max-height:${capMm}mm`,
+    'overflow:hidden',
+    ...(nowrap ? ['white-space:nowrap', 'text-overflow:ellipsis'] : []),
+  ].join(';')
+  const attrs = fit === 'shrink' && fitOwner.elementId
+    ? ` data-fit="shrink" data-fit-key="${esc(cellFitKey(fitOwner.elementId, fitOwner.kind, rowIndex, colIndex))}" data-fit-base="${cell.fontSize ?? opts.tableDefaultFontSize ?? 12}" data-fit-min="${resolveShrinkMinFontSize(cell.shrinkMinFontSize)}" data-fit-mm="${capMm}"`
+    : ''
+  return `<div class="cell-fit" style="${style}"${attrs}>${text}</div>`
+}
+
+/** 矩阵表格骨架：colgroup（列宽 mm）+ 单一 tbody */
+function matrixTableHtml(
+  el: TemplateElement,
+  bodyHtml: string,
+): string {
+  const opts = el.options
+  const colWidths: number[] = opts.tableColWidths ?? []
+  const colgroup = colWidths.map(w => `<col style="width:${w}mm;">`).join('')
+  const tableWidth = colWidths.reduce((s, w) => s + w, 0)
+  return `<table class="print-table" data-element-id="${el.id}" style="border-collapse:collapse;table-layout:fixed;width:${tableWidth}mm;">
+    <colgroup>${colgroup}</colgroup>
+    <tbody>${bodyHtml}</tbody>
+  </table>`
+}
+
+function renderTableElement(
+  el: TemplateElement,
+  isMeasure: boolean,
+  measureAttr: string,
+  ctx?: RenderCtx,
+  overrideTop?: number,
+): string {
+  const opts = el.options
+  const style = elementPositionStyle(opts.left ?? 0, overrideTop ?? opts.top ?? 0, opts.width ?? 100, undefined, opts.zIndex, opts)
+  const renderRows: RenderRow[] = opts._renderRows ?? []
+  const bodyHtml = renderMatrixRows(renderRows, 0, renderRows.length, opts, isMeasure, ctx, { elementId: el.id, kind: 'b' })
+  return `<div class="print-element" style="${style};overflow:visible;"${measureAttr}>
+  ${matrixTableHtml(el, bodyHtml)}
+</div>`
+}
+
+function renderTableSlice(el: TemplateElement, section: PageSection, ctx?: RenderCtx): string {
+  const opts = el.options
+  // 续片在本页内容区从页顶(0)开始，首片用设计 top
+  const style = elementPositionStyle(opts.left ?? 0, section.renderTop ?? opts.top ?? 0, opts.width ?? 100, undefined, opts.zIndex, opts)
+  const renderRows: RenderRow[] = opts._renderRows ?? []
+  const startRow = section.startRow ?? 0
+  const endRow = section.endRow ?? renderRows.length
+  const repeatCount: number = opts._repeatHeaderCount ?? 0
+
+  const repeatHtml = section.repeatHeader && repeatCount > 0
+    ? renderMatrixRows(renderRows, 0, repeatCount, opts, false, ctx, { elementId: el.id, kind: 'b' }, repeatCount)
+    : ''
+  const bodyHtml = renderMatrixRows(renderRows, startRow, endRow, opts, false, ctx, { elementId: el.id, kind: 'b' })
+  const subtotalHtml = section.subtotal ? renderSubtotalRows(el, section, opts, ctx) : ''
+  const summaryHtml = section.summary ? renderSummaryRows(el, opts, ctx) : ''
+
+  return `<div class="print-element" style="${style};overflow:visible;">
+  ${matrixTableHtml(el, `${repeatHtml}\n${bodyHtml}${subtotalHtml}${summaryHtml}`)}
+</div>`
+}
+
+/** 渲染小计行（当前页数据小计）：按本片 data 行区间从 _dataRowCtx 截取，对 rawFormatter 重新求值 */
+function renderSubtotalRows(
+  el: TemplateElement,
+  section: PageSection,
+  opts: Record<string, any>,
+  ctx?: RenderCtx,
+): string {
+  const templates: RenderRow[] = opts._subtotalTemplates ?? []
+  if (templates.length === 0) return ''
+  const dataRowCtx: Record<string, any>[] = opts._dataRowCtx ?? []
+  const dataStartIdx: number = opts._dataStartIdx ?? 0
+  const mainData = opts._mainData ?? {}
+  const bodyLen: number = opts._renderRows?.length ?? 0
+  const startRow = section.startRow ?? 0
+  const endRow = section.endRow ?? bodyLen
+  // 本片内 data 行区间：data 行在正文行中从 dataStartIdx 起连续
+  const dataStart = Math.max(startRow, dataStartIdx)
+  const dataEnd = Math.max(endRow, dataStart)
+  const pageCtx = dataEnd > dataStartIdx
+    ? dataRowCtx.slice(Math.max(dataStart - dataStartIdx, 0), dataEnd - dataStartIdx)
+    : []
+  // 小计按「本页数据行」重算；若表达式同时引用页码，页码并入同一上下文（否则 rows 会被丢掉）
+  const pageVars = ctx?.pageVars ? pageVarsContext(ctx.pageVars) : {}
+  const rows = templates.map(tpl => ({
+    ...tpl,
+    cells: tpl.cells.map(cell => cell.rawFormatter
+      ? {
+          ...cell,
+          content: evaluateTemplate(cell.rawFormatter, { rows: pageCtx, ...mainData, ...pageVars }),
+          // 已按本页上下文求值，清标记避免渲染时再按页码重算一次（会丢掉 rows）
+          rawFormatter: '',
+        }
+      : cell),
+  }))
+  return renderMatrixRows(rows, 0, rows.length, opts, false, ctx, { elementId: el.id, kind: 'st' })
+}
+
+/** 渲染整表汇总行（总计，仅最后一页） */
+function renderSummaryRows(el: TemplateElement, opts: Record<string, any>, ctx?: RenderCtx): string {
+  const summaryRows: RenderRow[] = opts._summaryRows ?? []
+  if (summaryRows.length === 0) return ''
+  return renderMatrixRows(summaryRows, 0, summaryRows.length, opts, false, ctx, { elementId: el.id, kind: 'sm' })
+}
+
+/**
+ * 方案 A+B：渲染「锚点切片 + 跟随区」相对容器（表格 / 动态 flowList 共用）。
+ * 容器按 groupTop 绝对定位；容器内切片走文档流（动态切片绝不能沿用独立分节的
+ * 绝对定位 + top 样式，否则容器内坐标翻倍）；跟随元素外包 position:relative 的
+ * flow-follow 容器（紧随切片实际底部），成员按设计坐标绝对定位：
+ * left = 设计 left − 锚点 left，top = 设计 top − 锚点设计底部。
+ * 由此保留成员间设计几何与重叠（WYSIWYG）：非重叠顺序元素位置与旧文档流间隙排布一致，
+ * 重叠成员不再被压缩成块级堆叠。
+ */
+function renderFlowGroup(
+  el: TemplateElement,
+  section: PageSection,
+  template: TemplateData,
+  ctx?: RenderCtx,
+): string {
+  const opts = el.options ?? {}
+  const anchorType = el.type || el.printElementType?.type || 'text'
+  const isDynamicAnchor = anchorType === 'flowList' && resolveFlowLayoutMode(opts.flowLayoutMode) === 'dynamic'
+  const anchorLeft = opts.left ?? 0
+  const anchorWidth = opts.width ?? 100
+  const groupTop = section.groupTop ?? opts.top ?? 0
+  const anchorBottom = splittableDesignBottom(el) + resolveElementMargins(opts).bottom
+  const anchorMargin = elementMarginCss(opts)
+  const anchorMarginStyle = anchorMargin ? `${anchorMargin};` : ''
+  const zStyle = typeof opts.zIndex === 'number' ? `z-index:${opts.zIndex};` : ''
+  const style = `position:absolute;left:${mm(anchorLeft)};top:${mm(groupTop)};width:${mm(anchorWidth)};overflow:visible;${zStyle}`
+
+  // 本页锚点切片（跟随区整体移页时为空；小计/汇总行即使无正文行也渲染）
+  let sliceHtml = ''
+  if (isDynamicAnchor) {
+    sliceHtml = flowGroupSliceHtml(el, section)
+  } else {
+    const startRow = section.startRow ?? 0
+    const endRow = section.endRow ?? 0
+    if (endRow > startRow || section.subtotal || section.summary) {
+      const renderRows: RenderRow[] = opts._renderRows ?? []
+      const repeatCount: number = opts._repeatHeaderCount ?? 0
+      const repeatHtml = section.repeatHeader && repeatCount > 0
+        ? renderMatrixRows(renderRows, 0, repeatCount, opts, false, ctx, { elementId: el.id, kind: 'b' }, repeatCount)
+        : ''
+      const bodyHtml = renderMatrixRows(renderRows, startRow, endRow, opts, false, ctx, { elementId: el.id, kind: 'b' })
+      const subtotalHtml = section.subtotal ? renderSubtotalRows(el, section, opts, ctx) : ''
+      const summaryHtml = section.summary ? renderSummaryRows(el, opts, ctx) : ''
+      sliceHtml = `<div class="flow-slice" style="position:relative;width:${mm(anchorWidth)};overflow:visible;${anchorMarginStyle}">
+  ${matrixTableHtml(el, `${repeatHtml}\n${bodyHtml}${subtotalHtml}${summaryHtml}`)}
+</div>`
+    }
+  }
+
+  // 跟随区：flow-follow 容器（relative）高度 = 成员相对锚点设计底部的并集范围，
+  // 保证切片跨页/整体移页时容器始终紧随切片实际底部排布。
+  const followIds = section.followElementIds ?? []
+  const followExtent = followIds.reduce((maxBottom, id) => {
+    const m = findElement(template, id)
+    if (!m) return maxBottom
+    return Math.max(maxBottom, resolveElementBoxes({ width: 0, ...m.options }).margin.bottom)
+  }, anchorBottom)
+
+  const followHtml = followIds
+    .map(id => {
+      const m = findElement(template, id)
+      if (!m) return ''
+      const mTop = m.options?.top ?? 0
+      const mLeft = m.options?.left ?? 0
+      const mWidth = m.options?.width ?? anchorWidth
+      const mHeight = m.options?.height ?? 0
+      const mZ = m.options?.zIndex
+      const type = m.type || m.printElementType?.type || 'text'
+      const needsHeight = type === 'rect' || type === 'oval' || type === 'image' || type === 'vline'
+      const memberMargin = elementMarginCss(m.options)
+      const flowStyle = [
+        'position:absolute',
+        `left:${mm(mLeft - anchorLeft)}`,
+        `top:${mm(mTop - anchorBottom)}`,
+        `width:${mm(mWidth)}`,
+        ...(needsHeight && mHeight > 0 ? [`height:${mm(mHeight)}`] : []),
+        ...(typeof mZ === 'number' ? [`z-index:${mZ}`] : []),
+        'overflow:visible',
+        ...(memberMargin ? [memberMargin] : []),
+      ].join(';') + ';'
+      return renderElement(m, false, flowStyle, undefined, ctx)
+    })
+    .join('\n')
+
+  const followWrap = followIds.length > 0
+    ? `<div class="flow-follow" style="position:relative;width:${mm(anchorWidth)};height:${mm(Math.max(followExtent - anchorBottom, 0))};overflow:visible;">
+${followHtml}
+</div>`
+    : ''
+
+  return `<div class="flow-group" style="${style}">
+${sliceHtml}
+${followWrap}
+</div>`
+}
+
+/** flow-group 内的动态列表切片：相对文档流，行区间/边框/padding 与独立分节片一致 */
+function flowGroupSliceHtml(el: TemplateElement, section: PageSection): string {
+  const opts = el.options ?? {}
+  const rows: FlowRow[] = Array.isArray(opts._flowRows) ? opts._flowRows : []
+  const startFlowRow = section.startFlowRow ?? 0
+  const endFlowRow = section.endFlowRow ?? 0
+  // 空行区间（跟随区整体移页）：只渲染跟随区
+  if (startFlowRow >= endFlowRow) return ''
+  const type = el.type || el.printElementType?.type || 'flowList'
+  const columns = resolveFlowColumns(opts.flowColumns)
+  const gapX = resolveFlowGapX(opts.flowGapX)
+  const rowHeight = resolveFlowRowHeight(opts.flowRowHeight)
+  const anchorMargin = elementMarginCss(opts)
+  const anchorMarginStyle = anchorMargin ? `${anchorMargin};` : ''
+  return `<div class="flow-slice" style="position:relative;width:${mm(opts.width ?? 100)};overflow:visible;${anchorMarginStyle}">
+  <div class="print-flowlist-slice" style="position:relative;width:${mm(opts.width ?? 100)};${flowSliceChromeStyle(type, opts)}">
+  ${flowRowsHtml(rows.slice(startFlowRow, endFlowRow), columns, gapX, rowHeight, startFlowRow)}
+</div>
+</div>`
+}
+
+// ─── 区域元素渲染（页眉/页脚/叠加） ───
+
+function renderAreaElements(
+  elements: TemplateElement[],
+  _contentWidth: number,
+  pageIndex?: number,
+  totalPages?: number,
+  ctx?: RenderCtx,
+): string {
+  return elements
+    .map(el => {
+      let html = renderAreaElement(el, ctx)
+      // 页码变量替换（仅页眉/页脚区域）
+      if (pageIndex !== undefined) {
+        html = html.replace(/\{pageIndex\}/g, String(pageIndex))
+      }
+      if (totalPages !== undefined) {
+        html = html.replace(/\{totalPages\}/g, String(totalPages))
+      }
+      return html
+    })
+    .join('\n')
+}
+
+function renderAreaElement(el: TemplateElement, ctx?: RenderCtx): string {
+  // 复用内容区类型分支，补齐 hline/vline/rect/oval/barcode/qrcode
+  return renderElement(el, false, undefined, undefined, ctx)
+}
+
+// ─── 工具函数 ───
+
+function findElement(template: TemplateData, id: string): TemplateElement | undefined {
+  return template.elements.find(el => el.id === id)
+}
+
+function getPaperDims(template: TemplateData): { width: number; height: number } {
+  return getPaperDimensions(template)
+}
+
+function esc(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}

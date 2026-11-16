@@ -1,0 +1,15 @@
+// 主进程 ↔ 配置窗口 IPC 通道（main 与 preload 共用常量）。
+export const SETTINGS_IPC = {
+  GET_STATE: 'worm:settings:get-state',
+  /** AI 助手（MCP）状态刷新：模板会话实时变化，设置页可随时拉取 */
+  GET_MCP_STATE: 'worm:settings:get-mcp-state',
+  SAVE_CONFIG: 'worm:settings:save-config',
+  LIST_PRINTERS: 'worm:settings:list-printers',
+  TEST_PRINT: 'worm:settings:test-print',
+  LIST_HISTORY: 'worm:settings:list-history',
+  OPEN_PDF_DIR: 'worm:settings:open-pdf-dir',
+  PICK_PDF_DIR: 'worm:settings:pick-pdf-dir',
+  OPEN_PDF_FILE: 'worm:settings:open-pdf-file',
+  LOG_EVENT: 'worm:settings:log-event',
+  JOB_EVENT: 'worm:settings:job-event',
+} as const

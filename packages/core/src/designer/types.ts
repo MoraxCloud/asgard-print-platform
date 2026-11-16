@@ -1,0 +1,561 @@
+// web/src/components/print/types.ts
+// 打印模块全部类型定义，零外部依赖
+
+// ─── 新模板数据模型（PRD 3.2 节） ───
+
+/**
+ * 纸张尺寸。
+ * - DOT_FULL / DOT_HALF / DOT_THIRD：针式打印纸 241 系列全等分 / 二等分 / 三等分；
+ * - LABEL_80X60 / LABEL_60X40 / LABEL_40X30：标签纸；
+ * - THERMAL_57 / THERMAL_80 / THERMAL_110：小票纸（热敏卷纸，连续纸，出纸高度按内容推导）；
+ * - CONTINUOUS=连续纸（热敏/标签，设计高度固定 297mm，出纸高度按内容推导，底边距用 margins.bottom）。
+ * 连续纸（含小票纸）设计高度仅作画布，方向强制纵向，纸宽可用 customWidth 覆盖。
+ */
+export type PaperSize =
+  | 'A4' | 'A3' | 'A5' | 'Letter' | 'Legal'
+  | 'DOT_FULL' | 'DOT_HALF' | 'DOT_THIRD'
+  | 'LABEL_80X60' | 'LABEL_60X40' | 'LABEL_40X30'
+  | 'THERMAL_57' | 'THERMAL_80' | 'THERMAL_110'
+  | 'CUSTOM' | 'CONTINUOUS'
+
+/** 元素所属区域（运行时标记，序列化时剥离；区域元素 left/top 相对所在区域左上角，单位 pt） */
+export type ElementZone = 'content' | 'header' | 'footer'
+
+/** 元素分页属性（非表格元素） */
+export interface PaginationConfig {
+  pageable: boolean      // 是否参与分页，默认 true
+  keepWithNext: boolean  // 是否与下一元素保持在同一页
+}
+
+/** 表格分页配置 */
+export interface TablePaginationConfig {
+  enabled: boolean        // 是否启用表格分页
+}
+
+/**
+ * 模板声明的插件引用：只作「启用 strict 校验 + 版本核对」的声明，
+ * 服务端禁止据 id 动态 import 模块（部署白名单由宿主依赖决定，设计文档 §3.7）。
+ */
+export interface TemplatePluginDeclaration {
+  id: string
+  version?: string
+}
+
+/** 新模板数据模型（替代旧 PrintPanel / PrintTemplateJson） */
+export interface TemplateData {
+  paperSize: PaperSize
+  /** 方向（纸张方向）= 当前纸张长宽；切换时直接交换纸张宽高（设计稿内容随之铺在该尺寸上） */
+  orientation: 'portrait' | 'landscape'
+  /**
+   * 出纸旋转角度（整页内容旋转出纸）：缺省 0（不旋转）。仅固定纸（非连续纸）生效。
+   * 0° 纸张不变、内容不旋转；180° 纸张不变、内容翻转；90°/270° 纸张长宽互换以贴合旋转后的内容包围盒，
+   * 设计稿内容保持原方向不变，不被拉伸或裁切。
+   * 拼版启用时按**每格内容**旋转：90°/270° 时每格占位宽高互换，列数/行数按互换后重算。
+   */
+  outputRotation?: 0 | 90 | 180 | 270
+  margins: { top: number; right: number; bottom: number; left: number } // mm
+  header: {
+    height: number // mm
+    elements: TemplateElement[]
+  }
+  footer: {
+    height: number // mm
+    elements: TemplateElement[]
+  }
+  elements: TemplateElement[] // 内容区主体元素
+  /** 页面名称（多页面模板中用于设计器页签显示；渲染端忽略） */
+  name?: string
+  /** 模板级字体声明（由设计器 prop 同步写入）：三端据此生成同一份 @font-face */
+  fonts?: import('../print/fonts.js').PrintFontDeclaration[]
+  /** 拼版打印配置（模板级）；缺省不写 = 不拼版 */
+  tiling?: import('../print/tiling.js').TilingOptions
+  /** 元素坐标单位（新保存模板固定 'mm'；旧数据无此字段按 pt 迁移） */
+  unit?: 'pt' | 'mm'
+  /** 自定义纸张宽度（mm），paperSize='CUSTOM' 时有效；连续纸（含小票纸）时为纸宽，缺省取预设纸宽 */
+  customWidth?: number
+  /** 自定义纸张高度（mm），仅 paperSize='CUSTOM' 时有效；连续纸（含小票纸）时仅作设计画布高度（缺省 297，出纸按内容推导） */
+  customHeight?: number
+  /** 页面（纸张）背景色；未设置时默认白色 */
+  pageBackground?: string
+  /** 水印配置 */
+  watermark?: WatermarkOptions
+  /** 手动参考线（设计态辅助，序列化保留，渲染端忽略） */
+  guides?: AlignLine[]
+  /** 设计背景（定位底图）：仅设计画布显示，用于套打对位；预览与打印管线一律忽略 */
+  designBackground?: DesignBackground
+  /**
+   * 可选插件清单（设计文档 §3.4）：不写 = legacy 宽松校验（历史模板零迁移）；
+   * 写了 = strict 按注册态强校验，缺插件或版本不符直接报错而非静默出空纸。
+   */
+  plugins?: TemplatePluginDeclaration[]
+}
+
+/**
+ * 多页面模板（设计器侧 wrapper）：pages 为设计器完整模型 TemplateData。
+ * 与主入口 render 管线的同名 MultiPageTemplateData（pages 为简化 TemplateData）有意分离，
+ * 两侧运行时代表同一份 JSON（{version, pages}），由 canvas 侧经 normalizeTemplate 交给渲染端。
+ */
+export interface MultiPageTemplateData {
+  version?: 1
+  pages: TemplateData[]
+  /** 多页 wrapper 顶层的插件清单（与单页语义一致，见 §3.4） */
+  plugins?: TemplatePluginDeclaration[]
+}
+
+/** 模板元素引用（用于 TemplateData 各区域） */
+export type TemplateElement = PrintElementData
+
+// ─── 基础类型 ───
+
+/**
+ * 插件元素类型的声明合并扩展点：主体恒为空，插件包通过
+ * `declare module '@worm-print-platform/core/designer' { interface PluginElementTypeMap { chart: true } }`
+ * 注入类型。这样装了插件包的宿主自动拿回完整 ElementType，
+ * 所有 `Record<ElementType, T>` 穷尽映射无需改动（设计文档 §3.5）。
+ */
+export interface PluginElementTypeMap {}
+
+/**
+ * 主体内置元素类型（运行时注册态见 element-plugin-registry.ts）。
+ * 主体只认内置类型；扩展元素由插件包经 PluginElementTypeMap 声明合并注入，
+ * 运行时由通用注册表按 type 分派（设计文档 §3.5）。
+ */
+export type BuiltinElementType =
+  | 'text' | 'image' | 'longText' | 'table' | 'flowList'
+  | 'hline' | 'vline' | 'rect' | 'oval'
+  | 'barcode' | 'qrcode' | 'html'
+  | 'pageNumber'
+
+/** 元素类型：内置项 ∪ 声明合并注入的插件类型 */
+export type ElementType = BuiltinElementType | keyof PluginElementTypeMap
+
+/** 对齐方式 */
+export type TextAlign = 'left' | 'center' | 'right' | 'justify'
+
+/**
+ * 文字超出可用空间时的显示形式（文本类元素与表格单元格共用）：
+ * - `clip`：截断，超出部分不显示；不换行（`wordWrap=false`）时以省略号收尾
+ * - `shrink`：自动缩小字号，缩到下限字号仍放不下则退化为截断
+ * - `autoHeight`：自适应高度，元素高度 / 表格行高随内容增高
+ *
+ * 未显式设置时按元素类型取默认值（text=clip、longText=autoHeight、单元格=autoHeight），
+ * 与既有渲染行为一致，存量模板不受影响。
+ */
+export type TextFit = 'clip' | 'shrink' | 'autoHeight'
+
+/** 垂直对齐方式（文本类元素，未设置时按顶部处理，与打印端一致） */
+export type VerticalAlign = 'top' | 'middle' | 'bottom'
+
+/** 缩放手柄方向 */
+export type ResizePoint = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
+
+/** 设计背景（定位底图）：仅设计画布显示，预览/PDF/打印均不输出 */
+export interface DesignBackground {
+  /** 宿主上传接口返回的完整图片路径，可直接用于 <img src> */
+  src: string
+  /** 旋转角度，仅允许 90° 步进；非法值读取时按 0 处理 */
+  rotation: 0 | 90 | 180 | 270
+}
+
+/** 引导线 */
+export interface AlignLine {
+  type: 'vertical' | 'horizontal'
+  position: number
+  id?: string
+  /** 引导线颜色(区分左/中/右对齐类型) */
+  color?: string
+}
+
+/** 吸附结果 */
+export interface AdsorbResult {
+  left: number
+  top: number
+  lines: AlignLine[]
+}
+
+/** 元素矩形（用于吸附检测） */
+export interface ElementRect {
+  id: string
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+// ─── Excel 风格表格矩阵模型 ───
+
+/** 表格行类型：header 标题 / data 数据（全表唯一） / subtotal 当前页小计（每页末尾） / summary 整表汇总 */
+export type TableRowType = 'header' | 'data' | 'subtotal' | 'summary'
+
+/** 单边边框样式 */
+export interface TableCellBorder {
+  width: number   // pt
+  style: 'solid' | 'dashed' | 'dotted' | 'double' | 'none'
+  color: string
+}
+
+/** 四边边框 */
+export interface TableCellBorders {
+  top?: TableCellBorder
+  right?: TableCellBorder
+  bottom?: TableCellBorder
+  left?: TableCellBorder
+}
+
+/** 单元格内容类型 */
+export type TableCellType = 'text' | 'barcode' | 'qrcode' | 'image'
+
+/** 单元格 */
+export interface TableCell {
+  id: string
+  formatter?: string          // 表达式模板：data 行 {field}；subtotal/summary 行 {MONEY(SUM(field))}（subtotal 聚合当前页数据）；header 行 "文本: {field}"
+  cellType?: TableCellType    // 内容类型，缺省 text
+  barcodeType?: string        // 条形码码制（jsbarcode 格式名），仅 cellType='barcode' 时生效
+  qrCodeLevel?: string        // 二维码纠错级别 L/M/Q/H，仅 cellType='qrcode' 时生效
+  qrQuietZone?: number        // 二维码静区（白边）宽度（模块），仅 cellType='qrcode' 时生效；缺省 0 = 码面铺满单元格
+  /**
+   * 条形码静区（左右白边）宽度（模块），仅 cellType='barcode' 时生效：
+   * 缺省 10（一维码码制对静区的下限要求），填 0 即不留白边、把这部分宽度全部换成条宽。
+   * 白边是「条→空→条」跳变的一部分，压到 0 时若相邻格有文字或边框线，可能扫不出，需自行验证。
+   */
+  barQuietZone?: number
+  /** 条区高度（mm，不含下方文字），仅 cellType='barcode' 时生效：折算粒度为每模块物理宽，框高不足时由条高让位 */
+  barHeight?: number
+  showBarcodeText?: boolean   // 条形码下方是否显示文本，仅 cellType='barcode' 时生效
+  /**
+   * 打印机分辨率（点/英寸，常见 203/300/600），仅 cellType='barcode' 时生效：
+   * 条形码尺寸由「条宽 → dpi → 等比缩小」结算（见 render/barcode-dot.ts），
+   * 给出本字段时首选尺寸吸附到整数打印点（dpi 优先于条宽的精确毫米值），
+   * 单元格可用宽高不足则整体等比缩小，消除热敏出纸「条宽忽宽忽窄」。
+   */
+  printerDpi?: number
+  /** 条码模块宽度倍率（2-8），仅 cellType='barcode' 时生效：每模块首选宽度 = 倍率/2 × 0.25mm */
+  barWidth?: number
+  /** 条码下方文本字号（相对条高，条高为 30），仅 cellType='barcode' 时生效 */
+  barFontSize?: number
+  rowspan?: number            // 默认 1
+  colspan?: number            // 默认 1
+  merged?: boolean            // true = 被合并覆盖的占位格
+  /**
+   * dynamic 模式数据行按值纵向合并：仅 type='data' 的模板行生效。
+   * 渲染绑定阶段对相邻数据行比较该列求值文本，相同则自动纵向 rowspan（空值与含页码
+   * 表达式的列不参与）。与静态合并不同，归并产生的占位格不写入模板 JSON。
+   */
+  mergeSameValue?: boolean
+  align?: TextAlign
+  valign?: 'top' | 'middle' | 'bottom'
+  fontFamily?: string         // 字体
+  fontSize?: number           // pt
+  fontWeight?: string
+  color?: string
+  backgroundColor?: string
+  borders?: TableCellBorders
+  padding?: number            // mm
+  wordWrap?: boolean          // 默认 true
+  /** 文字溢出显示形式；缺省按「不换行→截断，否则自适应行高」判定 */
+  textFit?: TextFit
+  /** 自动缩小（textFit='shrink'）的下限字号（pt）；缺省 6pt */
+  shrinkMinFontSize?: number
+  // 图片类型特有属性
+  fit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'  // 缩放模式，默认 contain
+  objectPosition?: string   // 裁剪锚点（CSS object-position 值），仅 cellType='image' 生效；缺省居中
+  fitScale?: number         // 剪裁放大比例（%，100~400），仅 cellType='image' 且 fit='cover' 生效；100 与缺省同形
+  maxWidth?: number     // 最大宽度（mm）
+  maxHeight?: number    // 最大高度（mm）
+}
+
+/** 表格行 */
+export interface TableRow {
+  id: string
+  type: TableRowType
+  height: number              // mm，min-height 语义
+  repeatOnPage?: boolean      // 仅 header 行有效
+  cells: TableCell[]          // 长度恒等于列数
+}
+
+/** 单元格选区（r/c 均为 0 基，闭区间） */
+export interface TableSelection {
+  elementId: string
+  r1: number
+  c1: number
+  r2: number
+  c2: number
+}
+
+/** 表格历史字段绑定（兼容存量模板，实际取 fields[0].dataSource） */
+export interface ElementFieldBinding {
+  text?: string
+  dataSource?: string
+}
+
+/** 元素分边边框的边位 */
+export type ElementBorderSide = 'top' | 'right' | 'bottom' | 'left'
+
+/** 元素单边边框规格（pt 口径，与整圈 borderWidth 及单元格边框统一） */
+export interface ElementBorderEdge {
+  width: number
+  style?: string
+  color?: string
+}
+
+/** 元素选项（序列化到 JSON） */
+export interface ElementOptions {
+  left: number
+  top: number
+  width: number
+  height: number
+  /** 四向外边距（mm）：left/top 为外边距盒坐标，width/height 为实际边框盒尺寸 */
+  marginTop?: number
+  marginRight?: number
+  marginBottom?: number
+  marginLeft?: number
+  /** @deprecated 统一使用 formatter */
+  title?: string
+  testData?: string
+  fontSize?: number
+  fontWeight?: string
+  fontFamily?: string
+  color?: string
+  backgroundColor?: string
+  textAlign?: TextAlign
+  verticalAlign?: VerticalAlign
+  lineHeight?: number
+  letterSpacing?: number
+  /** 文字溢出显示形式（text/longText）；缺省按元素类型取默认值 */
+  textFit?: TextFit
+  /** 自动缩小（textFit='shrink'）的下限字号（pt）；缺省 6pt */
+  shrinkMinFontSize?: number
+  /** 自动换行（text/longText）；缺省 true。false 时单行显示，截断形式下以省略号收尾 */
+  wordWrap?: boolean
+  /**
+   * 保留换行符与连续空格（text/longText）；缺省关。
+   * 打开后按 `white-space: pre-wrap` 落纸：内容里的 `\n` 真换行、行首与连续空格原样保留，
+   * 同时仍按框宽自动换行。与「自动换行」互斥让位——`wordWrap === false` 时本档不出声明（单行优先）。
+   */
+  keepLineBreaks?: boolean
+  /** 每页重复：首页保留设计 top；续页将整组重复元素归一到页眉底部 0 起排并保持相对间距，正文接在重复区后并扣减其预算；不参与编组或跟随区，表格/动态列表完整重复，连续纸仅输出一次 */
+  repeatOnEveryPage?: boolean
+  /** 固定：每页保持首页设计 top/left，不参与正文分页结算、编组或跟随区；连续纸仅输出一次。与每页重复同时开启时优先固定 */
+  fixed?: boolean
+  locked?: boolean
+  /** 元素可见性（图层面板切换） */
+  visible?: boolean
+  borderWidth?: number
+  borderStyle?: string
+  borderColor?: string
+  /** 元素分边边框（pt 口径）：在整圈三字段之上逐边覆盖；未设整圈时仅这些边生效 */
+  borders?: Partial<Record<ElementBorderSide, ElementBorderEdge>>
+  contentPaddingLeft?: number
+  contentPaddingTop?: number
+  contentPaddingRight?: number
+  contentPaddingBottom?: number
+  textDecoration?: string
+  textType?: 'barcode' | 'qrcode'
+  barcodeType?: string
+  barWidth?: number
+  /**
+   * 条形码静区（左右白边）宽度，单位「模块」，缺省 10（一维码码制对静区的下限要求）。
+   * 填 0 即不留白边，这 20 个模块全部换成条宽；但静区参与「条→空→条」跳变，
+   * 压到 0 后若紧邻文字或表格线可能扫不出，需自行验证。
+   */
+  barQuietZone?: number
+  /**
+   * 条区高度（mm，不含下方文字），缺省按 30 模块的等比档。
+   * 折算粒度就是「每模块物理宽」，所以实际落纸只能精确到它的整数倍；可用框高装不下时由条高
+   * 让位，绝不反过来挤窄条宽——条宽是热敏出纸清晰度的第一来源（结算见 render/barcode-dot.ts）。
+   */
+  barHeight?: number
+  barAutoWidth?: string
+  /**
+   * 条形码下方是否显示码值文本。与 hideTitle 等价（hideTitle 优先）：
+   * 渲染端 evaluateTemplate 取 `hideTitle !== undefined ? !hideTitle : showBarcodeText`。
+   */
+  showBarcodeText?: boolean
+  /**
+   * 打印机分辨率（点/英寸，常见 203/300/600）：条形码尺寸由「条宽 → dpi → 等比缩小」结算
+   * （见 render/barcode-dot.ts），给出本字段时首选尺寸吸附到整数打印点，dpi 优先于条宽的
+   * 精确毫米值；可用框放不下则整体等比缩小。缺省不启用（按条宽的毫米值落纸）。
+   */
+  printerDpi?: number
+  qrCodeLevel?: string
+  /**
+   * 二维码静区（白边）宽度，单位「模块」：图形四周留出的空白格数，缺省 0。
+   * 0 表示不留白边，码面即整张图、等比铺满元素框——此时扫码所需的静区由元素框外的白纸充当；
+   * 要合规静区（ISO/IEC 18004 推荐 4 模块）请显式写 4。
+   * 值越大码面在框内占比越小（21 模块时：0→100%、2→84%、4→72.4%）。
+   */
+  qrQuietZone?: number
+  src?: string
+  /** 内容缩放模式（image/qrcode）：contain | cover | fill | none | scale-down。条形码不接受拉伸——尺寸已由结算确定 */
+  fit?: string
+  /** 裁剪锚点（image）：CSS object-position 值透传，如 'center 20%'；含 ; 引号 url() 等非法字符则整条丢弃；缺省不输出，按 50% 50% 居中 */
+  objectPosition?: string
+  /** 剪裁放大比例（image，100~400，单位 %）：仅 fit='cover' 消费——铺满后把画面再推大这么多，两轴同时溢出才真裁得动；100/缺省不落声明 */
+  fitScale?: number
+  /** 内容最大宽度（mm，image/barcode/qrcode）；缺省不限制 */
+  maxWidth?: number
+  /** 内容最大高度（mm，image/barcode/qrcode）；缺省不限制 */
+  maxHeight?: number
+  hideTitle?: boolean
+  draggable?: boolean
+  axis?: string
+  /**
+   * 元素级旋转角（度，围绕元素中心，归一化到 [0,360)；0/未设即不旋转）。
+   * 渲染走 CSS 独立属性 rotate（不占 transform，避免与设计器拖拽冲突）。
+   * 分页/连续纸按旋转后 AABB 结算（见 render/rotation.ts）。
+   * table、flowList、跟随区元素与条码非直角档（低 dpi 渲染端）忽略本值。
+   */
+  rotate?: number
+  zIndex?: number
+  groupId?: string
+  // 分页属性（非表格元素）
+  pagination?: PaginationConfig
+  // 表格分页配置（表格元素）
+  tablePagination?: TablePaginationConfig
+  // Excel 风格表格矩阵模型
+  /** @deprecated 静态布局模式已移除，所有表格统一使用动态模式 */
+  tableMode?: 'dynamic' | 'static'       // 默认 dynamic
+  tableRows?: TableRow[]
+  tableColWidths?: number[]              // 列宽 mm
+  tableDefaultFontSize?: number          // 单元格未设置时的继承基线
+  /** 单元格未设置 fontFamily 时的继承基线（与 tableDefaultFontSize 同一优先级口径） */
+  tableDefaultFontFamily?: string
+  tableDefaultColor?: string
+  tableDefaultPadding?: number           // mm
+  /**
+   * 单元格未设置 borders 时的继承基线（四边可分别缺省，缺的那边仍为 none）。
+   * 用于整表统一网格：写一次即覆盖全部单元格，不必逐格重复声明。
+   */
+  tableDefaultBorders?: TableCellBorders
+  /** 列表数据源路径（data 行迭代的数据数组） */
+  dataSource?: string
+  /** @deprecated 兼容存量表格模型；列表数据源优先使用 dataSource */
+  fields?: ElementFieldBinding[]
+  formatter?: string
+  styler?: string
+  rowStyler?: string
+  // 长文本特有：首行缩进，单位 em（随字号，textFit='shrink' 缩小后缩进同步变窄）
+  longTextIndent?: number
+  // ─── 流式列表（flowList）特有 ───
+  /**
+   * 每行列数：必须由模板作者指定，不随内容自动算（见 specs 第八节第 1 项）。
+   * 列数 × 单元宽放不进元素框时属性台只提示、不改用户填的数（第 3 项口径）。
+   */
+  flowColumns?: number
+  /** 行高（mm，最小高语义：内容高于行高时该行撑高，与表格行高同口径） */
+  flowRowHeight?: number
+  /** 单元横向间距（mm）；纵向不留缝，行距由行高承担 */
+  flowGapX?: number
+  /** 内容过长时自动跨列（占位式：吃掉 N 个列位，当前行剩不够就整个挪到下一行行首）；缺省关 */
+  flowAutoSpan?: boolean
+  /**
+   * 最多跨几列：仅在 flowAutoSpan 为真时生效。上限钳到「每行列数」——这是本元素唯一
+   * 会改用户填值的行为，与 flowColumns 冲突时按列数顶回（specs 第八节第 9 项）。
+   */
+  flowMaxSpan?: number
+  /**
+   * 容器布局模式：缺省 'fixed'（固定设计高度、一框一页，存量模板无需迁移）；
+   * 'dynamic' 容器高度由内容撑开、内容满页后按行续页，每片输出完整边框容器。
+   * 非法值读取时按 'fixed' 处理（resolveFlowLayoutMode）。
+   */
+  flowLayoutMode?: import('../render/flow-list.js').FlowLayoutMode
+  /** 动态容器四边内边距（mm），缺省 0；负值与非有限值按 0 处理。仅 dynamic 模式生效 */
+  flowPaddingTop?: number
+  flowPaddingRight?: number
+  flowPaddingBottom?: number
+  flowPaddingLeft?: number
+  // 扩展元素专属属性不写在主体里：插件包经 `declare module` 对本接口声明合并注入，
+  // 运行时由插件 optionMeta / binding.bind 解释（设计文档 §3.5 / §3.2）。
+}
+
+/** 元素类型元数据 */
+export interface PrintElementTypeMeta {
+  title?: string
+  type: ElementType
+  editable?: boolean
+  formatter?: string
+  styler?: string
+}
+
+/** 序列化元素数据 */
+export interface PrintElementData {
+  id?: string
+  type?: ElementType
+  options: ElementOptions
+  printElementType: PrintElementTypeMeta
+}
+
+/** 水印配置 */
+export interface WatermarkOptions {
+  /** 水印模式：fixed=固定文本，binding=绑定字段 */
+  mode?: 'fixed' | 'binding'
+  /** 固定文本（mode=fixed 时使用） */
+  content?: string
+  /** 绑定字段（mode=binding 时使用） */
+  binding?: string
+  /** 测试值（设计态预览使用） */
+  testData?: string
+  /** 旋转角度 */
+  rotate?: number
+  /** 颜色 */
+  color?: string
+  /** 透明度 */
+  opacity?: number
+  /** 显示时间戳 */
+  timestamp?: boolean
+  /** 时间格式（timestamp=true 时使用，token 支持 YYYY/MM/DD/HH/mm/ss） */
+  format?: string
+  /** 平铺瓦片宽度（px，控制水印密度：越小越密，默认 260，下限 140） */
+  tileWidth?: number
+  /** 平铺瓦片高度（px，控制水印密度：越小越密，默认 180，下限 100） */
+  tileHeight?: number
+}
+
+/** 运行时元素（设计器中带状态） */
+export interface RuntimeElement {
+  id: string
+  options: ElementOptions
+  printElementType: PrintElementTypeMeta
+  selected?: boolean
+  /** 运行时所属区域，序列化时剥离，缺省视为 content */
+  zone?: ElementZone
+}
+
+/** 业务字段（宿主查询后传入，核心不内置字段字典） */
+export interface PrintBusinessField {
+  id?: string
+  fieldKey: string
+  fieldLabel: string
+  /** 字段类型；'list' 表示明细列表字段（用于表格数据源选择） */
+  fieldType: string
+  sortOrder: number
+}
+
+/**
+ * 绑定位置描述（用于属性面板自动渲染绑定控件）
+ */
+export interface BindingDescriptor {
+  /** 绑定的属性路径（如 'options.formatter'、'options.tableRows[0].cells[0].formatter'） */
+  targetPath: string
+  /** 显示名称 */
+  label: string
+  /** 数据源上下文 */
+  dataSource: 'main' | 'list' | 'subtotal' | 'summary'
+  /** 绑定的列表字段（仅表格行需要） */
+  listField?: string
+  /** 提示文本 */
+  placeholder?: string
+  /** 是否允许清空 */
+  clearable?: boolean
+}
+// ─── 宿主能力注入：开源核心不直接发起网络请求，以下能力由宿主实现后注入 ───
+
+/** 图片上传适配器：宿主上传文件并返回可访问的图片 URL */
+export type UploadImageFn = (file: File) => Promise<string>
+
+/**
+ * 设计背景图上传适配器（由宿主实现注入）。
+ * 入参为用户选择的图片文件；返回值必须是可直接 <img src> 访问的完整图片路径。
+ * 与 UploadImageFn 语义独立：不配合 baseUrl，不要求相对路径。
+ */
+export type UploadDesignBackgroundFn = (file: File) => Promise<string>

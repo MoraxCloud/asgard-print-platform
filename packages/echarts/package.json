@@ -1,0 +1,71 @@
+{
+  "name": "@worm-print-platform/echarts",
+  "version": "1.5.0",
+  "type": "module",
+  "description": "打印模板 ECharts 图表元素可选包：SSR/浏览器 SVG 渲染器、页面执行器与设计器图表扩展（主包不依赖图表库）",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "require": "./dist/node.cjs"
+    },
+    "./kit": {
+      "types": "./dist/kit.d.ts",
+      "import": "./dist/kit.js",
+      "require": "./dist/kit.cjs"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js",
+      "require": "./dist/ui.cjs"
+    },
+    "./browser/executor.iife": {
+      "types": "./dist/executor.iife.global.d.ts",
+      "default": "./dist/executor.iife.global.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "worm <liu_long_qqcom@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitee.com/liulong_oschina/worm-print-platform.git"
+  },
+  "readme": "README.md",
+  "keywords": [
+    "print",
+    "template",
+    "echarts",
+    "chart",
+    "designer",
+    "svg"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && tsup && node ../../scripts/inject-license-banner.mjs dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@worm-print-platform/core": "^1.5.0",
+    "@worm-print-platform/plugin-kit": "^1.5.0",
+    "echarts": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "happy-dom": "^20.10.6",
+    "tsup": "^8.0.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.9"
+  }
+}

@@ -1,0 +1,113 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { ConfigStore, DEFAULT_CONFIG, parseConfig, generatePairingToken } from './config.js'
+
+let dir: string
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), 'wpc-config-'))
+})
+afterEach(() => rmSync(dir, { recursive: true, force: true }))
+
+describe('parseConfig', () => {
+  it('空值返回默认配置', () => {
+    expect(parseConfig(undefined)).toEqual(DEFAULT_CONFIG)
+    expect(parseConfig(null)).toEqual(DEFAULT_CONFIG)
+    expect(parseConfig('x')).toEqual(DEFAULT_CONFIG)
+  })
+
+  it('合法字段合并，非法/越界字段回退默认', () => {
+    const cfg = parseConfig({
+      port: 9090,
+      autoStart: true,
+      logLevel: 'debug',
+      securityEnabled: true,
+      allowedOrigins: ['https://a.com'],
+      pairingToken: 'tok',
+    })
+    expect(cfg).toMatchObject({
+      port: 9090,
+      autoStart: true,
+      logLevel: 'debug',
+      securityEnabled: true,
+    })
+    expect(cfg.allowedOrigins).toEqual(['https://a.com'])
+
+    const fallback = parseConfig({
+      port: 80,
+      logLevel: 'verbose',
+      autoStart: 'yes',
+      allowedOrigins: ['x', 12],
+    })
+    expect(fallback.port).toBe(DEFAULT_CONFIG.port)
+    expect(fallback.logLevel).toBe('info')
+    expect(fallback.autoStart).toBe(false)
+    expect(fallback.allowedOrigins).toEqual([])
+  })
+
+  it('保留 PDF 配置：默认关闭、目录为空；合法值透传、类型不符回退', () => {
+    expect(DEFAULT_CONFIG.keepGeneratedPdf).toBe(false)
+    expect(DEFAULT_CONFIG.pdfOutputDir).toBe('')
+
+    const on = parseConfig({ keepGeneratedPdf: true, pdfOutputDir: '  /Users/x/PrintPdf  ' })
+    expect(on.keepGeneratedPdf).toBe(true)
+    expect(on.pdfOutputDir).toBe('/Users/x/PrintPdf')
+
+    const bad = parseConfig({ keepGeneratedPdf: 'yes', pdfOutputDir: 12 })
+    expect(bad.keepGeneratedPdf).toBe(false)
+    expect(bad.pdfOutputDir).toBe('')
+  })
+
+  it('出纸方式不再是配置项：旧文件里的 printRoute 被忽略且不落回', () => {
+    const parsed = parseConfig({ printRoute: 'html', logLevel: 'info' })
+    expect('printRoute' in parsed).toBe(false)
+    expect(parsed.logLevel).toBe('info')
+  })
+
+  it('mcpEnabled：默认 false、布尔透传、类型不符回退默认', () => {
+    expect(DEFAULT_CONFIG.mcpEnabled).toBe(false)
+    expect(parseConfig({ mcpEnabled: true }).mcpEnabled).toBe(true)
+    expect(parseConfig({ mcpEnabled: 'yes' }).mcpEnabled).toBe(false)
+    // 旧配置缺字段不报错
+    expect(parseConfig({ port: 19001 }).mcpEnabled).toBe(false)
+  })
+})
+
+describe('generatePairingToken', () => {
+  it('返回 64 位十六进制且两次不同', () => {
+    const a = generatePairingToken()
+    expect(a).toMatch(/^[0-9a-f]{64}$/)
+    expect(a).not.toBe(generatePairingToken())
+  })
+})
+
+describe('ConfigStore', () => {
+  it('文件不存在时 load 返回默认值并落盘', () => {
+    const file = join(dir, 'config.json')
+    const store = new ConfigStore(file)
+    expect(store.load()).toEqual(DEFAULT_CONFIG)
+    expect(existsSync(file)).toBe(true)
+  })
+
+  it('update 合并并持久化，新实例可读到', () => {
+    const file = join(dir, 'config.json')
+    const store = new ConfigStore(file)
+    store.load()
+    store.update({ port: 18000, autoStart: true })
+    const again = new ConfigStore(file)
+    expect(again.load()).toMatchObject({ port: 18000, autoStart: true })
+    // 文件是合法 JSON
+    expect(() => JSON.parse(readFileSync(file, 'utf-8'))).not.toThrow()
+  })
+
+  it('mcpEnabled round-trip：false→true→false 全程保留合法配置', () => {
+    const file = join(dir, 'config.json')
+    const store = new ConfigStore(file)
+    store.load()
+    store.update({ mcpEnabled: true })
+    expect(new ConfigStore(file).load().mcpEnabled).toBe(true)
+    store.update({ mcpEnabled: false })
+    expect(new ConfigStore(file).load().mcpEnabled).toBe(false)
+  })
+})

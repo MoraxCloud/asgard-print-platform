@@ -1,0 +1,84 @@
+/* 派生泄漏修正层：由 scripts/gen-styles.mjs 追加到 src/styles/designer.css 末尾。
+ *
+ * 背景：canvas 的 scoped 样式编译成 `.foo[data-v-hash]`，派生时剥掉作用域属性后
+ * 规则会**跨组件命中**同名类；canvas 运行时却不会。这类差异 DOM 断言看不出来，
+ * 只能靠成对截图 + computed style 实测（口径见 packages/print-common/PARITY.md §〇）。
+ *
+ * 维护：canvas 改样式后重跑 `node demos/scripts/style-scope-audit.mjs` 列出候选，
+ * 再用 `node demos/scripts/tiling-parity.mjs`（含本区断言）与成对截图确认是否需要在下方补条目。
+ * 每条都写清 canvas 侧的实测值，不要凭 selector 猜。
+ */
+
+/* PropertyPanel.vue 的 scoped 规则：拼版区段（TilingConfig）在 canvas 里拿不到它们
+   → canvas 实测：.margin-grid / .custom-size-grid 都是 display:block 单列堆叠，
+     .custom-size-x 是 inline 且继承正文色（rgb(42,46,55)），不是被排成三列网格。
+     注意要把 grid-template-columns / gap 的计算值一并还原：对拍断言比的是 computed style，
+     只改 display 时这两项仍会带着被泄漏的值。 */
+.tiling-config .margin-grid {
+  display: block;
+  grid-template-columns: none;
+  gap: normal;
+}
+.tiling-config .custom-size-grid {
+  display: block;
+  grid-template-columns: none;
+  gap: normal;
+}
+.tiling-config .custom-size-x {
+  display: inline;
+  min-width: 0;
+  color: inherit;
+}
+
+/* WatermarkConfig.vue 的 scoped `.pd-hint{margin-left:8px;color:#909399;min-width:32px}`
+   与 PropertyPanel.vue 的 scoped `.pd-hint{margin:2px 0 6px;color:muted}` 在 canvas 里各管自己组件的节点，
+   派生后互相覆盖：canvas 实测「非水印区段」的提示是 min-width:auto、margin-left:0、muted 色；
+   「水印区段」的提示是 margin-left:8px、#909399、min-width:32px。以下按这两个实测态还原
+   （注意 margin 简写在后者会把 margin-left 打回 0，所以水印那条必须排在后面）。 */
+.pd-hint {
+  min-width: auto;
+}
+.watermark-config .pd-hint {
+  min-width: 32px;
+  margin-left: 8px;
+  color: #909399;
+}
+
+/* 同上：PropertyPanel 的 muted 色会盖掉 TilingConfig 自己的错误/摘要配色
+   → canvas 实测：拼版错误行 #f56c6c 红字、摘要行 --pd-text-regular。 */
+.tiling-config .tiling-error {
+  color: #f56c6c;
+}
+.tiling-config .tiling-summary {
+  color: var(--pd-text-regular, #606266);
+}
+
+/* 泄漏修正：canvas 顶部栏的 [data-tip] { position: relative } 是按钮 tooltip 的基座，
+   剥掉 [data-v-*] 后会连带命中属性台里带 data-tip 的 .pd-help，把气泡基准从「标签左边缘」
+   挪成「图标自身」——长标签时气泡右端会顶出属性台被 overflow:hidden 裁掉。
+   canvas 侧 .pd-help 本就是 static（基准交给 .pd-label），这里按 canvas 实测还原。 */
+.pd-help {
+  position: static;
+}
+
+/* 同一条泄漏也命中气泡本体：[data-tip]::after 的 bottom/left/transform/padding/white-space/z-index
+   与 canvas 属性台的气泡形态不同（其中 white-space:nowrap 会让 90 多字的说明变成一条超宽长条）。
+   canvas 侧这些声明带 [data-v-*] 只作用于顶部栏按钮，故按 native-controls.css 的 .pd-help::after
+   逐条还原（单一来源就是那份共享样式，改它时这里要同步）。 */
+.pd-help::after {
+  top: calc(100% + 6px);
+  bottom: auto;
+  left: 0;
+  transform: none;
+  padding: 5px 7px;
+  white-space: normal;
+  z-index: 120;
+}
+
+/* 泄漏修正：页签与素材台的提示由 JS 挂 fixed 浮层（.pd-hover-tip），而顶部栏的
+   [data-tip]::after 剥掉 [data-v-*] 后会在同一元素上再叠一个 CSS 气泡 → 悬停出两份提示。
+   canvas 侧该规则只作用于顶部栏按钮，这里把浮层容器内的气泡整体关掉。 */
+.page-tabs [data-tip]::after,
+.field-tree-panel [data-tip]::after {
+  content: none;
+}

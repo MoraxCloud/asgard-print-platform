@@ -1,0 +1,281 @@
+// 客户端与桌面端共享的 WebSocket 协议唯一事实源。
+// 帧：请求 { id, type, payload }；响应 { id, ok, payload | error }。
+
+export const APP_ID = 'worm-print-client'
+export const DEFAULT_PORT = 17521
+export const PORT_SCAN_LIMIT = 20
+
+/** 服务端可能返回的错误码 */
+export type ServerErrorCode =
+  | 'INVALID_REQUEST'
+  | 'UNAUTHORIZED'
+  | 'PRINTER_NOT_FOUND'
+  | 'PRINTER_OFFLINE'
+  | 'BUSY'
+  | 'RENDER_TIMEOUT'
+  | 'PRINT_FAILED'
+  | 'SESSION_NOT_FOUND'
+  | 'SESSION_DISCONNECTED'
+  | 'REVISION_CONFLICT'
+  | 'INVALID_TEMPLATE'
+  | 'INTERNAL'
+
+/** SDK 本地产生的错误码（服务端不会发送） */
+export type ClientErrorCode = 'CLIENT_TIMEOUT' | 'CLIENT_NOT_RUNNING'
+
+export type ProtocolErrorCode = ServerErrorCode | ClientErrorCode
+
+// ─── 基础帧 ───
+
+export interface ClientRequest<T = unknown> {
+  id: string
+  type: string
+  payload: T
+}
+
+export interface ServerOk<T = unknown> {
+  id: string
+  ok: true
+  payload: T
+}
+
+export interface ServerError {
+  id: string
+  ok: false
+  error: { code: ServerErrorCode; message: string }
+}
+
+export type ServerResponse<T = unknown> = ServerOk<T> | ServerError
+
+/** 无法解析的服务端消息 */
+export interface MalformedMessage {
+  malformed: true
+}
+
+// ─── 业务消息 payload ───
+
+export interface PrinterInfo {
+  name: string
+  isDefault: boolean
+  /** 系统返回的打印机状态描述（如 idle、offline），无信息时为空串 */
+  status: string
+}
+
+export interface HelloRequestPayload {}
+
+export interface HelloResponsePayload {
+  app: typeof APP_ID
+  version: string
+  port: number
+}
+
+export interface PrintersListResponsePayload {
+  printers: PrinterInfo[]
+}
+
+/** 打印参数；长度单位均为微米（1mm = 1000μm） */
+export interface PrintOptions {
+  /** 缺省走系统默认打印机 */
+  printerName?: string
+  copies?: number
+  /** 打印机驱动内已配置纸型名，针式打印机优先使用 */
+  paperName?: string
+  /**
+   * 纸张覆盖项（微米）。
+   * - 普通模板：缺省（或仅给 width）时以模板自带纸张（getPaperDimensions）为准；
+   * - 连续纸模板（templateJson.paperSize === 'CONTINUOUS'）：高度缺省或 <=0 时按渲染探针
+   *   测得的内容高度＋连续纸底边距推导实际纸高；显式 height>0 为配置覆盖（逃生门）。
+   *   宽度缺省取模板 customWidth（默认 80mm）。
+   */
+  paperSize?: { width?: number; height?: number }
+  landscape?: boolean
+  /**
+   * 页边距覆盖（微米）；缺省使用模板 margins。
+   * 连续纸的末尾留白由模板连续纸底边距（默认 0）控制，已计入推导纸高。
+   */
+  margins?: { top: number; bottom: number; left: number; right: number }
+  color?: boolean
+  pageRanges?: Array<{ from: number; to: number }>
+}
+
+/** print.submit 请求 payload；templateJson 结构由 core 定义，这里保持松散耦合 */
+export interface PrintSubmitRequest {
+  templateJson: Record<string, unknown>
+  /** 业务数据：对象=单份；非空对象数组=批量（最多 500 份，合并为一个作业） */
+  printData?: Record<string, unknown> | Array<Record<string, unknown>>
+  /** 相对路径图片资源解析基址 */
+  baseUrl?: string
+  /** 相对路径字体资源解析基址；缺省回落 baseUrl（客户端必须能访问解析后的地址） */
+  fontBaseUrl?: string
+  /** 模板名称（业务侧元数据，用于客户端任务记录展示，不参与渲染） */
+  templateName?: string
+  print: PrintOptions
+}
+
+export interface PrintSubmitResponsePayload {
+  jobId: string
+}
+
+/**
+ * 浏览器侧预渲染结果（@worm-print-platform/core/browser 的 renderHtmlPages 输出子集）。
+ * 业务页在浏览器内完成两遍渲染后，把最终 HTML 直接提交给客户端静默打印，
+ * 客户端不再持有/执行模板渲染内核。
+ */
+export interface RenderedHtmlPages {
+  /** 最终多页 HTML（连续纸纸高已写入 @page/.print-page） */
+  html: string
+  /** 最终纸张尺寸（mm；连续纸为探针推导高度） */
+  paperMm: { width: number; height: number }
+  /** 模板是否连续纸 */
+  continuous?: boolean
+  /** 总页数（客户端任务记录用，可选） */
+  pageCount?: number
+}
+
+/** print.submitHtml 请求 payload：浏览器预渲染 HTML 直提交通道 */
+export interface PrintSubmitHtmlRequest {
+  /** 最终多页 HTML（必须是 core 同构管线产出的完整文档） */
+  html: string
+  /** 最终纸张尺寸（mm） */
+  paperMm: { width: number; height: number }
+  /** 模板是否连续纸（影响纸张覆盖语义，缺省 false） */
+  continuous?: boolean
+  /** 总页数（可选，任务记录展示） */
+  pageCount?: number
+  /** 模板名称（业务侧元数据，用于客户端任务记录展示，不参与渲染） */
+  templateName?: string
+  print: PrintOptions
+}
+
+// ─── 消息 type 常量 ───
+
+export const MESSAGE_TYPES = {
+  HELLO: 'hello',
+  PRINTERS_LIST: 'printers.list',
+  PRINT_SUBMIT: 'print.submit',
+  PRINT_SUBMIT_HTML: 'print.submitHtml',
+  TEMPLATE_ATTACH: 'template.attach',
+  TEMPLATE_DETACH: 'template.detach',
+  TEMPLATE_GET: 'template.get',
+  TEMPLATE_APPLY: 'template.apply',
+} as const
+
+/** 桌面端主动请求的 id 前缀：与浏览器侧请求 id（现有格式）互不碰撞 */
+export const SERVER_REQUEST_ID_PREFIX = 'srv-'
+
+// ─── 编解码 ───
+
+let seq = 0
+function nextId(): string {
+  seq = (seq + 1) % Number.MAX_SAFE_INTEGER
+  return `${Date.now().toString(36)}-${seq.toString(36)}`
+}
+
+/** 编码请求帧为 JSON 字符串 */
+export function encodeRequest<T>(type: string, payload: T): string {
+  const frame: ClientRequest<T> = { id: nextId(), type, payload }
+  return JSON.stringify(frame)
+}
+
+/** 解码服务端消息；任何非法输入统一返回 { malformed: true }，不抛异常 */
+export function decodeServerMessage(raw: string): ServerResponse | MalformedMessage {
+  let data: unknown
+  try {
+    data = JSON.parse(raw)
+  } catch {
+    return { malformed: true }
+  }
+  if (typeof data !== 'object' || data === null) return { malformed: true }
+  const obj = data as Record<string, unknown>
+  if (typeof obj.id !== 'string' || typeof obj.ok !== 'boolean') return { malformed: true }
+  if (obj.ok) {
+    return { id: obj.id, ok: true, payload: (obj.payload ?? {}) as unknown }
+  }
+  const err = obj.error as Record<string, unknown> | undefined
+  if (!err || typeof err.code !== 'string' || typeof err.message !== 'string') {
+    return { malformed: true }
+  }
+  return {
+    id: obj.id,
+    ok: false,
+    error: { code: err.code as ServerErrorCode, message: err.message },
+  }
+}
+
+// ─── 双向协议：桌面端 → 浏览器请求（模板会话） ───
+
+/**
+ * 服务端主动下发的请求帧。浏览器 SDK 用 onMessage 时先判
+ * `('type' in msg)`（请求）再判 `'ok' in msg`（响应），公开既有返回形状不变。
+ */
+export type IncomingServerMessage =
+  | ServerResponse
+  | ClientRequest
+  | MalformedMessage
+
+/** template.attach 请求 payload（浏览器 → 桌面端） */
+export interface TemplateAttachRequest {
+  /** 页内 16–128 位 [A-Za-z0-9_-] 随机串（sessionStorage 保存，重连复用） */
+  sessionId: string
+  /** 页面展示名，桌面端截断到 120 字符 */
+  name: string
+  /** 页面地址，桌面端只保留 origin+pathname 并截断到 512 字符 */
+  url: string
+  templateName?: string
+}
+
+export interface TemplateAttachResponsePayload {
+  sessionId: string
+}
+
+/** template.get 请求 payload（桌面端 → 浏览器） */
+export interface TemplateGetRequest {}
+
+/** template.get 响应 payload（浏览器 → 桌面端） */
+export interface TemplateGetResponsePayload {
+  sessionId: string
+  /** 当前模板 JSON 的不透明内容指纹（SHA-256 hex，不支持时退化为稳定 FNV-1a hex） */
+  revision: string
+  templateJson: unknown
+  fields?: unknown[]
+  printData?: unknown
+  templateName?: string
+}
+
+/** template.apply 请求 payload（桌面端 → 浏览器） */
+export interface TemplateApplyRequest {
+  /** 写回依据的 revision；与当前不一致时浏览器拒绝并返回 REVISION_CONFLICT */
+  baseRevision: string
+  templateJson: unknown
+  reason?: string
+}
+
+/** template.apply 响应 payload */
+export interface TemplateApplyResponsePayload {
+  /** 写回后重新计算的新 revision */
+  revision: string
+  templateJson: unknown
+  issues?: unknown[]
+  warnings?: unknown[]
+}
+
+/** 判定一帧是否为服务端（桌面端）主动请求：无 ok 字段且含 id/type/payload */
+export function isServerRequestFrame(data: unknown): data is ClientRequest {
+  if (typeof data !== 'object' || data === null) return false
+  const obj = data as Record<string, unknown>
+  return 'ok' in obj === false
+    && typeof obj.id === 'string'
+    && typeof obj.type === 'string'
+    && typeof obj.payload === 'object' && obj.payload !== null
+}
+
+/** 桌面端请求帧解码：无 ok 字段且含 id/type/payload 才算请求，其余返回 malformed */
+export function decodeServerRequest(raw: string): ClientRequest | MalformedMessage {
+  let data: unknown
+  try {
+    data = JSON.parse(raw)
+  } catch {
+    return { malformed: true }
+  }
+  return isServerRequestFrame(data) ? data : { malformed: true }
+}

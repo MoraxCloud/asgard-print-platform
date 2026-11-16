@@ -1,0 +1,33 @@
+node_modules/
+dist/
+out/
+
+# macOS 目录元数据
+.DS_Store
+
+# common 从共享源派生的构建输入（npm run styles 生成，不入库）
+packages/common/src/styles/designer.css
+packages/common/src/core/icons.ts
+
+# demos 验收产物（verify-demo.mjs 每次跑都会重新截图）
+demos/evidence/
+
+# demos 子工程直挂资产：npm install 的 postinstall 从 @worm-print-platform/common 的 dist 拷来
+demos/apps/*/public/vendor/
+demos/apps/*/dist/
+
+# demos 子工程的示例字体：单个体积 1.5~8MB 不入库，需要时自行放置
+demos/apps/*/public/fonts/
+
+# electron-builder 本地下载缓存（构建时自动生成，不入库）
+.cache/
+
+# 教学视频运行目录：本仓库无相关技能源
+.video/
+.video-*/
+
+# AI 生成图片临时目录，不入库
+vibe_images/
+
+# 本地 AI 工具状态（会话令牌、端口等），不入库
+.superpowers/

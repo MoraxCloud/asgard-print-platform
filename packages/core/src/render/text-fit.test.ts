@@ -1,0 +1,370 @@
+// 文字溢出显示形式：默认值判定、可用高度换算与渲染输出
+import { describe, it, expect } from 'vitest'
+import {
+  DEFAULT_SHRINK_MIN_FONT_SIZE_PT,
+  cellFitCapMm,
+  cellFitWidthMm,
+  cellFitKey,
+  parseCellFitKey,
+  resolveCellTextFit,
+  resolveElementTextFit,
+  resolveElementNowrap, resolveElementWhiteSpace,
+  resolveShrinkMinFontSize,
+} from './text-fit.js'
+import { generateHtml } from './html-generator.js'
+import type { TemplateData, TemplateElement, RenderRow } from './types.js'
+
+// ─── 判定 ───
+
+describe('resolveElementTextFit', () => {
+  it('未配置时按元素类型取默认：text 截断、longText 自适应行高', () => {
+    expect(resolveElementTextFit('text', {})).toBe('clip')
+    expect(resolveElementTextFit('longText', {})).toBe('autoHeight')
+    expect(resolveElementTextFit('text', undefined)).toBe('clip')
+  })
+
+  it('显式配置优先于默认值', () => {
+    expect(resolveElementTextFit('text', { textFit: 'shrink' })).toBe('shrink')
+    expect(resolveElementTextFit('longText', { textFit: 'clip' })).toBe('clip')
+  })
+
+  it('非法值回落默认', () => {
+    expect(resolveElementTextFit('text', { textFit: 'ellipsis' as never })).toBe('clip')
+  })
+})
+
+describe('resolveCellTextFit', () => {
+  it('未配置时：不换行→截断，否则自适应行高', () => {
+    expect(resolveCellTextFit({})).toBe('autoHeight')
+    expect(resolveCellTextFit({ wordWrap: true })).toBe('autoHeight')
+    expect(resolveCellTextFit({ wordWrap: false })).toBe('clip')
+    expect(resolveCellTextFit(undefined)).toBe('autoHeight')
+  })
+
+  it('显式配置优先级最高', () => {
+    expect(resolveCellTextFit({ textFit: 'shrink', wordWrap: false })).toBe('shrink')
+  })
+})
+
+describe('resolveShrinkMinFontSize', () => {
+  it('缺省与非法值回落 6pt，且不低于绝对下限 1pt', () => {
+    expect(resolveShrinkMinFontSize()).toBe(DEFAULT_SHRINK_MIN_FONT_SIZE_PT)
+    expect(resolveShrinkMinFontSize(0)).toBe(DEFAULT_SHRINK_MIN_FONT_SIZE_PT)
+    expect(resolveShrinkMinFontSize(Number.NaN)).toBe(DEFAULT_SHRINK_MIN_FONT_SIZE_PT)
+    expect(resolveShrinkMinFontSize(0.2)).toBe(1)
+    expect(resolveShrinkMinFontSize(8)).toBe(8)
+  })
+})
+
+describe('cellFitCapMm', () => {
+  const rows = [{ height: 8 }, { height: 10 }]
+
+  it('可用高度 = 行高 − 上下内边距 − 塌陷边框占位', () => {
+    expect(cellFitCapMm(rows, 0, { padding: 1 })).toBeCloseTo(6, 5)
+    // 跨行取所跨行高之和
+    expect(cellFitCapMm(rows, 0, { padding: 1, rowspan: 2 })).toBeCloseTo(16, 5)
+  })
+
+  it('未设内边距时用元素级默认值；边框按 pt 折算一半', () => {
+    // 0.75pt ≈ 0.2646mm，上下各半 → 合计 0.75pt/2 ≈ 0.1323mm
+    expect(cellFitCapMm([{ height: 8 }], 0, { borders: { top: { width: 0.75 } } }, 2)).toBeCloseTo(8 - 4 - 0.1323, 3)
+  })
+
+  it('极端值兜底为 0.5mm，不返回 0/负数', () => {
+    expect(cellFitCapMm([{ height: 1 }], 0, { padding: 5 })).toBe(0.5)
+  })
+})
+
+describe('cellFitWidthMm', () => {
+  const colWidths = [40, 60]
+
+  it('可用宽度 = 列宽 − 左右内边距 − 塌陷边框占位（与 cellFitCapMm 同口径）', () => {
+    expect(cellFitWidthMm(colWidths, 0, { padding: 1 })).toBeCloseTo(38, 5)
+    expect(cellFitWidthMm(colWidths, 1, { padding: 1 })).toBeCloseTo(58, 5)
+  })
+
+  it('跨列取所跨列宽之和', () => {
+    expect(cellFitWidthMm(colWidths, 0, { padding: 1, colspan: 2 })).toBeCloseTo(98, 5)
+  })
+
+  it('未设内边距时用元素级默认值', () => {
+    expect(cellFitWidthMm(colWidths, 0, {}, 2)).toBeCloseTo(36, 5)
+  })
+
+  it('列宽缺失时返回 0（调用方据此不启用点对齐）', () => {
+    expect(cellFitWidthMm([], 0, { padding: 1 })).toBe(0)
+    expect(cellFitWidthMm([40], 3, { padding: 1 })).toBe(0)
+  })
+
+  it('极端值兜底为 0.5mm，不返回 0/负数', () => {
+    expect(cellFitWidthMm([1], 0, { padding: 5 })).toBe(0.5)
+  })
+})
+
+describe('单元格缩小结果 key', () => {
+  it('构造与解析可逆', () => {
+    const key = cellFitKey('el-1-ab', 'st', 3, 2)
+    expect(key).toBe('el-1-ab#st#3:2')
+    expect(parseCellFitKey(key)).toEqual({ elementId: 'el-1-ab', kind: 'st', rowIndex: 3, colIndex: 2 })
+  })
+
+  it('元素级 key（无 #）与非法 key 均解析为 undefined', () => {
+    expect(parseCellFitKey('el-1-ab')).toBeUndefined()
+    expect(parseCellFitKey('el-1-ab#x#0:0')).toBeUndefined()
+    expect(parseCellFitKey('el-1-ab#b#a:b')).toBeUndefined()
+  })
+})
+
+// ─── 渲染输出 ───
+
+function templateWith(element: TemplateElement): TemplateData {
+  return {
+    paperSize: 'A4',
+    orientation: 'portrait',
+    margins: { top: 10, right: 10, bottom: 10, left: 10 },
+    header: { height: 0, elements: [] },
+    footer: { height: 0, elements: [] },
+    elements: [element],
+  }
+}
+
+function textElement(options: Record<string, any>): TemplateElement {
+  return { id: 't1', type: 'text', options: { left: 10, top: 10, width: 40, height: 8, fontSize: 12, ...options } }
+}
+
+function render(el: TemplateElement): string {
+  return generateHtml(templateWith(el), [{ pageIndex: 0, sections: [{ elementId: el.id, type: 'element' }] }])
+}
+
+describe('文本元素三种形式的 HTML 输出', () => {
+  it('截断（默认）：不加高度自适应样式，仅不换行时补省略号', () => {
+    const html = render(textElement({}))
+    expect(html).not.toContain('overflow:visible')
+    expect(html).not.toContain('ellipsis')
+    expect(render(textElement({ wordWrap: false }))).toContain('white-space:nowrap;text-overflow:ellipsis;')
+  })
+
+  it('自适应行高：放开裁剪且不写死高度，盒子由内容撑开（测量趟与最终趟一致）', () => {
+    const template = templateWith(textElement({ textFit: 'autoHeight' }))
+    const html = render(textElement({ textFit: 'autoHeight' }))
+    expect(html).toContain('overflow:visible;')
+    expect(html).not.toContain('height:8mm')
+    // 测量趟同样不写死高度，实测高度即内容高度
+    const measureHtml = generateHtml(template, [], undefined, { isMeasurementPass: true })
+    expect(measureHtml).toContain('data-measure-id="t1"')
+    expect(measureHtml).not.toContain('height:8mm')
+  })
+
+  it('自动缩小：容器保持裁剪，带测量趟所需标记与下限字号', () => {
+    const html = render(textElement({ textFit: 'shrink', shrinkMinFontSize: 8 }))
+    expect(html).toContain('data-fit="shrink"')
+    expect(html).toContain('data-fit-key="t1"')
+    expect(html).toContain('data-fit-base="12"')
+    expect(html).toContain('data-fit-min="8"')
+    expect(html).not.toContain('overflow:visible')
+  })
+
+  it('回写的自动缩小字号覆盖设计字号渲染', () => {
+    const html = render(textElement({ textFit: 'shrink', _fitFontSize: 7.25 }))
+    expect(html).toContain('font-size:7.25pt')
+    expect(html).not.toContain('font-size:12pt')
+  })
+})
+
+describe('表格单元格三种形式的 HTML 输出', () => {
+  function tableElement(cellPatch: Record<string, any> = {}, opts: Record<string, any> = {}): TemplateElement {
+    return {
+      id: 'tb1',
+      type: 'table',
+      options: {
+        left: 10, top: 10, width: 60, height: 16,
+        tableColWidths: [30, 30],
+        tableDefaultFontSize: 10,
+        tableDefaultPadding: 1,
+        _renderRows: [
+          { type: 'header', height: 8, cells: [{ content: '标题', rowspan: 1, colspan: 1, merged: false }] },
+          { type: 'data', height: 8, cells: [{ content: '内容', rowspan: 1, colspan: 1, merged: false, ...cellPatch }] },
+        ] as RenderRow[],
+        ...opts,
+      },
+    }
+  }
+
+  it('自适应行高（默认）：直接输出文本，不加定高容器', () => {
+    const html = render(tableElement())
+    expect(html).toContain('>内容</td>')
+    expect(html).not.toContain('cell-fit')
+  })
+
+  it('截断：内容包定高容器，max-height 取可用高度', () => {
+    const html = render(tableElement({ textFit: 'clip' }))
+    expect(html).toContain('<div class="cell-fit" style="max-height:6mm;overflow:hidden">内容</div>')
+  })
+
+  it('截断 + 不换行：追加省略号声明', () => {
+    const html = render(tableElement({ textFit: 'clip', wordWrap: false }))
+    expect(html).toContain('max-height:6mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis')
+  })
+
+  it('自动缩小：带行/列定位 key 与可用高度，供测量趟回写字号', () => {
+    const html = render(tableElement({ textFit: 'shrink' }))
+    expect(html).toContain('data-fit="shrink"')
+    expect(html).toContain('data-fit-key="tb1#b#1:0"')
+    expect(html).toContain('data-fit-mm="6"')
+    expect(html).toContain('data-fit-base="10"')
+  })
+
+  it('回写的字号优先于单元格/元素级字号', () => {
+    const html = render(tableElement({ textFit: 'shrink', fontSize: 10, fittedFontSize: 6.5 }))
+    expect(html).toContain('font-size:6.5pt')
+  })
+})
+
+// ─── 保留换行符档（#IKPXQL 需求2：元素里的 \n 与连续空格上纸）───
+
+describe('resolveElementNowrap（三端共用的不换行判据）', () => {
+  it('只有显式 false 才算关；缺省 / true / 字符串都不算', () => {
+    expect(resolveElementNowrap({ wordWrap: false })).toBe('nowrap')
+    expect(resolveElementNowrap({})).toBeUndefined()
+    expect(resolveElementNowrap(undefined)).toBeUndefined()
+    expect(resolveElementNowrap({ wordWrap: true })).toBeUndefined()
+    expect(resolveElementNowrap({ wordWrap: 'false' as never })).toBeUndefined()
+  })
+
+  it('与「保留换行符」并存时判据不打架：单行优先由白空格判据让位实现，nowrap 照常出', () => {
+    expect(resolveElementNowrap({ wordWrap: false, keepLineBreaks: true })).toBe('nowrap')
+    expect(resolveElementWhiteSpace({ wordWrap: false, keepLineBreaks: true })).toBeUndefined()
+  })
+})
+
+describe('resolveElementWhiteSpace', () => {
+  it('缺省不出声明（存量模板逐字不变的前提）', () => {
+    expect(resolveElementWhiteSpace({})).toBeUndefined()
+    expect(resolveElementWhiteSpace(undefined)).toBeUndefined()
+    expect(resolveElementWhiteSpace({ keepLineBreaks: false })).toBeUndefined()
+  })
+
+  it('非 true 的值不算打开（手写 JSON 塞字符串也不生效）', () => {
+    expect(resolveElementWhiteSpace({ keepLineBreaks: 'yes' as never })).toBeUndefined()
+    expect(resolveElementWhiteSpace({ keepLineBreaks: 1 as never })).toBeUndefined()
+  })
+
+  it('打开 → pre-wrap', () => {
+    expect(resolveElementWhiteSpace({ keepLineBreaks: true })).toBe('pre-wrap')
+  })
+
+  it('与「自动换行」冲突时让位：wordWrap=false 即单行优先', () => {
+    expect(resolveElementWhiteSpace({ keepLineBreaks: true, wordWrap: false })).toBeUndefined()
+    expect(resolveElementWhiteSpace({ keepLineBreaks: true, wordWrap: true })).toBe('pre-wrap')
+  })
+})
+
+describe('保留换行符的出纸落值', () => {
+  it('text：打开才出 white-space:pre-wrap，缺省不出', () => {
+    expect(render(textElement({}))).not.toContain('white-space')
+    expect(render(textElement({ keepLineBreaks: true }))).toContain('white-space:pre-wrap;')
+  })
+
+  it('longText：缺省 fit 是 autoHeight，elementFitStyle 会先 return——放错位置这条就红', () => {
+    const html = render(textElement({}) as never) // 正对照：普通 text 无该声明
+    expect(html).not.toContain('pre-wrap')
+    const long = { ...textElement({ keepLineBreaks: true }), type: 'longText' } as TemplateElement
+    const longHtml = render(long)
+    expect(longHtml).toContain('overflow:visible;')        // 自适应行高仍在
+    expect(longHtml).toContain('white-space:pre-wrap;')    // 新档没被 autoHeight 分支吞掉
+  })
+
+  it('打开「不换行」时新档让位：出 nowrap、不出 pre-wrap（源序与判据双保险）', () => {
+    const html = render(textElement({ keepLineBreaks: true, wordWrap: false }))
+    expect(html).toContain('white-space:nowrap;text-overflow:ellipsis;')
+    expect(html).not.toContain('pre-wrap')
+  })
+
+  it('与首行缩进共存：两条声明成对出现在同一个 style 里', () => {
+    const html = render({ ...textElement({ keepLineBreaks: true, longTextIndent: 2 }), type: 'longText' } as TemplateElement)
+    expect(html).toContain('text-indent:2em;')
+    expect(html).toContain('white-space:pre-wrap;')
+  })
+
+  it('表格不消费元素级新档：误挂到表格 options 上也逐字不变（负面对照）', () => {
+    const mkTable = (extra: Record<string, any>): TemplateElement => ({
+      id: 'tbK',
+      type: 'table',
+      options: {
+        left: 10, top: 10, width: 60, height: 16,
+        tableColWidths: [30, 30],
+        _renderRows: [
+          { type: 'header', height: 8, cells: [{ content: '标题', rowspan: 1, colspan: 1, merged: false }] },
+          { type: 'data', height: 8, cells: [{ content: '内容', rowspan: 1, colspan: 1, merged: false }] },
+        ] as RenderRow[],
+        ...extra,
+      },
+    })
+    const plain = render(mkTable({}))
+    // 单元格仍拿它自己那套成对声明，元素级 keepLineBreaks 不改表格分支一个字节
+    expect((plain.match(/white-space:pre-wrap/g) ?? []).length).toBeGreaterThan(0)
+    expect(render(mkTable({ keepLineBreaks: true }))).toBe(plain)
+  })
+})
+
+// ─── T-28：longText 缺省行高与画布/Common 对齐（此前只有出纸落回 UA normal）───
+
+describe('longText 缺省行高', () => {
+  const longEl = (options: Record<string, any> = {}): TemplateElement =>
+    ({ ...textElement(options), type: 'longText' }) as TemplateElement
+
+  it('未设 lineHeight 时出无单位 1.5（与画布 LongTextElement、common textLikeStyle 同值）', () => {
+    expect(render(longEl({}))).toContain('line-height:1.5;')
+  })
+
+  it('显式 lineHeight 仍按 pt 输出，且不重复声明', () => {
+    const html = render(longEl({ lineHeight: 8 }))
+    expect(html).toContain('line-height:8pt;')
+    expect(html).not.toContain('line-height:1.5')
+  })
+
+  it('负对照：text 未设 lineHeight 不出声明（三端本来就都是 normal）', () => {
+    expect(render(textElement({}))).not.toContain('line-height')
+  })
+
+  it('与「不换行」并存：1.5 与 nowrap 同时在场，互不顶掉', () => {
+    const html = render(longEl({ wordWrap: false }))
+    expect(html).toContain('line-height:1.5;')
+    expect(html).toContain('white-space:nowrap;text-overflow:ellipsis;')
+  })
+})
+
+// ─── T-27：长文本关「自动换行」的出纸分叉（画布/Common 都出 nowrap，出纸没出）───
+
+describe('longText 关自动换行的出纸落值', () => {
+  const longElement = (options: Record<string, any>): TemplateElement =>
+    ({ ...textElement(options), type: 'longText' })
+
+  it('缺省 fit（autoHeight）+ 关自动换行：出 nowrap，且 overflow:visible 不被挪走', () => {
+    const html = render(longElement({ wordWrap: false }))
+    expect(html).toContain('overflow:visible;')
+    expect(html).toContain('white-space:nowrap;text-overflow:ellipsis;')
+  })
+
+  it('正对照：text 关自动换行本就出 nowrap（这条一直是绿的）', () => {
+    expect(render(textElement({ wordWrap: false }))).toContain('white-space:nowrap;text-overflow:ellipsis;')
+  })
+
+  it('正对照：longText 显式截断 + 关自动换行也出 nowrap', () => {
+    const html = render(longElement({ wordWrap: false, textFit: 'clip' }))
+    expect(html).toContain('white-space:nowrap;text-overflow:ellipsis;')
+    expect(html).not.toContain('overflow:visible')
+  })
+
+  it('负对照：开着自动换行的 longText 不该被顺手塞进 nowrap', () => {
+    const html = render(longElement({}))
+    expect(html).toContain('overflow:visible;')
+    expect(html).not.toContain('nowrap')
+  })
+
+  it('单行优先：与「保留换行符」同时打开时只出 nowrap、不出 pre-wrap', () => {
+    const html = render(longElement({ wordWrap: false, keepLineBreaks: true }))
+    expect(html).toContain('white-space:nowrap;text-overflow:ellipsis;')
+    expect(html).not.toContain('pre-wrap')
+  })
+})

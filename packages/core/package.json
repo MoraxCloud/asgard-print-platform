@@ -1,0 +1,74 @@
+{
+  "name": "@worm-print-platform/core",
+  "version": "1.5.0",
+  "type": "module",
+  "description": "打印模板表达式引擎、同构渲染管线与框架无关的设计器内核（HTML 生成/分页/数据绑定/设计器模型与工具），无 Vue/React 依赖",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./designer": {
+      "types": "./dist/designer/index.d.ts",
+      "import": "./dist/designer/index.js",
+      "require": "./dist/designer/index.cjs"
+    },
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "require": "./dist/browser/index.cjs"
+    },
+    "./browser/dom-executor.iife": "./dist/dom-executor.iife.global.js",
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js",
+      "require": "./dist/client/index.cjs"
+    },
+    "./styles/designer.css": "./dist/styles/designer.css",
+    "./styles/theme.css": "./dist/styles/theme.css",
+    "./styles/icon-manifest.json": "./dist/styles/icon-manifest.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "worm <liu_long_qqcom@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitee.com/liulong_oschina/worm-print-platform.git"
+  },
+  "readme": "README.md",
+  "keywords": [
+    "print",
+    "template",
+    "expression",
+    "pagination",
+    "pdf-render-pipeline",
+    "designer"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/copy-styles.mjs && node ../../scripts/inject-license-banner.mjs dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6",
+    "happy-dom": "^20.10.6",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "jsbarcode": "^3.12.3",
+    "qrcode": "^1.5.4"
+  }
+}

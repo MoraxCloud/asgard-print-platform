@@ -1,0 +1,135 @@
+import { z } from 'zod'
+import type { BuiltinElementType } from '@worm-print-platform/core/designer'
+import { OPTION_META, OPTION_KEYS } from '../option-meta.js'
+import type { OptionMeta } from '../units.js'
+
+/** 主体内置元素类型：与 core `BuiltinElementType` 逐字对齐（文件末尾有双向漂移闸门） */
+export const elementTypeSchema = z.enum([
+  'text', 'image', 'longText', 'table', 'flowList', 'hline', 'vline', 'rect', 'oval',
+  'barcode', 'qrcode', 'html', 'pageNumber',
+])
+
+/**
+ * 双向漂移闸门改盯 BuiltinElementType 而非 ElementType：
+ * 后者已含 `keyof PluginElementTypeMap`（插件声明合并注入的类型），
+ * 由运行时注册表动态校验，静态 enum 不该也不可能覆盖它们（设计文档 §3.5）。
+ */
+const _elementTypeValues: readonly BuiltinElementType[] = elementTypeSchema.options
+type _ElementTypeMissing = Exclude<BuiltinElementType, (typeof elementTypeSchema.options)[number]>
+const _elementTypeFull: _ElementTypeMissing extends never ? true : never = true
+void _elementTypeValues
+void _elementTypeFull
+
+/** 按元数据推导单键 schema；长度类只校验「数值 + 区间」，不做像素/毫米换算 */
+function optionValueSchema(meta: OptionMeta): z.ZodTypeAny {
+  switch (meta.kind) {
+    case 'mm':
+    case 'pt':
+    case 'count': {
+      let s: z.ZodNumber = z.number().finite()
+      if (meta.min !== undefined) s = s.min(meta.min)
+      if (meta.max !== undefined) s = s.max(meta.max)
+      return s
+    }
+    case 'bool': return z.boolean()
+    case 'color': return z.union([z.string(), z.number()])
+    case 'text': return z.union([z.string(), z.number()])
+    case 'enum': return z.enum((meta.enum ?? []) as [string, ...string[]])
+    case 'object': return z.unknown()
+  }
+}
+
+export const tableCellSchema = z.object({
+  id: z.string().optional(),
+  formatter: z.string().optional(),
+  cellType: z.enum(['text', 'barcode', 'qrcode', 'image']).optional(),
+  rowspan: z.number().int().positive().optional(),
+  colspan: z.number().int().positive().optional(),
+  merged: z.boolean().optional(),
+  mergeSameValue: z.boolean().optional(),
+}).catchall(z.unknown())
+
+export const tableRowSchema = z.object({
+  id: z.string().optional(),
+  type: z.enum(['header', 'data', 'subtotal', 'summary']).optional(),
+  height: z.number().finite().nonnegative(),
+  repeatOnPage: z.boolean().optional(),
+  cells: z.array(tableCellSchema),
+}).catchall(z.unknown())
+
+/** 元素分边边框（types.ts:261-268/308）：四边各自 { width pt, style, color } */
+const elementBorderEdgeSchema = z.object({
+  width: z.number().finite().nonnegative(),
+  style: z.string().optional(),
+  color: z.union([z.string(), z.number()]).optional(),
+}).catchall(z.unknown())
+
+const bordersSchema = z.object({
+  top: elementBorderEdgeSchema.optional(),
+  right: elementBorderEdgeSchema.optional(),
+  bottom: elementBorderEdgeSchema.optional(),
+  left: elementBorderEdgeSchema.optional(),
+}).catchall(z.unknown())
+
+/**
+ * 复合对象键的结构校验：OPTION_META 里这些键只标了 kind='object'，
+ * 整块 z.unknown() 等于放行任意结构，AI 写错也检不出来，故在此逐个覆盖。
+ * 存量兼容优先：内部字段一律 optional，只校验「出现了就必须是合法形状」。
+ */
+const STRUCTURED_OVERRIDES: Record<string, z.ZodTypeAny> = {
+  borders: bordersSchema,
+  // 表格级默认边框：与单元格 borders 同结构，逐边兜底
+  tableDefaultBorders: bordersSchema,
+  pagination: z.object({
+    pageable: z.boolean().optional(),
+    keepWithNext: z.boolean().optional(),
+  }).catchall(z.unknown()),
+  tablePagination: z.object({ enabled: z.boolean().optional() }).catchall(z.unknown()),
+  tableColWidths: z.array(z.number().finite().nonnegative()),
+  tableRows: z.array(tableRowSchema),
+  // 扩展元素专属属性的结构校验由插件 optionMeta 与 strict 模式注册态负责
+}
+
+const optionalShape = Object.fromEntries(
+  OPTION_KEYS.map(k => [
+    k,
+    (STRUCTURED_OVERRIDES[k] ?? optionValueSchema(OPTION_META[k])).optional(),
+  ]),
+)
+
+/** 四个几何键是元素必填项，放最后展开以覆盖 optional() */
+export const elementOptionsSchema = z.object({
+  ...optionalShape,
+  left: z.number().finite(),
+  top: z.number().finite(),
+  width: z.number().finite().nonnegative(),
+  height: z.number().finite().nonnegative(),
+}).catchall(z.unknown())
+
+/**
+ * 按「元素类型 schema」构造元素 schema：默认仍是内置类型的严格 enum，
+ * 校验器可按 legacy 宽松 / strict 注册态传入不同的 type schema（设计文档 §3.4）。
+ */
+export function createPrintElementDataSchema(typeSchema: z.ZodTypeAny = elementTypeSchema) {
+  return z.object({
+    id: z.string().optional(),
+    // 类型必须落在 core 的 BuiltinElementType（或注册态）上：拼错（Text / tabel）过去整块放行，
+    // 草稿会静默产出一个渲染端不认识的元素（element-factory 走 default 分支）
+    type: typeSchema.optional(),
+    options: elementOptionsSchema,
+    printElementType: z.object({
+      type: typeSchema,
+      title: z.string().optional(),
+      editable: z.boolean().optional(),
+      formatter: z.string().optional(),
+      styler: z.string().optional(),
+    }).catchall(z.unknown()),
+  }).catchall(z.unknown())
+}
+
+export const printElementDataSchema = createPrintElementDataSchema()
+
+/** legacy 宽松通道：未知 type 交给校验器按注册态与拼写距离判定，不再由 zod 直接判死 */
+export const legacyPrintElementDataSchema = createPrintElementDataSchema(z.string())
+
+export const KNOWN_OPTION_KEYS = new Set<string>(OPTION_KEYS)

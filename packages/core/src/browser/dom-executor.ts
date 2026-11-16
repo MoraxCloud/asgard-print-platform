@@ -1,0 +1,217 @@
+// 唯一一份 DOM 执行器：浏览器进程内直接调用，服务端/客户端以 IIFE 注入后调用。
+import { renderCodeSvg } from './browser-code-renderer.js'
+import { applyTextFit } from './text-fit-dom.js'
+import type { CodeSpec, RawMeasurement } from '../print/types.js'
+
+/** 执行器版本：注入失败时用于日志定位产物不匹配 */
+export const EXECUTOR_VERSION = '2'
+
+export { applyTextFit, fitTextNode } from './text-fit-dom.js'
+
+const DEFAULT_READY_TIMEOUT_MS = 5000
+
+/** 等待文档加载、字体就绪与图片完成；任何失败都不阻断（测量有兜底） */
+export async function waitReady(win: Window, timeoutMs = DEFAULT_READY_TIMEOUT_MS): Promise<void> {
+  const doc = win.document
+  const wait = (task: Promise<unknown>): Promise<unknown> =>
+    Promise.race([task, new Promise(resolve => setTimeout(resolve, timeoutMs))])
+  const ready = (async () => {
+    if (doc.readyState !== 'complete') {
+      await wait(new Promise<void>(resolve => win.addEventListener('load', () => resolve(), { once: true })))
+    }
+    const fonts = (doc as Document & { fonts?: FontFaceSet }).fonts
+    if (fonts) {
+      // 模板声明的 webfont 必须显式加载：只等 fonts.ready 会在字体尚未进入布局时提前 resolve，
+      // 之后按兜底字体度量，分页与出图静默错版。加载失败不阻断，交给兜底栈。
+      await wait(Promise.all(declaredFontFaces(doc).map(face =>
+        fonts.load(`${face.style} ${face.weight} 16px "${face.family}"`).catch(() => undefined),
+      )))
+      if (fonts.ready) await wait(fonts.ready)
+    }
+    await wait(Promise.all(Array.from(doc.images ?? []).map(img =>
+      img.complete
+        ? Promise.resolve()
+        : new Promise<void>(resolve => {
+            img.addEventListener('load', () => resolve(), { once: true })
+            img.addEventListener('error', () => resolve(), { once: true })
+          }),
+    )))
+  })()
+  await wait(ready)
+}
+
+/** 读出文档里 @font-face 声明的族名/字重/字型（跨源样式表读不到时忽略） */
+function declaredFontFaces(doc: Document): Array<{ family: string; weight: string; style: string }> {
+  const out: Array<{ family: string; weight: string; style: string }> = []
+  const CSS_FONT_FACE_RULE = 5
+  for (const sheet of Array.from(doc.styleSheets ?? [])) {
+    let rules: CSSRuleList | undefined
+    try {
+      rules = sheet.cssRules
+    } catch {
+      continue
+    }
+    for (const rule of Array.from(rules ?? [])) {
+      if (rule.type !== CSS_FONT_FACE_RULE) continue
+      const style = (rule as CSSFontFaceRule).style
+      const family = (style.getPropertyValue('font-family') || '').replace(/^["']|["']$/g, '')
+      if (!family) continue
+      out.push({
+        family,
+        weight: style.getPropertyValue('font-weight') || '400',
+        style: style.getPropertyValue('font-style') || 'normal',
+      })
+    }
+  }
+  return out
+}
+
+/**
+ * 读取 [data-measure-id] 元素高度与表格行高（原始 CSS px）。
+ * 用 getBoundingClientRect().height 而非 offsetHeight：后者是取整整数，
+ * 38mm 会被舍成 144px（38.1mm），在内容刚好顶满分页预算时把「放得下」误判为
+ * 「放不下」，进而触发换页。亚像素精度才能反映真实布局高度。
+ */
+export function readMeasurements(doc: Document): RawMeasurement[] {
+  const result: RawMeasurement[] = []
+  doc.querySelectorAll('[data-measure-id]').forEach(node => {
+    const el = node as HTMLElement
+    const id = el.getAttribute('data-measure-id')
+    if (!id) return
+    const heightPx = el.getBoundingClientRect().height
+    const table = el.querySelector('table.print-table')
+    if (!table) {
+      // 动态流式列表：逐行实测高度走与表格同一个 rowHeightsPx 通道（按 DOM 行序）
+      const flowRows = el.querySelectorAll<HTMLElement>('.print-flow-row[data-flow-row-index]')
+      if (flowRows.length > 0) {
+        const flowRowHeightsPx: number[] = []
+        flowRows.forEach(row => flowRowHeightsPx.push(row.getBoundingClientRect().height))
+        result.push({ id, heightPx, rowHeightsPx: flowRowHeightsPx })
+        return
+      }
+      result.push({ id, heightPx })
+      return
+    }
+    const rowHeightsPx: number[] = []
+    table.querySelectorAll('tbody > tr[data-row-index]').forEach(row => {
+      rowHeightsPx.push((row as HTMLElement).getBoundingClientRect().height)
+    })
+    result.push({ id, heightPx, rowHeightsPx })
+  })
+  return result
+}
+
+/** 内容区后代相对 .print-page 顶部的最大底边（CSS px）；绝对定位元素的几何由真实引擎决定 */
+export function readContentBottom(doc: Document): number {
+  const page = doc.querySelector('.print-page') as HTMLElement | null
+  const area = doc.querySelector('.content-area') as HTMLElement | null
+  if (!page || !area) return 0
+  const pageTop = page.getBoundingClientRect().top
+  let maxBottom = 0
+  area.querySelectorAll<HTMLElement>('*').forEach(node => {
+    if (node.classList.contains('print-element')) return
+    const rect = node.getBoundingClientRect()
+    if (rect.height > 0) maxBottom = Math.max(maxBottom, rect.bottom - pageTop)
+  })
+  area.querySelectorAll<HTMLElement>('.print-element').forEach(node => {
+    const rect = node.getBoundingClientRect()
+    const marginBottom = Number.parseFloat(doc.defaultView?.getComputedStyle(node).marginBottom ?? '0') || 0
+    if (rect.height > 0) maxBottom = Math.max(maxBottom, rect.bottom - pageTop + marginBottom)
+  })
+  const areaRect = area.getBoundingClientRect()
+  if (areaRect.height > 0) maxBottom = Math.max(maxBottom, areaRect.bottom - pageTop)
+  return maxBottom
+}
+
+/** 元素在页面内的实测矩形（CSS px，相对其所属区域的左上角） */
+export interface ElementRect {
+  id: string
+  left: number
+  top: number
+  width: number
+  height: number
+  /** 坐标基准区域：content 元素相对内容区，header/footer 元素相对各自容器 */
+  zone: 'content' | 'header' | 'footer'
+}
+
+/**
+ * 读取每个 [data-element-id] 元素的实际渲染矩形（供预览回读「写的坐标 vs 实际落位」）。
+ * 坐标按区域区分基准：
+ * - 内容区元素以 .content-area 左上角为原点（有页眉时才是模板坐标，不能用页面 padding 推）；
+ * - 页眉/页脚元素分别以 .page-header / .page-footer 左上角为原点，与模板的三区坐标一致。
+ * 某个容器缺失时回退到 .print-page 内容框（减 padding），zone 仍标 'content'。
+ */
+export function readElementRects(doc: Document, pageIndex = 0): ElementRect[] {
+  const pages = doc.querySelectorAll<HTMLElement>('.print-page')
+  const page = pages[pageIndex]
+  if (!page) return []
+  const pageRect = page.getBoundingClientRect()
+  const cs = doc.defaultView?.getComputedStyle(page)
+  const padLeft = Number.parseFloat(cs?.paddingLeft ?? '0') || 0
+  const padTop = Number.parseFloat(cs?.paddingTop ?? '0') || 0
+  const result: ElementRect[] = []
+  page.querySelectorAll<HTMLElement>('[data-element-id]').forEach(node => {
+    // 表格内部 <table> 与外层容器可能同时带标识时，只取最内层（表格本身）
+    if (node.querySelector('[data-element-id]')) return
+    const id = node.getAttribute('data-element-id')
+    if (!id) return
+    const rect = node.getBoundingClientRect()
+    // closest 会向上找整棵文档树；元素都在本页下，不存在跨页命中的可能
+    const zoneOrigin = zoneOriginFor(node, pageRect, padLeft, padTop)
+    result.push({
+      id,
+      left: rect.left - zoneOrigin.left,
+      top: rect.top - zoneOrigin.top,
+      width: rect.width,
+      height: rect.height,
+      zone: zoneOrigin.zone,
+    })
+  })
+  return result
+}
+
+/** 元素所属区域的坐标基准（CSS px 坐标 + zone 标记） */
+function zoneOriginFor(
+  node: Element,
+  pageRect: DOMRect,
+  padLeft: number,
+  padTop: number,
+): { left: number; top: number; zone: ElementRect['zone'] } {
+  const of = (el: HTMLElement, zone: ElementRect['zone']): { left: number; top: number; zone: ElementRect['zone'] } => {
+    const r = el.getBoundingClientRect()
+    return { left: r.left, top: r.top, zone }
+  }
+  const header = node.closest('.page-header')
+  if (header) return of(header as HTMLElement, 'header')
+  const footer = node.closest('.page-footer')
+  if (footer) return of(footer as HTMLElement, 'footer')
+  const area = node.closest('.content-area')
+  if (area) return of(area as HTMLElement, 'content')
+  // 回退：容器缺失时用页面内容框（padding box 内侧）当内容区原点
+  return { left: pageRect.left + padLeft, top: pageRect.top + padTop, zone: 'content' }
+}
+
+/** 码值 → SVG 映射；单项失败跳过，交由 core 降级文本占位 */
+export function renderCodes(specs: CodeSpec[]): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const spec of specs) {
+    try {
+      map[spec.key] = renderCodeSvg(spec.value, spec.cellType, spec.opts)
+    } catch {
+      // 单值失败不影响其它码值
+    }
+  }
+  return map
+}
+
+/** 注入后挂在 globalThis.__wormDom 上的执行器对象 */
+export const domExecutor = {
+  version: EXECUTOR_VERSION,
+  waitReady,
+  readMeasurements,
+  readContentBottom,
+  readElementRects,
+  renderCodes,
+  /** 自动缩小（data-fit="shrink"）：须在 readMeasurements 之前调用，返回需回写的字号清单 */
+  applyTextFit,
+}
