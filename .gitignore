@@ -29,5 +29,6 @@ demos/apps/*/public/fonts/
 # AI 生成图片临时目录，不入库
 vibe_images/
 
-# 本地 AI 工具状态（会话令牌、端口等），不入库
+# 本地 AI 工具状态（会话令牌、端口、本地权限缓存），不入库
 .superpowers/
+.qoder/
