@@ -1,17 +1,19 @@
 // 示例模板库弹窗：卡片 DOM 全部由 JS 生成（无模板引擎），类名与 demo 的 TemplateGalleryDialog 一致。
 import { SAMPLES } from './templates.js'
+import { CHART_SAMPLES } from './templates-chart.js'
 import { createThumb } from './thumb.js'
 import { setVisible } from './ui.js'
 
-const GROUPS = ['全部', '单据', '标签', '小票']
+const SAMPLE_LIBRARY = [...SAMPLES, ...CHART_SAMPLES]
+const GROUPS = ['全部', '单据', '标签', '小票', '图表']
 
 /** 宿主注入的回调：读当前示例 id、应用选中示例 */
 let host = null
 let activeGroup = '全部'
 let selectedId = ''
 
-const countOf = group => (group === '全部' ? SAMPLES.length : SAMPLES.filter(s => s.group === group).length)
-const visibleSamples = () => (activeGroup === '全部' ? SAMPLES : SAMPLES.filter(s => s.group === activeGroup))
+const countOf = group => (group === '全部' ? SAMPLE_LIBRARY.length : SAMPLE_LIBRARY.filter(s => s.group === group).length)
+const visibleSamples = () => (activeGroup === '全部' ? SAMPLE_LIBRARY : SAMPLE_LIBRARY.filter(s => s.group === activeGroup))
 
 function renderTabs() {
   const $tabs = $('#gallery-tabs').empty()
@@ -52,14 +54,14 @@ function renderCards() {
 }
 
 function confirmGallery() {
-  const sample = SAMPLES.find(s => s.id === selectedId)
+  const sample = SAMPLE_LIBRARY.find(s => s.id === selectedId)
   if (sample) host.applySample(sample)
 }
 
 export function openGallery() {
   activeGroup = '全部'
-  selectedId = host.currentSampleId() || SAMPLES[0].id
-  $('#gallery-subtitle').text(`${SAMPLES.length} 个示例 · 全部使用静态数据`)
+  selectedId = host.currentSampleId() || SAMPLE_LIBRARY[0].id
+  $('#gallery-subtitle').text(`${SAMPLE_LIBRARY.length} 个示例 · 全部使用静态数据`)
   renderTabs()
   renderCards()
   setVisible('#gallery-mask', true)

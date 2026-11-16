@@ -2,6 +2,8 @@
 // 集成过程（模板 / 脚本 / 样式）全部在 src/App.vue 单文件组件里。
 import Vue from 'vue'
 import { registerAll } from '@worm-print-platform/canvas'
+// 图表插件：import 即注册——素材卡、画布出图、图形化属性面板与预览渲染全部生效
+import '@worm-print-platform/echarts/ui'
 import App from './App.vue'
 
 // ① 一次性注册 <print-designer>：样式在组件 Shadow DOM 内，宿主不需要引 css

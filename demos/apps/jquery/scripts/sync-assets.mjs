@@ -11,6 +11,7 @@ const OUT = join(APP, 'public', 'vendor')
 const FILES = [
   { from: '@worm-print-platform/canvas/dist/canvas.js', to: 'worm-print-canvas.js' },
   { from: '@worm-print-platform/canvas/dist/canvas.css', to: 'worm-print-canvas.css' },
+  { from: '@worm-print-platform/echarts/dist/echarts.js', to: 'worm-print-echarts.js' },
   { from: 'jquery/dist/jquery.min.js', to: 'jquery.min.js' },
 ]
 

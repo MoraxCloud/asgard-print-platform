@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerAll } from '@worm-print-platform/canvas'
+// 图表插件：import 即注册——素材卡、画布出图、图形化属性面板与预览渲染全部生效
+import '@worm-print-platform/echarts/ui'
 import App from './App'
 import './styles/demo-ui.css'
 import './styles/topbar-overflow.css'

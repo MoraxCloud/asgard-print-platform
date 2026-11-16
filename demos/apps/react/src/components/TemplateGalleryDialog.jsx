@@ -1,10 +1,12 @@
 // 示例模板库弹窗：版式与 demo 的 TemplateGalleryDialog 一致，点击「加载示例」唤出，选中后覆盖当前画布。
 import { useEffect, useMemo, useState } from 'react'
 import { SAMPLES } from '../templates'
+import { CHART_SAMPLES } from '../templates-chart'
 import SampleThumb from '../SampleThumb'
 
-const GROUPS = ['全部', '单据', '标签', '小票']
-const countOf = group => (group === '全部' ? SAMPLES.length : SAMPLES.filter(s => s.group === group).length)
+const SAMPLE_LIBRARY = [...SAMPLES, ...CHART_SAMPLES]
+const GROUPS = ['全部', '单据', '标签', '小票', '图表']
+const countOf = group => (group === '全部' ? SAMPLE_LIBRARY.length : SAMPLE_LIBRARY.filter(s => s.group === group).length)
 
 export default function TemplateGalleryDialog({ visible, currentSample, onClose, onApply }) {
   const [activeGroup, setActiveGroup] = useState('全部')
@@ -14,18 +16,18 @@ export default function TemplateGalleryDialog({ visible, currentSample, onClose,
   useEffect(() => {
     if (!visible) return
     setActiveGroup('全部')
-    setSelectedId(currentSample?.id || SAMPLES[0].id)
+    setSelectedId(currentSample?.id || SAMPLE_LIBRARY[0].id)
   }, [visible, currentSample])
 
   const visibleSamples = useMemo(
-    () => (activeGroup === '全部' ? SAMPLES : SAMPLES.filter(s => s.group === activeGroup)),
+    () => (activeGroup === '全部' ? SAMPLE_LIBRARY : SAMPLE_LIBRARY.filter(s => s.group === activeGroup)),
     [activeGroup],
   )
 
   if (!visible) return null
 
   const confirmGallery = () => {
-    const sample = SAMPLES.find(s => s.id === selectedId)
+    const sample = SAMPLE_LIBRARY.find(s => s.id === selectedId)
     if (sample) onApply(sample)
   }
 
@@ -34,7 +36,7 @@ export default function TemplateGalleryDialog({ visible, currentSample, onClose,
       <div className="gallery-panel" onClick={e => e.stopPropagation()}>
         <div className="gallery-head">
           <span className="gallery-title">选择示例模板</span>
-          <span className="gallery-subtitle">{SAMPLES.length} 个示例 · 全部使用静态数据</span>
+          <span className="gallery-subtitle">{SAMPLE_LIBRARY.length} 个示例 · 全部使用静态数据</span>
           <button type="button" className="gallery-close" onClick={onClose}>×</button>
         </div>
 

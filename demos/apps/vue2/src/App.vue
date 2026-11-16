@@ -5,6 +5,7 @@
 import { createDefaultTemplate } from '@worm-print-platform/canvas'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
 import { SAMPLES } from './templates'
+import { CHART_SAMPLES } from './templates-chart'
 import SampleThumb from './SampleThumb.vue'
 import { checkRenderHealth, openPdfBlob, requestServerPdf } from './render-client'
 import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-render'
@@ -71,8 +72,8 @@ export default {
     return {
       hostLinks: HOST_LINKS,
       currentHost: CURRENT_HOST,
-      samples: SAMPLES,
-      groups: ['全部', '单据', '标签', '小票'],
+      samples: [...SAMPLES, ...CHART_SAMPLES],
+      groups: ['全部', '单据', '标签', '小票', '图表'],
       // 设计器数据源
       fields: [],
       templateData: createDefaultTemplate(),

@@ -15,6 +15,7 @@
   "dependencies": {
     "@worm-print-platform/core": "file:../../../packages/core",
     "@worm-print-platform/canvas": "file:../../../packages/canvas",
+    "@worm-print-platform/echarts": "file:../../../packages/echarts",
     "jquery": "^3.7.1"
   },
   "allowScripts": {

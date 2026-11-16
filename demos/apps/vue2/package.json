@@ -12,6 +12,7 @@
   "dependencies": {
     "@worm-print-platform/core": "file:../../../packages/core",
     "@worm-print-platform/canvas": "file:../../../packages/canvas",
+    "@worm-print-platform/echarts": "file:../../../packages/echarts",
     "vue": "2.7.16"
   },
   "devDependencies": {
