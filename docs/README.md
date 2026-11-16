@@ -10,6 +10,9 @@ AI 编程工具的「集成提示词」。提示词内置技能安装引导，�
 | React 18 | [react.md](./react.md) | `<print-designer>` 自定义元素 + `addEventListener` | `demos/apps/react` | 9335 |
 | jQuery / 原生 JS | [jquery.md](./jquery.md) | UMD 直挂（无打包器，`window.WormPrintCanvas` 全局） | `demos/apps/jquery` | 9334 |
 
+老用户迁移：[migration-worm-vue3-print.md](./migration-worm-vue3-print.md)
+—— 包名映射、三条迁移路径、行为差异要点与 AI 迁移提示词。
+
 四个示例工程互跳总览页在 `:9300`，一条命令全部拉起：`npm run dev:demos:all`。
 每个 demo 的验收脚本：`node demos/scripts/verify-demo.mjs http://localhost:<端口>/`。
 
