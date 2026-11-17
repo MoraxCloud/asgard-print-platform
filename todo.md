@@ -80,3 +80,15 @@
   client 213 / canvas 455 项测试全部通过；`npm run build` 全仓成功。
 - 范围限制（保留）：仅同一纸型内横纵混排，仍拒绝 A4/A3 混用、连续纸多页、多页拼版。
 - **遗留：实体打印机逐页方向识别需目标驱动验收**（本机无对应硬件，无法自动化）。
+
+---
+
+# 插件市场（Git 仓库式分发）—— 方案已定，待实现
+
+> 记录日期 2026-11-17。完整方案见 docs/plugin-marketplace-plan.md。
+
+- 目标：索引仓库 + CLI 安装器 + qrcode 样板插件，打通「收录 → 安装 → 宿主加载」，无中心化服务端。
+- 已定决策：独立索引仓库（先在本仓 marketplace/ 目录孵化，后手工建仓）；文件安装 +
+  `.worm-print/plugins.json` 清单；新包 `@worm-print-platform/marketplace` 纳入 publish:npm；首个插件 qrcode。
+- 复用点：packages/skills 双源/稀疏检出骨架；core/plugin-kit Symbol.for 注册表；echarts 插件样板。
+- 状态：仅方案记录，未动代码。实现入口见方案文档「实施顺序」六步。
