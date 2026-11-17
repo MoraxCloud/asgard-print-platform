@@ -184,3 +184,39 @@ describe('元素四向外边距的二维分页口径', () => {
     expect(paginate(tpl, heightMap([['a', 60], ['b', 20]]))).toHaveLength(2)
   })
 })
+
+describe('单个宽元素横跨多列：自身未超纸面时不被累加预算误换页（Gitee #IKVLU4）', () => {
+  /** 80×60mm 纸、上下边距 5 → 内容高 50、预算 48；左右边距 1 */
+  function wideTemplate(wideTop: number, wideHeight: number): TemplateData {
+    return {
+      paperSize: 'CUSTOM', orientation: 'portrait',
+      customWidth: 80, customHeight: 60,
+      margins: { top: 5, right: 1, bottom: 5, left: 1 },
+      header: { height: 0, elements: [] },
+      footer: { height: 0, elements: [] },
+      elements: [
+        el('left', 'text', 0, 0, 30, 40),
+        el('qr', 'barcode', 49, 0, 30, 40),
+        el('wide', 'text', 0, wideTop, 78, wideHeight),
+      ] as any,
+    }
+  }
+
+  it('宽文本横跨左文字与右二维码、自身底边在纸内时留在首页', () => {
+    // 左文字 x[0..30] 与二维码 x[49..79] 并排（互不占高，各 40）；
+    // 宽文本 x[0..78] 同时与两者横向相交，旧 depthIn 累加 40+40=80 →
+    // remainingIn = 48-80 < 0 → 自身高 5 被误判放不下、整段挪到第 2 页。
+    // 实际宽文本底边 top40+5=45 在内容高 50 内，应留首页。
+    const pages = paginate(wideTemplate(40, 5), heightMap([['left', 40], ['qr', 40], ['wide', 5]]))
+    expect(pages).toHaveLength(1)
+    expect(pages[0].sections.map(s => s.elementId)).toEqual(['left', 'qr', 'wide'])
+    expect(pages[0].sections.find(s => s.elementId === 'wide')).toMatchObject({ renderTop: 40 })
+  })
+
+  it('宽元素自身底边确实超出纸面时不被放行，仍换页', () => {
+    // 宽文本底边 45+10=55 > 内容高 50：不适用"自身在纸内"放行，仍按累加预算换页
+    const pages = paginate(wideTemplate(45, 10), heightMap([['left', 40], ['qr', 40], ['wide', 10]]))
+    expect(pages).toHaveLength(2)
+    expect(pages[1].sections.some(s => s.elementId === 'wide')).toBe(true)
+  })
+})

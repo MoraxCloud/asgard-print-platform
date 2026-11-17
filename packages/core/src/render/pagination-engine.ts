@@ -602,6 +602,23 @@ export function paginate(
     return fullPageHeight() - depthIn(x)
   }
 
+  /**
+   * depthIn(x) 是否被「横向并排、互不相交的多列」虚增（Gitee #IKVLU4）。
+   * depthIn 把与 x 相交的已占记录高度全部累加（sum），前提是它们同列纵向堆叠；
+   * 但一个横跨多列的宽元素会同时与若干互不相交的列相交（如左侧文字 + 右侧二维码
+   * 并排），此时累加出的深度远大于任一列真实前沿，属虚假预算。
+   * 若相交记录中存在横向互不相交的两条，即判定为这种情形。
+   */
+  function inflatedByDisjointColumns(x: [number, number]): boolean {
+    const hits = occupied.filter(r => xIntersects(x, [r.x0, r.x1]))
+    for (let i = 0; i < hits.length; i++) {
+      for (let j = i + 1; j < hits.length; j++) {
+        if (!xIntersects([hits[i]!.x0, hits[i]!.x1], [hits[j]!.x0, hits[j]!.x1])) return true
+      }
+    }
+    return false
+  }
+
   /** 记下一块本列已占版面 */
   function occupy(x: [number, number], height: number): void {
     occupied.push({ x0: x[0], x1: x[1], height })
@@ -868,7 +885,16 @@ export function paginate(
       )
     }
 
-    if (elHeight <= remainingIn(x)) {
+    // #IKVLU4：首页元素按设计坐标落位（WYSIWYG）。宽元素横跨多个纵向并排、
+    // 互不相交的列时，depthIn(x) 把这些列高度相加（左列 + 右列）得出虚假深度，
+    // remainingIn 被压成负数，把底边明明在纸内的宽元素误判为放不下、整段挪到下一页。
+    // 这种「被并排多列虚增」情形下，改用元素自身绝对底边是否落在物理纸面内判断。
+    // 仅首页生效（续页为流式布局，depthIn 累加语义不变）；底边越纸面者不放行，
+    // 仍走原预算判断（底边越纸面留本页标 overflow 的既有契约不变）。
+    const fitsByOwnBottom = !pageBroken
+      && settle.outerBottom <= contentHeight
+      && inflatedByDisjointColumns(x)
+    if (fitsByOwnBottom || elHeight <= remainingIn(x)) {
       // 放得下
       place()
 
