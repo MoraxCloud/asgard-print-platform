@@ -222,7 +222,7 @@ npm run pack:client:dir
 - **外部访问如实声明**：`print_preview_template` / `print_compare_with_reference` 在客户端本地渲染、不上传数据，但模板内引用的远程图片/字体 URL 与 `file://` 资源会由隐藏窗口真实取回，故两者注解为 `openWorldHint: true`；`print_analyze_reference_image` 只按绝对路径读本地图片（限 20MB、长边 4000px、总像素 2000 万，超限在解码前拒绝），`openWorldHint` 保持 false。宿主 Agent 应把渲染类工具当作可能触网的只读操作，必要时请用户批准。
 - `print_get_open_template` / `print_patch_open_template` / `print_apply_open_template` 读写的是浏览器里**正在编辑**的实时模板：宿主页面（demo 或业务页）用浏览器 SDK `setRequestHandler` 注册 `template.get/apply` 处理器并 `attachTemplate` 签到；`apply` 带防覆盖 revision（陈旧 `baseRevision` 返回冲突，需重新读取），并拒绝 `html` 等封禁元素。同一 sessionId 跨 Origin 重连被拒，页面断开后台自动回收会话。
 
-工作流：demo 打开设计器 → 客户端开启 MCP → Agent 直连 `/mcp` 读取/修改画布模板。宿主接入方式见 [AI 接入](../../docs/中文/指南/AI接入.md)。
+工作流：demo 打开设计器 → 客户端开启 MCP → Agent 直连 `/mcp` 读取/修改画布模板。宿主接入方式见 [宿主端 MCP 集成](../../skills/worm-print-platform-integration/references/mcp-host-integration.md)。
 
 ## 连续纸（热敏/标签）纸长策略
 
