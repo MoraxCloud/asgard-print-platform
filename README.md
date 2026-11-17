@@ -6,9 +6,7 @@
 可在 Vue 2 / Vue 3 / React / jQuery / 原生 JS 等任意运行环境接入；出纸走**同构渲染管线**——
 同一份模板与数据，浏览器预览打印、服务端 PDF、桌面客户端静默打印三条链路产出完全一致。
 
-> 由 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print) 的 common 生态独立拆仓而来，
-> npm scope 迁移为 `@worm-print-platform/*`。本仓为设计器权威实现与后续维护迭代的**稳定主版本**（`1.5.x` 主线），
-> 旧仓进入维护状态。
+> npm scope 为 `@worm-print-platform/*`。本仓是设计器权威实现与后续维护迭代的**稳定主版本**（`1.5.x` 主线）。
 
 ## 当前版本与下载
 
@@ -180,8 +178,6 @@ npm run publish:canvas         # 仅补发 canvas（core / plugin-kit / canvas �
 
 - 本仓 Gitee：https://gitee.com/liulong_oschina/worm-print-platform
 - 本仓 GitHub：https://github.com/worm-longliu/worm-print-platform
-- 旧仓 worm-vue3-print（Gitee）：https://gitee.com/liulong_oschina/worm-vue3-print/tree/master
-- 旧仓 worm-vue3-print（GitHub）：https://github.com/worm-longliu/worm-vue3-print
 
 ## 抖音 & 赞赏
 

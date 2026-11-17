@@ -13,7 +13,7 @@
 
 > 这里刻意不做逻辑抽象：demo 的价值在于读者能在一个文件里看完「注册元素 → 注入模板与字段 → 听事件 → 出纸」，
 > 而不是跳到某个 shared 包里去看封装。四个工程的重复是有意为之；样式与示例库是两份同源产物，
-> 供四个工程保持一致（生成脚本留在 worm-vue3-print 主仓）。
+> 供四个工程保持一致（生成脚本随本仓库 `demos/scripts/` 维护）。
 
 `demos/shared/template-session.ts` 是**桌面客户端「AI 助手」通道**（template.attach / template.get / template.apply）
 的参考实现：页面侧接入 MCP 的完整会话生命周期（重试、revision 冲突拒绝、封禁元素拒绝、写回校验），

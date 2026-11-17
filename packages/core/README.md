@@ -72,16 +72,15 @@ const pages = paginate(bound, measured, options)
 const html = generateHtml(pages)
 ```
 
-## 在 Vue 3 项目中使用（与 `@worm-vue3-print/canvas` 配合）
+## 在 Vue 3 项目中使用（与 `@worm-print-platform/canvas/vue3` 配合）
 
-`core` 的同构渲染管线由 `@worm-vue3-print/canvas` 的 `PrintHtmlPreview` 组件内部调用，
+`core` 的同构渲染管线由 `@worm-print-platform/canvas/vue3` 的 `PrintHtmlPreview` 组件内部调用，
 浏览器端接入无需直接调用 `core` API。以下配置与仓库 `demos/apps/vue3/src/App.vue` 保持一致：
 
 ```ts
-import { PrintDesigner, PrintHtmlPreview, createDefaultTemplate } from '@worm-vue3-print/canvas'
-import type { PrintBusinessField, TemplateData } from '@worm-vue3-print/canvas'
-// 设计器控件样式（发布包唯一对外样式入口），需全局引入一次
-import '@worm-vue3-print/canvas/style.css'
+import { PrintDesigner, PrintHtmlPreview, createDefaultTemplate } from '@worm-print-platform/canvas/vue3'
+import type { PrintBusinessField, TemplateData } from '@worm-print-platform/canvas/vue3'
+// 门面样式由组件幂等注入，无需额外引 CSS
 ```
 
 ```vue

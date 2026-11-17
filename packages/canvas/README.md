@@ -9,7 +9,7 @@
 实现为零框架原生 Custom Element + Shadow DOM，**不依赖 Vue / React 等任何框架运行时**，
 作为设计器的权威实现，同时向 Vue 3、Vue 2、React、jQuery 及任意无框架宿主提供同一套能力。
 
-- 功能与布局与 Vue 3 版对齐，逐项状态见 [PARITY.md](./PARITY.md)
+- 设计器能力与逐项验收状态见 [PARITY.md](./PARITY.md)
 - 样式与图标从 **`core/src/styles` 共享源**派生（`gen-styles.mjs` 剥 `[data-v-*]` 后补主题令牌、
   `gen-icons.mjs` 读共享 `icon-manifest.json`）；`gen-styles.mjs --check` 做漂移检测
 - 运行时体积：`dist/index.js` 368.28 kB（gzip 106.68 kB），零框架依赖
@@ -21,7 +21,7 @@
 npm i @worm-print-platform/canvas @worm-print-platform/core
 ```
 
-`canvas` 与主线同号发布正式版，安装直接取 `latest`（当前主线 `1.5.1`），不需要 `@next`；`core` 装同版本即可，出纸链路也要直接用它。本包是设计器的**权威实现**、后续维护迭代的稳定主版本，四个宿主示例工程均已接入；`/vue3` 门面与 `@worm-vue3-print/canvas` 是 Vue 3 兼容轨。注意 `plugin-kit` 是本包的运行时依赖，1.5.x 起各包同号同批发版，安装时不要只锁 `core` + `canvas` 两个版本号。
+`canvas` 与主线同号发布正式版，安装直接取 `latest`（当前主线 `1.5.1`），不需要 `@next`；`core` 装同版本即可，出纸链路也要直接用它。本包是设计器的**权威实现**、后续维护迭代的稳定主版本，四个宿主示例工程均已接入；`/vue3` 门面为 Vue 3 宿主提供组件写法（vue 为可选 peer）。注意 `plugin-kit` 是本包的运行时依赖，1.5.x 起各包同号同批发版，安装时不要只锁 `core` + `canvas` 两个版本号。
 
 本页包含三种 NPM 宿主的最小接入示例：[Vue 3](#vue-3) · [Vue 2.7](#vue-27) · [React 18](#react-18)；无打包器宿主见下文「浏览器直挂」。
 
@@ -96,7 +96,7 @@ d.save()
 ```
 
 出纸链路不需要设计器，直接走 `@worm-print-platform/core`（浏览器渲染 / print-render 服务端 /
-桌面静默打印），与 canvas（Vue 3）宿主完全一致。
+桌面静默打印），三条链路与 `/vue3` 门面宿主完全一致。
 
 ## 宿主契约
 
@@ -170,7 +170,7 @@ registerElementRenderer('signature', (el) => { /* 返回 HTML 字符串或 Node 
 设计器只保留通用机制，具体元素由独立插件包提供。宿主 `import` 一次插件入口即可让素材卡、
 画布、属性台「自定义属性」页签与出纸同时生效；元素语义来自 `@worm-print-platform/core/designer`
 的插件描述符，设计器 UI 来自 `@worm-print-platform/plugin-kit` 的框架无关 `ElementUI` 契约，
-一份 UI 同时服务本包与 Vue 3 轨的 canvas。
+一份 UI 同时服务本包主入口与 `/vue3` 门面。
 
 ```js
 import { registerAll } from '@worm-print-platform/canvas'
@@ -190,8 +190,8 @@ d.designData = { trend: [{ name: '一月', value: 12 }, { name: '二月', value:
 
 ## Vue 3 兼容门面（`/vue3`）
 
-原本消费 `@worm-vue3-print/canvas` 的 Vue 3 宿主，可以只改依赖与 import 就把设计器实现换成
-零框架的本包，模板、事件回调、`ref` 方法调用与业务逻辑一行不动：
+Vue 3 宿主使用 `/vue3` 门面即可沿用组件写法（props / 事件 / `ref`），底层复用零框架的本包，
+模板、事件回调、`ref` 方法调用与业务逻辑一行不动。原本消费 `@worm-vue3-print/canvas` 的项目只需改依赖与 import：
 
 ```diff
 - "@worm-vue3-print/canvas": "..."
@@ -213,7 +213,7 @@ monorepo 源码消费的宿主还需把 Vite `resolve.alias` 与 `tsconfig.paths
 
 ### 门面负责的契约转换
 
-| Vue 组件侧（Vue 3 轨口径） | Custom Element 侧 | 门面动作 |
+| Vue 组件侧（`/vue3` 门面口径） | Custom Element 侧 | 门面动作 |
 |---|---|---|
 | `:initial-template` `:fields` `:fonts` 与函数型 `:upload-image` | `el.template` `el.fields` `el.fonts` `el.uploadImage` | 显式赋 property，绕开 `setAttribute` 把对象 / 函数字符串化 |
 | `@save="onSave"` 首参是 JSON 字符串 | `CustomEvent('save')`，json 在 `detail` | 解 `detail` 再 emit |
@@ -221,7 +221,7 @@ monorepo 源码消费的宿主还需把 Vite `resolve.alias` 与 `tsconfig.paths
 | `ref.getTemplateJson()` 返回对象 | `getTemplateJson()` 返回 JSON 字符串 | `JSON.parse` |
 | `ref.validateTemplate()` / `getGeometryWarnings()` | 同名同语义 | 直接代理 |
 
-props 变化会重新注入（与 Vue 3 轨的 `watch` 口径一致）；卸载时摘除事件监听。
+props 变化会重新注入（与门面组件写法一致）；卸载时摘除事件监听。
 
 ### 已提供的导出
 
@@ -236,15 +236,15 @@ TS 宿主沿用原写法即可通过 `vue-tsc`。
 ### 能力边界（换包前请确认）
 
 - **Vue 专属元素扩展注册表不提供**：`registerElementExtension` / `resolveElementPropertyTab`
-  等属于 Vue 3 轨 canvas 的 Vue 组件契约。自定义元素改走 `@worm-print-platform/plugin-kit`
+  等属于旧 Vue 组件形态的契约。自定义元素改走 `@worm-print-platform/plugin-kit`
   （`defineElementUI` / `registerElementUI`），官方图表用 `@worm-print-platform/echarts/ui`，见上一节。
 - `initialElements`：本包没有独立元素池，门面在未提供 `initialTemplate` 时把它并入
-  当前模板第一页的 `elements`；与 Vue 3 轨的「单独覆盖元素层」略有差别。
+  当前模板第一页的 `elements`；与旧组件形态的「单独覆盖元素层」略有差别。
 - **样式、图标与主题令牌的单一来源在 `core/src/styles`**：`gen-styles.mjs` / `gen-icons.mjs`
-  从共享源派生；Vue 3 轨反向消费同一份主题令牌，本包不依赖其构建产物。因此本仓构建顺序是
-  core → plugin-kit → canvas，与 Vue 3 轨互不阻塞。
-- **本包是设计器权威实现**，`/vue3` 门面与 `@worm-vue3-print/canvas` 是 Vue 3 兼容轨（沿用原组件写法，
-  不是新的正式方案）；新接入的宿主统一用本包主入口。
+  从共享源派生；`/vue3` 门面与 Vue 3 宿主消费同一份主题令牌，本包不依赖任何外部构建产物。
+  因此本仓构建顺序是 core → plugin-kit → canvas，宿主接入互不阻塞。
+- **本包是设计器权威实现与稳定主版本**；`/vue3` 门面是 Vue 3 宿主的一等接入方式（沿用组件写法，
+  底层复用同一份零框架设计器）。新接入的宿主按宿主框架选用本包主入口或 `/vue3` 门面。
 
 ## 在 Vue 3 / Vue 2 / React 中使用
 
@@ -254,8 +254,8 @@ TS 宿主沿用原写法即可通过 `vue-tsc`。
 
 ### Vue 3
 
-> Vue 3 项目的生产首选仍是 `@worm-vue3-print/canvas`（功能面更全）；本节面向已定用本包形态、
-> 或要与 Vue 2 / React 共用同一套注入代码的场景。
+> Vue 3 宿主可用原生 `<print-designer>` 接入本节写法，与 Vue 2 / React 共用同一套注入代码；
+> 需要沿用组件写法（props / 事件 / `ref`）时用 `/vue3` 门面，见上一节。
 
 ```js
 // vite.config.js —— SFC 编译期就要声明 print-* 是自定义元素，否则被当未注册组件
@@ -416,13 +416,13 @@ export default function App() {
    后两者**不要** `JSON.parse`。旁路取模板用 `getTemplateJson()`，它绕过拼版校验，
    保存/导出前要先调 `validateTemplate()`。
 
-## 与 canvas 版的边界
+## 本包两种接入形态的边界
 
-| | Vue 3 轨（@worm-vue3-print/canvas） | 本包（@worm-print-platform/canvas） |
+| | `/vue3` 门面 | 本包主入口 |
 |---|---|---|
-| 运行时 | Vue 3.5 | 无框架 |
-| 宿主注入 | `provide/inject`、props | element property / attribute + CustomEvent |
-| 样式 | `@worm-vue3-print/canvas/style.css` | 内置 Shadow DOM（`?inline`），无需引样式文件；light DOM 形态引 `@worm-print-platform/canvas/style.css` |
-| 适用 | Vue 3 项目 | React / Vue 2 / jQuery / 原生 |
+| 运行时 | Vue 3（可选 peer） | 无框架 |
+| 宿主注入 | props / 事件 / `ref` | element property / attribute + CustomEvent |
+| 样式 | 门面幂等注入，无需引样式文件 | 内置 Shadow DOM（`?inline`）；light DOM 形态引 `@worm-print-platform/canvas/style.css` |
+| 适用 | 沿用组件写法的 Vue 3 项目 | Vue 3 / Vue 2 / React / jQuery / 原生 |
 
-Vue 3 项目若要沿用原组件形态，可用 `/vue3` 兼容门面或 `@worm-vue3-print/canvas`（消费同一份共享样式与能力表）；新接入的宿主统一用本包主入口。
+两种形态消费同一份共享样式与能力表；新接入的宿主按宿主框架选用 `/vue3` 门面或本包主入口。

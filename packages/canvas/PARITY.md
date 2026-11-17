@@ -1,15 +1,12 @@
-# 与 Vue3 版设计器（`@worm-vue3-print/canvas`）的一致性清单
+# 设计器能力验收清单
 
-> **历史文档**：本清单是拆仓前 common 与 canvas（worm-vue3-print 仓库）的逐项对齐记录，保留供溯源。
-> 拆仓后本包（canvas）为权威实现，canvas 兼容轨见 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print)。
->
-> 本包是设计器的**权威实现**，Vue 3 的 `@worm-vue3-print/canvas` 为兼容轨（消费同一份共享样式与 core 能力表）。
+> 本清单记录本包（canvas）设计器能力的逐项验收结论，作为回归基线保留。
+> 本包是设计器的**权威实现与稳定主版本**；Vue 3 宿主经 `/vue3` 门面消费同一份共享样式与 core 能力表。
 > 验收口径：**功能清单逐项 + 截图逐张比对**（历史轮次），现为「逻辑单测 + 源码审计 + 宿主集成验收」。
-> 早期成对截图脚本（`demos/scripts/compare.mjs`，输出 `demos/evidence/compare/`，两侧同名成对如
-> `vue3-10-toolbar.png` / `common-10-toolbar.png`）依赖当时的共用壳层与 `#demo` 别名直连 `demo/src/samples/**`；
-> 壳层拆除后这批脚本已删除，结论见下方各节的「✅ / 🟡 + 说明」。
+> 早期成对截图脚本（`demos/scripts/compare.mjs`，输出 `demos/evidence/compare/`）依赖当时的共用壳层与
+> `#demo` 别名直连 `demo/src/samples/**`；壳层拆除后这批脚本已删除，结论见下方各节的「✅ / 🟡 + 说明」。
 
-状态记号：✅ 已实现且与 Vue3 版同口径 · 🟡 已实现但存在口径偏差 · ⬜ 未实现
+状态记号：✅ 已实现且符合设计口径 · 🟡 已实现但存在口径偏差 · ⬜ 未实现
 
 ## 〇、当前验收手段
 
@@ -169,7 +166,7 @@
 
 ## 八、与 canvas 的有意行为差异
 
-以下 15 条是与 Vue3 版**功能等价但实现口径不同**的点，验收时按此判定，不算回归：
+以下 15 条是**功能等价但实现口径不同**的点，验收时按此判定，不算回归：
 
 1. **快捷键的实例接管**：canvas 的 `useKeyboard` 绑在 `document`（页面任意处 Ctrl+Z 都生效）。本包也绑 `document`，但额外加一层「最后交互的实例」仲裁：宿主内 `pointerdown`/`focusin` 即接管，未有人接管时由最先连接的实例兜底，因此同页挂多个设计器不会互相抢键，而**焦点掉回 `body` 时快捷键仍然有效**（早期绑在宿主元素上，点过工具栏按钮后 Ctrl+Z/Ctrl+1 会整体失效 —— 由 ops 脚本揭穿）。判定「是否在为输入」用 `composedPath()[0]` 取 shadow 内真实 target（document 上拿到的 target 已被重定向成宿主）。
 2. **文本输入的提交时机**：canvas 用 `@input` 实时提交；Common 的属性台文本框统一用 `change`（失焦或回车提交）。原因：无框架版每次 store 变更会整体重绘属性台，边打边提交会把光标顶回开头，无法连续输入。

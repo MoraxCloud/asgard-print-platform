@@ -7,7 +7,7 @@
 | 宿主 | 消费方式 |
 | --- | --- |
 | `@worm-print-platform/canvas` | 零框架原生挂载：素材卡、画布、属性台「自定义属性」页签直接使用 UI |
-| `@worm-vue3-print/canvas` | Vue 3 桥接：`useElementExtensionRegistry` 自动生成画布组件与属性页签组件 |
+| `@worm-print-platform/canvas/vue3` | Vue 3 门面：复用同一份 UI 契约，沿用组件写法接入 |
 
 > 状态：已作为正式包发布到 npm（与主线同号，`1.5.x`），`npm i @worm-print-platform/plugin-kit` 即可；工作区内也可通过 workspace / `file:` 依赖接入。
 
@@ -69,7 +69,7 @@ registerElementUI(MY_ELEMENT_UI)
 
 `@worm-print-platform/canvas` 宿主用 `el.designData = {...}`（或 `design-data` attribute 的 JSON 串）注入示例数据，
 单对象会自动归一成 `[对象]`；`fields` 来自 `el.fields`。未注入时 `fields` 为空数组，插件应回落 `data[0]` 的键。
-Vue 3 的 `@worm-vue3-print/canvas` 属性台透传宿主的 `fields`，画布组件则透传宿主的 `printData`。
+`@worm-print-platform/canvas/vue3` 门面的属性台透传宿主的 `fields`，画布组件则透传宿主的 `printData`。
 
 ### 属性写回
 
