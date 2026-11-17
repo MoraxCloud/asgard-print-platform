@@ -1,0 +1,74 @@
+name: Create Gitee Release
+
+# 手动在 Gitee 为指定标签创建 release（不含客户端 assets）。
+# 正文取自 GitHub 同名 release；Gitee 会自动附带源码 zip/tar.gz，非客户端安装包。
+# 触发：Actions → Create Gitee Release → Run workflow，填写 tag，或
+#   gh workflow run create-gitee-release.yml -f tag=v1.5.1
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要创建 release 的标签（如 v1.5.1，需已存在于 Gitee）'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 校验标签存在
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          # 标签必须已存在于本仓（GitHub 与 Gitee 标签一致）
+          if ! git ls-remote --tags "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "refs/tags/${TAG}" | grep -q .; then
+            echo "::error::标签 $TAG 不存在，请先打标签并推送"
+            exit 1
+          fi
+
+      - name: 在 Gitee 创建 Release（无客户端 assets）
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          GITEE_OWNER="liulong_oschina"
+          GITEE_REPO="worm-print-platform"
+
+          # 取 GitHub 同名 release 的 name/body；无同名 release 时回退为标签名
+          META=$(gh api "repos/${{ github.repository }}/releases/tags/${TAG}" \
+            --jq '{name: .name, body: .body}' 2>/dev/null || echo '{}')
+          NAME=$(echo "$META" | jq -r '.name // empty')
+          BODY=$(echo "$META" | jq -r '.body // empty')
+          [ -n "$NAME" ] || NAME="$TAG"
+
+          COMMIT_SHA=$(git ls-remote "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "refs/tags/${TAG}^{}" | awk '{print $1}')
+          [ -n "$COMMIT_SHA" ] || COMMIT_SHA=$(git ls-remote "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "refs/tags/${TAG}" | awk '{print $1}')
+
+          # 用 jq 构造 JSON，避免正文含引号/换行时破坏结构（原文件的注入 bug）
+          PAYLOAD=$(jq -n \
+            --arg access_token "$GITEE_TOKEN" \
+            --arg tag_name "$TAG" \
+            --arg name "$NAME" \
+            --arg body "$BODY" \
+            --arg target_commitish "$COMMIT_SHA" \
+            '{access_token: $access_token, tag_name: $tag_name, name: $name, body: $body, target_commitish: $target_commitish, prerelease: false}')
+
+          RESP=$(curl -s -X POST \
+            "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases" \
+            -H "Content-Type: application/json;charset=UTF-8" \
+            --data-binary "$PAYLOAD")
+
+          # 若该标签 release 已存在，Gitee 会报错；给出明确提示
+          if echo "$RESP" | jq -e '.id' >/dev/null 2>&1; then
+            echo "✅ 已在 Gitee 创建 release：$TAG"
+          else
+            echo "::error::Gitee 创建 release 失败：$RESP"
+            exit 1
+          fi
