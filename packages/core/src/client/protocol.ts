@@ -124,8 +124,10 @@ export interface PrintSubmitResponsePayload {
 export interface RenderedHtmlPages {
   /** 最终多页 HTML（连续纸纸高已写入 @page/.print-page） */
   html: string
-  /** 最终纸张尺寸（mm；连续纸为探针推导高度） */
+  /** 最终纸张尺寸（mm；连续纸为探针推导高度）；多页时保留首页尺寸 */
   paperMm: { width: number; height: number }
+  /** 多页面模板逐物理页尺寸；各页同纸型，允许横纵向互换 */
+  pagePaperMm?: { width: number; height: number }[]
   /** 模板是否连续纸 */
   continuous?: boolean
   /** 总页数（客户端任务记录用，可选） */
@@ -136,8 +138,10 @@ export interface RenderedHtmlPages {
 export interface PrintSubmitHtmlRequest {
   /** 最终多页 HTML（必须是 core 同构管线产出的完整文档） */
   html: string
-  /** 最终纸张尺寸（mm） */
+  /** 最终纸张尺寸（mm）；多页时保留首页尺寸 */
   paperMm: { width: number; height: number }
+  /** 多页面模板逐物理页尺寸，顺序与 HTML 中的物理页一致 */
+  pagePaperMm?: { width: number; height: number }[]
   /** 模板是否连续纸（影响纸张覆盖语义，缺省 false） */
   continuous?: boolean
   /** 总页数（可选，任务记录展示） */

@@ -107,4 +107,45 @@ describe('多页面模板渲染（真实 Chromium）', () => {
     expect(texts[3]).toContain('封面标题')
     expect(texts[4]).toContain('内容正文二')
   })
+
+  it('纵封面 + 横内容 + 纵条款批量输出：各页按设计方向出纸，pagePaperMm 顺序正确', async () => {
+    const cover = page('封面', [textEl('cover', 10, 30, '{title}')])
+    const landscape = {
+      ...page('内容', [
+        textEl('line1', 10, 30, '{body}'),
+        textEl('line2', 50, 30, '{body}'),
+        { ...textEl('wide', 90, 30, '{body}'), options: { left: 240, top: 0, width: 40, height: 10, formatter: '{body}' } },
+      ]),
+      orientation: 'landscape' as const,
+    }
+    const terms = page('条款', [textEl('terms', 10, 30, '{title}')])
+    const { pdf, prepared } = await coreRenderPdf({
+      templateJson: {
+        version: 1,
+        pages: [cover, landscape, terms],
+      },
+      printData: [
+        { title: '封面甲', body: '正文甲' },
+        { title: '封面乙', body: '正文乙' },
+      ],
+    }, runtime)
+    expect(prepared.pageCount).toBe(6)
+    expect(prepared.pagePaperMm).toHaveLength(6)
+    const doc = await getDocument({ data: pdf.slice() }).promise
+    expect(doc.numPages).toBe(6)
+    // 每份 3 页：纵(210×297) → 横(297×210) → 纵(210×297)，两份重复
+    for (let i = 1; i <= doc.numPages; i++) {
+      const p = await doc.getPage(i)
+      const viewport = p.getViewport({ scale: 1 })
+      const inCopy = (i - 1) % 3
+      const isLandscape = inCopy === 1
+      expect(Math.abs(viewport.width / PT_PER_MM - (isLandscape ? 297 : 210))).toBeLessThan(0.5)
+      expect(Math.abs(viewport.height / PT_PER_MM - (isLandscape ? 210 : 297))).toBeLessThan(0.5)
+    }
+    // pagePaperMm 按物理页顺序与 pdf 实际尺寸一致
+    expect(prepared.pagePaperMm).toEqual([
+      { width: 210, height: 297 }, { width: 297, height: 210 }, { width: 210, height: 297 },
+      { width: 210, height: 297 }, { width: 297, height: 210 }, { width: 210, height: 297 },
+    ])
+  })
 })

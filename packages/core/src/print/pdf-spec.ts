@@ -3,14 +3,17 @@ import type { MarginsMm, PaperMm, PdfTargetSpec } from './types.js'
 
 const ZERO_MARGINS_MM: MarginsMm = { top: 0, right: 0, bottom: 0, left: 0 }
 
-/** 边距恒为零：边距由 core 生成的 HTML padding 控制，避免两层边距叠加 */
-export function buildPdfTargetSpec(paperMm: PaperMm): PdfTargetSpec {
+/**
+ * 边距恒为零：边距由 core 生成的 HTML padding 控制，避免两层边距叠加。
+ * @param preferCSSPageSize 多页横纵混排时置 true——让 PDF 按各命名 @page 出纸，忽略单一 paperMm 覆盖。
+ */
+export function buildPdfTargetSpec(paperMm: PaperMm, preferCSSPageSize = false): PdfTargetSpec {
   return {
     paperMm,
     marginsMm: { ...ZERO_MARGINS_MM },
     printBackground: true,
     scale: 1,
-    preferCSSPageSize: false,
+    preferCSSPageSize,
   }
 }
 

@@ -71,9 +71,14 @@ describe('normalizeTemplate', () => {
       .toThrow(/至少需要一页/)
   })
 
-  it('各页纸张不一致抛错（含方向），错误带页面名', () => {
-    const b = { ...makePage('横向', [el('x', 30)]), orientation: 'landscape' } as TemplateData
-    expect(() => normalizeTemplate({ pages: [cover, b] }))
+  it('同纸型横纵互换放行（纵封面 + 横内容）', () => {
+    const landscape = { ...makePage('横向', [el('x', 30)]), orientation: 'landscape' } as TemplateData
+    expect(() => normalizeTemplate({ pages: [cover, landscape] })).not.toThrow()
+  })
+
+  it('不同纸型抛错（A4 + A3），错误带页面名', () => {
+    const a3 = { ...makePage('大页', [el('x', 30)]), paperSize: 'A3' } as TemplateData
+    expect(() => normalizeTemplate({ pages: [cover, a3] }))
       .toThrow(/纸张尺寸必须一致/)
   })
 
@@ -182,5 +187,40 @@ describe('composeMultiPageDocument', () => {
 
   it('空 copies 抛错', () => {
     expect(() => composeMultiPageDocument([])).toThrow(/至少需要一份数据/)
+  })
+
+  it('同纸型横纵混排：逐页命名 @page、pagePaperMm 按物理页顺序记录方向', () => {
+    const portrait = makePage('封面', [el('c', 30)])
+    const landscape = { ...makePage('明细', [el('d', 30)]), orientation: 'landscape' } as TemplateData
+    const doc = composeMultiPageDocument([{
+      boundPages: [portrait, landscape, portrait],
+      layoutsPerPage: [pageOf(portrait), pageOf(landscape), pageOf(portrait)],
+      data: {},
+    }])
+    expect(doc.pageCount).toBe(3)
+    // 命名 @page 每页一条，并绑定到对应 .mt-N.print-page
+    expect(doc.html).toContain('@page mt-0 { size: 210mm 297mm;')
+    expect(doc.html).toContain('@page mt-1 { size: 297mm 210mm;')
+    expect(doc.html).toContain('.mt-1.print-page { page: mt-1; }')
+    // 逐物理页出纸尺寸：纵、横、纵
+    expect(doc.pagePaperMm).toEqual([
+      { width: 210, height: 297 },
+      { width: 297, height: 210 },
+      { width: 210, height: 297 },
+    ])
+  })
+
+  it('批量多份时 pagePaperMm 跨份按物理页连续展开', () => {
+    const landscape = { ...makePage('明细', [el('d', 30)]), orientation: 'landscape' } as TemplateData
+    const input = {
+      boundPages: [cover, landscape],
+      layoutsPerPage: [pageOf(cover), pageOf(landscape)],
+      data: {},
+    }
+    const doc = composeMultiPageDocument([input, input])
+    expect(doc.pagePaperMm).toEqual([
+      { width: 210, height: 297 }, { width: 297, height: 210 },
+      { width: 210, height: 297 }, { width: 297, height: 210 },
+    ])
   })
 })

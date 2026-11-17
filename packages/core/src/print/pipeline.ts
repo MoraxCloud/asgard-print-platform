@@ -52,7 +52,12 @@ export async function renderPdf(job: PrintJob, runtime: PrintRuntime): Promise<R
   return runtime.withSession(job, async (session) => {
     const prepared = await prepareWithSession(job, session)
     const viewport = paperViewportPx(prepared.paperMm)
-    const pdf = await session.toPdf(prepared.html, buildPdfTargetSpec(prepared.paperMm), viewport)
+    // 多页模板（pagePaperMm 有值）按命名 @page 逐页出纸，禁止用首页尺寸覆盖各页方向
+    const pdf = await session.toPdf(
+      prepared.html,
+      buildPdfTargetSpec(prepared.paperMm, !!prepared.pagePaperMm),
+      viewport,
+    )
     return { pdf, prepared }
   })
 }
@@ -78,6 +83,7 @@ async function prepareWithSession(job: PrintJob, session: PrintSession): Promise
       html: doc.html,
       pageCount: doc.pageCount,
       paperMm: getOutputPaperDimensions(pageTemplates[0]!),
+      pagePaperMm: doc.pagePaperMm,
       continuous: false,
       heightSource: 'config',
       pageLayouts: doc.pageLayouts,
@@ -287,12 +293,13 @@ async function prepareMultiCopy(
   data: Record<string, any>,
 ): Promise<MultiPageCopyInput> {
   const templates = normalizeTemplate(job.templateJson)
-  const viewport = paperViewportPx(getPaperDimensions(templates[0]!))
   const boundPages: TemplateData[] = []
   const layoutsPerPage: PageLayout[][] = []
   const codeRenderers: Array<CodeRenderer | undefined> = []
   const renderersPerPage: Array<ElementRenderers | undefined> = []
   for (const t of templates) {
+    // 每页按自身纸型测量：横向页不能用首页纵向视口，否则 mm→px 换算错位
+    const viewport = paperViewportPx(getPaperDimensions(t))
     const bound = bindData(t, data, job.baseUrl, job.fontBaseUrl)
     const measurement = await buildHtmlWithAssets({ bound, job, session, data, pageLayouts: [], isMeasurementPass: true })
     const measurements = await session.measure(measurement.html, viewport)

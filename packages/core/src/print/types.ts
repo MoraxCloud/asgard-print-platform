@@ -92,6 +92,8 @@ export interface PreparedDocument {
   continuous: boolean
   heightSource: HeightSource
   pageLayouts: PageLayout[]
+  /** 多页面模板按物理页展开的尺寸；paperMm 保留首页尺寸以兼容现有调用方 */
+  pagePaperMm?: PaperMm[]
   /** 份数：单对象=1，数组=数组长度 */
   copies: number
   /** 批量时每份的物理纸张尺寸（连续纸各份高度不同）；单份无此字段 */

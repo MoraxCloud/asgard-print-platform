@@ -16,8 +16,10 @@ export interface BrowserRenderResult {
   pageCount: number
   /** 分页布局（调试/高级用途） */
   pageLayouts: PageLayout[]
-  /** 最终纸张尺寸（mm，已含方向）；连续纸为探针推导后的高度 */
+  /** 最终纸张尺寸（mm，已含方向）；连续纸为探针推导后的高度；多页时保留首页尺寸 */
   paperMm: { width: number; height: number }
+  /** 多页面模板逐物理页出纸尺寸；顺序与最终 HTML 的物理页一致 */
+  pagePaperMm?: Array<{ width: number; height: number }>
   /** 模板是否连续纸 */
   continuous: boolean
   /** 份数（对象数据=1；数组=数组长度） */
@@ -74,6 +76,7 @@ export async function renderHtmlPages(
     pageCount: prepared.pageCount,
     pageLayouts: prepared.pageLayouts,
     paperMm: prepared.paperMm,
+    pagePaperMm: prepared.pagePaperMm,
     continuous: prepared.continuous,
     copies: prepared.copies,
     copyPaperMm: prepared.copyPaperMm,
