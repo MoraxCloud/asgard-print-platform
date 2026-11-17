@@ -3,6 +3,7 @@
 
 import type { TemplateData, TemplateElement, RenderRow, RenderCell } from './types.js'
 import { evaluateTemplate } from './expression-eval.js'
+import { getDefaultExampleValue } from '../designer/element-capabilities.js'
 import {
   detectFlowListKey,
   flowContentWidthMm,
@@ -81,7 +82,13 @@ function bindElement(
       // 此处保留原始表达式——测量趟按最宽文本测量，最终趟由 html-generator 按该页页码重新求值。
       cloned.options.rawFormatter = raw
     } else {
-      cloned.options.formatter = evaluateTemplate(raw, data)
+      // #IKVLXT：缺字段导致求值时，整段回落到元素的默认显示内容（示例值），
+      // 避免预览暴露 `{expr}` 原文。字段有值/求值为空都不触发——真实数据优先。
+      const elementType = cloned.type || cloned.printElementType?.type
+      const example = typeof cloned.options.exampleValue === 'string'
+        ? cloned.options.exampleValue
+        : getDefaultExampleValue(elementType)
+      cloned.options.formatter = evaluateTemplate(raw, data, example)
     }
   }
   // 图片元素 src：{字段} 表达式求值（动态传参），相对路径拼接服务端 base URL

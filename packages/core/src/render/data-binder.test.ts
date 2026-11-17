@@ -533,3 +533,41 @@ describe('条形码单元格 barHeight 透传', () => {
     expect(c.barHeight).toBe(20)
   })
 })
+
+function textTemplate(options: Record<string, any>): TemplateData {
+  return {
+    paperSize: 'A4', orientation: 'portrait',
+    margins: { top: 10, right: 10, bottom: 10, left: 10 },
+    header: { height: 0, elements: [] },
+    footer: { height: 0, elements: [] },
+    elements: [{ id: 'txt-1', type: 'text', options: { left: 0, top: 0, width: 100, ...options } }],
+  } as TemplateData
+}
+
+describe('元素示例值兜底（#IKVLXT）', () => {
+  it('空数据 + 自定义 exampleValue → formatter 整段回落为示例值', () => {
+    const t = textTemplate({ formatter: '物料名称：{ItemName}', exampleValue: '示例：物料名称' })
+    expect(bindData(t, {}).elements[0]!.options.formatter).toBe('示例：物料名称')
+  })
+
+  it('空数据 + 无 exampleValue → 按元素类型取默认示例值', () => {
+    const t = textTemplate({ formatter: '物料名称：{ItemName}' })
+    expect(bindData(t, {}).elements[0]!.options.formatter).toBe('示例文本')
+  })
+
+  it('真实数据优先：字段有值时正常求值，不回落', () => {
+    const t = textTemplate({ formatter: '物料名称：{ItemName}', exampleValue: '示例：物料名称' })
+    expect(bindData(t, { ItemName: '碳钢螺丝' }).elements[0]!.options.formatter)
+      .toBe('物料名称：碳钢螺丝')
+  })
+
+  it('未提供 printData（undefined）同样回落', () => {
+    const t = textTemplate({ formatter: '{ItemName}', exampleValue: '示例值' })
+    expect(bindData(t, undefined).elements[0]!.options.formatter).toBe('示例值')
+  })
+
+  it('纯字面文本元素不受影响', () => {
+    const t = textTemplate({ formatter: '物料名称：', exampleValue: '示例文本' })
+    expect(bindData(t, {}).elements[0]!.options.formatter).toBe('物料名称：')
+  })
+})

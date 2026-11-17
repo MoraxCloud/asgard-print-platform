@@ -76,13 +76,33 @@ const BASE_BOX: Readonly<Pick<ElementOptions, 'left' | 'top' | 'width' | 'height
   left: 7, top: 17.6, width: 42.3, height: 7.1,
 }
 
+/**
+ * 元素「默认显示内容」（#IKVLXT）：无真实数据时 formatter 求值失败会整段回落到本值，
+ * 让预览显示带「示例」字样的占位而非 `{expr}` 原文。按类型给出缺省，作者可在 options
+ * 上用 exampleValue 覆盖。只覆盖会求值 formatter 的内容类元素；线条/形状/图片等无
+ * formatter 语义，不设。
+ */
+export const DEFAULT_EXAMPLE_VALUES: Readonly<Record<string, string>> = Object.freeze({
+  text: '示例文本',
+  longText: '示例长文本内容',
+  // 码类回落后要能真正出图：code128 不支持中文，沿用 testData 的码制安全示例值
+  barcode: '12345678',
+  qrcode: 'qrcode',
+})
+
+/** 查元素类型的默认显示内容；未登记类型返回 undefined（调用方据此不启用回落） */
+export function getDefaultExampleValue(type?: string | null): string | undefined {
+  if (!type) return undefined
+  return DEFAULT_EXAMPLE_VALUES[type]
+}
+
 /** 内置类型能力基线：逐项对齐改造前六处硬编码，任何取值变化都会影响存量出纸 */
 export const BUILTIN_ELEMENT_CAPABILITIES: Readonly<Record<string, ElementCapabilities>> = Object.freeze({
   text: {
     zoneAllowed: true,
     defaultTextFit: 'clip',
     bindings: [{ targetPath: 'options.formatter', label: '内容', dataSource: 'main' }],
-    defaultOptions: (): Partial<ElementOptions> => ({ formatter: '文本', fontSize: 12, textAlign: 'left', height: 5.3 }),
+    defaultOptions: (): Partial<ElementOptions> => ({ formatter: '文本', exampleValue: '示例文本', fontSize: 12, textAlign: 'left', height: 5.3 }),
     title: '文本',
   },
   longText: {
@@ -91,21 +111,21 @@ export const BUILTIN_ELEMENT_CAPABILITIES: Readonly<Record<string, ElementCapabi
       { targetPath: 'options.formatter', label: '内容', dataSource: 'main' },
       { targetPath: 'options.styler', label: '样式', dataSource: 'main' },
     ],
-    defaultOptions: (): Partial<ElementOptions> => ({ width: 141.1, height: 28.2, fontSize: 12, lineHeight: 18 }),
+    defaultOptions: (): Partial<ElementOptions> => ({ width: 141.1, height: 28.2, fontSize: 12, lineHeight: 18, exampleValue: '示例长文本内容' }),
     title: '长文',
   },
   barcode: {
     zoneAllowed: true,
     codeRotationDpiGated: true,
     bindings: [{ targetPath: 'options.formatter', label: '内容', dataSource: 'main' }],
-    defaultOptions: (): Partial<ElementOptions> => ({ width: 56.4, height: 14.1, title: '条形码', barcodeType: 'code128', testData: '12345678' }),
+    defaultOptions: (): Partial<ElementOptions> => ({ width: 56.4, height: 14.1, title: '条形码', barcodeType: 'code128', testData: '12345678', exampleValue: '12345678' }),
     title: '条形码',
   },
   qrcode: {
     zoneAllowed: true,
     codeRotationDpiGated: true,
     bindings: [{ targetPath: 'options.formatter', label: '内容', dataSource: 'main' }],
-    defaultOptions: (): Partial<ElementOptions> => ({ width: 28.2, height: 28.2, title: '二维码', testData: 'qrcode' }),
+    defaultOptions: (): Partial<ElementOptions> => ({ width: 28.2, height: 28.2, title: '二维码', testData: 'qrcode', exampleValue: 'qrcode' }),
     title: '二维码',
   },
   image: {

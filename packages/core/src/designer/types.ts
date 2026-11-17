@@ -312,6 +312,11 @@ export interface ElementOptions {
   /** @deprecated 统一使用 formatter */
   title?: string
   testData?: string
+  /**
+   * 无真实数据时的默认显示内容（#IKVLXT）：formatter 求值失败（缺字段）时整段回落到本值，
+   * 使预览显示「示例文本」这类占位而非 `{expr}` 原文；真实数据优先，求值成功不受影响。
+   */
+  exampleValue?: string
   fontSize?: number
   fontWeight?: string
   fontFamily?: string

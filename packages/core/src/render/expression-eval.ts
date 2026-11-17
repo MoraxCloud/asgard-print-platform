@@ -100,9 +100,16 @@ export function safeEval(expr: string, context: Record<string, any>): any {
 /**
  * 模板字符串求值：{表达式} 内求值，外为字面文本。
  * 聚合函数 SUM/AVG/COUNT/MIN/MAX(field) 预处理（需 ctx.rows）。
- * 单个 {expr} 求值失败时保留原 {expr} 文本。
+ *
+ * @param errorFallback 求值失败（如字段缺失抛「未定义的标识符」）时的整段替代文本。
+ *   缺省时保留原表达式文本（历史行为）；传入时用示例值整段回落，使预览不暴露 `{expr}` 原文。
+ *   注意：字段存在但求值为空（null/undefined/空串）不抛错，不会触发回落——真实数据始终优先。
  */
-export function evaluateTemplate(text: string, ctx: Record<string, any>): string {
+export function evaluateTemplate(
+  text: string,
+  ctx: Record<string, any>,
+  errorFallback?: string,
+): string {
   if (!text) return ''
   if (!text.includes('{')) return text
   const rows: Record<string, any>[] = Array.isArray(ctx.rows) ? ctx.rows : []
@@ -121,7 +128,7 @@ export function evaluateTemplate(text: string, ctx: Record<string, any>): string
   try {
     return engine.render(processedText, ctx)
   } catch {
-    // 降级：保留原表达式
-    return text
+    // 降级：有示例值则整段回落（#IKVLXT），否则保留原表达式
+    return errorFallback ?? text
   }
 }

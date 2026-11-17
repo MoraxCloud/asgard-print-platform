@@ -40,6 +40,22 @@ describe('evaluateTemplate 模板求值', () => {
   it('求值失败时 {} 内保留原文', () => {
     expect(evaluateTemplate('{undefinedVar.x}', {})).toBe('{undefinedVar.x}')
   })
+  it('求值失败且有示例值时整段回落为示例值（#IKVLXT）', () => {
+    expect(evaluateTemplate('物料名称：{ItemName}', {}, '示例文本')).toBe('示例文本')
+    expect(evaluateTemplate('{undefinedVar.x}', {}, '示例文本')).toBe('示例文本')
+  })
+  it('真实数据优先：字段有值时不受示例值影响', () => {
+    expect(evaluateTemplate('物料名称：{ItemName}', { ItemName: '碳钢螺丝' }, '示例文本'))
+      .toBe('物料名称：碳钢螺丝')
+  })
+  it('字段存在但求值为空不触发回落（真实数据优先）', () => {
+    expect(evaluateTemplate('物料名称：{ItemName}', { ItemName: '' }, '示例文本'))
+      .toBe('物料名称：')
+    expect(evaluateTemplate('{name}', { name: undefined }, '示例文本')).toBe('')
+  })
+  it('纯字面文本不受示例值影响', () => {
+    expect(evaluateTemplate('物料名称：', {}, '示例文本')).toBe('物料名称：')
+  })
   it('多段混合 你好 {name}，{MONEY(amount)} 元', () => {
     expect(evaluateTemplate('你好 {name}，{MONEY(amount)} 元', { name: '张三', amount: 99 })).toBe('你好 张三，99.00 元')
   })

@@ -45,7 +45,7 @@ export const OPTION_META: Record<OptionKey, Meta> = {
   ...flag('wordWrap', 'keepLineBreaks', 'repeatOnEveryPage', 'fixed', 'locked', 'visible', 'hideTitle', 'draggable', 'flowAutoSpan',
     // 渲染端 html-generator.ts 同时认 hideTitle 与本键，此前契约漏登记导致正确写法被判未知键
     'showBarcodeText'),
-  ...text('testData', 'fontFamily', 'fontWeight', 'borderStyle', 'textDecoration', 'textType',
+  ...text('exampleValue', 'testData', 'fontFamily', 'fontWeight', 'borderStyle', 'textDecoration', 'textType',
     'barcodeType', 'barAutoWidth', 'src', 'objectPosition', 'axis', 'groupId', 'dataSource',
     'formatter', 'styler', 'rowStyler', 'tableDefaultFontFamily', 'tableDefaultColor'),
   ...color('color', 'backgroundColor', 'borderColor'),
