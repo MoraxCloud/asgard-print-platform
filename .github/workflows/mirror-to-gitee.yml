@@ -1,8 +1,7 @@
 name: Mirror to Gitee
 
 # GitHub 为代码单一源：每次 push 到 master（或手动触发）后把全部 refs 镜像到 Gitee，
-# 替代本地双端推送。--mirror 会同步所有分支与标签，并删除 Gitee 上 GitHub 已不存在的 ref，
-# 即 Gitee 严格跟随 GitHub。两端 owner 不同：GitHub=worm-longliu，Gitee=liulong_oschina。
+# 替代本地双端推送。两端 owner 不同：GitHub=worm-longliu，Gitee=liulong_oschina。
 on:
   push:
     branches: [master]
@@ -15,21 +14,18 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout（含全部分支与标签）
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: master
-
       - name: 镜像全部 refs 到 Gitee
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           GITEE_OWNER="liulong_oschina"
           GITEE_REPO="worm-print-platform"
           MIRROR_URL="https://${GITEE_OWNER}:${GITEE_TOKEN}@gitee.com/${GITEE_OWNER}/${GITEE_REPO}.git"
 
-          git remote add gitee-mirror "$MIRROR_URL"
-          # --mirror：强制同步 refs/heads/* 与 refs/tags/*，并清理 Gitee 上多余 ref。
-          git push --mirror gitee-mirror
+          # 用裸克隆做镜像源：只有 refs/heads/* 与 refs/tags/*，不含 refs/remotes/*。
+          # 若直接用 actions/checkout 的仓库，--mirror 会把远程跟踪 ref 推成
+          # Gitee 隐藏 ref 而被拒（deny updating a hidden ref）。
+          git clone --mirror "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" mirror.git
+          git --git-dir=mirror.git push --mirror "$MIRROR_URL"
