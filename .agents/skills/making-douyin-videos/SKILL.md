@@ -45,6 +45,8 @@ npm run dev:demos:vue3
 
 先读 [剧本写作与字段](references/script-authoring.md)。剧本必须有 key（`script-<key>.json`，key 即目录里的主题名）；无 key 的 `script.json` 只作样例与自检，不出片。台词、录屏步骤、卡片、封面和 `douyin` 文案必须围绕同一主题；事实给源码或实测出处，未发布就写未发布。
 
+**出片后整理（一支视频一个自足目录）**：首跑时剧本在根目录，出片后把该片的专属剧本（及竖屏专属卡片 HTML）移入它的「日期-主题」产物目录，使剧本与成片同目录、整个目录拷走即交付。横屏卡片剧本 `cards` 字段改成相对 `portrait/` 的路径（如 `out/<日期>-<key>/cards-<key>.html`）。重跑时用绝对路径指定产物目录内的剧本：`VIDEO_SCRIPT=$PWD/out/<日期>-<key>/script-<key>.json npm run video`（竖屏同理传绝对路径给 `video:portrait`），路径解析仍按剧本文件名取 key、按 `out-registry.json` 定位产物目录，不换目录。流水线工具与默认样例剧本保持原位不动。
+
 ## 3. 先过读音与排版，再合成
 
 多音字和字幕规则见 [多音字与字幕](references/polyphone-and-subtitles.md)。核心闭环：
