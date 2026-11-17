@@ -1,4 +1,4 @@
-// services/print-render/src/browser-pool.ts
+// services/render/src/browser-pool.ts
 // Browser 池化管理：信号量并发控制 + 健康探测 + 崩溃自动恢复
 
 import { chromium, type Browser, type Page } from 'playwright'

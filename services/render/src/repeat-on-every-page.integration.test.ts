@@ -1,4 +1,4 @@
-// services/print-render/src/repeat-on-every-page.integration.test.ts
+// services/render/src/repeat-on-every-page.integration.test.ts
 // 端到端：元素 repeatOnEveryPage（每页重复，真实 Chromium + 真实分页）→ 首页保留设计位置，续页从页眉下方归一起排，
 // 正文一/正文二各归其页。与 core 的声明级用例互补：那边钉住 sections 结构，这边钉住真实 PDF 文本。
 import { readFileSync } from 'node:fs'

@@ -92,6 +92,8 @@ npm run dev:render     # 服务端 PDF 渲染微服务（:3001）
 npm run dev:client     # Electron 静默打印客户端
 ```
 
+完整命令索引（开发 / npm 发布 / 客户端打包 / Docker）：[docs/commands.md](./docs/commands.md)。
+
 ## 架构与分层
 
 ```

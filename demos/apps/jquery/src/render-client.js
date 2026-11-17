@@ -1,4 +1,4 @@
-// 服务端渲染微服务（services/print-render）调用封装，与 demo 的 render-client 同口径。
+// 服务端渲染微服务（services/render）调用封装，与 demo 的 render-client 同口径。
 // 浏览器只请求同源 /render-api/*，由 server.mjs 透传并注入 X-Render-Key，
 // 因此密钥不出现在前端代码中。生产环境应由宿主后端做等价的反向代理。
 

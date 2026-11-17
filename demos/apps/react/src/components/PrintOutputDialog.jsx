@@ -35,7 +35,7 @@ export default function PrintOutputDialog({ visible, onClose, designerRef, print
     if (!health) {
       setRenderStatus('offline')
       setRenderStatusText('渲染服务离线')
-      setRenderStatusTitle('请启动 services/print-render')
+      setRenderStatusTitle('请启动 services/render')
       return
     }
     setRenderStatus('online')

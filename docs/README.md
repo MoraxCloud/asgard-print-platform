@@ -3,6 +3,8 @@
 面向宿主开发者的接入文档：每个 UI 框架一份文件，包含「最小接入操作方法」与可直接复制给
 AI 编程工具的「集成提示词」。提示词内置技能安装引导，让 AI agent 先装规范再动手。
 
+仓库开发、npm 发布、客户端打包等日常命令见 [commands.md](./commands.md)。
+
 | 框架 | 文档 | 接入形态 | 可运行示例 | 端口 |
 | --- | --- | --- | --- | --- |
 | Vue 3 | [vue3.md](./vue3.md) | `@worm-print-platform/canvas/vue3` 组件门面（原 `@worm-vue3-print/canvas` 用户迁移零业务改动） | `demos/apps/vue3` | 9331 |

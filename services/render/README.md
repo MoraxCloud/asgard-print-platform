@@ -1,7 +1,7 @@
 # @worm-print-platform/render
 
 基于 Playwright（Headless Chromium）的 PDF 打印渲染微服务，位于 monorepo 的
-`services/print-render`（`private` 服务包，不发布 npm，仅 Docker 部署）。
+`services/render`（`private` 服务包，不发布 npm，仅 Docker 部署）。
 通过 npm workspace 本地软链依赖同仓库的 `@worm-print-platform/core`（表达式引擎与渲染管线），
 修改 core 无需发版即可在本服务生效。
 宿主（如管理后台 `web`）的后端 `PrintRenderClient` 调用本服务的 `POST /render/pdf`，传入 `templateJson`（模板 JSON）与 `printData`（打印数据），
@@ -47,7 +47,7 @@ npx playwright install chromium
 
 # 常用命令（仓库根执行；dev:render / dev:client / dev:demo 为根脚本短别名）
 npm run dev:render                        # 开发运行（tsx 直跑 src/server.ts）
-npm run build -w @worm-print-platform/render   # tsc 编译到 services/print-render/dist/
+npm run build -w @worm-print-platform/render   # tsc 编译到 services/render/dist/
 npm run start -w @worm-print-platform/render   # 生产运行（node dist/server.js）
 npm run test -w @worm-print-platform/render    # vitest（分页用例需可启动浏览器）
 ```
@@ -101,7 +101,7 @@ Playwright 自带 Chromium 都不存在时，服务启动会报明确错误，�
 
 ```bash
 # 在仓库根执行
-docker build -f services/print-render/Dockerfile -t worm-print-platform-render .
+docker build -f services/render/Dockerfile -t worm-print-platform-render .
 ```
 
 运行：

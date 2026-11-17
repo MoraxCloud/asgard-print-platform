@@ -457,7 +457,7 @@ export default {
       if (!health) {
         this.renderStatus = 'offline'
         this.renderStatusText = '渲染服务离线'
-        this.renderStatusTitle = '请启动 services/print-render'
+        this.renderStatusTitle = '请启动 services/render'
         return
       }
       this.renderStatus = 'online'

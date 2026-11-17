@@ -44,7 +44,7 @@ async function refreshRenderStatus() {
   refreshServerButtons()
   const health = await checkRenderHealth()
   if (!health) {
-    setStatus('render', 'offline', '渲染服务离线', '请启动 services/print-render')
+    setStatus('render', 'offline', '渲染服务离线', '请启动 services/render')
   } else {
     setStatus('render', 'online', '渲染服务在线',
       `活跃 ${health.activeRenders} / 并发 ${health.maxConcurrent} · 队列 ${health.queueLength}`)

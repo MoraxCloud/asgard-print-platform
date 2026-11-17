@@ -657,7 +657,7 @@ async function refreshRenderStatus() {
   if (!health) {
     renderStatus.value = 'offline'
     renderStatusText.value = '渲染服务离线'
-    renderStatusTitle.value = '请启动 services/print-render'
+    renderStatusTitle.value = '请启动 services/render'
     return
   }
   renderStatus.value = 'online'
