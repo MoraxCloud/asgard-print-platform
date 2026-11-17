@@ -1,3 +1,80 @@
-# 申公豹： 中文JSON key测试
+# Gitee issues 核查（来源：gitee.com/liulong_oschina/worm-vue3-print/issues）
 
-# 圣光： ai 创建一个新的模板，绑定数据，表格列操作
+> 核查日期 2026-11-17。本仓为 canvas 权威实现（v1.5.1），由 worm-vue3-print 拆仓分叉而来，
+> 议题针对 canvas/core 1.4.8。逐项在本仓验证是否存在同类问题。
+
+## 确认存在（缺陷）
+
+### #IKVLU4 固定纸上宽元素未超出纸面却被拆到第二页 —— 存在
+- 现象：自定义纸（如 80×60mm）上横贯多列的文本，绝对底边在本页可用高度内，预览仍整段挪到第二页。
+- 根因：`packages/core/src/render/pagination-engine.ts:559` 的 `depthIn(x)` 把横向相交列的已占高度**累加**；
+  `:601 remainingIn()`、`:871` 的 `elHeight <= remainingIn(x)` 只用元素自身高度对比剩余预算，
+  没有用元素自身的 `outerBottom` 判断是否落在页内。宽元素同时压到左文字与右二维码时，两侧高度被相加
+  再加 `SAFETY_MARGIN = 2`（`:30`），越过预算即整段换页。
+- 验证：已用临时分页测试复现（80×60 纸、宽 78mm 文本底边 45mm 在本页内），结果被拆到第 2 页；测试已删除。
+- 说明：本仓已有的二维预算修复（`#IKOUJI`）只解决"横向不相交元素互不占高"，不覆盖"单个宽元素横跨多列"的情形。
+
+### #IKVLXT 没有打印数据时预览显示表达式原文 —— 存在
+- 现象：`printData` 为空/缺字段时，预览显示 `物料名称：{ItemName}` 原文，看不出绑定是否生效。
+- 根因：`packages/core/src/render/expression-eval.ts:103-125` 单个 `{expr}` 求值失败时保留原表达式文本；
+  `packages/canvas/src/vue3/PrintHtmlPreview.ts:102-108` 把 `printData` 原样传给 `renderHtmlPages`，无示例值兜底。
+  模板元素无"示例值"属性，`designData`（element-definitions.ts:24、host-contract.ts:44）仅用于设计态画布占位，不进预览。
+- 期望未满足：缺字段时用示例值并标明为示例，真实数据优先。
+
+### #IKVLZT 设计器不跟随宿主浅色/暗色 —— 存在
+- 现象：`--pd-*` 变量缺省全是浅色，组件不读 `prefers-color-scheme`，无内置暗色主题。
+- 证据：`packages/core/src/styles/theme.css` 仅一套 `:root` 浅色令牌，无暗色变量集；全局无 `prefers-color-scheme`。
+  `packages/canvas/src/host-contract.ts:114-123` 仅说明宿主可自行覆盖部分 `--pd-*` 令牌。
+  changelog（canvas/src/shell/help-content/changelog.ts:201）"换深色不再出现白色死角"只指属性台控件接入了变量，
+  并非提供成套暗色预设或自动跟随。
+- 期望未满足：内置一套暗色变量，或明确列出暗色模式下需覆盖的完整 `--pd-*` 清单。
+
+## 部分存在（有缓解但未完全解决）
+
+### #IKVLXY 素材区图标/面板不能由宿主替换 —— 图标已可替换，隐藏页签不支持
+- 图标方面已解决：`packages/canvas/src/core/element-definitions.ts:37-78` 图标改为 lucide 图标名 + 统一注册表，
+  宿主可用 `registerElementDefinition` 覆盖素材卡的图标/标签/分组（origin: custom）。
+- 仍缺：`print-designer` 无"隐藏指定页签"的属性。`packages/canvas/src/shell/panels.ts:57-66` 的「元素/字段/图层」
+  三个页签写死，`host-contract.ts` 的 attribute/property（`:23-53`）无隐藏页签项，宿主无法只显示部分栏。
+
+### #IKVLXM 字段绑到已有文本操作容易用错 —— 已有替代入口，但无画布光标处直接插入
+- 已有缓解（拆仓后新增）：素材台单击字段复制中文名（Gitee #IKRIZM）、表达式弹窗 Ctrl/⌘+双击插入中文字段名、
+  素材台 Ctrl/⌘+拖拽生成静态文本元素（见 changelog V1.4.2、ctrl-field-label.spec.ts、field-tree.spec.ts）。
+- 仍缺：议题期望"选中画布文本后，双击或拖入字段，默认在光标处插入 `{字段名}`"——本仓字段插入取值仍需
+  点进右侧内容框/双击弹开表达式编辑器再双击字段（binding.ts:4、expression-editor.ts），画布上无直接插入光标入口。
+
+## 需求类（非缺陷，暂不列为待修）
+
+### #IKUJ0X checkbox 多选 / radio 单选打印元素 —— 未实现
+- 内置元素仅 13 类（element-definitions.ts:62-78），无 checkbox/radio 打印元素；属功能需求，议题无描述。
+
+### #IKRSXT 添加常用表格元素 —— 信息不足
+- 已内置 `table` 表格元素（element-definitions.ts:67），议题正文为空，无法确认具体诉求。
+
+---
+
+# GitHub PR 核查待办（来源：github.com/worm-longliu/worm-vue3-print）
+
+> 核查日期 2026-11-17。该仓与本仓同源分叉，但包名已全面改名（print-core→core、print-canvas→canvas、
+> print-client→client 等），且本仓 canvas 为 Web Components 权威实现（目标仓仍以 Vue 轨为主），
+> PR 无法直接 cherry-pick，只能手工按本仓架构移植。
+>
+> 核查结论：#11 表格按值合并、#12 MCP 参考图测量、#13 标尺修复、#14 文档 —— 均已迁入本仓，无需处理。
+> 唯一未迁入且有价值的是 **#15（OPEN，上游尚未合并）**，登记为待办如下。
+
+## 待办：移植 PR #15「支持同纸型多页横纵向混排并完善裁切确认」
+
+- 来源：PR #15（状态 OPEN，未合并）；功能：同一份多页模板中组合纵向封面 / 横向明细，按各页方向输出。
+- 本仓缺失的三项核心能力：
+  1. `pagePaperMm` 逐物理页出纸尺寸 —— 本仓 `MultiPageDocument` 无此字段；`multi-template.ts:57` 仍强制
+     「各页纸张尺寸必须一致」，未放行旋转尺寸（PR 中 `sameSize || rotatedSize` 判断）。
+  2. 命名 `@page` 逐页方向绑定 —— 本仓 `buildPageRuleCss(template, pageHeightMm?)`（css-builder.ts:250）
+     仅 2 参，无 PR 所需第三参 `pageName`，无法在同一文档横纵混排。
+  3. 裁切提示确认/取消 —— 本仓 `save()`（print-designer.ts:414-435）仅 `window.alert` 后直接保存，
+     无「确认后继续保存 / 取消保留编辑内容」语义。
+- 已有基础：本仓已具备底层依赖 `getOutputPaperDimensions`、`buildBasePageCss`，移植起点优于表面差异。
+- 影响面（约 38 文件，按本仓架构重写）：core 多页管线 / CSS 分页 / 出纸尺寸、canvas 设计器保存流程、
+  client 打印引擎横纵混排时禁止全局方向覆盖、render 服务多页测试与文档。
+- 范围限制（移植须保留）：仅同一纸型内横纵混排，仍拒绝 A4/A3 混用、连续纸多页、多页拼版；
+  实体打印机逐页方向识别仍需目标驱动验收。
+- 决策：暂不实现（用户 2026-11-17 选择仅登记待办）。上游 #15 仍 OPEN，建议待其合并稳定后再评估移植。
