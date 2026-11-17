@@ -102,7 +102,7 @@ npm run publish:canvas:check       # 只检查 canvas 的 dist-tag 健康度（l
 
 ### CI 发布
 
-`publish-npm.yml` 仅手动触发，认证优先 Trusted Publishing（OIDC），`NPM_TOKEN` 作为回退。
+`publish-npm.yml` 仅手动触发，认证为纯 Trusted Publishing（OIDC，不注入任何 npm token）。前提：npmjs.com 各包已配置 Trusted Publisher（Organization `worm-longliu` / Repository `worm-print-platform` / Workflow `publish-npm.yml` / Environment 留空 / Allowed actions 勾选 `npm publish`），账号 Publishing access 选 "disallow bypass 2fa tokens"。发版完整流程见 `.agents/skills/releasing-official-version/SKILL.md`。
 
 ```bash
 gh workflow run publish-npm.yml -f tag=v1.5.2 -f dry_run=true   # 先干跑
