@@ -6946,6 +6946,102 @@ export const SAMPLES = [
         shop: { name: '鲜享生活超市' },
         product: { name: '手打牛肉丸', spec: '500g', unit: '盒', price: 42, oldPrice: 52, barcode: '6901234567960' },
       },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '五常稻花香米', spec: '10kg 装', unit: '袋', price: 79.9, oldPrice: 99.9, barcode: '6901234568001' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '压榨花生油', spec: '5L', unit: '桶', price: 129, oldPrice: 159, barcode: '6901234568002' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '纯牛奶', spec: '250ml×12', unit: '箱', price: 59.9, oldPrice: 72, barcode: '6901234568003' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '希腊酸奶', spec: '100g×8', unit: '组', price: 39.9, oldPrice: 48, barcode: '6901234568004' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '土鸡蛋', spec: '30 枚装', unit: '盒', price: 29.9, oldPrice: 36, barcode: '6901234568005' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '黄油吐司', spec: '350g', unit: '袋', price: 15.8, oldPrice: 19.8, barcode: '6901234568006' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '速冻水饺', spec: '1kg', unit: '袋', price: 32.9, oldPrice: 42, barcode: '6901234568007' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '火锅牛肉卷', spec: '500g', unit: '盒', price: 45, oldPrice: 58, barcode: '6901234568008' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '有机西兰花', spec: '300g', unit: '份', price: 8.9, oldPrice: 11.9, barcode: '6901234568009' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '番茄', spec: '500g', unit: '份', price: 6.5, oldPrice: 8.5, barcode: '6901234568010' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '红富士苹果', spec: '单果 80mm 起', unit: '个', price: 5.9, oldPrice: 7.9, barcode: '6901234568011' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '香蕉', spec: '500g', unit: '份', price: 4.9, oldPrice: 6.5, barcode: '6901234568012' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '巨峰葡萄', spec: '500g', unit: '份', price: 12.9, oldPrice: 16.9, barcode: '6901234568013' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '脐橙', spec: '单果 75mm 起', unit: '个', price: 4.5, oldPrice: 6, barcode: '6901234568014' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '生抽酱油', spec: '500ml', unit: '瓶', price: 13.9, oldPrice: 17.9, barcode: '6901234568015' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '陈醋', spec: '500ml', unit: '瓶', price: 9.9, oldPrice: 12.9, barcode: '6901234568016' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '蚝油', spec: '700g', unit: '瓶', price: 16.8, oldPrice: 21, barcode: '6901234568017' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '食用盐', spec: '400g', unit: '袋', price: 2.5, oldPrice: 3.5, barcode: '6901234568018' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '白砂糖', spec: '500g', unit: '袋', price: 7.9, oldPrice: 9.9, barcode: '6901234568019' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '挂面', spec: '900g', unit: '袋', price: 8.5, oldPrice: 11, barcode: '6901234568020' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '方便面', spec: '5 连包', unit: '组', price: 14.9, oldPrice: 18.9, barcode: '6901234568021' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '薯片', spec: '100g', unit: '袋', price: 9.9, oldPrice: 12.9, barcode: '6901234568022' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '巧克力', spec: '80g', unit: '块', price: 12.5, oldPrice: 15.9, barcode: '6901234568023' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '矿泉水', spec: '550ml×24', unit: '箱', price: 35.9, oldPrice: 48, barcode: '6901234568024' },
+      },
     ],
     template: {
       unit: 'mm',
