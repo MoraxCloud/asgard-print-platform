@@ -162,6 +162,44 @@ npx @worm-print-platform/skills worm-print-platform-mcp
 - 安装后用设置页配置本地服务端口（默认 `127.0.0.1:17521`）与 MCP/AI 助手；接入方法见
   [客户端 README](./clients/client/README.md) 与 [静默打印技能](./skills/worm-print-platform-integration/references/silent-print.md)。
 
+### 手工打包客户端安装包
+
+前置：Node.js 20.19+（Vite 7 要求）、仓库根目录执行 `npm install`。各命令都会先按依赖序构建 `core` / `contract` / `mcp` /
+`echarts` 与客户端 `out/`，版本号取自 `clients/client/package.json`（当前 `1.5.1`）：
+
+```bash
+npm run pack:client          # macOS x64 + arm64、Windows x64（dmg / zip / exe）
+npm run pack:client:mac      # 仅 macOS
+npm run pack:client:win      # 仅 Windows x64 NSIS（可在 macOS 交叉构建）
+npm run pack:client:linux    # 仅 Linux deb / rpm / AppImage（Docker 容器内构建）
+npm run pack:client:dir      # 绿色免安装目录版，只出宿主平台
+npm run pack:client:release  # 全平台出包 + 生成 SHA256SUMS.txt 与 gh release upload 命令
+```
+
+| 产物 | 内容 | 对应命令 |
+| --- | --- | --- |
+| `WormPrintClient-<版本>-mac-x64.dmg` | Intel Mac 安装镜像 | `pack:client` / `pack:client:mac` |
+| `WormPrintClient-<版本>-mac-arm64.dmg` | Apple Silicon Mac 安装镜像 | `pack:client` / `pack:client:mac` |
+| `WormPrintClient-<版本>-win-x64.exe` | Windows NSIS 安装程序 | `pack:client` / `pack:client:win` |
+| `WormPrintClient-<版本>-linux-amd64.deb` | Debian / Ubuntu 系 | `pack:client:linux` |
+| `WormPrintClient-<版本>-linux-x86_64.rpm` | Fedora / RHEL / openSUSE 系 | `pack:client:linux` |
+| `WormPrintClient-<版本>-linux-x86_64.AppImage` | 免安装单文件 | `pack:client:linux` |
+| `SHA256SUMS.txt` | 上述安装包校验清单 | `pack:client:release` |
+
+说明：
+
+- **产物位置**：`clients/client/dist/`（已被 `.gitignore` 排除，不入库）。同处的 `*-mac-*.zip` 与
+  `*.blockmap` 是 electron-updater 差量更新元数据，本客户端未接自动更新，**不要挂进发行版**。
+- **Linux 原生构建**：在真实 Linux 主机上需先装 `rpm`/`rpmbuild` 等工具链，执行
+  `npm ci && npm run build && npm run pack:client:linux:native`；`pack:client:linux` 走容器，需已启动 Docker Desktop，
+  首次约 10 分钟（拉 `node:22-bookworm` 镜像 + 容器内 `npm ci`），镜像可用 `WORM_LINUX_BUILDER_IMAGE` 覆盖。
+- **国内网络**：交叉构建首次要从 GitHub 拉 Electron 与 NSIS 工具链，直连易卡在 `Timeout awaiting 'request'`，先设
+  `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/` 与
+  `ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`；
+  容器内 apt 拉不到 `deb.debian.org` 时加 `APT_MIRROR=https://mirrors.aliyun.com`。
+- **产物未经签名**：与上方现成安装包一致，无 Developer ID / Windows 证书，首次打开需按上面的绕过方式处理。
+- 出包细节、Linux 沙箱权限、代码签名现状见 [客户端 README 打包章节](./clients/client/README.md#打包)。
+
 ## 发布
 
 ```bash
