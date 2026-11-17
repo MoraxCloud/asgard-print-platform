@@ -189,6 +189,19 @@ import '@worm-print-platform/echarts/ui'
 
 > macOS 首次打开若提示"无法验证开发者"，在「系统设置 → 隐私与安全性」中允许打开即可（未做 Apple 公证）。
 
+### 手工打包速查
+
+```bash
+npm run pack:client          # 全平台（mac + win）安装包
+npm run pack:client:mac      # 仅 macOS（Intel + Apple Silicon）
+npm run pack:client:win      # 仅 Windows x64 NSIS（macOS 可交叉构建）
+npm run pack:client:linux    # Linux（Docker 容器内，deb / rpm / AppImage）
+npm run pack:client:dir      # 绿色目录版（免安装，宿主平台）
+npm run pack:client:release  # 安装包 + SHA256SUMS + 发行版上传命令
+```
+
+> 首次构建另一架构 / 平台时，electron-builder 需拉取对应工具链；国内网络建议先设镜像。完整打包说明、Linux Docker 前置条件、产物命名与 GitHub 发行版上传步骤见 [clients/client/README.md](./clients/client/README.md#打包)。
+
 ## AI Agent 配套技能
 
 仓库随源码维护两个技能包（`skills/` 目录），AI Agent 接入时先装规范再动手：
