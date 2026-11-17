@@ -208,10 +208,13 @@ const BUILTIN_CONTENT_RENDERERS: Readonly<Record<string, ElementContentRenderer>
   vline: (el) => h('div', { class: 'print-line', style: lineStyle(el) }),
   rect: (el) => h('div', { class: 'print-shape', style: shapeStyle(el) }),
   oval: (el) => h('div', { class: 'print-shape', style: shapeStyle(el) }),
-  image: (el) => {
+  image: (el, _designMode, host) => {
     const o = el.options
     const raw = String(o.src ?? '')
-    const src = raw.includes('{') ? evaluateTemplate(raw, DEFAULT_DEMO_DATA) : raw
+    // 与插件/表格同源：宿主注入 designData 时按其数据根求值，未注入回落内置 demo 数据。
+    // 否则表达式 src（如动态 base64 的 {logo}）在设计态永远求值为空，画布看不到图。
+    const demoData = host?.designData?.length ? host.designData[0] : DEFAULT_DEMO_DATA
+    const src = raw.includes('{') ? evaluateTemplate(raw, demoData) : raw
     return h('div', { class: 'print-image' }, [
       src
         ? h('img', { src, style: imageStyle(el) })
@@ -245,7 +248,7 @@ const BUILTIN_CONTENT_RENDERERS: Readonly<Record<string, ElementContentRenderer>
     })
   },
   table: (el, _designMode, host) =>
-    host ? renderTable(el, host.store, host.fire) : h('div', { class: 'print-table' }),
+    host ? renderTable(el, host.store, host.fire, host.designData) : h('div', { class: 'print-table' }),
   flowList: (el, _designMode, host) => renderFlowListElement(el, undefined, host?.store),
 }
 

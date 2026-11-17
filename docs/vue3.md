@@ -71,8 +71,9 @@ function onPreview() {
 
 组件契约（完整口径见技能 `references/integration-api.md`）：
 
-- `PrintDesigner` props：`initial-template / initial-elements / fields / is-edit / upload-image / show-help / fonts / design-data`；
+- `PrintDesigner` props：`initial-template / initial-elements / fields / is-edit / upload-image / show-help / show-preview / show-save / fonts / design-data`；
   事件 `save(json)` / `preview()`；ref 方法 `getTemplateJson() / validateTemplate() / getGeometryWarnings()`。
+  `show-preview` / `show-save` 控制工具栏「预览 / 保存」按钮显隐，默认显示，隐藏不影响 `save()` 与事件旁路。
 - `PrintHtmlPreview` props：`template-json / print-data / base-url / font-base-url / renderers`；
   事件 `rendered / error`；ref 方法 `print / rerender / setViewZoom`。
 - 不存在 `back` 事件与 `setTemplateMeta` 方法——返回导航与模板元信息都是宿主业务层。

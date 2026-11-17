@@ -73,6 +73,10 @@ const component = defineComponent({
     },
     /** 是否展示帮助入口；不传时保持元素默认（展示） */
     showHelp: { type: Boolean, default: undefined },
+    /** 是否展示工具栏「预览」按钮；不传时保持元素默认（展示） */
+    showPreview: { type: Boolean, default: undefined },
+    /** 是否展示工具栏「保存」按钮；不传时保持元素默认（展示） */
+    showSave: { type: Boolean, default: undefined },
     /** 模板级字体声明，保存 / 导出时写入模板 JSON */
     fonts: {
       type: Array as PropType<readonly PrintFontDeclaration[]>,
@@ -119,6 +123,8 @@ const component = defineComponent({
       el.uploadDesignBackground = props.uploadDesignBackground
       if (props.isEdit !== undefined) el.isEdit = props.isEdit
       if (props.showHelp !== undefined) el.showHelp = props.showHelp
+      if (props.showPreview !== undefined) el.showPreview = props.showPreview
+      if (props.showSave !== undefined) el.showSave = props.showSave
     }
 
     onMounted(() => {
@@ -148,6 +154,8 @@ const component = defineComponent({
     watch(() => props.uploadDesignBackground, v => { const el = elRef.value; if (el) el.uploadDesignBackground = v })
     watch(() => props.isEdit, v => { const el = elRef.value; if (el && v !== undefined) el.isEdit = v })
     watch(() => props.showHelp, v => { const el = elRef.value; if (el && v !== undefined) el.showHelp = v })
+    watch(() => props.showPreview, v => { const el = elRef.value; if (el && v !== undefined) el.showPreview = v })
+    watch(() => props.showSave, v => { const el = elRef.value; if (el && v !== undefined) el.showSave = v })
 
     const api: PrintDesignerExpose = {
       getTemplateJson() {

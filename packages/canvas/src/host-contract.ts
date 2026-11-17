@@ -14,7 +14,7 @@ import type { MultiPageTemplateData, PrintBusinessField, TemplateData } from '@w
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
 
 /** 宿主契约版本；每次改动可观察面必须同步升号 */
-export const PRINT_DESIGNER_CONTRACT_VERSION = '1.0.0'
+export const PRINT_DESIGNER_CONTRACT_VERSION = '1.1.0'
 
 /** 自定义元素标签名 */
 export const PRINT_DESIGNER_TAG = 'print-designer' as const
@@ -26,7 +26,7 @@ export const PRINT_DESIGNER_ATTRIBUTES = [
 export type PrintDesignerAttribute = typeof PRINT_DESIGNER_ATTRIBUTES[number]
 
 /** 只走 property 的开关（不进 observedAttributes，写 setAttribute 只影响样式/语义） */
-export const PRINT_DESIGNER_BOOLEAN_ATTRIBUTES = ['is-edit', 'show-help'] as const
+export const PRINT_DESIGNER_BOOLEAN_ATTRIBUTES = ['is-edit', 'show-help', 'show-preview', 'show-save'] as const
 export type PrintDesignerBooleanAttribute = typeof PRINT_DESIGNER_BOOLEAN_ATTRIBUTES[number]
 
 /** 设计态示例数据的数组信封（data[0] 为数据根对象） */
@@ -46,6 +46,10 @@ export interface PrintDesignerProperties {
   isEdit: boolean
   /** 是否显示帮助入口（同时写 show-help attribute） */
   showHelp: boolean
+  /** 是否显示工具栏「预览」按钮（同时写 show-preview attribute）；默认显示，隐藏不影响 preview 事件与宿主旁路 */
+  showPreview: boolean
+  /** 是否显示工具栏「保存」按钮（同时写 show-save attribute）；默认显示，隐藏不影响 save() 方法与 save 事件 */
+  showSave: boolean
   /** 宿主提供的图片上传回调；未注入时素材台的图片入口回落到内置行为 */
   uploadImage?: (file: File) => Promise<string> | string
   /** 宿主提供的设计背景上传回调 */
@@ -143,7 +147,7 @@ export const PRINT_DESIGNER_METHODS: readonly (keyof PrintDesignerMethods)[] = [
 ]
 
 export const PRINT_DESIGNER_PROPERTY_NAMES: readonly (keyof PrintDesignerProperties)[] = [
-  'template', 'fields', 'fonts', 'designData', 'isEdit', 'showHelp',
+  'template', 'fields', 'fonts', 'designData', 'isEdit', 'showHelp', 'showPreview', 'showSave',
   'uploadImage', 'uploadDesignBackground',
 ]
 

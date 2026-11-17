@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.5.1-384BFF" alt="npm">
+  <img src="https://img.shields.io/badge/npm-v1.5.2-384BFF" alt="npm">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
   <a href="/vue3">
     <img src="https://img.shields.io/badge/vue-optional%20peer-42b883" alt="vue peer">
@@ -108,12 +108,14 @@ import type { TemplateData } from '@worm-print-platform/canvas/vue3'
 
 | 面 | 内容 |
 | --- | --- |
-| attribute | `template` · `fields` · `name` · `fonts` · `design-data`（另 `is-edit` / `show-help` 两个布尔开关） |
-| property | `template` · `fields` · `fonts` · `designData` · `isEdit` · `showHelp` · `uploadImage` · `uploadDesignBackground` |
+| attribute | `template` · `fields` · `name` · `fonts` · `design-data`（另 `is-edit` / `show-help` / `show-preview` / `show-save` 四个布尔开关） |
+| property | `template` · `fields` · `fonts` · `designData` · `isEdit` · `showHelp` · `showPreview` · `showSave` · `uploadImage` · `uploadDesignBackground` |
 | 方法 | `getTemplateJson()` · `loadTemplate()` · `save()` · `validateTemplate()` · `getGeometryWarnings()` |
 | 事件（`bubbles + composed`） | `save` / `preview` → 模板 JSON 字符串；`help` → 无载荷；`dblclick-element` → 元素 id；`dblclick-cell` → `{ elementId, r, c, cellId? }` |
 
 自定义外观：外壳 8 个 `::part` 挂钩 + 52 个 `--pd-*` 主题令牌（权威定义在 `@worm-print-platform/core/styles/theme.css`）。契约版本遵守语义化，`src/__tests__/host-contract.spec.ts` 做漂移检测。
+
+`showPreview` / `showSave` 控制工具栏「预览 / 保存」按钮显隐，默认显示，置 `false` 隐藏（Vue 3 门面同名 props）。隐藏只影响按钮出图：`save()` 方法、`save` / `preview` 事件照常可用，宿主可接管打印与预览业务逻辑。
 
 ## 统一元素注册表
 

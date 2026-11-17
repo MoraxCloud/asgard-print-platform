@@ -83,6 +83,8 @@ function syncDesigner() {
   el.fields = state.fields
   el.template = state.templateData
   el.fonts = fontsOf(state.templateData)
+  // 设计态示例数据：让图片/码等表达式在设计画布也能求值（如动态 base64 图片）
+  el.designData = state.activeData
   console.log(`[demo] 注入 fields(${state.fields.length} 个字段) 与 template(${state.templateData.paperSize})`)
 }
 

@@ -20,3 +20,12 @@
 - `BUSY` 由宿主排队重试，客户端不提供离线补打队列。细节见 [静默打印](silent-print.md)。
 
 链路 A 的浏览器渲染结果与链路 C 的 `printHtml` 输入是同一个 `renderHtmlPages` 产物——宿主自绘预览层时用一份渲染结果即可同时支撑「浏览器打印」和「静默打印」两个按钮。
+
+## 接管设计器的预览/保存入口
+
+宿主要自定义打印与预览业务（自己的业务按钮、弹窗、出纸链路）时，用 `showPreview` / `showSave` 隐藏设计器工具栏的「预览 / 保存」按钮（契约 1.1.0 起，默认显示）：
+
+- 原生：`el.showPreview = false` / `el.showSave = false`，或声明式 `show-preview="false"` / `show-save="false"`。
+- Vue 3 门面：`:show-preview="false"` / `:show-save="false"`。
+
+隐藏只影响按钮出图，不关闭能力：`save()` 方法（先拼版校验再派发 `save` 事件）与 `save` / `preview` 事件照常可用。典型接法：宿主业务按钮里调 `el.save()` 落库，再取 `getTemplateJson()` + 业务数据走上面三条链路之一出纸。

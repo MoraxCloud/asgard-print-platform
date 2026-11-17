@@ -25,7 +25,7 @@ function create(): PrintDesignerElement {
 
 describe('宿主契约：声明面', () => {
   it('版本与标签固定，契约快照字段齐全', () => {
-    expect(PRINT_DESIGNER_CONTRACT_VERSION).toBe('1.0.0')
+    expect(PRINT_DESIGNER_CONTRACT_VERSION).toBe('1.1.0')
     expect(PRINT_DESIGNER_TAG).toBe('print-designer')
     const c = getHostContract()
     expect(c.version).toBe(PRINT_DESIGNER_CONTRACT_VERSION)

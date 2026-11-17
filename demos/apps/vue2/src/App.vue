@@ -222,6 +222,8 @@ export default {
       el.fields = this.fields
       el.template = this.templateData
       el.fonts = fontsOf(this.templateData)
+      // 设计态示例数据：让图片/码等表达式在设计画布也能求值（如动态 base64 图片）
+      el.designData = this.activeData
       console.log(`[demo] 注入 fields(${this.fields.length} 个字段) 与 template(${this.templateData.paperSize})`)
     },
     /** 图片上传回调：设计器「插入图片」时调用，宿主返回可访问地址即可（demo 用 Data URL 模拟上传接口） */

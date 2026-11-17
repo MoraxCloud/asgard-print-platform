@@ -223,6 +223,16 @@ export class PrintDesignerElement extends HTMLElement {
     if (!v) this.closeHelp()
     this.repaint()
   }
+  /** 工具栏「预览」按钮显隐；默认显示，隐藏只影响按钮出图，preview 事件旁路不受影响 */
+  set showPreview(v: boolean) {
+    this.setAttribute('show-preview', String(v))
+    this.repaint()
+  }
+  /** 工具栏「保存」按钮显隐；默认显示，隐藏只影响按钮出图，save() 与 save 事件不受影响 */
+  set showSave(v: boolean) {
+    this.setAttribute('show-save', String(v))
+    this.repaint()
+  }
 
   /**
    * 宿主契约版本（机器可读）；宿主可在挂载前用 `PrintDesignerElement.contractVersion`
@@ -587,6 +597,8 @@ export class PrintDesignerElement extends HTMLElement {
       repaint: () => this.repaint(),
       fire: (action, arg) => this.fire(action, arg),
       showHelp: this.getAttribute('show-help') !== 'false',
+      showPreview: this.getAttribute('show-preview') !== 'false',
+      showSave: this.getAttribute('show-save') !== 'false',
       isEdit: this.getAttribute('is-edit') === 'true',
       host: {
         uploadImage: this.uploadImage,

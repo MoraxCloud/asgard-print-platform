@@ -56,6 +56,7 @@
         ref="designerRef"
         is-edit="true"
         show-help="true"
+        :show-preview="true"
         @save="onSave"
         @preview="onPreview"
         @help="onHelp"

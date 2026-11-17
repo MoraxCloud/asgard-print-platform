@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.5.1-384BFF" alt="npm version">
+  <img src="https://img.shields.io/badge/npm-v1.5.2-384BFF" alt="npm version">
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
@@ -177,7 +177,7 @@ import '@worm-print-platform/echarts/ui'
 
 客户端用于**链路 C**，安装包随 GitHub Releases 分发：
 
-👉 [最新版 v1.5.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.5.1)
+👉 [v1.5.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.5.1)（客户端源码自 v1.5.1 起无变更，可继续使用；新版本仅涉及设计器与示例）
 
 | 平台 | 架构 | 安装包 |
 | --- | --- | --- |

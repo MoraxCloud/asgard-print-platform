@@ -144,6 +144,7 @@
 | `validateTemplate()` | ✅ | 当前为拼版配置校验（canvas 同名方法亦仅此口径） |
 | 选中元素即切到「元素属性」页签（有插件 UI 的元素切「自定义属性」）、清空即回「页面属性」 | ✅ | 对应 canvas 的 `selectedElement` watch，插件元素与 canvas 同口径 |
 | `isEdit` / `showHelp` | ✅ | attribute 口径 |
+| `showPreview` / `showSave`（工具栏「预览 / 保存」按钮显隐） | ✅ | attribute 口径（`show-preview` / `show-save`，`'false'` 才隐藏）；**common 侧新增，Vue 3 轨无此开关**。默认显示；隐藏只影响按钮出图，`save()` 方法与 `save` / `preview` 事件照常可用，供宿主自定义打印/预览业务。契约 1.1.0 新增，回归见 `__tests__/toolbar-visibility.spec.ts` 与 `vue3/__tests__/vue3-compat.spec.ts` |
 | `uploadImage` 注入（图片元素上传入口） | ✅ | 与 canvas 的 ImageContentUpload 同结构同文案：`.image-content-upload > label.pd-button.small.upload-label[.disabled] > svg.pd-icon + 文字 + input.visually-hidden`，另有 `.upload-tip`；未注入时置灰，四类提示（非图片 / 未配置 / 失败 / 抛错）逐字一致 |
 | `uploadDesignBackground` 注入（设计背景上传） | ✅ | 同 canvas：未注入时入口 `.disabled`，提示文案「设计背景上传能力未配置」等逐字一致 |
 | `fonts: PrintFontDeclaration[]`（property 或 `fonts` attribute 传 JSON） | ✅ | 与 canvas 同类型（2026-10-24 起连类型也收紧成 `readonly PrintFontDeclaration[]`，裸字符串族名两侧都不进候选）：① shadow root 内注入 `buildFontFaceCss(fonts)` 的 `@font-face`；② 字体下拉候选（含 `label` 展示名，候选整理调 core `normalizeFontCatalog`）；③ 保存 / 导出统一走 `templateJsonWithFonts()`，多页模板逐页写入 `fonts`；**四个宿主 demo 已演示**（2026-10-26 T-16：宿主把模板 `fonts` 交给元素，`verify-demo` 断言 3 条 `@font-face` 进文档、字体下拉 1 默认 + 3 候选） |
