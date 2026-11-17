@@ -76,14 +76,7 @@ jobs:
           echo "标签与全量发布链版本一致：$TAG"
 
       # 纯 OIDC 认证：不注入 NODE_AUTH_TOKEN，避免 npm CLI 回退到 token 路径触发 2FA。
-      # echarts 依赖 core，必须先发 core。
-      - name: 发布 @worm-print-platform/core
-        working-directory: packages/core
-        run: |
-          EXTRA=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
-          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-
+      # core 已于上一轮发布成功，本轮跳过
       # plugin-kit 是 canvas 的 runtime dependency，必须先于 canvas 发布
       - name: 发布 @worm-print-platform/plugin-kit
         working-directory: packages/plugin-kit
