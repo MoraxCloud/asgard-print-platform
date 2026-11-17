@@ -4,9 +4,8 @@ name: Deploy Pages
 #   /                      ← demos/index.html 导航页
 #   /canvas/{vue3,vue2,react,jquery}/ ← 各宿主（vite demo 用 PAGES_BASE 构建注入子路径）
 # 服务端 PDF 与桌面客户端静默打印在访客机器上不可达，demo 自带降级提示，不影响静态演示。
+# 仅手动触发：push 到 master 不再自动部署，只在需要时手动 Run workflow。
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 permissions:

@@ -1,9 +1,9 @@
 name: CI
 
+# 仅手动触发：任何 push / PR 都不会自动运行，只在需要时手动 Run workflow。
+# 触发：Actions → CI → Run workflow，或 gh workflow run ci.yml
 on:
-  push:
-    branches: [main, master]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build-test:
