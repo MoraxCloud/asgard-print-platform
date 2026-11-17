@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
-// common 侧出纸裁切提示（与 Vue 3 轨的 print-designer-geometry.spec.ts 成对）：
-// 预估口径不阻断保存，但点保存必须让用户看到「会被裁切」；宿主导出旁路可自行取同一批文案。
+// 本包出纸裁切提示（与 Vue 3 轨的 print-designer-geometry.spec.ts 成对）：
+// 用户确认接受裁切后继续保存，取消则保留编辑状态；格式错误优先于裁切询问。
+// 与出纸同一实现（core collectPrintWarnings → paginate），不把预估裁切当作非法模板。
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { DesignerStore } from '../core/store'
 import { PrintDesignerElement, definePrintDesigner } from '../print-designer'
@@ -43,15 +44,18 @@ async function mountDesigner(options: Record<string, any>) {
 }
 
 const alertSpy = vi.fn()
+const confirmSpy = vi.fn((_message: string) => true)
 
 beforeEach(() => {
   stubStorage()
   alertSpy.mockClear()
+  confirmSpy.mockReset().mockReturnValue(true)
   vi.stubGlobal('alert', alertSpy)
+  vi.stubGlobal('confirm', confirmSpy)
 })
 
 describe('本包 保存闸门的出纸裁切提示', () => {
-  it('元素超出纸面右缘：仍正常派 save，并弹一次「出纸提示」', async () => {
+  it('确认接受裁切后正常保存，不再用只有确定按钮的 alert', async () => {
     const el = await mountDesigner({ left: 150, top: 100, width: 100, height: 20, formatter: 'X' })
     const saves: string[] = []
     el.addEventListener('save', e => saves.push(String((e as CustomEvent).detail)))
@@ -60,10 +64,30 @@ describe('本包 保存闸门的出纸裁切提示', () => {
     await frame()
 
     expect(saves).toHaveLength(1)
-    expect(alertSpy).toHaveBeenCalledTimes(1)
-    const msg = String(alertSpy.mock.calls[0]![0])
+    expect(alertSpy).not.toHaveBeenCalled()
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    const msg = String(confirmSpy.mock.calls[0]![0])
     expect(msg).toContain('出纸提示')
     expect(msg).toContain('50')
+    expect(msg).toContain('接受裁切并继续保存')
+  })
+
+  it('取消裁切确认不保存，编辑内容保留，之后仍可确认保存', async () => {
+    const el = await mountDesigner({ left: 150, top: 100, width: 100, height: 20, formatter: 'X' })
+    const before = el.getTemplateJson()
+    confirmSpy.mockReturnValueOnce(false)
+    const saves: string[] = []
+    el.addEventListener('save', e => saves.push(String((e as CustomEvent).detail)))
+
+    el.save()
+    await frame()
+    expect(saves).toHaveLength(0)
+    expect(el.getTemplateJson()).toEqual(before)
+
+    // 再次保存并确认 → 正常放行
+    el.save()
+    await frame()
+    expect(saves).toHaveLength(1)
   })
 
   it('干净模板不打扰（无提示、正常保存）', async () => {
@@ -71,6 +95,7 @@ describe('本包 保存闸门的出纸裁切提示', () => {
     el.save()
     await frame()
     expect(alertSpy).not.toHaveBeenCalled()
+    expect(confirmSpy).not.toHaveBeenCalled()
   })
 
   it('getGeometryWarnings() 返回与出纸同源的文案（导出旁路可自行展示）', async () => {
@@ -80,7 +105,7 @@ describe('本包 保存闸门的出纸裁切提示', () => {
     expect(warnings[0]).toContain('22.43')
   })
 
-  it('拼版非法优先阻断，不叠加出纸提示（一次只说一件事）', async () => {
+  it('拼版非法优先阻断，不询问裁切（一次只说一件事）', async () => {
     const el = await mountDesigner({ left: 150, top: 100, width: 100, height: 20, formatter: 'X' })
     const store = (el as unknown as { store: DesignerStore }).store
     store.updateTemplateData({
@@ -98,6 +123,36 @@ describe('本包 保存闸门的出纸裁切提示', () => {
 
     expect(saves).toHaveLength(0)
     expect(alertSpy).toHaveBeenCalledTimes(1)
+    expect(confirmSpy).not.toHaveBeenCalled()
     expect(String(alertSpy.mock.calls[0]![0])).toContain('最多可放')
+  })
+
+  it('多页纸型非法先报真实错误，不先询问是否接受裁切', async () => {
+    definePrintDesigner()
+    const host = document.createElement('div')
+    document.body.replaceChildren(host)
+    const el = document.createElement('print-designer') as PrintDesignerElement
+    host.appendChild(el)
+    await frame()
+    const store = (el as unknown as { store: DesignerStore }).store
+    const page = (paperSize: string) => ({
+      paperSize, orientation: 'portrait',
+      margins: { top: 10, right: 10, bottom: 10, left: 10 },
+      header: { height: 0, elements: [] },
+      footer: { height: 0, elements: [] },
+      name: '页',
+      elements: [{ id: 't1', type: 'text', options: { left: 150, top: 100, width: 100, height: 20, formatter: 'X' } }],
+    })
+    store.loadTemplate({ version: 1, pages: [page('A4'), page('A3')] } as never)
+    await frame()
+
+    const saves: string[] = []
+    el.addEventListener('save', e => saves.push(String((e as CustomEvent).detail)))
+    el.save()
+    await frame()
+
+    expect(saves).toHaveLength(0)
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(String(alertSpy.mock.calls[0]![0])).toContain('纸张尺寸必须一致')
   })
 })

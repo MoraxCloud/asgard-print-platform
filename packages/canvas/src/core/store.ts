@@ -160,12 +160,13 @@ export class DesignerStore {
   addPage() {
     if (this.tilingEnabled) { window.alert(TILING_SINGLE_PAGE_TIP); return }
     this.recordHistory()
-    // 新增页继承当前页纸张（Vue 3 轨 同口径）：否则横版模板加出竖版页，
+    // 新增页继承当前页纸张、设计方向与内容旋转（Vue 3 轨同口径）：否则横版模板加出竖版页，
     // 保存时会被「各页纸张尺寸必须一致」校验整份拦下
     const base = this.pages[this.activePageIndex] ?? createDefaultTemplate()
     this.pages.push(toRuntimePool({
       ...createDefaultTemplate(),
       paperSize: base.paperSize, orientation: base.orientation,
+      outputRotation: base.outputRotation,
       customWidth: base.customWidth, customHeight: base.customHeight,
       name: this.nextDefaultPageName(),
     }))
@@ -404,6 +405,12 @@ export class DesignerStore {
   updateTemplateData(patch: Partial<TemplateData>) {
     this.recordHistory()
     Object.assign(this.templateData, patch)
+    // 各页共用纸型，设计方向与内容旋转保持按页独立。
+    for (const key of ['paperSize', 'customWidth', 'customHeight'] as const) {
+      if (key in patch) {
+        for (const page of this.pages) Object.assign(page, { [key]: patch[key] })
+      }
+    }
     this.emit()
   }
 
