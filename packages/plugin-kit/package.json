@@ -2,7 +2,7 @@
   "name": "@worm-print-platform/plugin-kit",
   "version": "1.5.1",
   "type": "module",
-  "description": "【尚未发布】打印模板自定义元素的框架无关设计器 UI 契约与注册表：插件写一份 DOM 渲染能力，common（原生）与 canvas（Vue 桥接）同时消费",
+  "description": "打印模板自定义元素的框架无关设计器 UI 契约与注册表：插件写一份 DOM 渲染能力，canvas（原生）与 /vue3（门面）同时消费",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

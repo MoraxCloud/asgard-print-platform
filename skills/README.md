@@ -16,16 +16,26 @@ canvas 主入口或其 UMD 产物。框架接入操作方法与 AI 集成提示�
 
 ## 安装
 
-在目标项目根目录用命令行安装器（`@worm-print-platform/skills`，随仓库 `packages/skills` 维护）：
+在目标项目根目录用命令行安装器（`@worm-print-platform/skills`，随仓库 `packages/skills` 维护），**Gitee 优先**（国内网络快）：
 
 ```bash
-npx @worm-print-platform/skills worm-print-platform-integration
-npx @worm-print-platform/skills worm-print-platform-mcp --dir .agents/skills
+# Gitee 优先（推荐，国内网络快）
+npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
+npx @worm-print-platform/skills worm-print-platform-mcp           --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
+
+# GitHub 自动回退：不带 --repo 时默认 GitHub 优先、失败自动回退 Gitee
+npx @worm-print-platform/skills worm-print-platform-integration --force
+
+# 自定义目录：--dir 指定目标（默认 .agents/skills）
+#   Claude Code → .claude/skills · Qoder → .qoder/skills · 用户级 → ~/.agents/skills
+npx @worm-print-platform/skills worm-print-platform-integration \
+  --repo https://gitee.com/liulong_oschina/worm-print-platform.git \
+  --dir .claude/skills --force
 ```
 
-默认装到当前项目 `.agents/skills/<技能名>/`，源为 GitHub、失败回退 Gitee。可用
-`--repo` 指定任意 GitHub/Gitee 仓库、`--dir` 指定技能目录、`--force` 覆盖已有目录；
-离线时也可直接从仓库手动下载本目录。详见 [docs/README.md 技能安装方法](../docs/README.md#技能安装方法提示词第-0-步的通用说明)。
+默认装到当前项目 `.agents/skills/<技能名>/`（OpenAI 规范位置）。可用 `--repo` 指定任意
+GitHub/Gitee 仓库、`--dir` 指定技能目录、`--force` 覆盖已有目录；离线时也可直接从仓库手动下载本目录。
+完整说明见 [docs/README.md 技能安装方法](../docs/README.md#技能安装方法提示词第-0-步的通用说明)。
 
 两个技能由 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print) 的同名分发技能迁移而来
 （原 `common` 直挂技能已并入 `integration`），已按当前仓库的包名（`@worm-print-platform/*`）、

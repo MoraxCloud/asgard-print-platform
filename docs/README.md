@@ -27,24 +27,55 @@ AI 编程工具的「集成提示词」。提示词内置技能安装引导，�
 
 ## 技能安装方法（提示词「第 0 步」的通用说明）
 
+> **所有命令块都支持快捷复制**（点击代码块右上角的复制按钮即可）。默认安装目录为 `.agents/skills/<技能名>/`（OpenAI 规范位置）。
+
 技能以仓库为源，通过命令行安装器安装到当前项目（推荐），也可从仓库源码手动取用（离线回退）。
 
 ### 方式 A：npx 安装器（推荐）
 
-在**当前项目根目录**逐条执行（`<技能名>` 见上表）：
+在**当前项目根目录**逐条执行（`<技能名>` 见上表）。默认 Gitee 优先（国内网络快），网络不通时自动回退 GitHub：
+
+**Gitee 优先（推荐，国内网络快）**：
 
 ```bash
-npx @worm-print-platform/skills worm-print-platform-integration
-npx @worm-print-platform/skills worm-print-platform-mcp
+npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
+npx @worm-print-platform/skills worm-print-platform-mcp           --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
 ```
 
-- 默认装到当前项目的 `.agents/skills/<技能名>/`，含 `SKILL.md` 与 `references/` 全部文件。
-- 默认源为 GitHub，失败自动回退 Gitee 镜像；两者都不通时可用 `--repo` 指定任意 GitHub /
-  Gitee 仓库（或 `owner/repo` 简写）。
-- 其他技能目录用 `--dir` 指定，例如 Qoder 项目级目录 `--dir .qoder/skills`，
-  Claude Code 用 `--dir .claude/skills`；用户级目录可传绝对路径。
-- 目标已存在时默认拒绝覆盖并报错，确认覆盖才加 `--force`。
-- 完整参数见 `npx @worm-print-platform/skills --help`。
+**GitHub 自动回退**：
+
+```bash
+# 不带 --repo 时默认 GitHub 优先、失败自动回退 Gitee
+npx @worm-print-platform/skills worm-print-platform-integration --force
+npx @worm-print-platform/skills worm-print-platform-mcp           --force
+```
+
+**自定义安装目录**（可选，指定 `--dir`）：
+
+```bash
+# 常见目标目录：
+#   Claude Code  → .claude/skills
+#   Qoder        → .qoder/skills
+#   用户级       → ~/.agents/skills
+#   其他任意路径 → 绝对路径
+
+npx @worm-print-platform/skills worm-print-platform-integration \
+  --repo https://gitee.com/liulong_oschina/worm-print-platform.git \
+  --dir .claude/skills --force
+```
+
+参数速查：
+
+| 参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `<技能名>` | 必填，单个技能名（如 `worm-print-platform-integration`） | — |
+| `--repo <地址>` | 仓库地址（GitHub / Gitee 均可，或 `owner/repo` 简写） | 双源：GitHub 优先、失败自动回退 Gitee |
+| `--dir <目录>` | 技能根目录，技能装到 `<目录>/<技能名>/` | `.agents/skills`（OpenAI 规范位置） |
+| `--force` | 目标目录已存在时覆盖（默认拒绝并报错） | 否 |
+| `-h, --help` | 显示帮助 | — |
+| `-v, --version` | 显示版本 | — |
+
+完整参数见 `npx @worm-print-platform/skills --help`。
 
 ### 方式 B：仓库源码手动取用（离线回退）
 
@@ -53,6 +84,21 @@ npx @worm-print-platform/skills worm-print-platform-mcp
 目录手动下载整个目录，放到所用 AI 编程工具的技能目录并重载。
 安装器不可用或网络受限时，提示词降级为「完整阅读该目录下 `SKILL.md` 与 `references/`
 全部文档」，门控效果等价。
+
+### 给 AI Agent 的提示词片段（可整段复制）
+
+把下面这段直接粘给 AI 编程工具，它会先装规范再动手：
+
+```
+请先在项目根目录执行以下命令安装 worm-print-platform 的官方技能规范，再开始接入开发：
+
+npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
+
+默认安装到 .agents/skills/worm-print-platform-integration/（OpenAI 规范位置）。
+若 Gitee 网络不通，去掉 --repo 参数即可自动回退 GitHub；
+需要其他技能目录（如 .claude/skills / .qoder/skills）时加 --dir 指定。
+安装完成后，请完整阅读该目录下的 SKILL.md 与 references/ 全部文件。
+```
 
 ## 打印链路速记
 

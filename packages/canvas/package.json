@@ -6,7 +6,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "type": "module",
-  "description": "【实验性，不建议用于生产】打印模板设计器的通用宿主适配包：主入口为零框架原生 Custom Elements + Shadow DOM，零 Vue/React 依赖，直接消费 @worm-print-platform/core；/vue3 子路径为原本消费 @worm-vue3-print/canvas 的 Vue 3 宿主提供兼容门面（vue 为可选 peer）",
+  "description": "打印模板设计器权威实现：零框架原生 Custom Elements + Shadow DOM（vue 为可选 peer，/vue3 子路径提供 Vue 3 门面）",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
