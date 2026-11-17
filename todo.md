@@ -60,21 +60,23 @@
 > PR 无法直接 cherry-pick，只能手工按本仓架构移植。
 >
 > 核查结论：#11 表格按值合并、#12 MCP 参考图测量、#13 标尺修复、#14 文档 —— 均已迁入本仓，无需处理。
-> 唯一未迁入且有价值的是 **#15（OPEN，上游尚未合并）**，登记为待办如下。
+> **#15 已于 2026-11-17 按本仓架构移植完成**（core 层 + client + 设计器配套，提交 17bc5cd / e193531），
+> 仅剩实体打印机逐页方向识别待硬件验收，登记如下存档。
 
-## 待办：移植 PR #15「支持同纸型多页横纵向混排并完善裁切确认」
+## 已移植：PR #15「支持同纸型多页横纵向混排并完善裁切确认」（2026-11-17）
 
-- 来源：PR #15（状态 OPEN，未合并）；功能：同一份多页模板中组合纵向封面 / 横向明细，按各页方向输出。
-- 本仓缺失的三项核心能力：
-  1. `pagePaperMm` 逐物理页出纸尺寸 —— 本仓 `MultiPageDocument` 无此字段；`multi-template.ts:57` 仍强制
-     「各页纸张尺寸必须一致」，未放行旋转尺寸（PR 中 `sameSize || rotatedSize` 判断）。
-  2. 命名 `@page` 逐页方向绑定 —— 本仓 `buildPageRuleCss(template, pageHeightMm?)`（css-builder.ts:250）
-     仅 2 参，无 PR 所需第三参 `pageName`，无法在同一文档横纵混排。
-  3. 裁切提示确认/取消 —— 本仓 `save()`（print-designer.ts:414-435）仅 `window.alert` 后直接保存，
-     无「确认后继续保存 / 取消保留编辑内容」语义。
-- 已有基础：本仓已具备底层依赖 `getOutputPaperDimensions`、`buildBasePageCss`，移植起点优于表面差异。
-- 影响面（约 38 文件，按本仓架构重写）：core 多页管线 / CSS 分页 / 出纸尺寸、canvas 设计器保存流程、
-  client 打印引擎横纵混排时禁止全局方向覆盖、render 服务多页测试与文档。
-- 范围限制（移植须保留）：仅同一纸型内横纵混排，仍拒绝 A4/A3 混用、连续纸多页、多页拼版；
-  实体打印机逐页方向识别仍需目标驱动验收。
-- 决策：暂不实现（用户 2026-11-17 选择仅登记待办）。上游 #15 仍 OPEN，建议待其合并稳定后再评估移植。
+- 来源：PR #15（上游 OPEN）；功能：同一份多页模板中组合纵向封面 / 横向明细，按各页方向输出。
+- 移植实现（未逐字照搬 diff，复用本仓 `buildBatchPageCss` 既有命名 @page 模式）：
+  1. `pagePaperMm` 逐物理页出纸尺寸 —— `MultiPageDocument` / `PreparedDocument` /
+     `BrowserRenderResult` / client 协议全链贯穿；`multi-template.ts` 校验放行旋转尺寸。
+  2. 命名 `@page` 逐页方向绑定 —— `buildPageRuleCss` 加第三参 `pageName`，
+     `composeMultiPageDocument` 逐页生成 `@page mt-N` + `.mt-N.print-page{page:mt-N}`；
+     多页 `preferCSSPageSize=true`，每页按自身纸型测量。
+  3. 裁切提示确认/取消 —— `save()` 格式校验通过后 `window.confirm`，
+     确认继续保存 / 取消保留编辑内容。
+- 配套：client 校验 pagePaperMm、混排拒绝 `print.landscape` 覆盖、介质按短边×长边声明；
+  设计器新增页继承方向与内容旋转、纸型修改跨页共享；预览宽度取多页最宽出纸页。
+- 验证：core 1420 / contract 103 / render 49（含真实 Chromium「纵→横→纵」批量出纸尺寸断言）/
+  client 213 / canvas 455 项测试全部通过；`npm run build` 全仓成功。
+- 范围限制（保留）：仅同一纸型内横纵混排，仍拒绝 A4/A3 混用、连续纸多页、多页拼版。
+- **遗留：实体打印机逐页方向识别需目标驱动验收**（本机无对应硬件，无法自动化）。
