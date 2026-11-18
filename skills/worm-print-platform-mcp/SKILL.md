@@ -15,7 +15,7 @@ description: Use when 用户需要通过浏览器设计器、桌面客户端和 
 - `print_draft_template`：生成模板草稿并附校验结果；常见单据/标签/小票/面单优先传 `preset`。
 - `print_validate_template`：模板契约校验。
 - `print_check_expression`：表达式语法、白名单和字段检查。
-- `print_inspect_layout`：静态几何与结构体检。
+- `print_inspect_layout`：静态几何与结构体检，含线穿码 `LINE_OVER_CODE`（error）。
 - `print_preview_template`：把模板渲染成单页 PNG 返回，并附每个元素的实际渲染包围盒；写回前看图自评版式。
 - `print_analyze_reference_image`：把设计稿图片转成几何数据（内容区/线条/文本行/表格网格），做模板前先取基准。
 - `print_compare_with_reference`：渲染结果与参考图逐线比对，先比内容区在整幅图像中的位置（抓整版平移），再输出偏差、多余与缺失的线。
@@ -43,6 +43,7 @@ description: Use when 用户需要通过浏览器设计器、桌面客户端和 
 
 ## 3. 写回与预览约束
 
+- `LINE_OVER_CODE` 属 error，命中必须清零（线穿码会破坏扫码）；但静态体检只看写死坐标，不判真实换行、表格展开与分页，`print_preview_template` 视觉回读不可省。
 - `updateElement.changes` 浅合并到元素 `options`；`moveElement` 的 `x/y` 对应 `options.left/top`，单位 mm。
 - Patch 任一操作失败会整批拒绝；`print_apply_open_template` 仍是带 `baseRevision` 的整份替换。
 - `REVISION_CONFLICT` 表示读取后画布又发生变化。重新读取并请用户确认差异，不自动覆盖或循环强制写回。

@@ -146,9 +146,11 @@ export const TOOLS: ToolDef[] = [
   {
     name: 'print_inspect_layout',
     description: '静态版面体检（只看模板里写死的坐标，不做排版测量）：占位落在纸张外 OUT_OF_PAPER（error，出纸被裁）、'
+      + '线穿码 LINE_OVER_CODE（error，横线/竖线横穿条码或二维码，破坏识读，必须修）、'
       + '侵入页边距 OUT_OF_CONTENT_AREA（warning）、零尺寸 ZERO_SIZE_ELEMENT、表格无行 TABLE_MISSING_ROWS、'
       + '流式列表无列数 FLOW_MISSING_COLUMNS、列宽与元素宽不符 TABLE_COL_WIDTH_MISMATCH、同区交叠 ELEMENT_OVERLAP、'
-      + '页眉页脚带装不下 BAND_TOO_SMALL。表格真实行高、长文本换行占位、真实页数一律不在这里判，'
+      + '页眉页脚带装不下 BAND_TOO_SMALL。全宽分隔线不计入 BACKGROUND_NOT_PAGEABLE。'
+      + '表格真实行高、长文本换行占位、真实页数一律不在这里判，'
       + '需要那些数字请在设计器或打印预览中确认。',
     annotations: { title: '版面静态体检', ...PURE_ANNOTATIONS },
     inputSchema: schemaOf(z.object({
