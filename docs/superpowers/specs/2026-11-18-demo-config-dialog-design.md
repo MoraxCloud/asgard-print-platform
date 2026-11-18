@@ -71,3 +71,9 @@
 - 配置弹窗各 demo 是独立组件还是内联（建议 react 独立组件，其余就近放在 App.vue / app.js）。
 - 颜色输入用原生 `<input type="color">` 还是文本色值输入（建议原生颜色控件 + 清空按钮，避免非法色值）。
 - 弹窗关闭方式沿用各 demo 现有弹窗口径（遮罩点击 / 关闭按钮）。
+
+## 复核记录（2026-11-18）
+
+以 Playwright 实际打开四个 demo（vue3:9331 / vue2:9332 / react:9335 / jquery:9334）逐项点检，每个 demo 13 项，共 52 项，零页面错误。验收项：配置按钮存在、弹窗打开、两组开关/三个预设/四个颜色输入/重置按钮齐全、预览与保存显隐写回、深色预设写回、颜色覆盖写回 `themeConfig`、重置回 `auto` 且清空覆盖、完成按钮关闭弹窗。
+
+首轮复核发现 vue2 缺陷：取消勾选「预览」后 `show-preview` 属性变成 `null` 而非 `"false"`。根因是 vue2 模板上的 `:show-preview="showPreview"` 属性绑定与 property setter 写入冲突——Vue 2 对自定义元素一律 `setAttribute`，`false` 被渲染为移除属性，且响应式更新在 setter 之后执行覆盖了正确值（Vue 3 走 property setter，不受影响）。修复：移除 vue2 模板的 `:show-preview` 绑定，显隐统一由 property setter 控制（提交 `f88dc3e`）。修复后四 demo 全部 52 项通过；另单独验证 vue3 反复切换预览开关 4 次属性值始终正确。
