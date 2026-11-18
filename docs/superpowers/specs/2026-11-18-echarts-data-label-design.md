@@ -54,7 +54,7 @@
 | 内容 | `overflow` | 下拉 none / truncate / break | 饼类默认写 `none` |
 | 位置 | `position` | 下拉（按 kind 给候选） | 仪表盘不开放 |
 | 位置 | `distance` | 数字 | 饼/环形/漏斗/散点 |
-| 位置 | `rotate` | 数字 | 饼类不开放 |
+| 位置 | `rotate` | 数字 | 饼图 / 漏斗 / 雷达 / 仪表盘不开放 |
 | 位置 | `offsetX` / `offsetY` | 两个数字 | |
 | 样式 | `fontSize` | 数字 | |
 | 样式 | `fontWeight` | 下拉 normal / bold | |
@@ -82,7 +82,7 @@
 | 柱状图 / 条形图 | 内容、位置（无 distance）、样式 |
 | 折线图 / 面积图 | 内容、位置（无 distance）、样式 |
 | 饼图 / 环形图 | 内容、位置（无 rotate）、样式、引导线（含 length2） |
-| 散点图 | 内容、位置（含 distance，无 rotate）、样式 |
+| 散点图 | 内容、位置（含 distance / rotate）、样式 |
 | 雷达图 | 内容（无 overflow）、样式（仅 fontSize / fontWeight / color） |
 | 漏斗图 | 内容、位置（含 distance，无 rotate）、样式（仅 fontSize / fontWeight / color）、引导线（无 length2） |
 | 仪表盘 | `detail` 子集：show / formatter / fontSize / fontWeight / color / offsetX / offsetY |
