@@ -59,7 +59,7 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 
 **前端（5 个必备片段）**
 1. 模板管理列表页：模板元信息（名称/业务类型/备注/默认标记）的增删改查。
-2. 设计器页：挂载 `<print-designer>`，`save` 事件提交模板 JSON，`preview` 事件打开预览（事件 `detail` 自带当前画布 JSON）。宿主接管打印/预览业务时用 `show-preview` / `show-save` 隐藏工具栏按钮（默认显示，隐藏不影响 `save()` 与事件旁路），见 [集成指南 §5.2](references/host-integration-guide.md)。
+2. 设计器页：挂载 `<print-designer>`，`save` 事件提交模板 JSON，`preview` 事件打开预览（事件 `detail` 自带当前画布 JSON）。宿主接管打印/预览业务时用 `show-preview` / `show-save` 隐藏工具栏按钮（默认显示，隐藏不影响 `save()` 与事件旁路）；需要换肤时用 `theme` / `themeConfig` 传参（画布纸张不受影响），见 [集成指南 §5.2](references/host-integration-guide.md) 与 [接入 API §2](references/integration-api.md)。
 3. 新建模板弹窗：元信息表单 + 用 `createDefaultTemplate()` 生成可渲染的初始 elements。
 4. 业务打印入口（按钮组件）：按业务类型选模板 → 向后端取 `{templateJson, printData, baseUrl}` → 打开预览。
 5. 预览弹窗：用 `@worm-print-platform/core/browser` 的 `renderHtmlPages` 同构渲染进全屏 iframe → `contentWindow.print()`；链路 B 再加「下载 PDF」；链路 C 再加 `PrintClient.printHtml()` 静默打印按钮。
@@ -109,8 +109,9 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 ## 6. 验收要点（委托或集成完成后逐项核对）
 
 - 安装方式与样式导入匹配：NPM/`file:` 用 `@worm-print-platform/canvas/style.css`；浏览器直挂用 UMD 产物 + `dist/canvas.css`；Vue 3 门面从 `@worm-print-platform/canvas/vue3` 导入组件，无需额外引样式。
-- Vue 3 门面：组件从 `@worm-print-platform/canvas/vue3` 导入；`PrintDesigner` props `initial-template/initial-elements/fields/is-edit/upload-image/show-help/show-preview/show-save/fonts/design-data`，事件 `save(json)` / `preview()`（无载荷），expose `getTemplateJson()`（返回对象）/ `validateTemplate()` / `getGeometryWarnings()`；`PrintHtmlPreview` props `template-json/print-data/base-url/font-base-url/renderers`，事件 `rendered` / `error`，expose `print/rerender/setViewZoom`。业务代码与旧 Vue 3 轨一致，不改。
-- 原生 `<print-designer>` 只用真实契约：attribute `template/fields/name/fonts/design-data` + 布尔开关 `is-edit/show-help/show-preview/show-save`；方法 `getTemplateJson/loadTemplate/save/validateTemplate/getGeometryWarnings`；事件 `save/preview/help/dblclick-element/dblclick-cell`。可运行时读 `getHostContract()` / `PrintDesignerElement.contractVersion` 自检。`show-preview` / `show-save` 控制工具栏「预览 / 保存」按钮显隐（默认显示），隐藏不影响 `save()` 与 `save`/`preview` 事件，供宿主自定义打印/预览业务。
+- Vue 3 门面：组件从 `@worm-print-platform/canvas/vue3` 导入；`PrintDesigner` props `initial-template/initial-elements/fields/is-edit/upload-image/show-help/show-preview/show-save/theme/theme-config/fonts/design-data`，事件 `save(json)` / `preview()`（无载荷），expose `getTemplateJson()`（返回对象）/ `validateTemplate()` / `getGeometryWarnings()`；`PrintHtmlPreview` props `template-json/print-data/base-url/font-base-url/renderers`，事件 `rendered` / `error`，expose `print/rerender/setViewZoom`。业务代码与旧 Vue 3 轨一致，不改。
+- 原生 `<print-designer>` 只用真实契约：attribute `template/fields/name/fonts/design-data` + 布尔开关 `is-edit/show-help/show-preview/show-save` + `theme`/`theme-config`；方法 `getTemplateJson/loadTemplate/save/validateTemplate/getGeometryWarnings`；事件 `save/preview/help/dblclick-element/dblclick-cell`。可运行时读 `getHostContract()` / `PrintDesignerElement.contractVersion` 自检（当前 1.2.0）。`show-preview` / `show-save` 控制工具栏「预览 / 保存」按钮显隐（默认显示），隐藏不影响 `save()` 与 `save`/`preview` 事件，供宿主自定义打印/预览业务。
+- 显示配置（契约 1.2.0 起）：`theme`（`auto`/`light`/`dark` 预设）与 `themeConfig`（色值覆盖对象，须赋 property）管配色，`showPreview`/`showSave` 管按钮显隐；参数优先级高于 CSS 令牌，深色预设不动纸张与画布。宿主可仿照四个 demo 顶部「配置」弹窗，把这几项状态写回元素 property（demo 示例只暴露显隐开关，配色靠传参）；细节见 [接入 API §2](references/integration-api.md)。
 - 原生宿主：对象与函数赋 property，不写进 attribute；`fields` 只有 setter，读回看 `el.store.fields`。
 - 原生事件：`save`/`preview` 的 `event.detail` 是模板 JSON 字符串；`dblclick-element` 的 detail 是元素 id 字符串，`dblclick-cell` 是 `{ elementId, r, c, cellId }` 对象，后两者不做 `JSON.parse`。这与门面组件 `@save` 首参为 json 字符串、`@preview` 无载荷的口径不同，按所用形态对齐。
 - 模板 JSON 与宿主元信息分离；列表/详情能正确回填 elements。
