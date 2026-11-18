@@ -117,6 +117,7 @@ render（Playwright PDF 微服务，私有 Docker 部署）
 client（Electron 静默打印桌面客户端，私有分发）
 contract / mcp（私有：契约校验 + MCP 工具库，随 client 打包）
 skills（npm 发布：命令行技能安装器）
+marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 
 宿主应用 ← Vue 3 / Vue 2 / React / jQuery / 原生 JS
 ```
@@ -138,6 +139,7 @@ skills（npm 发布：命令行技能安装器）
 | `packages/canvas` | `@worm-print-platform/canvas` | ✅ npm | 设计器权威实现（Custom Elements + Shadow DOM） |
 | `packages/echarts` | `@worm-print-platform/echarts` | ✅ npm | ECharts 图表元素可选包（十类 kind） |
 | `packages/skills` | `@worm-print-platform/skills` | ✅ npm | 命令行技能安装器（bin：`worm-print-skills`） |
+| `packages/marketplace` | `@worm-print-platform/marketplace` | ✅ npm | 插件市场 CLI（bin：`worm-print-marketplace`，三源安装） |
 | `packages/contract` | `@worm-print-platform/contract` | ❌ 私有 | 模板 JSON 契约校验（随 client 打包） |
 | `packages/mcp` | `@worm-print-platform/mcp` | ❌ 私有 | MCP 协议实现（随 client 打包） |
 | `services/render` | `@worm-print-platform/render` | ❌ 私有 | Playwright PDF 渲染微服务（Docker 部署） |
@@ -172,6 +174,10 @@ import '@worm-print-platform/echarts/ui'
 ```
 
 自定义插件写法见 [packages/plugin-kit/README](./packages/plugin-kit/README.md)。
+
+插件市场（索引与插件源码常驻本仓 `marketplace/`，三源安装、缺省最新稳定版）见
+[docs/plugin-marketplace.md](./docs/plugin-marketplace.md)。首个插件为保持独立发布的百度图表薄包装
+`@worm-print-platform/plugin-echarts`，图表库 `@worm-print-platform/echarts` 仍单独发布。
 
 ## 桌面客户端（静默打印）
 

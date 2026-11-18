@@ -15,6 +15,9 @@ AI 编程工具的「集成提示词」。提示词内置技能安装引导，�
 老用户迁移：[migration-worm-vue3-print.md](./migration-worm-vue3-print.md)
 —— 包名映射、三条迁移路径、行为差异要点与 AI 迁移提示词。
 
+插件市场：[plugin-marketplace.md](./plugin-marketplace.md)
+—— CLI 三源安装（npm / GitHub / Gitee）、默认最新稳定版、插件作者指南与导出插件契约。
+
 四个示例工程互跳总览页在 `:9300`，一条命令全部拉起：`npm run dev:demos:all`。
 每个 demo 的验收脚本：`node demos/scripts/verify-demo.mjs http://localhost:<端口>/`。
 

@@ -1,8 +1,9 @@
 import { createApp } from 'vue'
 import { registerAll } from '@worm-print-platform/canvas'
-// 图表插件适配包：import 即注册（core 插件描述符 + plugin-kit 设计器 UI 一并生效）。
-// 不装它时设计器仍是纯 canvas 能力；装了之后素材台「图表」分组出现十张图表卡。
-import '@worm-print-platform/echarts/ui'
+// 图表插件从市场安装后的副作用入口：import 即注册（core 插件描述符 + plugin-kit 设计器 UI）。
+// 产物位于 .worm-print/plugins/echarts/dist/index.js（由 worm-print-marketplace 安装），
+// 薄包装内部再 import 独立发布的 @worm-print-platform/echarts，图表库本身不被复制。
+import '../.worm-print/plugins/echarts/dist/index.js'
 import App from './App.vue'
 
 // 一次性注册 <print-designer>：不自动污染全局，宿主按需调用

@@ -16,7 +16,8 @@
 | #IKUJ0X | checkbox / radio 打印元素 | ⏸ 需求类，未实现 |
 | #IKRSXT | 添加常用表格元素 | ⏸ 信息不足 |
 | PR #15 | 同纸型多页横纵混排 | ✅ 已移植，遗留硬件验收 |
-| 插件市场 | Git 仓库式分发 | ⏸ 方案已定，待实现 |
+| 插件市场 | 三源分发（Gitee/GitHub/npm，目录常驻本仓）+ 导出插件 | ⏸ 方案已定，待实现 |
+| 导出插件（Excel/Word） | 新增需求·渲染结果的浏览器侧导出 | ⏸ 方案已定，待实现 |
 
 ## 已修复
 
@@ -113,12 +114,55 @@
 
 ---
 
-# 插件市场（Git 仓库式分发）—— 方案已定，待实现
+# 插件市场（三源分发 + 导出插件）—— 方案已定，待实现
 
-> 记录日期 2026-11-17。完整方案见 docs/plugin-marketplace-plan.md。
+> 记录日期 2026-11-17；2026-11-18 变更需求。完整方案见 docs/plugin-marketplace-plan.md。
 
-- 目标：索引仓库 + CLI 安装器 + qrcode 样板插件，打通「收录 → 安装 → 宿主加载」，无中心化服务端。
-- 已定决策：独立索引仓库（先在本仓 marketplace/ 目录孵化，后手工建仓）；文件安装 +
-  `.worm-print/plugins.json` 清单；新包 `@worm-print-platform/marketplace` 纳入 publish:npm；首个插件 qrcode。
-- 复用点：packages/skills 双源/稀疏检出骨架；core/plugin-kit Symbol.for 注册表；echarts 插件样板。
-- 状态：仅方案记录，未动代码（2026-11-18 复查确认）。实现入口见方案文档「实施顺序」六步。
+- 目标：marketplace/ 目录 + CLI 安装器 + qrcode 样板插件，打通「收录 → 安装 → 宿主加载」。
+- 2026-11-18 需求变更（覆盖原决策）：
+  1. **目录常驻本仓**：marketplace/ 永久留在当前 monorepo，不再创建独立索引仓库。
+  2. **三源分发**：安装支持 Gitee、GitHub、npm 三种来源；默认 `auto` 依次尝试 npm → GitHub → Gitee。
+     - npm：每个插件作为独立 npm 包发布（建议 scope `@worm-print-platform`，命名 `plugin-<id>`），
+       按插件名只装一个。
+     - GitHub / Gitee：从本仓两个远端稀疏检出 `marketplace/plugins/<id>/`，不新建仓库。
+  3. **版本**：`install <name>[@<version>]`；不指定版本取**最新稳定版**（npm `latest` 标签或最高非预发布
+     版本；git 取最高非预发布 tag，无 tag 回退主干并标注）。
+  4. **新增导出插件类别**：导出 Excel / Word 等打印内容也必须可用插件实现；形态为「接收渲染结果、
+     浏览器侧生成文件并下载」，core 需新增与元素插件并列的导出插件契约。
+- 保留决策：文件安装 + `.worm-print/plugins.json` 清单；本地 `--repo ./marketplace` 直读源码；
+  新包 `@worm-print-platform/marketplace` 纳入 publish:npm；首个插件 qrcode。
+- 复用点：skills 双源解析 + 稀疏检出骨架（用于 GitHub/Gitee 源）及参数校验/错误码范式；
+  core/plugin-kit Symbol.for 注册表 + echarts 插件样板。
+- 状态：仅方案记录，未动代码（2026-11-18 复查确认）。实现入口见方案文档「实施顺序」。
+
+---
+
+# 抖音视频待重录（2026-11-18）
+
+> 三项按下列顺序推进；均走 `making-douyin-videos` 技能规范，产物目录由 `out-registry.json` 固定，重录不换目录。TTS、录屏与整链重跑耗时耗额度，执行前说明；不得自动上传抖音。片尾统一用浅色卡 `endcard-tail-light.png`（剧本末尾 `cta` 场景，先 `npm run video:endcard` 渲染）。
+
+| 序号 | 任务 | 状态 |
+| --- | --- | --- |
+| 1 | 重录第二支「面单 / 价签批量出纸」视频 | 待做 |
+| 2 | 体检报告模板：部分图表换成扩展的百度图表插件 | 待做 |
+| 3 | 重录第三支「体检报告多页打印」视频 | 待做（依赖 2） |
+
+## 1. 重录第二支视频
+
+- 产物目录：`.video-skill/out/2026-11-17-batch-print/`（`out-registry.json` 已登记，重录仍用该目录）。
+- 核心原因：录制时示例里的**二维码与其他元素重叠**，画面不合格，必须先修示例布局再录制。
+- 技能规范：横屏 1920×1080，字幕短条最多两行、每行 20 字；多音字上下文确认 + 人工听审；四比例封面（含 4:3、3:4 必交）；抖音文案恰好 5 个不重复标签；音画同步与 `verify.mjs` 全绿。
+- 剧本已新增统一 `cta` 片尾场景；重跑前确认 `endcard-tail-light.png` 已生成（`VIDEO_SCRIPT=$PWD/out/2026-11-17-batch-print/script-batch-print.json npm run video:endcard`）。
+- 只改台词必须重跑配音及其后续步骤；不得静默重跑历史成片。
+
+## 2. 体检报告模板改用百度图表插件
+
+- 模板：`demos/apps/vue3/src/templates.js` 中 `id: 'health-report'`（起始约 1851 行）。当前三处图表是内联 SVG data URL（约 2952 / 3405 / 3770 行），把其中部分替换为扩展的百度图表插件元素（ECharts，`@worm-print-platform/echarts`）。
+- 接入口径：`/kit` 为框架无关纯 TS 出口，`/ui` 为 plugin-kit 设计器 UI，宿主 `import` 即注册；保持 5 页结构、表格 / 合并单元格 / 字段绑定不变，只替换图表元素。
+- 验收：设计器画布与浏览器预览出图一致；服务端 PDF、桌面客户端静默打印两条链路不被破坏；事实与版本号出片前重新核验。
+
+## 3. 重录第三支视频
+
+- 产物目录：`.video-skill/out/2026-11-17-health-report/`（同上，不换目录）。
+- 顺序依赖：必须在任务 2 完成后录制，画面要与改后的图表一致；台词 / 卡片 / 封面 / 文案同步更新，避免沿用旧 SVG 图表的说法。
+- 同样走统一 `cta` 浅色片尾卡与技能全链验收（多音字听审、音画同步、四封面、五标签、`verify.mjs`）。
