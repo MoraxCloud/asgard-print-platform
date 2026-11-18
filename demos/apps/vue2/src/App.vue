@@ -686,7 +686,6 @@ export default {
         ref="designer"
         is-edit="true"
         show-help="true"
-        :show-preview="showPreview"
         @save="onSave"
         @preview="onPreview"
         @help="onHelp"
