@@ -71,7 +71,7 @@ cd .video-skill
 VIDEO_SCRIPT=script-<key>.json npm run video
 ```
 
-顺序：配音门禁 → 听审片段 → 片头 → 实录 → 合成 → 音画同步 → 四比例封面 → 五标签文案 → 总验收。需要讲解卡片时先运行 `VIDEO_SCRIPT=script-<key>.json npm run video:panels`。
+顺序：配音门禁 → 听审片段 → 片头 → **片尾卡渲染（`video:endcard`）** → 实录 → 合成 → 音画同步 → 四比例封面 → 五标签文案 → 总验收。需要讲解卡片时先运行 `VIDEO_SCRIPT=script-<key>.json npm run video:panels`。剧本末尾用 `showImage` 引用统一片尾卡时，`video:endcard` 会先把浅/深两版渲染进本片 OUT_DIR；单独重跑某一步前也要确认该 PNG 已存在。
 
 只改台词必须重跑配音及其后续步骤；只改卡片可跳过 TTS，但仍须重跑排版、合成和验收。不得静默重跑历史成片。
 
@@ -79,6 +79,7 @@ VIDEO_SCRIPT=script-<key>.json npm run video
 
 - 字幕：短条、最多两行；竖屏默认每行 16 字、56px、`MarginV=340`，横屏默认每行 20 字。均为项目经验值，不称平台官方安全区。
 - 封面风格冻结：`cover-douyin.html` 打样单版式（品牌行、三层叠印标题、副标题、样张、结论划除行、角标）是项目固定风格，出片只改剧本 `cover*` 字段；不得换版式、另做模板或自绘封面。
+- 片尾介绍统一：后续所有视频的片尾 CTA 口播以 [统一片尾 CTA 口径](references/endcard-tail.md) 的「规范口播」为唯一方案（MIT 开源仓库名 + 感谢关注 + 评论区留下建议与需求、讨论），CTA 之前的场景不再复述开源仓库信息；画面卡沿用既有版式，横屏用浅色版 `endcard-tail-light.png`（浅色 demo 界面适配），深色版为备选；不得为单支视频另写片尾文案或自绘版式。文案、主题与重渲染见该文档。
 - 必交 `cover-douyin-4x3.png`（1440×1080）和 `cover-douyin-3x4.png`（1080×1440）；保留 16:9、9:16 母版。裁切规则不得改成拉伸或补边。
 - 文案：自动生成 `douyin-copy.md`，含 5 条标题候选、简介、**恰好 5 个不重复标签**、置顶评论和勿上传的口径出处。
 - 产物目录：一支视频一个「日期-主题」目录（横屏 `.video-skill/out/<YYYY-MM-DD>-<key>/`，竖屏 `portrait/out/` 同规则），日期取首次出片日，首跑自动登记 `out-registry.json`、重跑同片不换目录。成片、SRT、时间轴、多音字台账与听审文件、四张封面、文案全部落该目录；发布时整个目录拷走即交付单元。清单与判据见 [封面与验收](references/delivery.md)。
