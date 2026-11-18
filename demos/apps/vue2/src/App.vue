@@ -120,6 +120,17 @@ export default {
       clientPrinting: false,
       clientMessage: '',
       clientMessageKind: '',
+      // 显示配置（顶部「配置」弹窗）
+      configVisible: false,
+      showPreview: true,
+      showSave: true,
+      theme: 'auto',   // auto | light | dark
+      themeOverrides: { bg: '', surface: '', text: '', accent: '' },
+      themePresets: [
+        { key: 'auto', label: '跟随系统' },
+        { key: 'light', label: '浅色' },
+        { key: 'dark', label: '深色' },
+      ],
     }
   },
   computed: {
@@ -172,6 +183,11 @@ export default {
       this.refreshRenderStatus()
       this.connectPrintClient()
     },
+    // 显示配置写回设计器（对象入参 themeConfig 必须走 property）
+    showPreview: 'applyDisplayConfig',
+    showSave: 'applyDisplayConfig',
+    theme: 'applyDisplayConfig',
+    themeOverrides: { handler: 'applyDisplayConfig', deep: true },
   },
   created() {
     // 打印客户端实例无需响应式化，挂在实例普通属性上
@@ -211,6 +227,26 @@ export default {
     this.aiSession.stop()
   },
   methods: {
+    /** 把显示配置写回设计器：布尔/主题/对象统一走 property，避免自定义元素属性字符串化 */
+    applyDisplayConfig() {
+      const el = this.$refs.designer
+      if (!el) return
+      el.showPreview = this.showPreview
+      el.showSave = this.showSave
+      el.theme = this.theme
+      const overrides = {}
+      for (const [key, token] of [['bg', '--pd-bg'], ['surface', '--pd-surface'], ['text', '--pd-text'], ['accent', '--pd-accent']]) {
+        if (this.themeOverrides[key]) overrides[token] = this.themeOverrides[key]
+      }
+      el.themeConfig = Object.keys(overrides).length ? { overrides } : undefined
+    },
+    resetTheme() {
+      this.theme = 'auto'
+      this.themeOverrides.bg = ''
+      this.themeOverrides.surface = ''
+      this.themeOverrides.text = ''
+      this.themeOverrides.accent = ''
+    },
     // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
     // <print-designer> 是原生自定义元素：`:fields="..."` 这类绑定会走 setAttribute，
     // 对象被字符串化成 "[object Object]"，所以对象/函数入参必须赋 property；
@@ -576,6 +612,7 @@ export default {
   mounted() {
     initTopbarOverflow()
     const el = this.$refs.designer
+    this.applyDisplayConfig()
     // 上传能力同样是 property（函数无法走 attribute）
     el.uploadImage = this.uploadImage
     el.uploadDesignBackground = this.uploadImage
@@ -638,6 +675,7 @@ export default {
           <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
+      <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
       <button type="button" class="demo-print-btn" @click="printDialogVisible = true">打印输出</button>
       <input ref="fileInput" type="file" accept="application/json,.json" class="demo-file-input" @change="onImportTemplate($event)" />
     </header>
@@ -648,6 +686,7 @@ export default {
         ref="designer"
         is-edit="true"
         show-help="true"
+        :show-preview="showPreview"
         @save="onSave"
         @preview="onPreview"
         @help="onHelp"
@@ -828,6 +867,52 @@ export default {
             <button type="button" class="custom-btn ghost" @click="customDialogVisible = false">取消</button>
             <button type="button" class="custom-btn" @click="onApplyCustom">应用</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 显示配置：预览/保存按钮显隐 + 主题色（只作用于设计器外壳，画布纸张不受影响） -->
+    <div v-if="configVisible" class="config-mask" @click.self="configVisible = false">
+      <div class="config-panel">
+        <div class="config-head">
+          <span class="config-title">显示配置</span>
+          <span class="config-close" @click="configVisible = false">×</span>
+        </div>
+        <div class="config-body">
+          <section class="config-section">
+            <div class="config-label">按钮显隐</div>
+            <label class="config-row">
+              <input v-model="showPreview" type="checkbox" />
+              <span>显示「预览」按钮</span>
+            </label>
+            <label class="config-row">
+              <input v-model="showSave" type="checkbox" />
+              <span>显示「保存」按钮</span>
+            </label>
+          </section>
+
+          <section class="config-section">
+            <div class="config-label">主题色</div>
+            <div class="config-presets">
+              <button v-for="p in themePresets" :key="p.key" type="button"
+                      class="config-preset" :class="{ on: theme === p.key }"
+                      @click="theme = p.key">{{ p.label }}</button>
+            </div>
+            <div class="config-colors">
+              <label v-for="c in [['bg','背景'],['surface','面板'],['text','文字'],['accent','强调色']]" :key="c[0]" class="config-color">
+                <span>{{ c[1] }}</span>
+                <input type="color" :value="themeOverrides[c[0]] || '#ffffff'"
+                       @input="themeOverrides[c[0]] = $event.target.value" />
+                <button type="button" class="config-color-clear" title="清除该项覆盖"
+                        @click="themeOverrides[c[0]] = ''">清空</button>
+              </label>
+            </div>
+            <button type="button" class="config-btn ghost" @click="resetTheme">重置配色</button>
+          </section>
+        </div>
+        <div class="config-foot">
+          <span class="config-tip">配色只改变设计器外壳，纸张与画布保持原样</span>
+          <button type="button" class="config-btn" @click="configVisible = false">完成</button>
         </div>
       </div>
     </div>
