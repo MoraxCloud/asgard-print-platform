@@ -1853,7 +1853,7 @@ export const SAMPLES = [
     id: 'health-report',
     name: '健康体检报告',
     group: '单据',
-    desc: '5 页 A4 多页面模板：封面总检结论、一般检查、血常规、生化、尿常规与影像各占一页；表格（多级表头 / 异常高亮 / 重复表头）+ 按数据生成的矢量图表 + 长文结论与建议。',
+    desc: '5 页 A4 多页面模板：封面总检结论、一般检查、血常规、生化、尿常规与影像各占一页；表格（多级表头 / 异常高亮 / 重复表头）+ 按数据生成的图表（白细胞分类与生化趋势由百度图表插件渲染） + 长文结论与建议。',
     paper: 'A4 纵向 × 5 页 · 每个检验项目独立成页',
     fields: [
       { id: 'hr-1', fieldKey: 'report', fieldLabel: '报告信息', fieldType: 'string', sortOrder: 1 },
@@ -2178,6 +2178,7 @@ export const SAMPLES = [
     ],
     template: {
       version: 1,
+      plugins: [{ id: '@worm-print-platform/echarts', version: '2' }],
       pages: [
         {
           unit: 'mm',
@@ -3396,17 +3397,24 @@ export const SAMPLES = [
             },
             {
               id: 'hr-53',
-              type: 'image',
+              type: 'barChart',
               options: {
                 left: 0,
                 top: 44,
                 width: 190,
                 height: 53.2,
-                src: 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20viewBox%3D%220%200%20700%20196%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22700%22%20height%3D%22196%22%20fill%3D%22%23ffffff%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2214%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3E%25%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%2220%22%20x2%3D%22666%22%20y2%3D%2220%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2224%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E70%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%2256%22%20x2%3D%22666%22%20y2%3D%2256%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2260%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E52.5%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%2292%22%20x2%3D%22666%22%20y2%3D%2292%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2296%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E35%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%22128%22%20x2%3D%22666%22%20y2%3D%22128%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%22132%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E17.5%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%22164%22%20x2%3D%22666%22%20y2%3D%22164%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%22168%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E0%3C%2Ftext%3E%3Crect%20x%3D%2282.2%22%20y%3D%2244.274285714285696%22%20width%3D%2254%22%20height%3D%22119.7257142857143%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ctext%20x%3D%22109.2%22%20y%3D%2238.274285714285696%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3E58.2%3C%2Ftext%3E%3Ctext%20x%3D%22109.2%22%20y%3D%22182%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E%E4%B8%AD%E6%80%A7%E7%B2%92%3C%2Ftext%3E%3Crect%20x%3D%22204.60000000000002%22%20y%3D%2297.34857142857143%22%20width%3D%2254%22%20height%3D%2266.65142857142857%22%20fill%3D%22%239db9d8%22%2F%3E%3Ctext%20x%3D%22231.60000000000002%22%20y%3D%2291.34857142857143%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3E32.4%3C%2Ftext%3E%3Ctext%20x%3D%22231.60000000000002%22%20y%3D%22182%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E%E6%B7%8B%E5%B7%B4%3C%2Ftext%3E%3Crect%20x%3D%22327%22%20y%3D%22151.45142857142858%22%20width%3D%2254%22%20height%3D%2212.548571428571428%22%20fill%3D%22%239db9d8%22%2F%3E%3Ctext%20x%3D%22354%22%20y%3D%22145.45142857142858%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3E6.1%3C%2Ftext%3E%3Ctext%20x%3D%22354%22%20y%3D%22182%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E%E5%8D%95%E6%A0%B8%3C%2Ftext%3E%3Crect%20x%3D%22449.40000000000003%22%20y%3D%22158.65142857142857%22%20width%3D%2254%22%20height%3D%225.348571428571429%22%20fill%3D%22%239db9d8%22%2F%3E%3Ctext%20x%3D%22476.40000000000003%22%20y%3D%22152.65142857142857%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3E2.6%3C%2Ftext%3E%3Ctext%20x%3D%22476.40000000000003%22%20y%3D%22182%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E%E5%97%9C%E9%85%B8%3C%2Ftext%3E%3Crect%20x%3D%22571.8000000000001%22%20y%3D%22162.56%22%20width%3D%2254%22%20height%3D%221.44%22%20fill%3D%22%239db9d8%22%2F%3E%3Ctext%20x%3D%22598.8000000000001%22%20y%3D%22156.56%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3E0.7%3C%2Ftext%3E%3Ctext%20x%3D%22598.8000000000001%22%20y%3D%22182%22%20text-anchor%3D%22middle%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E%E5%97%9C%E7%A2%B1%3C%2Ftext%3E%3C%2Fsvg%3E',
-                borderWidth: 0.5,
-                borderColor: '#dfe6ee',
+                chartOption: {
+                  title: { text: '白细胞分类（%）', left: 'center', textStyle: { fontSize: 12, color: '#26364a' } },
+                  grid: { left: '8%', right: '8%', bottom: '12%', top: '22%', containLabel: true },
+                  xAxis: { type: 'category', data: ['$data'] },
+                  yAxis: { type: 'value', max: 100 },
+                  series: [{ type: 'bar', name: '占比', data: ['$data'], barWidth: '46%', itemStyle: { color: '#2f6fb5' } }],
+                },
+                chartDataSource: 'wbc',
+                chartCategoryField: 'name',
+                chartValueFields: ['value'],
               },
-              printElementType: { type: 'image', title: '图片' },
+              printElementType: { type: 'barChart', title: '柱状图' },
             },
             {
               id: 'hr-54',
@@ -3761,17 +3769,29 @@ export const SAMPLES = [
             },
             {
               id: 'hr-72',
-              type: 'image',
+              type: 'lineChart',
               options: {
                 left: 0,
                 top: 43,
                 width: 190,
                 height: 58.6,
-                src: 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20viewBox%3D%220%200%20700%20216%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22700%22%20height%3D%22216%22%20fill%3D%22%23ffffff%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2214%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3Emmol%2FL%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%2222%22%20x2%3D%22666%22%20y2%3D%2222%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2226%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E5.00%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%2261%22%20x2%3D%22666%22%20y2%3D%2261%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2265%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E3.75%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%22100%22%20x2%3D%22666%22%20y2%3D%22100%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%22104%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E2.50%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%22139%22%20x2%3D%22666%22%20y2%3D%22139%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%22143%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E1.25%3C%2Ftext%3E%3Cline%20x1%3D%2248%22%20y1%3D%22178%22%20x2%3D%22666%22%20y2%3D%22178%22%20stroke%3D%22%23dfe6ee%22%20stroke-width%3D%221%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%22182%22%20text-anchor%3D%22end%22%20font-size%3D%2211%22%20fill%3D%22%236b7c8f%22%3E0.00%3C%2Ftext%3E%3Ctext%20x%3D%2248%22%20y%3D%22198%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3E2022%3C%2Ftext%3E%3Ctext%20x%3D%22202.5%22%20y%3D%22198%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3E2023%3C%2Ftext%3E%3Ctext%20x%3D%22357%22%20y%3D%22198%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3E2024%3C%2Ftext%3E%3Ctext%20x%3D%22511.5%22%20y%3D%22198%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3E2025%3C%2Ftext%3E%3Ctext%20x%3D%22666%22%20y%3D%22198%22%20text-anchor%3D%22middle%22%20font-size%3D%2212%22%20fill%3D%22%236b7c8f%22%3E2026%3C%2Ftext%3E%3Cpolyline%20points%3D%2248%2C88.8%20202.5%2C80.7%20357%2C66.3%20511.5%2C58.2%20666%2C49.5%22%20fill%3D%22none%22%20stroke%3D%22%232f6fb5%22%20stroke-width%3D%222.4%22%2F%3E%3Cpolyline%20points%3D%2248%2C75.8%20202.5%2C71.5%20357%2C64.5%20511.5%2C59.4%20666%2C52.8%22%20fill%3D%22none%22%20stroke%3D%22%232e8b6b%22%20stroke-width%3D%222.4%22%2F%3E%3Ccircle%20cx%3D%2248%22%20cy%3D%2288.8%22%20r%3D%223.4%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ccircle%20cx%3D%22202.5%22%20cy%3D%2280.7%22%20r%3D%223.4%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ccircle%20cx%3D%22357%22%20cy%3D%2266.3%22%20r%3D%223.4%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ccircle%20cx%3D%22511.5%22%20cy%3D%2258.2%22%20r%3D%223.4%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ccircle%20cx%3D%22666%22%20cy%3D%2249.5%22%20r%3D%223.4%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ccircle%20cx%3D%2248%22%20cy%3D%2275.8%22%20r%3D%223.4%22%20fill%3D%22%232e8b6b%22%2F%3E%3Ccircle%20cx%3D%22202.5%22%20cy%3D%2271.5%22%20r%3D%223.4%22%20fill%3D%22%232e8b6b%22%2F%3E%3Ccircle%20cx%3D%22357%22%20cy%3D%2264.5%22%20r%3D%223.4%22%20fill%3D%22%232e8b6b%22%2F%3E%3Ccircle%20cx%3D%22511.5%22%20cy%3D%2259.4%22%20r%3D%223.4%22%20fill%3D%22%232e8b6b%22%2F%3E%3Ccircle%20cx%3D%22666%22%20cy%3D%2252.8%22%20r%3D%223.4%22%20fill%3D%22%232e8b6b%22%2F%3E%3Crect%20x%3D%22470%22%20y%3D%226%22%20width%3D%2212%22%20height%3D%224%22%20fill%3D%22%232f6fb5%22%2F%3E%3Ctext%20x%3D%22488%22%20y%3D%2213%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3ELDL-C%3C%2Ftext%3E%3Crect%20x%3D%22552%22%20y%3D%226%22%20width%3D%2212%22%20height%3D%224%22%20fill%3D%22%232e8b6b%22%2F%3E%3Ctext%20x%3D%22570%22%20y%3D%2213%22%20font-size%3D%2211%22%20fill%3D%22%2326364a%22%3E%E7%A9%BA%E8%85%B9%E8%A1%80%E7%B3%96%3C%2Ftext%3E%3Ctext%20x%3D%228%22%20y%3D%22212%22%20font-size%3D%2211%22%20fill%3D%22%23d0453b%22%3E2026%20%E5%B9%B4%20LDL-C%204.12%20%E2%86%91%EF%BC%88%E5%8F%82%E8%80%83%20%26lt%3B3.37%EF%BC%89%E3%80%81%E7%A9%BA%E8%85%B9%E8%A1%80%E7%B3%96%206.42%20%E2%86%91%EF%BC%88%E5%8F%82%E8%80%83%20%26lt%3B6.10%EF%BC%89%3C%2Ftext%3E%3C%2Fsvg%3E',
-                borderWidth: 0.5,
-                borderColor: '#dfe6ee',
+                chartOption: {
+                  title: { text: 'LDL-C 与空腹血糖趋势', left: 'center', textStyle: { fontSize: 12, color: '#26364a' } },
+                  tooltip: { trigger: 'axis' },
+                  legend: { data: ['LDL-C', '空腹血糖'], bottom: 0, textStyle: { fontSize: 10 } },
+                  grid: { left: '8%', right: '8%', bottom: '18%', top: '22%', containLabel: true },
+                  xAxis: { type: 'category', data: ['$data'] },
+                  yAxis: { type: 'value' },
+                  series: [
+                    { type: 'line', name: 'LDL-C', data: ['$data'], smooth: true, lineStyle: { width: 2 }, itemStyle: { color: '#2f6fb5' } },
+                    { type: 'line', name: '空腹血糖', data: ['$data'], smooth: true, lineStyle: { width: 2 }, itemStyle: { color: '#2e8b6b' } },
+                  ],
+                },
+                chartDataSource: 'trends',
+                chartCategoryField: 'year',
+                chartValueFields: ['ldl', 'glucose'],
               },
-              printElementType: { type: 'image', title: '图片' },
+              printElementType: { type: 'lineChart', title: '折线图' },
             },
             {
               id: 'hr-73',
