@@ -24,10 +24,12 @@ export function parseRepoUrl(raw: string): RepoSource {
   if (/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/.test(url)) {
     url = `https://github.com/${url}.git`
   }
-  if (!/^(https?:\/\/|ssh:\/\/|git:\/\/|git@)/i.test(url)) {
+  if (!/^(https?:\/\/|ssh:\/\/|git:\/\/|file:\/\/|git@)/i.test(url)) {
     throw new MarketError('BAD_REPO', `不支持的仓库地址：${raw}`)
   }
   if (/[\s\r\n]/.test(url)) throw new MarketError('BAD_REPO', `仓库地址不能包含空白字符：${raw}`)
+  // 本地 file:// 仓库（离线 E2E / 内网镜像）无传统主机名，单独识别
+  if (/^file:\/\//i.test(url)) return { url, raw: trimmed, host: 'other', hostName: 'localhost' }
   const hostName = extractHostName(url)
   if (!hostName) throw new MarketError('BAD_REPO', `无法解析仓库主机名：${raw}`)
   return { url, raw: trimmed, host: classifyHost(hostName), hostName }

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -77,6 +77,36 @@ describe('三源安装引擎', () => {
       name: 'echarts', source: 'auto', repo, cwd, index: indexOf(repo),
       npmExecutor: npmVersions, gitExecutor: gitMustNotRun,
     })).rejects.toMatchObject({ code: 'INVALID_PLUGIN' })
+  })
+
+  it('git 源用 tag 名而非完整 ref 作为 --branch', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
+    const repo = makeRepo(cwd)
+    const calls: string[][] = []
+    const gitExecutor: GitExecutor = async (args) => {
+      calls.push(args)
+      if (args[0] === 'ls-remote') {
+        return { stdout: `abc\trefs/tags/plugins/echarts/v1.0.0\n`, stderr: '' }
+      }
+      if (args[0] === 'clone') {
+        const target = args[args.length - 1]
+        mkdirSync(join(target, 'marketplace/plugins/echarts/dist'), { recursive: true })
+        cpSync(join(repo, 'marketplace.json'), join(target, 'marketplace/marketplace.json'))
+        cpSync(join(repo, 'plugins/echarts/plugin.json'), join(target, 'marketplace/plugins/echarts/plugin.json'))
+        cpSync(join(repo, 'plugins/echarts/dist/index.js'), join(target, 'marketplace/plugins/echarts/dist/index.js'))
+      }
+      return { stdout: '', stderr: '' }
+    }
+    const result = await installPlugin({
+      name: 'echarts', source: 'github', repo: 'https://github.com/x/y.git',
+      cwd, index: indexOf(repo), gitExecutor,
+    })
+    const cloneArgs = calls.find(args => args[0] === 'clone')!
+    expect(cloneArgs[cloneArgs.indexOf('--branch') + 1]).toBe('plugins/echarts/v1.0.0')
+    const sparseArgs = calls.find(args => args[0] === 'sparse-checkout')!
+    expect(sparseArgs).toContain('--no-cone')
+    expect(sparseArgs).toContain('marketplace/plugins/echarts')
+    expect(result.version).toBe('1.0.0')
   })
 
   it('remove 清理目录与清单条目', async () => {

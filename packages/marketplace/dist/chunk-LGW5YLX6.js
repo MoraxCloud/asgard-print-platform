@@ -120,10 +120,11 @@ function parseRepoUrl(raw) {
   if (/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/.test(url)) {
     url = `https://github.com/${url}.git`;
   }
-  if (!/^(https?:\/\/|ssh:\/\/|git:\/\/|git@)/i.test(url)) {
+  if (!/^(https?:\/\/|ssh:\/\/|git:\/\/|file:\/\/|git@)/i.test(url)) {
     throw new MarketError("BAD_REPO", `\u4E0D\u652F\u6301\u7684\u4ED3\u5E93\u5730\u5740\uFF1A${raw}`);
   }
   if (/[\s\r\n]/.test(url)) throw new MarketError("BAD_REPO", `\u4ED3\u5E93\u5730\u5740\u4E0D\u80FD\u5305\u542B\u7A7A\u767D\u5B57\u7B26\uFF1A${raw}`);
+  if (/^file:\/\//i.test(url)) return { url, raw: trimmed, host: "other", hostName: "localhost" };
   const hostName = extractHostName(url);
   if (!hostName) throw new MarketError("BAD_REPO", `\u65E0\u6CD5\u89E3\u6790\u4ED3\u5E93\u4E3B\u673A\u540D\uFF1A${raw}`);
   return { url, raw: trimmed, host: classifyHost(hostName), hostName };
@@ -158,7 +159,7 @@ var defaultGitExecutor = async (args, cwd) => {
     return { stdout, stderr };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const code = /ENOENT|not found/i.test(message) ? "GIT_MISSING" : "CLONE_FAILED";
+    const code = /ENOENT/i.test(message) ? "GIT_MISSING" : "CLONE_FAILED";
     throw new MarketError(code, message);
   }
 };
@@ -245,12 +246,20 @@ async function fetchGit(options, id, source, cwd, gitExecutor) {
       "--filter=blob:none",
       "--sparse",
       "--branch",
-      `refs/tags/${tag}`,
+      tag.replace(/^refs\/tags\//, ""),
       repoSource.url,
       tmp
     ], cwd);
-    await gitExecutor(["sparse-checkout", "set", "marketplace.json", options.index.plugins.find((p) => p.id === id)?.path ?? `plugins/${id}`], tmp);
-    return { version, sourceDir: join2(tmp, `plugins/${id}`), meta: readPluginJson(join2(tmp, `plugins/${id}`)), cleanup };
+    const entryPath = options.index.plugins.find((p) => p.id === id)?.path ?? `plugins/${id}`;
+    await gitExecutor([
+      "sparse-checkout",
+      "set",
+      "--no-cone",
+      "marketplace/marketplace.json",
+      `marketplace/${entryPath}`
+    ], tmp);
+    const sourceDir = join2(tmp, "marketplace", entryPath);
+    return { version, sourceDir, meta: readPluginJson(sourceDir), cleanup };
   } catch (err) {
     cleanup();
     throw err;

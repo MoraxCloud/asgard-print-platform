@@ -38,7 +38,7 @@ export const defaultGitExecutor: GitExecutor = async (args, cwd) => {
     return { stdout, stderr }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    const code = /ENOENT|not found/i.test(message) ? 'GIT_MISSING' : 'CLONE_FAILED'
+    const code = /ENOENT/i.test(message) ? 'GIT_MISSING' : 'CLONE_FAILED'
     throw new MarketError(code, message)
   }
 }
@@ -161,10 +161,15 @@ async function fetchGit(
   try {
     await gitExecutor([
       'clone', '--depth', '1', '--filter=blob:none', '--sparse',
-      '--branch', `refs/tags/${tag}`, repoSource.url, tmp,
+      '--branch', tag.replace(/^refs\/tags\//, ''), repoSource.url, tmp,
     ], cwd)
-    await gitExecutor(['sparse-checkout', 'set', 'marketplace.json', options.index.plugins.find(p => p.id === id)?.path ?? `plugins/${id}`], tmp)
-    return { version, sourceDir: join(tmp, `plugins/${id}`), meta: readPluginJson(join(tmp, `plugins/${id}`)), cleanup }
+    const entryPath = options.index.plugins.find(p => p.id === id)?.path ?? `plugins/${id}`
+    await gitExecutor([
+      'sparse-checkout', 'set', '--no-cone',
+      'marketplace/marketplace.json', `marketplace/${entryPath}`,
+    ], tmp)
+    const sourceDir = join(tmp, 'marketplace', entryPath)
+    return { version, sourceDir, meta: readPluginJson(sourceDir), cleanup }
   } catch (err) {
     cleanup()
     throw err
