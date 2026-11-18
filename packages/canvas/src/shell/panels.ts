@@ -4,6 +4,7 @@ import { PAPER_PRESETS, copyTextToClipboard, getPaperDimensions, groupFields, is
 import type { ElementType, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
 import { iconSvg } from '../core/icons'
+import { CANVAS_VERSION } from '../version'
 import {
   BUILTIN_ELEMENT_DEFINITIONS, getElementLayerIcon, getMaterialElementDefinitions,
 } from '../core/element-definitions'
@@ -295,10 +296,7 @@ export function renderStatusBar(ctx: ShellCtx) {
       class: 'status-item',
       text: `元素 ${s.elements.length}${s.selectedIds.size ? ` (选中 ${s.selectedIds.size})` : ''}`,
     }),
-    h('span', { class: `status-dirty${s.dirty ? ' on' : ''}` }, [
-      h('span', { class: 'dirty-dot' }),
-      s.dirty ? '未保存' : '已保存',
-    ]),
+    h('span', { class: 'status-item status-version', text: `v${CANVAS_VERSION}` }),
     h('span', { class: 'status-item status-paper', text: paper }),
   ])
 }

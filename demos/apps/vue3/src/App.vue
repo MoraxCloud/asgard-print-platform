@@ -259,6 +259,21 @@
               <span>显示「保存」按钮</span>
             </label>
           </section>
+          <section class="config-section">
+            <div class="config-label">主题</div>
+            <label class="config-row">
+              <input v-model="themeMode" type="radio" name="config-theme" value="light" />
+              <span>亮色</span>
+            </label>
+            <label class="config-row">
+              <input v-model="themeMode" type="radio" name="config-theme" value="dark" />
+              <span>暗色</span>
+            </label>
+            <label class="config-row">
+              <input v-model="themeMode" type="radio" name="config-theme" value="auto" />
+              <span>跟随系统</span>
+            </label>
+          </section>
         </div>
         <div class="config-foot">
           <button type="button" class="config-btn" @click="configVisible = false">完成</button>
@@ -318,6 +333,7 @@ const designerRef = ref(null)   // <print-designer> 自定义元素本体
 const configVisible = ref(false)
 const showPreview = ref(true)
 const showSave = ref(true)
+const themeMode = ref('auto')
 
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
@@ -869,15 +885,16 @@ const aiSession = createTemplateSession({
   onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
 })
 
-/** 把按钮显隐写回设计器：布尔开关走 property，避免自定义元素属性字符串化 */
+/** 把按钮显隐与主题预设写回设计器：全部走 property，避免自定义元素属性字符串化 */
 function applyDisplayConfig() {
   const el = designerRef.value
   if (!el) return
   el.showPreview = showPreview.value
   el.showSave = showSave.value
+  el.theme = themeMode.value
 }
 
-watch([showPreview, showSave], applyDisplayConfig)
+watch([showPreview, showSave, themeMode], applyDisplayConfig)
 
 onMounted(() => {
   initTopbarOverflow()

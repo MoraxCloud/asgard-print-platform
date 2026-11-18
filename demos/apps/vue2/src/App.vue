@@ -124,6 +124,7 @@ export default {
       configVisible: false,
       showPreview: true,
       showSave: true,
+      themeMode: 'auto',
     }
   },
   computed: {
@@ -176,9 +177,10 @@ export default {
       this.refreshRenderStatus()
       this.connectPrintClient()
     },
-    // 按钮显隐写回设计器（布尔开关走 property）
+    // 按钮显隐与主题预设写回设计器（统一走 property）
     showPreview: 'applyDisplayConfig',
     showSave: 'applyDisplayConfig',
+    themeMode: 'applyDisplayConfig',
   },
   created() {
     // 打印客户端实例无需响应式化，挂在实例普通属性上
@@ -218,12 +220,13 @@ export default {
     this.aiSession.stop()
   },
   methods: {
-    /** 把按钮显隐写回设计器：布尔开关走 property，避免自定义元素属性字符串化 */
+    /** 把按钮显隐与主题预设写回设计器：统一走 property，避免自定义元素属性字符串化 */
     applyDisplayConfig() {
       const el = this.$refs.designer
       if (!el) return
       el.showPreview = this.showPreview
       el.showSave = this.showSave
+      el.theme = this.themeMode
     },
     // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
     // <print-designer> 是原生自定义元素：`:fields="..."` 这类绑定会走 setAttribute，
@@ -865,6 +868,21 @@ export default {
             <label class="config-row">
               <input v-model="showSave" type="checkbox" />
               <span>显示「保存」按钮</span>
+            </label>
+          </section>
+          <section class="config-section">
+            <div class="config-label">主题</div>
+            <label class="config-row">
+              <input v-model="themeMode" type="radio" name="config-theme" value="light" />
+              <span>亮色</span>
+            </label>
+            <label class="config-row">
+              <input v-model="themeMode" type="radio" name="config-theme" value="dark" />
+              <span>暗色</span>
+            </label>
+            <label class="config-row">
+              <input v-model="themeMode" type="radio" name="config-theme" value="auto" />
+              <span>跟随系统</span>
             </label>
           </section>
         </div>
