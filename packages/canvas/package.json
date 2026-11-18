@@ -46,7 +46,7 @@
     "framework-agnostic"
   ],
   "scripts": {
-    "styles": "node scripts/gen-styles.mjs && node scripts/gen-icons.mjs",
+    "styles": "node scripts/gen-styles.mjs && node scripts/gen-icons.mjs && node scripts/gen-version.mjs",
     "build": "npm run styles && vite build && vite build -c vite.bundle.config.ts && vite build -c vite.vue3.config.ts && tsc -p tsconfig.build.json && node ../../scripts/inject-license-banner.mjs dist",
     "dev": "npm run styles && vite build --watch",
     "typecheck": "npm run styles && tsc -p tsconfig.json --noEmit",
