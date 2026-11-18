@@ -46,6 +46,7 @@
           <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
+      <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
       <button type="button" class="demo-print-btn" @click="printDialogVisible = true">打印输出</button>
       <input ref="fileInputRef" type="file" accept="application/json,.json" class="demo-file-input" @change="onImportTemplate($event)" />
     </header>
@@ -56,7 +57,7 @@
         ref="designerRef"
         is-edit="true"
         show-help="true"
-        :show-preview="true"
+        :show-preview="showPreview"
         @save="onSave"
         @preview="onPreview"
         @help="onHelp"
@@ -238,13 +239,59 @@
         </div>
       </div>
     </div>
+
+    <!-- 显示配置：预览/保存按钮显隐 + 主题色（只作用于设计器外壳，画布纸张不受影响） -->
+    <div v-if="configVisible" class="config-mask" @click.self="configVisible = false">
+      <div class="config-panel">
+        <div class="config-head">
+          <span class="config-title">显示配置</span>
+          <span class="config-close" @click="configVisible = false">×</span>
+        </div>
+        <div class="config-body">
+          <section class="config-section">
+            <div class="config-label">按钮显隐</div>
+            <label class="config-row">
+              <input v-model="showPreview" type="checkbox" />
+              <span>显示「预览」按钮</span>
+            </label>
+            <label class="config-row">
+              <input v-model="showSave" type="checkbox" />
+              <span>显示「保存」按钮</span>
+            </label>
+          </section>
+
+          <section class="config-section">
+            <div class="config-label">主题色</div>
+            <div class="config-presets">
+              <button v-for="p in THEME_PRESETS" :key="p.key" type="button"
+                      class="config-preset" :class="{ on: theme === p.key }"
+                      @click="theme = p.key">{{ p.label }}</button>
+            </div>
+            <div class="config-colors">
+              <label v-for="c in [['bg','背景'],['surface','面板'],['text','文字'],['accent','强调色']]" :key="c[0]" class="config-color">
+                <span>{{ c[1] }}</span>
+                <input type="color" :value="themeOverrides[c[0]] || '#ffffff'"
+                       @input="themeOverrides[c[0]] = $event.target.value" />
+                <button type="button" class="config-color-clear" title="清除该项覆盖"
+                        @click="themeOverrides[c[0]] = ''">清空</button>
+              </label>
+            </div>
+            <button type="button" class="config-btn ghost" @click="resetTheme">重置配色</button>
+          </section>
+        </div>
+        <div class="config-foot">
+          <span class="config-tip">配色只改变设计器外壳，纸张与画布保持原样</span>
+          <button type="button" class="config-btn" @click="configVisible = false">完成</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
 // Vue 3 宿主集成 @worm-print-platform/canvas 的完整链路示例。
 // 版式与 ./demo（Vue 3 设计器示例）完全一致：样式由 sync-demo-styles.mjs 从 demo 逐字抽取生成，
 // 本文件不写任何私有样式；事件不走侧栏面板，而是与 demo 同口径写控制台 + 下载 + alert。
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { initTopbarOverflow } from './topbar-overflow.js'
 import { createDefaultTemplate } from '@worm-print-platform/canvas'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
@@ -286,6 +333,19 @@ const HOST_LINKS = _isLocalhost
 const CURRENT_HOST = 'vue3'
 
 const designerRef = ref(null)   // <print-designer> 自定义元素本体
+
+// ── 显示配置（顶部「配置」弹窗）：全部走 property 写回，避免自定义元素属性字符串化 ──
+const configVisible = ref(false)
+const showPreview = ref(true)
+const showSave = ref(true)
+const theme = ref('auto')   // auto | light | dark
+const themeOverrides = reactive({ bg: '', surface: '', text: '', accent: '' })
+const THEME_PRESETS = [
+  { key: 'auto', label: '跟随系统' },
+  { key: 'light', label: '浅色' },
+  { key: 'dark', label: '深色' },
+]
+
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
 const activeData = shallowRef({})
@@ -836,9 +896,34 @@ const aiSession = createTemplateSession({
   onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
 })
 
+/** 把显示配置写回设计器：对象入参 themeConfig 必须走 property，布尔/主题也统一走 property */
+function applyDisplayConfig() {
+  const el = designerRef.value
+  if (!el) return
+  el.showPreview = showPreview.value
+  el.showSave = showSave.value
+  el.theme = theme.value
+  const overrides = {}
+  for (const [key, label] of [['bg', '--pd-bg'], ['surface', '--pd-surface'], ['text', '--pd-text'], ['accent', '--pd-accent']]) {
+    if (themeOverrides[key]) overrides[label] = themeOverrides[key]
+  }
+  el.themeConfig = Object.keys(overrides).length ? { overrides } : undefined
+}
+
+function resetTheme() {
+  theme.value = 'auto'
+  themeOverrides.bg = ''
+  themeOverrides.surface = ''
+  themeOverrides.text = ''
+  themeOverrides.accent = ''
+}
+
+watch([showPreview, showSave, theme, themeOverrides], applyDisplayConfig, { deep: true })
+
 onMounted(() => {
   initTopbarOverflow()
   const el = designerRef.value
+  applyDisplayConfig()
   // 上传能力同样是 property（函数无法走 attribute）
   el.uploadImage = uploadImage
   el.uploadDesignBackground = uploadImage
