@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { registerElementPlugin, clearElementPlugins } from '@worm-print-platform/core/designer'
+import { registerElementPlugin, clearElementPlugins, registerExportPlugin, clearExportPlugins } from '@worm-print-platform/core/designer'
 import type { PrintElementPlugin } from '@worm-print-platform/core/designer'
 import { validateTemplateJson } from '../validate.js'
 
@@ -45,7 +45,10 @@ const chartsPlugin: PrintElementPlugin = {
   render: { html: () => '<svg/>' },
 }
 
-afterEach(() => clearElementPlugins())
+afterEach(() => {
+  clearElementPlugins()
+  clearExportPlugins()
+})
 
 describe('legacy 宽松通道（历史模板零迁移）', () => {
   it('未声明 plugins 的未知 type 只给 warning，不判死模板', () => {
@@ -175,5 +178,28 @@ describe('strict 强校验通道（模板声明 plugins）', () => {
     const strict = validateTemplateJson(template([element('signature')], { plugins: [] }))
     expect(strict.ok).toBe(false)
     expect(strict.issues.some(i => i.path === 'elements[0].type' && i.level === 'error')).toBe(true)
+  })
+})
+
+describe('导出插件 id 的 strict 校验', () => {
+  it('已注册的导出插件 id 不再报 MISSING_PLUGIN', () => {
+    const release = registerExportPlugin({
+      id: '@acme/excel',
+      version: '1.0.0',
+      formats: ['xlsx'],
+      export: async () => ({ filename: 'a.xlsx', blob: new Blob([]) }),
+    })
+    const r = validateTemplateJson(template([element('text')], {
+      plugins: [{ id: '@acme/excel', version: '1.0.0' }],
+    }))
+    expect(r.issues.some(i => i.message.startsWith('MISSING_PLUGIN'))).toBe(false)
+    release()
+  })
+
+  it('未注册的导出插件 id 仍报 MISSING_PLUGIN', () => {
+    const r = validateTemplateJson(template([element('text')], {
+      plugins: [{ id: '@acme/no-such-export' }],
+    }))
+    expect(r.issues.some(i => i.message.startsWith('MISSING_PLUGIN'))).toBe(true)
   })
 })

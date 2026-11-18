@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { TemplateData, MultiPageTemplateData } from '@worm-print-platform/core/designer'
-import { getElementPluginKinds, getElementPluginById } from '@worm-print-platform/core/designer'
+import { getElementPluginKinds, getElementPluginById, getExportPluginById } from '@worm-print-platform/core/designer'
 import type { OptionIssue } from './units.js'
 import { DEPRECATED_OPTION_KEYS } from './option-meta.js'
 import {
@@ -206,7 +206,7 @@ function scanUnknownTypes(input: unknown, allowed: readonly string[], issues: Op
 /** strict 通道：模板声明的插件必须在当前进程已注册，且版本一致；否则明确报错而非静默出空纸 */
 function scanPluginDeclarations(list: readonly PluginDeclaration[], issues: OptionIssue[]) {
   for (const decl of list) {
-    const plugin = getElementPluginById(decl.id)
+    const plugin = getElementPluginById(decl.id) ?? getExportPluginById(decl.id)
     if (!plugin) {
       issues.push({
         path: 'plugins',

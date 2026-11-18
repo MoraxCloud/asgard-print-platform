@@ -10,6 +10,9 @@ export * from './types.js'
 // ─── 通用元素插件注册表（主体只留机制，不留具体元素知识） ───
 export * from './element-plugin-registry.js'
 
+// ─── 导出插件注册表（与元素插件并列的第二契约，浏览器侧导出文件） ───
+export * from './export-plugin-registry.js'
+
 // ─── 元素能力位注册表（六处类型白名单的单一真源；内置与插件同权） ───
 export * from './element-capabilities.js'
 

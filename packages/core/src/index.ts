@@ -153,3 +153,19 @@ export type {
   PluginOptionKind,
   PluginConfig,
 } from './designer/element-plugin-registry.js'
+
+// 导出插件注册表（浏览器侧导出 Excel/Word 等；状态同样挂在 globalThis 上跨 bundle 单实例）
+export {
+  defineExportPlugin,
+  registerExportPlugin,
+  getExportPluginById,
+  getExportPluginByFormat,
+  getExportPlugins,
+  clearExportPlugins,
+} from './designer/export-plugin-registry.js'
+export type {
+  PrintExportPlugin,
+  RenderedPage,
+  ExportInput,
+  ExportResult,
+} from './designer/export-plugin-registry.js'
