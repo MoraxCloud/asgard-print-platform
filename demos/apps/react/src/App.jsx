@@ -6,6 +6,7 @@ import { createDefaultTemplate } from '@worm-print-platform/canvas'
 import { SAMPLES } from './templates'
 import TemplateGalleryDialog from './components/TemplateGalleryDialog'
 import CustomDataDialog from './components/CustomDataDialog'
+import ConfigDialog from './components/ConfigDialog'
 import PrintOutputDialog from './components/PrintOutputDialog'
 import { createPreviewZoom, renderInBrowser, writeHtmlToFrame } from './browser-render'
 import { createTemplateSession } from './mcp-session'
@@ -333,6 +334,27 @@ export default function App() {
   const [customDialogVisible, setCustomDialogVisible] = useState(false)
   const [printDialogVisible, setPrintDialogVisible] = useState(false)
 
+  // ────────────────── 显示配置（顶部「配置」弹窗） ──────────────────
+  const [configVisible, setConfigVisible] = useState(false)
+  const [showPreview, setShowPreview] = useState(true)
+  const [showSave, setShowSave] = useState(true)
+  const [theme, setTheme] = useState('auto')
+  const [themeOverrides, setThemeOverrides] = useState({ bg: '', surface: '', text: '', accent: '' })
+
+  // 配置写回设计器：对象入参 themeConfig 走 property，避免属性字符串化
+  useEffect(() => {
+    const el = designerRef.current
+    if (!el) return
+    el.showPreview = showPreview
+    el.showSave = showSave
+    el.theme = theme
+    const overrides = {}
+    for (const [key, token] of [['bg', '--pd-bg'], ['surface', '--pd-surface'], ['text', '--pd-text'], ['accent', '--pd-accent']]) {
+      if (themeOverrides[key]) overrides[token] = themeOverrides[key]
+    }
+    el.themeConfig = Object.keys(overrides).length ? { overrides } : undefined
+  }, [showPreview, showSave, theme, themeOverrides])
+
   // 应用自定义字段与数据：即时生效并覆盖当前字段树
   function onApplyCustom(nextFields, nextData) {
     setFields(nextFields)
@@ -433,6 +455,7 @@ export default function App() {
           <div className="demo-more-item" data-unit="gallery"><span className="demo-more-label">加载示例</span><span className="demo-more-slot" data-overflow-slot="gallery"></span></div>
           </span>
         </span>
+        <button type="button" className="demo-print-btn" onClick={() => setConfigVisible(true)}>配置</button>
         <button type="button" className="demo-print-btn" onClick={() => setPrintDialogVisible(true)}>打印输出</button>
         <input ref={fileInputRef} type="file" accept="application/json,.json" className="demo-file-input" onChange={onImportTemplate} />
       </header>
@@ -501,6 +524,19 @@ export default function App() {
         data={activeData}
         onClose={() => setCustomDialogVisible(false)}
         onApply={onApplyCustom}
+      />
+
+      <ConfigDialog
+        visible={configVisible}
+        onClose={() => setConfigVisible(false)}
+        showPreview={showPreview}
+        setShowPreview={setShowPreview}
+        showSave={showSave}
+        setShowSave={setShowSave}
+        theme={theme}
+        setTheme={setTheme}
+        overrides={themeOverrides}
+        setOverrides={setThemeOverrides}
       />
     </div>
   )
