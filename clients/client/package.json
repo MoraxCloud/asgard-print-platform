@@ -9,9 +9,9 @@
   "author": "worm <liu_long_qqcom@qq.com>",
   "main": "out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "node scripts/electron-vite-with-env.mjs dev",
     "build": "electron-vite build",
-    "start": "electron-vite preview",
+    "start": "node scripts/electron-vite-with-env.mjs preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "pack:dir": "electron-vite build && electron-builder --dir"
