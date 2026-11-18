@@ -58,6 +58,57 @@ export interface PluginsManifest {
   plugins: Record<string, ManifestEntry>
 }
 
+/** 规范化后的 git 仓库源 */
+export interface RepoSource {
+  url: string
+  raw: string
+  host: 'github' | 'gitee' | 'other'
+  hostName: string
+}
+
+/** 子进程执行结果（npm / git），可注入以便离线测试 */
+export interface CommandResult {
+  stdout: string
+  stderr: string
+}
+
+export type NpmExecutor = (args: string[], cwd?: string) => Promise<CommandResult>
+export type GitExecutor = (args: string[], cwd?: string) => Promise<CommandResult>
+
+export interface InstallOptions {
+  /** 插件名或完整 npm spec */
+  name: string
+  /** 指定版本；缺省取最新稳定版 */
+  version?: string
+  /** 安装来源；auto 按 npm → github → gitee 回退 */
+  source: MarketSource | 'auto'
+  /** 目标插件根目录，默认 .worm-print/plugins */
+  dir?: string
+  /** 本地仓库目录（local 源）或自定义 git 仓库地址 */
+  repo?: string
+  force?: boolean
+  cwd?: string
+  index: MarketIndex
+  npmExecutor?: NpmExecutor
+  gitExecutor?: GitExecutor
+}
+
+export interface InstallResult {
+  id: string
+  version: string
+  target: string
+  source: MarketSource
+  stable: boolean
+  created: boolean
+}
+
+export interface RemoveOptions {
+  name: string
+  dir?: string
+  cwd?: string
+  npmExecutor?: NpmExecutor
+}
+
 export type MarketErrorCode =
   | 'BAD_ARGUMENT'
   | 'BAD_PLUGIN_ID'
