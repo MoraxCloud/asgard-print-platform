@@ -14,14 +14,14 @@ import type { MultiPageTemplateData, PrintBusinessField, TemplateData } from '@w
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
 
 /** 宿主契约版本；每次改动可观察面必须同步升号 */
-export const PRINT_DESIGNER_CONTRACT_VERSION = '1.1.0'
+export const PRINT_DESIGNER_CONTRACT_VERSION = '1.2.0'
 
 /** 自定义元素标签名 */
 export const PRINT_DESIGNER_TAG = 'print-designer' as const
 
 /** 会触发 attributeChangedCallback 的声明式 attribute（字符串形态） */
 export const PRINT_DESIGNER_ATTRIBUTES = [
-  'template', 'fields', 'name', 'fonts', 'design-data',
+  'template', 'fields', 'name', 'fonts', 'design-data', 'theme', 'theme-config',
 ] as const
 export type PrintDesignerAttribute = typeof PRINT_DESIGNER_ATTRIBUTES[number]
 
@@ -50,6 +50,10 @@ export interface PrintDesignerProperties {
   showPreview: boolean
   /** 是否显示工具栏「保存」按钮（同时写 show-save attribute）；默认显示，隐藏不影响 save() 方法与 save 事件 */
   showSave: boolean
+  /** 主题预设：auto 跟随系统 prefers-color-scheme，light/dark 强制；默认 auto */
+  theme?: PrintDesignerThemeMode
+  /** 主题色值覆盖；一旦传入优先于预设/系统/CSS 令牌，只作用于设计器外壳，画布纸张与元素不受影响 */
+  themeConfig?: PrintDesignerThemeConfig
   /** 宿主提供的图片上传回调；未注入时素材台的图片入口回落到内置行为 */
   uploadImage?: (file: File) => Promise<string> | string
   /** 宿主提供的设计背景上传回调 */
@@ -116,16 +120,35 @@ export const PRINT_DESIGNER_PARTS = [
 export type PrintDesignerPart = typeof PRINT_DESIGNER_PARTS[number]
 
 /**
- * 共享主题令牌（宿主最常覆盖的一组）：权威且完整的清单在
- * `@worm-print-platform/core/styles/theme.css` 的 `:root`（共 52 个 --pd-* 变量）。
- * 宿主在自己的 CSS 里覆盖同名变量即可换肤；不要写死颜色到 Shadow DOM 内部选择器。
+ * 完整主题令牌清单：权威定义在 `@worm-print-platform/core/styles/theme.css` 的 `:root`
+ * （共 55 个 --pd-* 变量）。两种换肤通道并存：
+ *   1. CSS：宿主覆盖同名变量（注意 Shadow DOM 内 `.designer-container` 的令牌声明会遮蔽外部值）；
+ *   2. 参数：`theme-config` 写入内部容器行内变量，优先级高于 CSS 令牌。
+ * 画布相关令牌（纸张/画布背景/标尺/手柄）在内置暗色预设中保持原值，所见即所得不受换肤影响。
  */
 export const PRINT_DESIGNER_THEME_TOKENS = [
-  '--pd-bg', '--pd-surface', '--pd-sidebar', '--pd-canvas-bg', '--pd-paper',
-  '--pd-text', '--pd-text-muted', '--pd-text-faint', '--pd-border', '--pd-border-soft',
-  '--pd-accent', '--pd-accent-soft', '--pd-hover-tint', '--pd-danger', '--pd-radius',
+  '--pd-bg', '--pd-surface', '--pd-field-bg', '--pd-sidebar', '--pd-sidebar-hover',
+  '--pd-canvas-bg', '--pd-paper', '--pd-accent', '--pd-accent-2', '--pd-accent-soft',
+  '--pd-accent-secondary', '--pd-danger-soft', '--pd-ink-green', '--pd-text', '--pd-text-muted',
+  '--pd-text-faint', '--pd-border', '--pd-border-soft', '--pd-input-bg', '--pd-hover-tint',
+  '--pd-danger', '--pd-danger-bg', '--pd-danger-border', '--pd-menu-text', '--pd-menu-hover',
+  '--pd-menu-border', '--pd-menu-divider', '--pd-menu-muted', '--pd-menu-disabled', '--pd-scrollbar',
+  '--pd-scrollbar-thumb', '--pd-scrollbar-thumb-hover', '--pd-help-field-bg', '--pd-help-field-line',
+  '--pd-help-field-ink', '--pd-help-function-bg', '--pd-help-function-line', '--pd-help-function-ink',
+  '--pd-help-variable-bg', '--pd-help-variable-line', '--pd-help-variable-ink', '--pd-help-conditional-bg',
+  '--pd-help-conditional-line', '--pd-help-conditional-ink', '--pd-handle', '--pd-ruler', '--pd-ruler-bg',
+  '--pd-ruler-cursor', '--pd-radius', '--pd-shadow-sm', '--pd-shadow-md', '--pd-shadow-paper',
+  '--pd-success', '--pd-text-regular', '--pd-fill-light',
 ] as const
 export type PrintDesignerThemeToken = typeof PRINT_DESIGNER_THEME_TOKENS[number]
+
+/** 主题预设：跟随系统 / 强制浅色 / 强制深色 */
+export type PrintDesignerThemeMode = 'auto' | 'light' | 'dark'
+
+/** 主题色值覆盖：键为 --pd-* 令牌，值为合法 CSS 颜色或阴影字符串；参数优先级最高 */
+export interface PrintDesignerThemeConfig {
+  overrides?: Partial<Record<PrintDesignerThemeToken, string>>
+}
 
 /** 完整契约描述（供文档生成、宿主自检与契约测试共用） */
 export interface PrintDesignerHostContract {
@@ -148,7 +171,7 @@ export const PRINT_DESIGNER_METHODS: readonly (keyof PrintDesignerMethods)[] = [
 
 export const PRINT_DESIGNER_PROPERTY_NAMES: readonly (keyof PrintDesignerProperties)[] = [
   'template', 'fields', 'fonts', 'designData', 'isEdit', 'showHelp', 'showPreview', 'showSave',
-  'uploadImage', 'uploadDesignBackground',
+  'theme', 'themeConfig', 'uploadImage', 'uploadDesignBackground',
 ]
 
 /** 事件名的具名常量：实现侧派发事件时引用这里，避免契约表与运行时字符串漂移 */

@@ -42,7 +42,8 @@ export type {
   PrintDesignerAttribute, PrintDesignerBooleanAttribute, PrintDesignerDesignData,
   PrintDesignerProperties, PrintDesignerMethods, PrintDesignerEventMap,
   PrintDesignerEventName, PrintDesignerCustomEvent, PrintDesignerPart,
-  PrintDesignerThemeToken, PrintDesignerHostContract,
+  PrintDesignerThemeToken, PrintDesignerThemeMode, PrintDesignerThemeConfig,
+  PrintDesignerHostContract,
 } from './host-contract'
 
 // ─── core 元素能力位：宿主/插件可声明区域、旋转、边框、绑定与出厂默认 ───

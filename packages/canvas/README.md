@@ -108,12 +108,28 @@ import type { TemplateData } from '@worm-print-platform/canvas/vue3'
 
 | 面 | 内容 |
 | --- | --- |
-| attribute | `template` · `fields` · `name` · `fonts` · `design-data`（另 `is-edit` / `show-help` / `show-preview` / `show-save` 四个布尔开关） |
-| property | `template` · `fields` · `fonts` · `designData` · `isEdit` · `showHelp` · `showPreview` · `showSave` · `uploadImage` · `uploadDesignBackground` |
+| attribute | `template` · `fields` · `name` · `fonts` · `design-data` · `theme` · `theme-config`（另 `is-edit` / `show-help` / `show-preview` / `show-save` 四个布尔开关） |
+| property | `template` · `fields` · `fonts` · `designData` · `isEdit` · `showHelp` · `showPreview` · `showSave` · `theme` · `themeConfig` · `uploadImage` · `uploadDesignBackground` |
 | 方法 | `getTemplateJson()` · `loadTemplate()` · `save()` · `validateTemplate()` · `getGeometryWarnings()` |
 | 事件（`bubbles + composed`） | `save` / `preview` → 模板 JSON 字符串；`help` → 无载荷；`dblclick-element` → 元素 id；`dblclick-cell` → `{ elementId, r, c, cellId? }` |
 
-自定义外观：外壳 8 个 `::part` 挂钩 + 52 个 `--pd-*` 主题令牌（权威定义在 `@worm-print-platform/core/styles/theme.css`）。契约版本遵守语义化，`src/__tests__/host-contract.spec.ts` 做漂移检测。
+自定义外观：外壳 8 个 `::part` 挂钩 + 55 个 `--pd-*` 主题令牌（权威定义在 `@worm-print-platform/core/styles/theme.css`）。契约版本遵守语义化，`src/__tests__/host-contract.spec.ts` 做漂移检测。
+
+主题配色有两条通道，且**参数优先于 CSS 令牌**：
+
+- CSS：宿主覆盖 `--pd-*` 变量（注意 Shadow DOM 内 `.designer-container` 的令牌声明会遮蔽外部值）；
+- 参数：`theme="auto" | "light" | "dark"` 选预设，`theme-config` 传细粒度色值覆盖。
+
+优先级：`theme-config.overrides` > 显式 `theme="dark"|"light"` > `auto` 跟随系统 `prefers-color-scheme` > CSS 令牌 > 内置浅色。内置暗色预设只改设计器外壳，纸张、画布背景、标尺与手柄保持原值，预览所见即所得不受影响；宿主如需连画布外围一起换色，可显式覆盖 `--pd-canvas-bg`。
+
+```html
+<print-designer
+  theme="dark"
+  theme-config='{"overrides":{"--pd-bg":"#0f1115","--pd-surface":"#181b21","--pd-text":"#e6e8ee"}}'>
+</print-designer>
+```
+
+Vue 3 门面同名 props：`theme="dark"` + `:theme-config="{ overrides: { ... } }"`。
 
 `showPreview` / `showSave` 控制工具栏「预览 / 保存」按钮显隐，默认显示，置 `false` 隐藏（Vue 3 门面同名 props）。隐藏只影响按钮出图：`save()` 方法、`save` / `preview` 事件照常可用，宿主可接管打印与预览业务逻辑。
 

@@ -17,6 +17,7 @@ import type {
   UploadDesignBackgroundFn, UploadImageFn,
 } from '@worm-print-platform/core/designer'
 import type { PrintDesignerElement } from '../print-designer'
+import type { PrintDesignerThemeConfig, PrintDesignerThemeMode } from '../host-contract'
 
 /** 与 Vue 3 轨的 expose 同形：getTemplateJson 返回对象而非 JSON 字符串 */
 export interface PrintDesignerExpose {
@@ -87,6 +88,10 @@ const component = defineComponent({
       type: [Object, Array] as PropType<Record<string, unknown> | readonly Record<string, unknown>[]>,
       default: undefined,
     },
+    /** 主题预设：auto（默认）跟随系统 prefers-color-scheme，light/dark 强制 */
+    theme: { type: String as PropType<PrintDesignerThemeMode>, default: undefined },
+    /** 主题色值覆盖：传参优先于预设、系统与 CSS 令牌；只影响外壳，画布纸张不受影响 */
+    themeConfig: { type: Object as PropType<PrintDesignerThemeConfig>, default: undefined },
   },
   emits: {
     preview: () => true,
@@ -125,6 +130,8 @@ const component = defineComponent({
       if (props.showHelp !== undefined) el.showHelp = props.showHelp
       if (props.showPreview !== undefined) el.showPreview = props.showPreview
       if (props.showSave !== undefined) el.showSave = props.showSave
+      if (props.theme !== undefined) el.theme = props.theme
+      if (props.themeConfig !== undefined) el.themeConfig = props.themeConfig
     }
 
     onMounted(() => {
@@ -156,6 +163,8 @@ const component = defineComponent({
     watch(() => props.showHelp, v => { const el = elRef.value; if (el && v !== undefined) el.showHelp = v })
     watch(() => props.showPreview, v => { const el = elRef.value; if (el && v !== undefined) el.showPreview = v })
     watch(() => props.showSave, v => { const el = elRef.value; if (el && v !== undefined) el.showSave = v })
+    watch(() => props.theme, v => { const el = elRef.value; if (el && v !== undefined) el.theme = v })
+    watch(() => props.themeConfig, v => { const el = elRef.value; if (el && v !== undefined) el.themeConfig = v })
 
     const api: PrintDesignerExpose = {
       getTemplateJson() {

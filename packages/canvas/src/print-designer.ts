@@ -20,7 +20,10 @@ import {
   PRINT_DESIGNER_ATTRIBUTES, PRINT_DESIGNER_CONTRACT_VERSION,
   PRINT_DESIGNER_EVENT, PRINT_DESIGNER_PARTS, getHostContract,
 } from './host-contract'
-import type { PrintDesignerHostContract } from './host-contract'
+import type {
+  PrintDesignerHostContract, PrintDesignerThemeConfig, PrintDesignerThemeMode,
+} from './host-contract'
+import { DARK_THEME_TOKENS } from './theme-tokens'
 import { renderCanvasArea, zoneRectsMM, clearDropDrag } from './shell/canvas'
 import { positionLabel } from './shell/elements'
 import type { CanvasUI } from './shell/canvas'
@@ -45,6 +48,17 @@ import type { RulerGeom } from './shell/ruler'
 import designerCss from './styles/designer.css?inline'
 
 const RULER_THICK = 20
+
+/** theme-config attribute 解析：非法 JSON 或非对象值一律忽略，保持无覆盖，不阻断渲染 */
+function parseThemeConfig(value: string): PrintDesignerThemeConfig | undefined {
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as PrintDesignerThemeConfig
+    }
+  } catch { /* 非法 JSON：保持无覆盖 */ }
+  return undefined
+}
 
 /**
  * 走 JS 浮层 tooltip 的容器：这些区域带 overflow 裁剪，CSS ::after 气泡会被切掉，
@@ -170,6 +184,18 @@ export class PrintDesignerElement extends HTMLElement {
   private lastSelKey = ''
   private chromeKey = ''
 
+  /** 主题：预设 + 参数覆盖。参数 > 显式预设 > 系统偏好 > CSS 令牌 */
+  private _theme: PrintDesignerThemeMode = 'auto'
+  private _themeConfig?: PrintDesignerThemeConfig
+  private systemDark = false
+  private themeMedia: MediaQueryList | null = null
+  private readonly onThemeMediaChange = () => {
+    this.systemDark = this.themeMedia?.matches ?? false
+    this.applyTheme()
+  }
+  /** applyTheme 写入的行内变量键：精确清理，不碰宿主/插件写的其他行内样式 */
+  private appliedThemeTokens: string[] = []
+
   /** 宿主注入：图片上传，返回可访问 URL 或 data URL（对应 Vue 3 轨 的 UPLOAD_IMAGE_KEY） */
   uploadImage?: UploadImageFn
   /** 宿主注入：设计背景图上传，返回可直接 <img src> 的完整路径（对应 Vue 3 轨 的 UPLOAD_DESIGN_BACKGROUND_KEY） */
@@ -234,6 +260,26 @@ export class PrintDesignerElement extends HTMLElement {
     this.repaint()
   }
 
+  /** 主题预设：auto（默认）跟随系统 prefers-color-scheme，light/dark 强制 */
+  set theme(v: PrintDesignerThemeMode | undefined) {
+    const next: PrintDesignerThemeMode = v === 'dark' || v === 'light' ? v : 'auto'
+    this._theme = next
+    this.setAttribute('theme', next)
+    this.applyTheme()
+  }
+  get theme(): PrintDesignerThemeMode { return this._theme }
+
+  /** 主题色值覆盖：传参优先于预设、系统与 CSS 令牌；只作用于外壳，画布纸张与元素不受影响 */
+  set themeConfig(v: PrintDesignerThemeConfig | string | undefined) {
+    const cfg = typeof v === 'string' ? parseThemeConfig(v) : v
+    this._themeConfig = cfg
+    // 与 attribute 双向同步（与 template/fields 同口径）：移除 attribute 才能回落到预设
+    if (cfg === undefined) this.removeAttribute('theme-config')
+    else this.setAttribute('theme-config', JSON.stringify(cfg))
+    this.applyTheme()
+  }
+  get themeConfig(): PrintDesignerThemeConfig | undefined { return this._themeConfig }
+
   /**
    * 宿主契约版本（机器可读）；宿主可在挂载前用 `PrintDesignerElement.contractVersion`
    * 判断是否需要降级或提示升级，避免把版本号埋在文档里。
@@ -253,6 +299,17 @@ export class PrintDesignerElement extends HTMLElement {
       this.repaint()
       return
     }
+    // theme / theme-config 移除后回落默认（auto / 无覆盖），必须放在通用空值返回之前
+    if (name === 'theme') {
+      this._theme = value === 'dark' || value === 'light' ? value : 'auto'
+      this.applyTheme()
+      return
+    }
+    if (name === 'theme-config') {
+      this._themeConfig = value ? parseThemeConfig(value) : undefined
+      this.applyTheme()
+      return
+    }
     if (!value) return
     if (name === 'name') { this.repaint(); return }
     let parsed: unknown
@@ -263,6 +320,9 @@ export class PrintDesignerElement extends HTMLElement {
   }
 
   connectedCallback() {
+    // 主题监听与行内覆盖：首次挂载与重连都要恢复（卸载时成对摘除）
+    this.attachThemeMedia()
+    this.applyTheme()
     if (this.store) {
       // 重连（宿主挪动节点等）：字体与全局键监听随卸载摘除过，这里补挂
       this.applyFontFace()
@@ -297,6 +357,52 @@ export class PrintDesignerElement extends HTMLElement {
     })
   }
 
+  /** 仅 auto 模式需要监听系统深浅色；matchMedia 缺失的环境（部分测试宿主）保持浅色 */
+  private attachThemeMedia(): void {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    this.detachThemeMedia()
+    this.themeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+    this.systemDark = this.themeMedia.matches
+    this.themeMedia.addEventListener('change', this.onThemeMediaChange)
+  }
+
+  private detachThemeMedia(): void {
+    this.themeMedia?.removeEventListener('change', this.onThemeMediaChange)
+    this.themeMedia = null
+  }
+
+  /**
+   * 主题落到内部 .designer-container 的行内 CSS 变量：行内声明优先级高于
+   * Shadow DOM 内 `.designer-container{--pd-*:浅色}` 规则，是唯一切实生效的通道。
+   * paint() 只 clear(shell) 清子节点，容器常驻，写入的变量不会被重绘冲掉。
+   */
+  private applyTheme(): void {
+    const shell = this.root.querySelector<HTMLElement>('.designer-container')
+    if (!shell) return
+    for (const key of this.appliedThemeTokens) shell.style.removeProperty(key)
+    this.appliedThemeTokens = []
+
+    const mode: 'light' | 'dark' = this._theme === 'dark' || this._theme === 'light'
+      ? this._theme
+      : (this.systemDark ? 'dark' : 'light')
+    if (mode === 'dark') {
+      for (const [key, value] of Object.entries(DARK_THEME_TOKENS)) {
+        if (value === undefined) continue
+        shell.style.setProperty(key, value)
+        this.appliedThemeTokens.push(key)
+      }
+    }
+    // 参数覆盖最后写入：优先级高于预设与系统；未传参时上一步预设即为最终值
+    const overrides = this._themeConfig?.overrides
+    if (overrides) {
+      for (const [key, value] of Object.entries(overrides)) {
+        if (!key.startsWith('--pd-') || typeof value !== 'string') continue
+        shell.style.setProperty(key, value)
+        if (!this.appliedThemeTokens.includes(key)) this.appliedThemeTokens.push(key)
+      }
+    }
+  }
+
   /** 面板折叠态：与 Vue 3 轨的 useStudioChrome 共用 localStorage 键，同一浏览器里两边偏好互通 */
   private readChrome() {
     this.state.leftCollapsed = readChromeKey(LEFT_CHROME_KEY)
@@ -313,6 +419,7 @@ export class PrintDesignerElement extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.detachThemeMedia()
     this.unsub?.()
     this.unsub = null
     this.unsubPluginUI?.()
