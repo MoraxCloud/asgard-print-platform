@@ -4622,7 +4622,7 @@ export const SAMPLES = [
         {
           id: 'ew-10',
           type: 'qrcode',
-          options: { left: 0, top: 52, width: 24, height: 24, formatter: '{waybill.qrcode}', qrCodeLevel: 'M' },
+          options: { left: 0, top: 52, width: 24, height: 18, formatter: '{waybill.qrcode}', qrCodeLevel: 'M' },
           printElementType: { type: 'qrcode', title: '二维码' },
         },
         {
