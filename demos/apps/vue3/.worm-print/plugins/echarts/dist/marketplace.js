@@ -134,6 +134,9 @@ var CHART_KINDS = CHART_KIND_DEFINITIONS.map((def) => def.type);
 function getChartKindDefinition(type) {
   return CHART_KIND_DEFINITIONS.find((def) => def.type === type);
 }
+function resolveChartPanelFields(type) {
+  return getChartKindDefinition(type)?.fields ?? [];
+}
 
 // src/bind.ts
 import { evaluateTemplate } from "@worm-print-platform/core";
@@ -317,8 +320,17 @@ import { configurePlugin, getPluginConfig } from "@worm-print-platform/core/desi
 
 // src/constants.ts
 var CHART_PLUGIN_ID = "@worm-print-platform/echarts";
+var CHART_PALETTES = [
+  { key: "default", label: "\u9ED8\u8BA4\u84DD", colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"] },
+  { key: "fresh", label: "\u6E05\u65B0\u7EFF", colors: ["#2f9e6e", "#5cc9a7", "#9ad6c1", "#f2c94c", "#4a90e2"] },
+  { key: "warm", label: "\u6696\u6A59\u7EA2", colors: ["#f2704e", "#f7a35c", "#f7d56d", "#c54e3f", "#8f5a4a"] },
+  { key: "purple", label: "\u7D2B\u7070", colors: ["#7b61ff", "#9b8cff", "#c3baff", "#596275", "#8d99ae"] }
+];
+var FALLBACK_SAMPLE_CATEGORIES = ["\u793A\u4F8B\u4E00", "\u793A\u4F8B\u4E8C", "\u793A\u4F8B\u4E09"];
 var FUNNEL_PADDING_DEFAULTS = { top: 6, right: 25, bottom: 6, left: 5 };
 var RADAR_RADIUS_DEFAULT = 75;
+var ECHARTS_RADAR_RADIUS_DEFAULT = 50;
+var ECHARTS_FUNNEL_PADDING_PX = { top: 60, right: 80, bottom: 65, left: 80 };
 
 // src/defaults.ts
 var GRID = { left: "8%", right: "8%", bottom: "12%", top: "18%", containLabel: true };
@@ -395,6 +407,19 @@ function createDefaultChartOption(type) {
 // src/config.ts
 function getChartPluginConfig() {
   return getPluginConfig(CHART_PLUGIN_ID);
+}
+function getChartPalettes() {
+  const overrides = getChartPluginConfig().palettes ?? {};
+  const builtin = CHART_PALETTES.map((palette) => {
+    const custom = overrides[palette.key];
+    return custom ? { key: palette.key, label: custom.label ?? palette.label, colors: custom.colors } : { key: palette.key, label: palette.label, colors: palette.colors };
+  });
+  const extra = Object.entries(overrides).filter(([key]) => !CHART_PALETTES.some((palette) => palette.key === key)).map(([key, value]) => ({ key, label: value.label ?? key, colors: value.colors }));
+  return [...builtin, ...extra];
+}
+function getSampleCategories() {
+  const custom = getChartPluginConfig().sampleCategories;
+  return Array.isArray(custom) && custom.length > 0 ? custom : FALLBACK_SAMPLE_CATEGORIES;
 }
 function chartFactoryDefaults(type, partial) {
   const config = getChartPluginConfig();
@@ -640,26 +665,152 @@ registerChartPlugin();
 
 // src/ui.ts
 import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
-import {
-  asObject,
-  CHART_KINDS as CHART_KINDS2,
-  cloneChartOption,
-  createDefaultChartOption as createDefaultChartOption2,
-  FUNNEL_PADDING_DEFAULTS as FUNNEL_PADDING_DEFAULTS2,
-  getChartKindDefinition as getChartKindDefinition2,
-  getChartPalettes as getChartPalettes2,
-  normalizeChartOption as normalizeChartOption2,
-  previewChartOption,
-  RADAR_RADIUS_DEFAULT as RADAR_RADIUS_DEFAULT2,
-  readFunnelPadding,
-  readPaletteKey,
-  readRadarRadius,
-  renderChartToSvg as renderChartToSvg2,
-  resolveChartPanelFields as resolveChartPanelFields2,
-  syncSeriesCount,
-  writeFunnelPadding,
-  writeRadarRadius
-} from "@worm-print-platform/plugin-echarts/kit";
+
+// src/option-utils.ts
+var SAMPLE_VALUES = [12, 20, 15];
+function cloneChartOption(value) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return value;
+  }
+}
+function previewChartOption(type, option) {
+  if (!option || typeof option !== "object" || Array.isArray(option)) return {};
+  const next = cloneChartOption(option);
+  const def = getChartKindDefinition(type);
+  const categories = [...getSampleCategories()];
+  const values = [...SAMPLE_VALUES];
+  const series = Array.isArray(next.series) ? next.series : [];
+  const replaceSeriesData = (mapper) => {
+    for (const item of series) {
+      if (Array.isArray(item.data) && item.data.includes("$data")) item.data = mapper(item);
+    }
+  };
+  const replaceAxisData = () => {
+    for (const key of ["xAxis", "yAxis"]) {
+      const axes = Array.isArray(next[key]) ? next[key] : next[key] ? [next[key]] : [];
+      for (const axis of axes) {
+        if (axis && Array.isArray(axis.data) && axis.data.includes("$data")) axis.data = [...categories];
+      }
+    }
+  };
+  switch (def?.seriesType) {
+    case "pie":
+      replaceSeriesData(() => categories.map((name, index) => ({ name, value: values[index] ?? 10 })));
+      break;
+    case "funnel":
+      replaceSeriesData(() => categories.map((name, index) => ({ name, value: values[index] ?? 10 })));
+      break;
+    case "scatter":
+      replaceSeriesData(() => values.map((value) => [value, value + 6]));
+      break;
+    case "radar":
+      next.radar = {
+        ...next.radar ?? {},
+        indicator: categories.map((name) => ({ name, max: 30 }))
+      };
+      replaceSeriesData(() => [{ name: "\u793A\u4F8B", value: values }]);
+      break;
+    case "gauge":
+      replaceSeriesData(() => [{ value: values[0] ?? 40, name: "\u6570\u91CF" }]);
+      break;
+    default:
+      replaceSeriesData(() => [...values]);
+      replaceAxisData();
+      break;
+  }
+  return next;
+}
+function readPaletteKey(option, palettes) {
+  const color = Array.isArray(option?.color) ? (option?.color).map(String) : [];
+  const hit = palettes.find((palette) => palette.colors.every((c, i) => c === color[i]) && color.length === palette.colors.length);
+  return hit?.key ?? "default";
+}
+function asObject(node) {
+  if (Array.isArray(node)) return node[0] && typeof node[0] === "object" ? { ...node[0] } : {};
+  return node && typeof node === "object" ? { ...node } : {};
+}
+function syncSeriesCount(option, count, type) {
+  const next = cloneChartOption(option);
+  const rawSeries = Array.isArray(next.series) ? next.series : [];
+  const def = getChartKindDefinition(type);
+  const template = rawSeries[0] ?? { type: def?.seriesType === "line" ? "line" : "bar", data: ["$data"] };
+  next.series = Array.from({ length: Math.max(count, 1) }, (_, index) => ({
+    ...template,
+    ...rawSeries[index] ?? {},
+    data: ["$data"]
+  }));
+  return next;
+}
+var round1 = (value) => Math.round(value * 10) / 10;
+function pxToPercent(px, totalPx) {
+  return totalPx > 0 ? round1(px / totalPx * 100) : 0;
+}
+function readInsetPercent(value, totalPx, echartsPx) {
+  if (typeof value === "string" && value.trim().endsWith("%")) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return round1(parsed);
+  }
+  if (typeof value === "number" && Number.isFinite(value)) return pxToPercent(value, totalPx);
+  return pxToPercent(echartsPx, totalPx);
+}
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+function percentString(value) {
+  return `${clamp(round1(value), 0, 100)}%`;
+}
+function firstSeries(option) {
+  const series = Array.isArray(option.series) ? option.series : [];
+  const first = series[0];
+  return first && typeof first === "object" ? first : {};
+}
+function readFunnelPadding(option, widthMm, heightMm) {
+  const source = option && typeof option === "object" ? option : {};
+  const series = firstSeries(source);
+  const widthPx = mmToChartPx(widthMm);
+  const heightPx = mmToChartPx(heightMm);
+  return {
+    top: readInsetPercent(series.top, heightPx, ECHARTS_FUNNEL_PADDING_PX.top),
+    right: readInsetPercent(series.right, widthPx, ECHARTS_FUNNEL_PADDING_PX.right),
+    bottom: readInsetPercent(series.bottom, heightPx, ECHARTS_FUNNEL_PADDING_PX.bottom),
+    left: readInsetPercent(series.left, widthPx, ECHARTS_FUNNEL_PADDING_PX.left)
+  };
+}
+function writeFunnelPadding(option, padding) {
+  const next = cloneChartOption(option);
+  const series = Array.isArray(next.series) ? next.series : [];
+  if (series.length === 0) series.push({ type: "funnel", data: ["$data"] });
+  const first = series[0];
+  first.top = percentString(padding.top);
+  first.right = percentString(padding.right);
+  first.bottom = percentString(padding.bottom);
+  first.left = percentString(padding.left);
+  next.series = series;
+  return next;
+}
+function readRadarRadius(option, widthMm, heightMm) {
+  const source = option && typeof option === "object" ? option : {};
+  const raw = asObject(source.radar).radius;
+  const value = Array.isArray(raw) ? raw[raw.length - 1] : raw;
+  const widthPx = mmToChartPx(widthMm);
+  const heightPx = mmToChartPx(heightMm);
+  const viewSize = Math.min(widthPx, heightPx) / 2;
+  if (typeof value === "string" && value.trim().endsWith("%")) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return round1(parsed);
+  }
+  if (typeof value === "number" && Number.isFinite(value)) return pxToPercent(value, viewSize);
+  return ECHARTS_RADAR_RADIUS_DEFAULT;
+}
+function writeRadarRadius(option, percent) {
+  const next = cloneChartOption(option);
+  next.radar = { ...asObject(next.radar), radius: percentString(clamp(percent, 20, 100)) };
+  return next;
+}
+
+// src/ui.ts
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
@@ -709,7 +860,7 @@ function rawChartOption(element) {
 }
 function panelOption(element) {
   const raw = rawChartOption(element);
-  return cloneChartOption(raw ?? createDefaultChartOption2(elementType(element)));
+  return cloneChartOption(raw ?? createDefaultChartOption(elementType(element)));
 }
 function chartHasProperties(element) {
   const options = element?.options;
@@ -718,7 +869,7 @@ function chartHasProperties(element) {
   return CHART_OPTION_KEYS.some((key) => record[key] !== void 0);
 }
 function commitOption(ctx, type, next, patch = {}) {
-  ctx.update({ chartOption: normalizeChartOption2(type, next), ...patch });
+  ctx.update({ chartOption: normalizeChartOption(type, next), ...patch });
 }
 function readValueFields(element) {
   const raw = element.options.chartValueFields;
@@ -748,7 +899,7 @@ function dataSourceCandidates(data) {
 function seriesList(option) {
   return Array.isArray(option.series) ? option.series : [];
 }
-function clamp(value, min, max) {
+function clamp2(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 function syncValueFields(ctx, type, nextFields) {
@@ -767,14 +918,14 @@ function renderCanvas(ctx) {
   const widthMm = Number(options.width) || 0;
   const heightMm = Number(options.height) || 0;
   try {
-    const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption2(type));
-    const option = normalizeChartOption2(type, preview);
+    const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption(type));
+    const option = normalizeChartOption(type, preview);
     if (!option || typeof option !== "object" || Array.isArray(option)) throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
     const fontFamily = typeof options.fontFamily === "string" && options.fontFamily ? options.fontFamily : void 0;
-    const svg = renderChartToSvg2({ key: element.id, type, option, widthMm, heightMm, fontFamily });
+    const svg = renderChartToSvg({ key: element.id, type, option, widthMm, heightMm, fontFamily });
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${svg}</div>`;
   } catch {
-    const title = typeof options.title === "string" && options.title.trim() ? options.title : getChartKindDefinition2(type)?.label ?? "\u56FE\u8868";
+    const title = typeof options.title === "string" && options.title.trim() ? options.title : getChartKindDefinition(type)?.label ?? "\u56FE\u8868";
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${escapeHtml2(title)}</div>`;
   }
 }
@@ -814,14 +965,14 @@ function checkboxField(labelText, checked, onCommit) {
 function renderProperty(ctx) {
   const element = ctx.element;
   const type = elementType(element);
-  const def = getChartKindDefinition2(type);
-  const fields = resolveChartPanelFields2(type);
+  const def = getChartKindDefinition(type);
+  const fields = resolveChartPanelFields(type);
   const has = (key) => fields.includes(key);
   const options = element.options;
   const widthMm = Number(options.width) || 0;
   const heightMm = Number(options.height) || 0;
   const limit = maxValueFields(def);
-  const palettes = getChartPalettes2();
+  const palettes = getChartPalettes();
   const root = el("div", "echarts-property");
   const form = el("form", "pd-form");
   form.addEventListener("submit", (event) => event.preventDefault());
@@ -976,7 +1127,7 @@ function renderProperty(ctx) {
       textInput({ value: String(inner), type: "number", min: 0, max: 90 }, (value) => {
         const next = panelOption(element);
         const series = seriesList(next);
-        if (series[0]) series[0].radius = [`${clamp(Number(value) || 0, 0, 90)}%`, "70%"];
+        if (series[0]) series[0].radius = [`${clamp2(Number(value) || 0, 0, 90)}%`, "70%"];
         commitOption(ctx, type, next);
       })
     );
@@ -996,7 +1147,7 @@ function renderProperty(ctx) {
       row.appendChild(
         textInput({ value: String(padding[side]), type: "number", min: 0, max: 60, title }, (value) => {
           const raw = Number(value);
-          const next = Number.isFinite(raw) ? clamp(raw, 0, 60) : FUNNEL_PADDING_DEFAULTS2[side];
+          const next = Number.isFinite(raw) ? clamp2(raw, 0, 60) : FUNNEL_PADDING_DEFAULTS[side];
           const option = panelOption(element);
           const current = readFunnelPadding(option, widthMm, heightMm);
           commitOption(ctx, type, writeFunnelPadding(option, { ...current, [side]: next }));
@@ -1013,7 +1164,7 @@ function renderProperty(ctx) {
         { value: String(readRadarRadius(panelOption(element), widthMm, heightMm)), type: "number", min: 20, max: 100 },
         (value) => {
           const raw = Number(value);
-          const next = Number.isFinite(raw) ? clamp(raw, 20, 100) : RADAR_RADIUS_DEFAULT2;
+          const next = Number.isFinite(raw) ? clamp2(raw, 20, 100) : RADAR_RADIUS_DEFAULT;
           commitOption(ctx, type, writeRadarRadius(panelOption(element), next));
         }
       )
@@ -1047,7 +1198,7 @@ function renderProperty(ctx) {
   return root;
 }
 var CHART_ELEMENT_UI = defineElementUI({
-  types: CHART_KINDS2,
+  types: CHART_KINDS,
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,

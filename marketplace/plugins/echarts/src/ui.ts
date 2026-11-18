@@ -31,8 +31,8 @@ import {
   syncSeriesCount,
   writeFunnelPadding,
   writeRadarRadius,
-} from '@worm-print-platform/plugin-echarts/kit'
-import type { ChartFieldKey, ChartKindDefinition, FunnelPadding } from '@worm-print-platform/plugin-echarts/kit'
+} from './kit.js'
+import type { ChartFieldKey, ChartKindDefinition, FunnelPadding } from './kit.js'
 
 /** 画布容器与 Vue 侧 ChartElement.vue 同形：铺满元素框且不吃指针事件 */
 const CANVAS_STYLE = 'width:100%;height:100%;min-width:0;min-height:0;pointer-events:none'
