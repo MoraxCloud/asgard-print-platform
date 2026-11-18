@@ -10,6 +10,7 @@ describe('百度图表市场插件', () => {
     const entry = index.plugins.find((p: any) => p.id === 'echarts')
     expect(entry).toBeDefined()
     expect(entry.version).toBe(plugin.version)
+    expect(pkg.wormPrint.version).toBe(plugin.version)
     expect(entry.npmName).toBe(plugin.npmName)
     expect(entry.entry).toBe(plugin.entry)
     expect(entry.path).toBe('plugins/echarts')
