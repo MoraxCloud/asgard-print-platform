@@ -49,6 +49,18 @@ test('字幕换行不拆英文单词（含连字符标识符）', async () => {
   assert.equal(wrapSubtitle('MIT 开源，仓库叫 worm-print-platform。', 20), 'MIT 开源，仓库叫 \nworm-print-platform。')
 })
 
+test('短句合并后必须能排进两行且每行不超宽', async () => {
+  const { subtitlesFor } = await import(pathToFileURL(join(pipeline, 'subtitles.mjs')))
+  // 回归：两个短句合并后 37 字，jQuery 卡在可切区时 wrapSubtitle 曾放弃换行产出超宽单行
+  const source = 'Vue3、Vue2、React、jQuery四个宿主都能接，示例整份照抄。'
+  const parts = subtitlesFor(source, 0, 8, { lineWidth: 20, maxLines: 2 })
+  for (const part of parts) {
+    const lines = part.text.split('\n')
+    assert.ok(lines.length <= 2, `超过两行：${part.text}`)
+    assert.ok(lines.every((line) => [...line].length <= 20), `单行超宽：${part.text}`)
+  }
+})
+
 test('发布文案保留恰好五个不重复标签', async () => {
   const { renderDouyinCopy } = await import(pathToFileURL(join(pipeline, 'douyin-copy.mjs')))
   const script = {
