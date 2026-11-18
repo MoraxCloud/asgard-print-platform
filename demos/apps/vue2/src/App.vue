@@ -530,7 +530,14 @@ export default {
         })
       }
       try {
-        await this.client.connect()
+        // 客户端未启动时端口扫描（默认 20 个）要 ~30s 才失败，加 5s 兜底让状态及时降级为「离线」。
+        const ac = new AbortController()
+        const timer = setTimeout(() => ac.abort(), 5000)
+        try {
+          await this.client.connect(ac.signal)
+        } finally {
+          clearTimeout(timer)
+        }
         this.clientStatus = 'online'
         this.clientStatusText = '打印客户端在线'
         await this.refreshClientPrinters()

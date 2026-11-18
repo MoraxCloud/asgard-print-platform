@@ -8,12 +8,12 @@
 
 四个工程的**界面版式完全一致**：同一份顶栏动作、同一个全屏打印预览层、
 同一套「打印输出 / 加载示例 / 自定义字段与数据」弹窗。样式收敛在各自
-`apps/<宿主>/src/styles/demo-ui.css`（四份同源产物，不要手改），
-示例库在各自 `apps/<宿主>/src/templates.js`（四份同源产物，不要手改）。
+`apps/<宿主>/src/styles/demo-ui.css`（四份同源产物，以 vue3 的为唯一源，其余三份不要手改），
+示例库在各自 `apps/<宿主>/src/templates.js`（同样以 vue3 的为唯一源）。
 
 > 这里刻意不做逻辑抽象：demo 的价值在于读者能在一个文件里看完「注册元素 → 注入模板与字段 → 听事件 → 出纸」，
 > 而不是跳到某个 shared 包里去看封装。四个工程的重复是有意为之；样式与示例库是两份同源产物，
-> 供四个工程保持一致（生成脚本随本仓库 `demos/scripts/` 维护）。
+> 改动 vue3 的这两份文件后分别运行 `npm run styles:demos` / `npm run samples:demos` 同步到其余三宿主。
 
 `demos/shared/template-session.ts` 是**桌面客户端「AI 助手」通道**（template.attach / template.get / template.apply）
 的参考实现：页面侧接入 MCP 的完整会话生命周期（重试、revision 冲突拒绝、封禁元素拒绝、写回校验），

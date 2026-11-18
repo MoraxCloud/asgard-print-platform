@@ -1,6 +1,5 @@
-// 宿主示例库：与 ./demo（Vue 3 打印设计器示例）同源，整份文件可以直接抄进业务项目改造成你自己的数据源。
-// 由 demos/scripts/sync-demo-samples.mjs 从 demo/src/samples 自动生成，请勿手改；
-// 示例的增删改只在 demo 侧做，重跑脚本即可同步到四个宿主。
+// 宿主示例库：四个宿主工程同源，整份文件可以直接抄进业务项目改造成你自己的数据源。
+// 本文件（apps/vue3）是唯一源，改动后运行 npm run samples:demos 同步到其余三宿主；其余三份请勿手改。
 // 纸面口径与 core 渲染管线一致：单位 mm，tableColWidths 之和 = 表格元素宽度，
 // tableRows 行高之和 = 表格元素高度，明细行用 rowType 'data' + '{goods.xxx}' 表达式绑定列表。
 

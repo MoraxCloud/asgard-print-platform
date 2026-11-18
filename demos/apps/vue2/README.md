@@ -35,8 +35,7 @@ npm run dev -w @worm-print-platform/render     # 服务端 PDF（3001，dev 代�
 | `vite.config.js` | `@vitejs/plugin-vue2`（`plugins: [vue2()]`），`/render-api` 代理注入 `X-Render-Key` |
 
 依赖：`npm i @worm-print-platform/canvas @worm-print-platform/core vue@2.7`（`canvas` 与主线同号发布正式版，直接取 `latest`，为后续维护迭代的稳定主版本）；`npm i -D @vitejs/plugin-vue2`。
-示例数据在 `src/templates.js`（10 个示例，带 group/paper/desc 元数据；由 `demos/scripts/sync-demo-samples.mjs`
-从 demo 的 `src/samples` 同源生成，勿手改），改成你的接口返回即可。
+示例数据在 `src/templates.js`（带 group/paper/desc 元数据；由 vue3 的同名文件经 `npm run samples:demos` 同源同步，勿手改），改成你的接口返回即可。
 
 ## Vue 2 专属的坑（务必处理）
 
@@ -63,7 +62,7 @@ npm run dev -w @worm-print-platform/render     # 服务端 PDF（3001，dev 代�
 
 ## 页面上能点的集成动作
 
-顶栏：自定义字段与数据 / 加载示例 / 导出模板 / 导入模板 / 清空 / 打印输出 / 批量开关，另有「宿主示例」下拉互跳五个工程。
+顶栏：自定义字段与数据 / 加载示例 / 导出模板 / 导入模板 / 清空 / 打印输出 / 批量开关，另有「宿主示例」下拉互跳四个宿主。
 示例库弹窗：分组页签（全部·单据·标签·小票）+ 缩略图卡片 + 双击/确定应用。
 自定义弹窗：粘贴字段/数据 JSON、格式化、非法拦截、应用即时生效。
 预览：点设计器自身「预览」触发 `@preview` → 全屏预览层浏览器同构渲染出纸（Esc 关闭）。

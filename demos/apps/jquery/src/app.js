@@ -1,5 +1,5 @@
 // jQuery 宿主直挂集成 @worm-print-platform/canvas 的完整链路示例（无打包器、无框架封装）。
-// 版式与 ./demo（Vue 3 打印设计器示例）完全一致：样式来自 sync-demo-styles.mjs 抽取的 demo-ui.css，
+// 版式与 vue3 子工程完全一致：样式来自 npm run styles:demos 同步的 demo-ui.css，
 // 本文件不写任何私有样式；宿主事件只进控制台，不做侧栏日志面板。
 // 插件能力全部来自 window.WormPrintCanvas（<script src="/vendor/worm-print-canvas.js"> 挂上的全局）。
 import { SAMPLES } from './templates.js'
