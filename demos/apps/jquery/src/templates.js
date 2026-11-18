@@ -9890,5 +9890,81 @@ export const SAMPLES = [
         }
       ]
     }
-  }
+  },
+  // ───────────────────────── 示例：图表数据标签（A5 横向 · 柱状图 + 饼图） ─────────────────────────
+  {
+    id: 'chart-label-demo',
+    name: '数据标签示例',
+    group: '图表',
+    desc: '柱状图与饼图开启数据标签：演示 formatter 模板、字号与标签位置。',
+    paper: 'A5 横向',
+    fields: [
+      { id: 'cl-1', fieldKey: 'sales', fieldLabel: '销售数据', fieldType: 'list', sortOrder: 1 },
+      { id: 'cl-2', fieldKey: 'sales.name', fieldLabel: '区域', fieldType: 'string', sortOrder: 2 },
+      { id: 'cl-3', fieldKey: 'sales.value', fieldLabel: '数量', fieldType: 'number', sortOrder: 3 },
+    ],
+    data: {
+      sales: [
+        { name: '华东', value: 12 },
+        { name: '华南', value: 20 },
+        { name: '华北', value: 15 },
+      ],
+    },
+    template: {
+      version: 1,
+      plugins: [{ id: '@worm-print-platform/echarts', version: '2' }],
+      pages: [
+        {
+          unit: 'mm',
+          paperSize: 'A5',
+          orientation: 'landscape',
+          name: '数据标签',
+          margins: { top: 8, right: 8, bottom: 8, left: 8 },
+          elements: [
+            {
+              id: 'cl-title',
+              type: 'text',
+              options: {
+                left: 0, top: 0, width: 194, height: 8,
+                formatter: '图表数据标签示例', fontSize: 12, fontWeight: 'bold',
+                color: '#26364a', verticalAlign: 'middle',
+              },
+              printElementType: { type: 'text', title: '文本' },
+            },
+            {
+              id: 'cl-bar',
+              type: 'barChart',
+              options: {
+                left: 0, top: 10, width: 110, height: 70,
+                chartOption: {
+                  grid: { left: '8%', right: '8%', bottom: '12%', top: '18%', containLabel: true },
+                  xAxis: { type: 'category', data: ['$data'] },
+                  yAxis: { type: 'value' },
+                  series: [{ type: 'bar', name: '数量', data: ['$data'], label: { show: true, position: 'top', formatter: '{b}: {c}', fontSize: 11 } }],
+                },
+                chartDataSource: 'sales',
+                chartCategoryField: 'name',
+                chartValueFields: ['value'],
+              },
+              printElementType: { type: 'barChart', title: '柱状图' },
+            },
+            {
+              id: 'cl-pie',
+              type: 'pieChart',
+              options: {
+                left: 118, top: 10, width: 72, height: 70,
+                chartOption: {
+                  series: [{ type: 'pie', data: ['$data'], radius: '62%', label: { show: true, position: 'outside', formatter: '{c} 件', fontSize: 10, overflow: 'none' } }],
+                },
+                chartDataSource: 'sales',
+                chartCategoryField: 'name',
+                chartValueFields: ['value'],
+              },
+              printElementType: { type: 'pieChart', title: '饼图' },
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]
