@@ -17,9 +17,11 @@
 4. **新增导出插件类别**：除元素插件外，导出 Excel / Word 等打印内容也必须可用插件实现；用户选型为
    「接收渲染结果、浏览器侧生成文件并触发下载」（详见 §3.2）。
 5. **首个插件改为百度图表（ECharts）**（2026-11-18 实施前补充）：不再先写 qrcode，改用百度图表作为
-   首个插件验证整条链路。**图表库包 `@worm-print-platform/echarts` 保持独立、仍单独发布，不并入市场
-   安装器或任何聚合包**；市场侧只新增一个薄包装插件 `@worm-print-platform/plugin-echarts`
-   （依赖独立图表库包，自身也可单独发布）。qrcode 细节保留在 §3.1 作后续样板参考。
+   首个插件验证整条链路。
+6. **插件源码唯一真源在市场**（2026-11-18 二次调整）：`marketplace/plugins/echarts/` 承载图表插件的
+   全部实现源码；同一源码构建出 `@worm-print-platform/plugin-echarts`（市场主口径）与
+   `@worm-print-platform/echarts`（兼容镜像，存量依赖零改动），两个包均可单独发布、README 统一为
+   市场口径。`CHART_PLUGIN_ID` 保持 `@worm-print-platform/echarts` 不变。qrcode 细节保留在 §3.1 作后续样板参考。
 
 ### 来源与本仓的对应关系（关键：三源指向同一份源码）
 
@@ -50,7 +52,7 @@ marketplace/
       ui.ts               # defineElementUI + registerElementUI（import 即注册）
       index.ts            # 汇总出口：import './plugin.js' + './ui.js'
       *.test.ts           # vitest：编码已知向量、SVG 输出、binding、注册命中
-    dist/index.js         # 预构建产物，提交进仓库（三源共用，免构建安装）
+    dist/marketplace.js   # 预构建产物，提交进仓库（三源共用，免构建安装）
     README.md / LICENSE
   plugins/<export-plugin>/  # 后续新增导出插件，结构同上，契约见 §3.2
 ```
@@ -68,7 +70,7 @@ marketplace/
       "version": "1.0.0",
       "npmName": "@worm-print-platform/plugin-qrcode",
       "path": "plugins/qrcode",
-      "entry": "dist/index.js",
+      "entry": "dist/marketplace.js",
       "kinds": ["qrCode"],
       "exportFormats": [],
       "homepage": "…",
@@ -79,13 +81,13 @@ marketplace/
 }
 ```
 
-插件清单 plugin.json：`{id, version, name, npmName, entry:"dist/index.js",
+插件清单 plugin.json：`{id, version, name, npmName, entry:"dist/marketplace.js",
 kinds:[{type:"qrCode",label:"二维码"}], exportFormats:[], peerDeps:{core,plugin-kit}, files 白名单}`。
 导出插件把 `kinds` 留空、`exportFormats` 填 `["xlsx","docx",…]`。
 
 产物协议（写进 marketplace/README.md）：
 
-- dist 必须预构建并提交；单文件 ESM。三源共用同一份 `dist/index.js`。
+- dist 必须预构建并提交；单文件 ESM。三源共用同一份 `dist/marketplace.js`。
 - `package.json` 带 `wormPrint` 元数据字段（id / version / entry / kinds / exportFormats / peerDeps），
   npm 源安装后据此写入宿主清单。
 - external 白名单仅 `@worm-print-platform/core`、`@worm-print-platform/plugin-kit`
@@ -217,12 +219,12 @@ export interface ExportResult {
 {
   "schemaVersion": 1,
   "plugins": {
-    "qrcode": {
+    "echarts": {
       "version": "1.0.0",
-      "entry": "plugins/qrcode/dist/index.js",
-      "kinds": ["qrCode"],
+      "entry": "plugins/echarts/dist/marketplace.js",
+      "kinds": ["barChart", "lineChart"],
       "exportFormats": [],
-      "npmName": "@worm-print-platform/plugin-qrcode",
+      "npmName": "@worm-print-platform/plugin-echarts",
       "source": { "mode": "npm", "repo": "…", "tag": "…" },
       "stable": true,
       "installedAt": "…"
@@ -239,14 +241,14 @@ export interface ExportResult {
 
 ## 六、宿主加载链路（demos/apps/vue3 验证）
 
-- `demos/apps/vue3/src/main.js` 增 `import '../.worm-print/plugins/qrcode/dist/index.js'`
+- `demos/apps/vue3/src/main.js` 增 `import '../.worm-print/plugins/echarts/dist/marketplace.js'`
   （import 即注册，registerAll 前后均可）；导出插件同理 import 即注册。
 - `demos/apps/vue3/vite.config.js` 加
   `resolve.dedupe:['@worm-print-platform/core','@worm-print-platform/plugin-kit']`；
   即便重复副本，Symbol.for 注册表兜底去重。
 - demo `.gitignore` 增 `.worm-print/`。
 - 通用宿主写法（写进文档，demo 用静态 import 保持最小）：元素插件按清单
-  `import.meta.glob('../.worm-print/plugins/*/dist/index.js',{eager:true})`；导出插件由 core 注册表枚举，
+  `import.meta.glob('../.worm-print/plugins/*/dist/marketplace.js',{eager:true})`；导出插件由 core 注册表枚举，
   宿主菜单按 `formats` 自动生成。
 
 ## 七、根脚本 / 发布 / 文档（实现时改动清单）

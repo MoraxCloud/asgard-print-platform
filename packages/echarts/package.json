@@ -2,7 +2,7 @@
   "name": "@worm-print-platform/echarts",
   "version": "1.5.2",
   "type": "module",
-  "description": "打印模板 ECharts 图表元素可选包：SSR/浏览器 SVG 渲染器、页面执行器与设计器图表扩展（主包不依赖图表库）",
+  "description": "兼容镜像包：源码唯一真源在 marketplace/plugins/echarts（@worm-print-platform/plugin-echarts），本包由同一源码生成，保留原包名与子路径供存量依赖方零改动使用",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -55,10 +55,10 @@
     "svg"
   ],
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "vite build && tsc -p tsconfig.build.json && tsup && vite build -c vite.bundle.config.ts && node ../../scripts/inject-license-banner.mjs dist",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "dev": "npm --prefix ../../marketplace/plugins/echarts run dev",
+    "build": "npm --prefix ../../marketplace/plugins/echarts run build",
+    "test": "npm --prefix ../../marketplace/plugins/echarts test",
+    "test:watch": "npm --prefix ../../marketplace/plugins/echarts run test:watch"
   },
   "dependencies": {
     "@worm-print-platform/core": "^1.5.2",

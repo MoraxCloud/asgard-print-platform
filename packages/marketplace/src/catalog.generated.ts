@@ -11,7 +11,7 @@ export const BUNDLED_CATALOG: MarketIndex = {
       "version": "1.0.0",
       "npmName": "@worm-print-platform/plugin-echarts",
       "path": "plugins/echarts",
-      "entry": "dist/index.js",
+      "entry": "dist/marketplace.js",
       "kinds": [
         "barChart",
         "barHChart",

@@ -53,7 +53,7 @@ npx @worm-print-platform/marketplace remove echarts
   "plugins": {
     "echarts": {
       "version": "1.0.0",
-      "entry": "dist/index.js",
+      "entry": "dist/marketplace.js",
       "kinds": ["barChart", "lineChart"],
       "exportFormats": [],
       "npmName": "@worm-print-platform/plugin-echarts",
@@ -71,10 +71,10 @@ npx @worm-print-platform/marketplace remove echarts
 
 ```js
 // 静态 import（demo 用法）
-import '../.worm-print/plugins/echarts/dist/index.js'
+import '../.worm-print/plugins/echarts/dist/marketplace.js'
 
 // 或按清单动态加载
-Object.values(import.meta.glob('../.worm-print/plugins/*/dist/index.js', { eager: true }))
+Object.values(import.meta.glob('../.worm-print/plugins/*/dist/marketplace.js', { eager: true }))
 ```
 
 宿主构建工具建议对 `@worm-print-platform/core`、`@worm-print-platform/plugin-kit` 做 `dedupe`。
@@ -122,10 +122,17 @@ registerExportPlugin(defineExportPlugin({
 2. 发版时同步三处版本：`marketplace.json`、`plugin.json`、`package.json`（含 `wormPrint.version`）。
 3. 维护者 `npm publish` 插件包，并在本仓打 tag `plugins/<id>/vX.Y.Z` 供 GitHub / Gitee 源解析。
 
-### 独立示例：百度图表
+### 示例：百度图表（唯一源码真源）
 
-首个插件是薄包装 `@worm-print-platform/plugin-echarts`，只做副作用注册；图表实现来自独立发布的
-`@worm-print-platform/echarts`（含 `/kit`、`/ui` 子路径）。两者各自独立发布，图表库代码不被复制或内联。
+`marketplace/plugins/echarts/` 是百度图表插件的唯一源码真源：十类图表描述符、SSR 渲染器、页面执行器
+与设计器 UI 均在此目录。构建脚本 `npm run build` 从同一源码同时产出：
+
+- `@worm-print-platform/plugin-echarts`：市场主口径，根入口 `dist/marketplace.js` 一次 import 注册插件与 UI；
+- `@worm-print-platform/echarts`：兼容镜像，保留原包名与全部子路径（`.`、`/kit`、`/ui`、`/node`、`/browser`、
+  `/browser/executor.iife`）及原根入口行为，供存量依赖方零改动使用。
+
+两个包均可单独 `npm publish`，README 为同一份市场口径文档（构建时同步到兼容包）。插件 id
+`@worm-print-platform/echarts` 保持不变，避免既有模板的 `plugins` 声明被 contract 判为 MISSING_PLUGIN。
 
 ## 四、信任边界
 
