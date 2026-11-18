@@ -338,14 +338,16 @@ export default function App() {
   const [configVisible, setConfigVisible] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
   const [showSave, setShowSave] = useState(true)
+  const [themeMode, setThemeMode] = useState('auto')
 
-  // 按钮显隐写回设计器：布尔开关走 property，避免属性字符串化
+  // 按钮显隐与主题预设写回设计器：统一走 property，避免属性字符串化
   useEffect(() => {
     const el = designerRef.current
     if (!el) return
     el.showPreview = showPreview
     el.showSave = showSave
-  }, [showPreview, showSave])
+    el.theme = themeMode
+  }, [showPreview, showSave, themeMode])
 
   // 应用自定义字段与数据：即时生效并覆盖当前字段树
   function onApplyCustom(nextFields, nextData) {
@@ -525,6 +527,8 @@ export default function App() {
         setShowPreview={setShowPreview}
         showSave={showSave}
         setShowSave={setShowSave}
+        themeMode={themeMode}
+        setThemeMode={setThemeMode}
       />
     </div>
   )

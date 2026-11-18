@@ -29,14 +29,16 @@ const state = {
   // 显示配置（顶部「配置」弹窗）
   showPreview: true,
   showSave: true,
+  themeMode: 'auto',
 }
 
-/** 把按钮显隐写回设计器：布尔开关走 property */
+/** 把按钮显隐与主题预设写回设计器：统一走 property */
 function applyDisplayConfig() {
   const el = designer()
   if (!el) return
   el.showPreview = state.showPreview
   el.showSave = state.showSave
+  el.theme = state.themeMode
 }
 
 function openConfigDialog() {
@@ -53,6 +55,7 @@ function bindConfigDialog() {
 
   $('#config-show-preview').on('change', function () { state.showPreview = this.checked; applyDisplayConfig() })
   $('#config-show-save').on('change', function () { state.showSave = this.checked; applyDisplayConfig() })
+  $('input[name="config-theme"]').on('change', function () { state.themeMode = this.value; applyDisplayConfig() })
 }
 
 /** 模板声明的字体（多页模板合并、按 family 去重）；宿主把 /fonts 从本站 public 直接提供，URL 原样可用 */
