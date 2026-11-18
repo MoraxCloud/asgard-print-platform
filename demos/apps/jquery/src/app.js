@@ -26,6 +26,33 @@ const state = {
   currentSample: null,
   batchEnabled: false,
   customDataActive: false,
+  // 显示配置（顶部「配置」弹窗）
+  showPreview: true,
+  showSave: true,
+}
+
+/** 把按钮显隐写回设计器：布尔开关走 property */
+function applyDisplayConfig() {
+  const el = designer()
+  if (!el) return
+  el.showPreview = state.showPreview
+  el.showSave = state.showSave
+}
+
+function openConfigDialog() {
+  setVisible('#config-mask', true)
+}
+function closeConfigDialog() {
+  setVisible('#config-mask', false)
+}
+
+function bindConfigDialog() {
+  $('#btn-config').on('click', openConfigDialog)
+  $('#config-close, #config-done').on('click', closeConfigDialog)
+  $('#config-mask').on('click', e => { if (e.target === e.currentTarget) closeConfigDialog() })
+
+  $('#config-show-preview').on('change', function () { state.showPreview = this.checked; applyDisplayConfig() })
+  $('#config-show-save').on('change', function () { state.showSave = this.checked; applyDisplayConfig() })
 }
 
 /** 模板声明的字体（多页模板合并、按 family 去重）；宿主把 /fonts 从本站 public 直接提供，URL 原样可用 */
@@ -380,6 +407,8 @@ function mountDesigner() {
   // 字符串开关写在 attribute 上；元素默认 display:inline，由 demo-ui.css 给它块级 100% 宽高
   $('#host').html('<print-designer id="designer" is-edit="true" show-help="true"></print-designer>')
   const el = designer()
+  // 显示配置在元素挂载后立即写回一次
+  applyDisplayConfig()
   // 上传能力同样是 property（函数无法走 attribute）
   el.uploadImage = uploadImage
   el.uploadDesignBackground = uploadImage
@@ -427,6 +456,7 @@ $(function () {
     currentSampleName: () => state.currentSample?.name,
   })
   bindTopbar()
+  bindConfigDialog()
   initTopbarOverflow()
   // 自定义弹窗：点遮罩空白处等同于取消
   $('#custom-close, #custom-cancel').on('click', closeCustomDialog)

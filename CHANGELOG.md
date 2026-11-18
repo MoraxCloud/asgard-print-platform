@@ -4,7 +4,13 @@
 `core` / `plugin-kit` / `canvas` / `echarts` / `skills` 等正式包同号同批发版；
 `contract` / `mcp` 随桌面客户端打包，不单独发布到 npm。
 
-## V1.5.2(2026-11-17)
+## V1.5.3(待发布)
+
+- **设计器主题支持参数化配色**：新增 `theme`（`auto` / `light` / `dark`）与 `theme-config` 两个参数，attribute 与 property 双通道；优先级为参数覆盖 > 显式预设 > 系统 `prefers-color-scheme` > CSS 令牌 > 内置浅色。内置暗色预设只作用于设计器外壳，纸张、画布背景、标尺与手柄保持原值，预览所见即所得不受影响。
+- **宿主契约升级至 1.2.0**：主题令牌清单补全至 55 项，Vue 3 门面同步两个 prop；core 补齐 3 个此前仅有 fallback 的令牌。
+- 设计器内置「更新记录」补齐至 V1.5.2，消除与包版本的滞后。
+- **四个宿主 demo 新增「配置」弹窗**：顶部新增配置入口，集中预览 / 保存按钮显隐，原有顶部操作与弹窗保持不变。配色配置未纳入示例——换肤通过给设计器传 `theme` / `themeConfig` 实现（画布纸张不受影响），接入文档已补充这两项参数说明。
+- 修复 vue2 demo 预览显隐开关失效（模板属性绑定把 `show-preview="false"` 渲染为移除属性），显隐统一走 property setter。
 
 - **图片 base64 支持增强**：设计态图片元素与表格图片单元格的 `{字段}` 表达式，改为优先用宿主注入的 `designData` 求值（未注入仍回落内置 demo 数据），动态 base64 图片现可在设计画布直接渲染；新增「Base64 图片验证」示例覆盖静态内联与动态注入两种写法（四宿主同源）。
 - **宿主契约升级至 1.1.0**：新增 `showPreview` / `showSave` 布尔开关（`show-preview` / `show-save` attribute），宿主可隐藏工具栏「预览 / 保存」按钮并自行接管出图业务；隐藏不影响 `save()` 方法与 `save` / `preview` 事件。Vue 3 门面同步提供同名 props。

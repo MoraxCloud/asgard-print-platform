@@ -47,9 +47,9 @@ el.addEventListener('preview', e => openPreview(e.detail)) // detail 已是当�
 
 修改字段、切换示例、导入或清空模板后，显式再次给 property 赋值；不要监听 element 自身猜测注入时机。`fields` 只有 setter，读回用 `el.store.fields`；`el.template` getter 返回当前画布 JSON 字符串。
 
-## 2. `<print-designer>` 契约（版本化，当前 1.1.0）
+## 2. `<print-designer>` 契约（版本化，当前 1.2.0）
 
-**attribute（字符串形态）**：`template` · `fields` · `name` · `fonts` · `design-data`
+**attribute（字符串形态）**：`template` · `fields` · `name` · `fonts` · `design-data` · `theme` · `theme-config`
 **布尔 attribute（property 开关）**：`is-edit` · `show-help` · `show-preview` · `show-save`
 **property**：
 
@@ -61,7 +61,11 @@ el.addEventListener('preview', e => openPreview(e.detail)) // detail 已是当�
 | `designData` | 设计态示例数据（单对象 / 数组信封 / JSON 串），供插件按真实数据预览 |
 | `isEdit` / `showHelp` | 布尔开关，同时写 `is-edit` / `show-help` attribute |
 | `showPreview` / `showSave` | 工具栏「预览 / 保存」按钮显隐，默认显示，置 `false` 隐藏；同时写 `show-preview` / `show-save` attribute。隐藏只影响按钮出图，`save()` 方法与 `save` / `preview` 事件照常可用（宿主自定义打印/预览业务的旁路） |
+| `theme` | 主题预设：`'auto'`（默认，跟随系统）/ `'light'` / `'dark'`，同时写 `theme` attribute。深色预设只改设计器外壳，纸张 / 画布背景 / 标尺 / 手柄保持原值，预览所见即所得不变 |
+| `themeConfig` | 主题色值覆盖：`{ overrides?: { '--pd-bg'?: string, '--pd-surface'?: string, … } }`，**对象必须赋 property**（写 attribute 会被字符串化）。传参优先级高于 `theme` 预设与 CSS 令牌；未传时由预设 / 系统决定 |
 | `uploadImage` / `uploadDesignBackground` | 宿主上传函数 `(file: File) => string \| Promise<string>` |
+
+**显示配置小结（1.2.0 起）**：`showPreview` / `showSave` 管按钮显隐，`theme` / `themeConfig` 管配色，二者都是宿主可传的配置项，互不依赖。典型做法：宿主自己的页面提供「配置」入口（如顶部按钮弹窗），把这几项的状态写回元素 property；`themeConfig` 是对象，务必走 property。仓库四个 demo（vue3 / vue2 / react / jquery）顶部都有这样的「配置」弹窗可直接抄——**示例只暴露显隐开关，不暴露配色控件**；配色通过传 `theme` / `themeConfig` 实现，画布纸张不受影响。优先级链：`themeConfig` 覆盖 > 显式 `theme` 预设 > `auto` 跟随系统 `prefers-color-scheme` > CSS 令牌 > 内置浅色。
 
 **方法**：
 
@@ -83,7 +87,7 @@ el.addEventListener('preview', e => openPreview(e.detail)) // detail 已是当�
 | `dblclick-element` | 元素 id 字符串本身，**不要 `JSON.parse`** |
 | `dblclick-cell` | `{ elementId, r, c, cellId? }` 对象 |
 
-**运行时自检**：`PrintDesignerElement.contractVersion`、`el.getHostContract()`、`getHostContract()`（均导出）。`::part` 外壳挂钩 8 个：`container / toolbar / format-bar / left-panel / canvas-area / property-panel / status-bar / page-tabs`；主题令牌 52 个 `--pd-*`，权威定义在 `@worm-print-platform/core/styles/theme.css`，覆盖同名变量即可换肤，不要写死进 Shadow DOM 内部选择器。
+**运行时自检**：`PrintDesignerElement.contractVersion`、`el.getHostContract()`、`getHostContract()`（均导出）。`::part` 外壳挂钩 8 个：`container / toolbar / format-bar / left-panel / canvas-area / property-panel / status-bar / page-tabs`；主题令牌 55 个 `--pd-*`，权威定义在 `@worm-print-platform/core/styles/theme.css`，覆盖同名变量即可换肤，不要写死进 Shadow DOM 内部选择器。换肤推荐用 `theme` / `themeConfig` 参数（见上表），它写入内部容器行内变量，优先级高于外部 CSS 令牌。
 
 **不存在** `back` 事件、`setTemplateMeta` 方法——返回导航与模板元信息都属宿主业务层。模板重载：`el.template = 新对象`（必须新引用）。事件处理器在组件销毁 / effect cleanup 里成对解绑；React StrictMode dev 双跑，漏解绑会重复保存。
 
@@ -153,7 +157,7 @@ async function uploadImage(file: File) {
 
 ### 门面组件契约
 
-`PrintDesigner` props：`initial-template`、`initial-elements`、`fields`、`is-edit`、`upload-image`、`upload-design-background`、`show-help`、`show-preview`、`show-save`、`fonts`、`designData`。事件：`save(json: string)`、`preview()`（无载荷）。expose：`getTemplateJson()`（返回**对象**，不是字符串）、`validateTemplate()`、`getGeometryWarnings()`。
+`PrintDesigner` props：`initial-template`、`initial-elements`、`fields`、`is-edit`、`upload-image`、`upload-design-background`、`show-help`、`show-preview`、`show-save`、`theme`、`theme-config`、`fonts`、`designData`。事件：`save(json: string)`、`preview()`（无载荷）。expose：`getTemplateJson()`（返回**对象**，不是字符串）、`validateTemplate()`、`getGeometryWarnings()`。`theme` / `theme-config` 与原生元素同语义：前者选预设，后者传覆盖对象（门面内部赋 property，避免对象被字符串化）。
 
 `PrintHtmlPreview` props：`template-json`、`print-data`、`base-url`、`font-base-url`、`renderers`。事件：`rendered(pageCount, copies)`、`error(message)`。expose：`print()`、`rerender()`、`setViewZoom(key)` 及缩放只读属性。
 
@@ -161,7 +165,7 @@ async function uploadImage(file: File) {
 
 | Vue 组件侧 | Custom Element 侧 | 门面动作 |
 | --- | --- | --- |
-| `:initial-template` `:fields` `:fonts` `:design-data`、函数型 `:upload-image` | 同名 property | 显式赋 property，绕开 `setAttribute` 字符串化 |
+| `:initial-template` `:fields` `:fonts` `:design-data`、函数型 `:upload-image`、对象型 `:theme-config` | 同名 property | 显式赋 property，绕开 `setAttribute` 字符串化 |
 | `@save` 首参为 JSON 字符串 | `CustomEvent('save')`，json 在 `detail` | 解 `detail` 再 emit |
 | `@preview`（无载荷） | `CustomEvent('preview')`，detail 为 JSON | 转无参 emit |
 | `ref.getTemplateJson()` 返回对象 | 返回 JSON 字符串 | `JSON.parse` |

@@ -120,6 +120,10 @@ export default {
       clientPrinting: false,
       clientMessage: '',
       clientMessageKind: '',
+      // 显示配置（顶部「配置」弹窗）
+      configVisible: false,
+      showPreview: true,
+      showSave: true,
     }
   },
   computed: {
@@ -172,6 +176,9 @@ export default {
       this.refreshRenderStatus()
       this.connectPrintClient()
     },
+    // 按钮显隐写回设计器（布尔开关走 property）
+    showPreview: 'applyDisplayConfig',
+    showSave: 'applyDisplayConfig',
   },
   created() {
     // 打印客户端实例无需响应式化，挂在实例普通属性上
@@ -211,6 +218,13 @@ export default {
     this.aiSession.stop()
   },
   methods: {
+    /** 把按钮显隐写回设计器：布尔开关走 property，避免自定义元素属性字符串化 */
+    applyDisplayConfig() {
+      const el = this.$refs.designer
+      if (!el) return
+      el.showPreview = this.showPreview
+      el.showSave = this.showSave
+    },
     // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
     // <print-designer> 是原生自定义元素：`:fields="..."` 这类绑定会走 setAttribute，
     // 对象被字符串化成 "[object Object]"，所以对象/函数入参必须赋 property；
@@ -576,6 +590,7 @@ export default {
   mounted() {
     initTopbarOverflow()
     const el = this.$refs.designer
+    this.applyDisplayConfig()
     // 上传能力同样是 property（函数无法走 attribute）
     el.uploadImage = this.uploadImage
     el.uploadDesignBackground = this.uploadImage
@@ -638,6 +653,7 @@ export default {
           <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
+      <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
       <button type="button" class="demo-print-btn" @click="printDialogVisible = true">打印输出</button>
       <input ref="fileInput" type="file" accept="application/json,.json" class="demo-file-input" @change="onImportTemplate($event)" />
     </header>
@@ -828,6 +844,32 @@ export default {
             <button type="button" class="custom-btn ghost" @click="customDialogVisible = false">取消</button>
             <button type="button" class="custom-btn" @click="onApplyCustom">应用</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 显示配置：预览/保存按钮显隐 -->
+    <div v-if="configVisible" class="config-mask" @click.self="configVisible = false">
+      <div class="config-panel">
+        <div class="config-head">
+          <span class="config-title">显示配置</span>
+          <span class="config-close" @click="configVisible = false">×</span>
+        </div>
+        <div class="config-body">
+          <section class="config-section">
+            <div class="config-label">按钮显隐</div>
+            <label class="config-row">
+              <input v-model="showPreview" type="checkbox" />
+              <span>显示「预览」按钮</span>
+            </label>
+            <label class="config-row">
+              <input v-model="showSave" type="checkbox" />
+              <span>显示「保存」按钮</span>
+            </label>
+          </section>
+        </div>
+        <div class="config-foot">
+          <button type="button" class="config-btn" @click="configVisible = false">完成</button>
         </div>
       </div>
     </div>

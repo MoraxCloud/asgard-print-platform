@@ -1,8 +1,44 @@
-// 逐字复制自 print-canvas/src/help-content/changelog.ts（改动需两侧同步）
+// 设计器内置「更新记录」权威内容：本仓 canvas 即权威实现，不再与上游 print-canvas 逐字同步。
+// 版本条目与仓库根 CHANGELOG.md 对齐，面向设计器使用者撰写；新增功能未发布时标注「待发布」。
 export default {
   id: 'changelog',
   title: '更新记录',
   content: `
+<h2>V1.5.3<small>(待发布)</small></h2>
+
+<h3>新增</h3>
+<ul>
+  <li><strong>设计器配色可传参控制</strong>：新增 <code>theme</code>（跟随系统 / 浅色 / 深色）与 <code>theme-config</code> 两个参数，传参即优先于 CSS 主题令牌，不必自己覆盖样式变量。优先级为「参数覆盖 &gt; 显式深色/浅色 &gt; 跟随系统 &gt; CSS 令牌」，宿主可只传一个深色开关，也可细调任意颜色。</li>
+</ul>
+
+<h3>注意</h3>
+<ul>
+  <li><strong>画布保持原样</strong>：内置深色预设只改变设计器外壳，纸张、画布背景、标尺与手柄的颜色不变，预览所见即所得不受换肤影响。若想连画布外围背景一起换色，可显式覆盖 <code>--pd-canvas-bg</code>。</li>
+</ul>
+
+<h2>V1.5.2<small>(2026-11-17)</small></h2>
+
+<h3>新增</h3>
+<ul>
+  <li><strong>动态 base64 图片可在画布直接显示</strong>：图片元素与表格图片单元格里的 <code>{字段}</code> 表达式，现在优先取宿主给的设计态示例数据，不用等到预览或出纸才看到图；未注入示例数据时仍用内置演示图。</li>
+  <li><strong>工具栏「预览 / 保存」按钮可隐藏</strong>：宿主可按需隐藏这两个按钮并自行接管出图业务。隐藏只影响按钮显示，保存与预览功能本身照常可用。</li>
+</ul>
+
+<h2>V1.5.1<small>(2026-11-16)</small></h2>
+
+<h3>发布</h3>
+<ul>
+  <li><strong>桌面客户端安装包正式发行</strong>：mac（x64 / arm64）、Windows、Linux（deb / rpm / AppImage）六件安装包随版发布，README 提供直链与校验清单，可按系统直接下载静默打印客户端。</li>
+</ul>
+
+<h2>V1.5.0<small>(2026-11-16)</small></h2>
+
+<h3>发布</h3>
+<ul>
+  <li><strong>第一个稳定版本正式发布</strong>：设计器以零框架的 Web Components 实现为权威版本，npm 包名迁移为 <code>@worm-print-platform/*</code>；Vue 3 用法保留兼容门面，原有接入代码无需重写。</li>
+  <li><strong>插件化元素转正</strong>：图表等扩展元素可作为独立插件安装，内置元素与第三方插件在设计器里同权使用。</li>
+</ul>
+
 <h2>V1.4.8<small>(2026-11-11)</small></h2>
 
 <h3>修复</h3>

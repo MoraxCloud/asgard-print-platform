@@ -46,6 +46,7 @@
           <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
+      <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
       <button type="button" class="demo-print-btn" @click="printDialogVisible = true">打印输出</button>
       <input ref="fileInputRef" type="file" accept="application/json,.json" class="demo-file-input" @change="onImportTemplate($event)" />
     </header>
@@ -56,7 +57,7 @@
         ref="designerRef"
         is-edit="true"
         show-help="true"
-        :show-preview="true"
+        :show-preview="showPreview"
         @save="onSave"
         @preview="onPreview"
         @help="onHelp"
@@ -238,6 +239,32 @@
         </div>
       </div>
     </div>
+
+    <!-- 显示配置：预览/保存按钮显隐 -->
+    <div v-if="configVisible" class="config-mask" @click.self="configVisible = false">
+      <div class="config-panel">
+        <div class="config-head">
+          <span class="config-title">显示配置</span>
+          <span class="config-close" @click="configVisible = false">×</span>
+        </div>
+        <div class="config-body">
+          <section class="config-section">
+            <div class="config-label">按钮显隐</div>
+            <label class="config-row">
+              <input v-model="showPreview" type="checkbox" />
+              <span>显示「预览」按钮</span>
+            </label>
+            <label class="config-row">
+              <input v-model="showSave" type="checkbox" />
+              <span>显示「保存」按钮</span>
+            </label>
+          </section>
+        </div>
+        <div class="config-foot">
+          <button type="button" class="config-btn" @click="configVisible = false">完成</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -286,6 +313,12 @@ const HOST_LINKS = _isLocalhost
 const CURRENT_HOST = 'vue3'
 
 const designerRef = ref(null)   // <print-designer> 自定义元素本体
+
+// ── 显示配置（顶部「配置」弹窗）：全部走 property 写回，避免自定义元素属性字符串化 ──
+const configVisible = ref(false)
+const showPreview = ref(true)
+const showSave = ref(true)
+
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
 const activeData = shallowRef({})
@@ -836,9 +869,20 @@ const aiSession = createTemplateSession({
   onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
 })
 
+/** 把按钮显隐写回设计器：布尔开关走 property，避免自定义元素属性字符串化 */
+function applyDisplayConfig() {
+  const el = designerRef.value
+  if (!el) return
+  el.showPreview = showPreview.value
+  el.showSave = showSave.value
+}
+
+watch([showPreview, showSave], applyDisplayConfig)
+
 onMounted(() => {
   initTopbarOverflow()
   const el = designerRef.value
+  applyDisplayConfig()
   // 上传能力同样是 property（函数无法走 attribute）
   el.uploadImage = uploadImage
   el.uploadDesignBackground = uploadImage
