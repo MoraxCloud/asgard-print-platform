@@ -8823,7 +8823,7 @@ export const SAMPLES = [
             left: 0,
             top: 25.5,
             width: 76,
-            height: 17.5,
+            height: 45,
             tableMode: 'dynamic',
             dataSource: 'items',
             tableColWidths: [38, 12, 13, 13],
@@ -8871,7 +8871,7 @@ export const SAMPLES = [
         {
           id: 'rc-13',
           type: 'text',
-          options: { left: 0, top: 45, width: 76, height: 4, formatter: '支付方式：{order.payMethod}', fontSize: 8.5, verticalAlign: 'middle' },
+          options: { left: 0, top: 72.5, width: 76, height: 4, formatter: '支付方式：{order.payMethod}', fontSize: 8.5, verticalAlign: 'middle' },
           printElementType: { type: 'text', title: '文本' },
         },
         {
@@ -8879,7 +8879,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 49,
+            top: 76.5,
             width: 76,
             height: 4,
             formatter: '实付：¥{MONEY(order.paid)}    找零：¥{MONEY(order.change)}',
@@ -8893,7 +8893,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 53,
+            top: 80.5,
             width: 76,
             height: 4,
             formatter: '会员卡号：{order.memberNo}    本次积分：{order.points}',
@@ -8905,13 +8905,13 @@ export const SAMPLES = [
         {
           id: 'rc-16',
           type: 'hline',
-          options: { left: 0, top: 57.5, width: 76, height: 0.2, borderWidth: 0.4, borderColor: '#999999' },
+          options: { left: 0, top: 85, width: 76, height: 0.2, borderWidth: 0.4, borderColor: '#999999' },
           printElementType: { type: 'hline', title: '横线' },
         },
         {
           id: 'rc-17',
           type: 'qrcode',
-          options: { left: 26, top: 59, width: 24, height: 24, formatter: '{order.qrcode}', qrCodeLevel: 'M' },
+          options: { left: 26, top: 86.5, width: 24, height: 24, formatter: '{order.qrcode}', qrCodeLevel: 'M' },
           printElementType: { type: 'qrcode', title: '二维码' },
         },
         {
@@ -8919,7 +8919,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 84,
+            top: 111.5,
             width: 76,
             height: 5,
             formatter: '谢谢惠顾，欢迎下次光临！',
@@ -8935,7 +8935,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 89,
+            top: 116.5,
             width: 76,
             height: 4,
             formatter: '小票号 {order.no}   {order.time}',
@@ -8951,7 +8951,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 93,
+            top: 120.5,
             width: 76,
             height: 4,
             formatter: '凭此小票 7 日内可办理退换货',
