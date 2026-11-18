@@ -14,6 +14,7 @@ export type InspectCode =
   | 'ELEMENT_OVERLAP'
   | 'BACKGROUND_NOT_PAGEABLE'
   | 'BARCODE_MISSING_BAR_HEIGHT'
+  | 'LINE_OVER_CODE'
 
 export interface InspectFinding {
   code: InspectCode
@@ -25,8 +26,14 @@ export interface InspectFinding {
 /** 线/矩形/椭圆属装饰层，与文字重叠是常规用法，不参与重叠判定 */
 const NON_OVERLAP_TYPES = new Set(['hline', 'vline', 'rect', 'oval'])
 
-/** 背景/装饰层候选：随版面比例判定的类型（文本/表格/码类不算背景） */
+/** 背景/装饰层候选：随版面比例判定的类型（文本/表格/码类与分隔线不算背景） */
 const BACKGROUND_CANDIDATE_TYPES = new Set(['rect', 'oval', 'image'])
+
+/** 线类与码类：线横穿条码/二维码会破坏识读，属功能性缺陷 */
+const LINE_TYPES = new Set(['hline', 'vline'])
+const CODE_TYPES = new Set(['barcode', 'qrcode'])
+/** 线类交叉轴缺省厚度（mm）：声明为 0 时按最细线处理 */
+const LINE_MIN_THICKNESS_MM = 0.2
 
 /** 占版面比例阈值：宽或高达到内容区的 80% 即视为背景/装饰层 */
 const BACKGROUND_RATIO = 0.8
@@ -196,6 +203,29 @@ export function inspectTemplate(
         if (rectOverlap(A, B, tol)) {
           findings.push({ code: 'ELEMENT_OVERLAP', level: 'warning', path: `${path}[${boxes[a].i}]`,
             message: `与 ${path}[${boxes[b].i}] 矩形交叠，落纸可能互相盖住` })
+        }
+      }
+    }
+
+    // 线类虽不参与文字/形状的矩形重叠判定，但横穿码类会遮断条码/二维码，按 error 报出
+    const indexed = list.map((e, i) => ({ e, i }))
+    const lines = indexed.filter(({ e }) => LINE_TYPES.has(String(e.type)))
+    const codes = indexed.filter(({ e }) => CODE_TYPES.has(String(e.type)))
+    for (const { e: line, i: li } of lines) {
+      const lo = line.options
+      const lineBox = {
+        left: lo.left ?? 0,
+        top: lo.top ?? 0,
+        width: Math.max(lo.width ?? 0, LINE_MIN_THICKNESS_MM),
+        height: Math.max(lo.height ?? 0, LINE_MIN_THICKNESS_MM),
+      }
+      for (const { e: code, i: ci } of codes) {
+        const co = code.options
+        const codeBox = { left: co.left ?? 0, top: co.top ?? 0, width: co.width ?? 0, height: co.height ?? 0 }
+        if (rectOverlap(lineBox, codeBox, tol)) {
+          findings.push({ code: 'LINE_OVER_CODE', level: 'error', path: `${path}[${li}]`,
+            message: `${line.type === 'hline' ? '横线' : '竖线'} ${line.id} 穿过${code.type === 'qrcode' ? '二维码' : '条码'} ${code.id}`
+              + `（${path}[${ci}]），会破坏码图识读，请移动线或调整码的位置/尺寸` })
         }
       }
     }
