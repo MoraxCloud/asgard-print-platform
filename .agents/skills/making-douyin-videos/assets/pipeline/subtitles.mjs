@@ -1,9 +1,32 @@
 const DEFAULTS = { lineWidth: 16, maxLines: 2 }
 
+/** 英文/数字词（含连字符与点号，如 Vue3、worm-print-platform、v1.5.2）按 [start,end) 记位 */
+function tokenSpans(text) {
+  const spans = []
+  for (const m of text.matchAll(/[A-Za-z0-9][A-Za-z0-9._-]*/g)) {
+    spans.push([m.index, m.index + m[0].length])
+  }
+  return spans
+}
+
+/** 换行点是否落在英文词内部（词首/词尾可切，词中不可切） */
+function insideToken(spans, i) {
+  return spans.some(([s, e]) => i > s && i < e)
+}
+
 function chunks(text, size) {
+  const spans = tokenSpans(text)
   const chars = [...text]
   const out = []
-  for (let i = 0; i < chars.length; i += size) out.push(chars.slice(i, i + size).join(''))
+  let i = 0
+  while (i < chars.length) {
+    let end = Math.min(i + size, chars.length)
+    // 切点落在英文词内部时退到词首；词首就是本条开头（退无可退）才改从词尾切
+    const hit = spans.find(([s, e]) => s < end && end < e)
+    if (hit) end = hit[0] > i ? hit[0] : hit[1]
+    out.push(chars.slice(i, end).join(''))
+    i = end
+  }
   return out
 }
 
@@ -11,7 +34,7 @@ function clauses(text) {
   return text.match(/[^，、；：。！？!?]+[，、；：。！？!?]?/gu)?.filter(Boolean) || [text]
 }
 
-/** 按标点组成短条；单条最多两行，保留所有原始字符。 */
+/** 按标点组成短条；单条最多两行，保留所有原始字符，英文词不跨行。 */
 export function splitSubtitle(text, options = {}) {
   const { lineWidth, maxLines } = { ...DEFAULTS, ...options }
   if (maxLines !== 2) throw new Error('抖音短字幕固定最多两行')
@@ -26,17 +49,33 @@ export function splitSubtitle(text, options = {}) {
   return captions.map((caption) => wrapSubtitle(caption, lineWidth))
 }
 
-/** 两行时优先在标点处均衡换行，避免第二行只剩一两个字。 */
+/** 两行时优先在标点处均衡换行；切点不得落在英文词内部。 */
 export function wrapSubtitle(text, lineWidth = DEFAULTS.lineWidth) {
   const chars = [...text]
   if (chars.length <= lineWidth) return text
+  const spans = tokenSpans(text)
   const middle = Math.ceil(chars.length / 2)
+  const min = Math.max(1, chars.length - lineWidth)
+  const max = Math.min(chars.length - 1, lineWidth)
   const candidates = []
   for (let i = 1; i < chars.length; i++) {
     if ('，、；：。！？!?'.includes(chars[i - 1])) candidates.push(i)
   }
-  const valid = candidates.filter((i) => i <= lineWidth && chars.length - i <= lineWidth)
-  const at = valid.sort((a, b) => Math.abs(a - middle) - Math.abs(b - middle))[0] ?? middle
+  const validPunct = candidates.filter((i) => i >= min && i <= max && !insideToken(spans, i))
+  let at = validPunct.sort((a, b) => Math.abs(a - middle) - Math.abs(b - middle))[0]
+  if (at == null) {
+    // 没有合适标点：从中点向两侧找最近的非词内切点，仍受两行宽度约束
+    for (let d = 0; d < chars.length; d++) {
+      for (const i of [middle - d, middle + d]) {
+        if (i >= min && i <= max && !insideToken(spans, i)) { at = i; break }
+      }
+      if (at != null) break
+    }
+  }
+  if (at == null) {
+    // 整句就是一个超长英文词：宁可单行超宽也不拆词（不丢弃字符）
+    return text
+  }
   return `${chars.slice(0, at).join('')}\n${chars.slice(at).join('')}`
 }
 

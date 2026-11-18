@@ -31,6 +31,24 @@ test('字幕最多两行，长句不会整段挤进一条', async () => {
   }
 })
 
+test('字幕换行不拆英文单词（含连字符标识符）', async () => {
+  const { subtitlesFor, wrapSubtitle } = await import(pathToFileURL(join(pipeline, 'subtitles.mjs')))
+  const tokens = (s) => s.match(/[A-Za-z0-9][A-Za-z0-9._-]*/g) || []
+  const sources = [
+    'MIT 开源，仓库叫 worm-print-platform。',
+    '浏览器预览、服务端 PDF、桌面客户端共用渲染管线。',
+    'Vue3、Vue2、React、jQuery 四个宿主示例整份照抄。',
+    '版本是 v1.5.2，JSON 模板走 JSON 渲染。',
+    '前置说明前置说明前置说明前置说明前置说明前置说明前置说明worm-print-platform',
+  ]
+  for (const source of sources) {
+    const parts = subtitlesFor(source, 0, 8, { lineWidth: 20, maxLines: 2 })
+    assert.deepEqual(tokens(parts.map((p) => p.text).join('')), tokens(source), `英文词被拆开：${source}`)
+    for (const part of parts) assert.ok(part.text.split('\n').length <= 2)
+  }
+  assert.equal(wrapSubtitle('MIT 开源，仓库叫 worm-print-platform。', 20), 'MIT 开源，仓库叫 \nworm-print-platform。')
+})
+
 test('发布文案保留恰好五个不重复标签', async () => {
   const { renderDouyinCopy } = await import(pathToFileURL(join(pipeline, 'douyin-copy.mjs')))
   const script = {
