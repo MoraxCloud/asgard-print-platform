@@ -124,13 +124,6 @@ export default {
       configVisible: false,
       showPreview: true,
       showSave: true,
-      theme: 'auto',   // auto | light | dark
-      themeOverrides: { bg: '', surface: '', text: '', accent: '' },
-      themePresets: [
-        { key: 'auto', label: '跟随系统' },
-        { key: 'light', label: '浅色' },
-        { key: 'dark', label: '深色' },
-      ],
     }
   },
   computed: {
@@ -183,11 +176,9 @@ export default {
       this.refreshRenderStatus()
       this.connectPrintClient()
     },
-    // 显示配置写回设计器（对象入参 themeConfig 必须走 property）
+    // 按钮显隐写回设计器（布尔开关走 property）
     showPreview: 'applyDisplayConfig',
     showSave: 'applyDisplayConfig',
-    theme: 'applyDisplayConfig',
-    themeOverrides: { handler: 'applyDisplayConfig', deep: true },
   },
   created() {
     // 打印客户端实例无需响应式化，挂在实例普通属性上
@@ -227,25 +218,12 @@ export default {
     this.aiSession.stop()
   },
   methods: {
-    /** 把显示配置写回设计器：布尔/主题/对象统一走 property，避免自定义元素属性字符串化 */
+    /** 把按钮显隐写回设计器：布尔开关走 property，避免自定义元素属性字符串化 */
     applyDisplayConfig() {
       const el = this.$refs.designer
       if (!el) return
       el.showPreview = this.showPreview
       el.showSave = this.showSave
-      el.theme = this.theme
-      const overrides = {}
-      for (const [key, token] of [['bg', '--pd-bg'], ['surface', '--pd-surface'], ['text', '--pd-text'], ['accent', '--pd-accent']]) {
-        if (this.themeOverrides[key]) overrides[token] = this.themeOverrides[key]
-      }
-      el.themeConfig = Object.keys(overrides).length ? { overrides } : undefined
-    },
-    resetTheme() {
-      this.theme = 'auto'
-      this.themeOverrides.bg = ''
-      this.themeOverrides.surface = ''
-      this.themeOverrides.text = ''
-      this.themeOverrides.accent = ''
     },
     // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
     // <print-designer> 是原生自定义元素：`:fields="..."` 这类绑定会走 setAttribute，
@@ -870,7 +848,7 @@ export default {
       </div>
     </div>
 
-    <!-- 显示配置：预览/保存按钮显隐 + 主题色（只作用于设计器外壳，画布纸张不受影响） -->
+    <!-- 显示配置：预览/保存按钮显隐 -->
     <div v-if="configVisible" class="config-mask" @click.self="configVisible = false">
       <div class="config-panel">
         <div class="config-head">
@@ -889,28 +867,8 @@ export default {
               <span>显示「保存」按钮</span>
             </label>
           </section>
-
-          <section class="config-section">
-            <div class="config-label">主题色</div>
-            <div class="config-presets">
-              <button v-for="p in themePresets" :key="p.key" type="button"
-                      class="config-preset" :class="{ on: theme === p.key }"
-                      @click="theme = p.key">{{ p.label }}</button>
-            </div>
-            <div class="config-colors">
-              <label v-for="c in [['bg','背景'],['surface','面板'],['text','文字'],['accent','强调色']]" :key="c[0]" class="config-color">
-                <span>{{ c[1] }}</span>
-                <input type="color" :value="themeOverrides[c[0]] || '#ffffff'"
-                       @input="themeOverrides[c[0]] = $event.target.value" />
-                <button type="button" class="config-color-clear" title="清除该项覆盖"
-                        @click="themeOverrides[c[0]] = ''">清空</button>
-              </label>
-            </div>
-            <button type="button" class="config-btn ghost" @click="resetTheme">重置配色</button>
-          </section>
         </div>
         <div class="config-foot">
-          <span class="config-tip">配色只改变设计器外壳，纸张与画布保持原样</span>
           <button type="button" class="config-btn" @click="configVisible = false">完成</button>
         </div>
       </div>

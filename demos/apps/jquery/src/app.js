@@ -29,24 +29,14 @@ const state = {
   // 显示配置（顶部「配置」弹窗）
   showPreview: true,
   showSave: true,
-  theme: 'auto',   // auto | light | dark
-  themeOverrides: { bg: '', surface: '', text: '', accent: '' },
 }
 
-const THEME_TOKEN = { bg: '--pd-bg', surface: '--pd-surface', text: '--pd-text', accent: '--pd-accent' }
-
-/** 把显示配置写回设计器：对象入参 themeConfig 必须走 property */
+/** 把按钮显隐写回设计器：布尔开关走 property */
 function applyDisplayConfig() {
   const el = designer()
   if (!el) return
   el.showPreview = state.showPreview
   el.showSave = state.showSave
-  el.theme = state.theme
-  const overrides = {}
-  for (const [key, token] of Object.entries(THEME_TOKEN)) {
-    if (state.themeOverrides[key]) overrides[token] = state.themeOverrides[key]
-  }
-  el.themeConfig = Object.keys(overrides).length ? { overrides } : undefined
 }
 
 function openConfigDialog() {
@@ -63,28 +53,6 @@ function bindConfigDialog() {
 
   $('#config-show-preview').on('change', function () { state.showPreview = this.checked; applyDisplayConfig() })
   $('#config-show-save').on('change', function () { state.showSave = this.checked; applyDisplayConfig() })
-
-  $('#config-presets .config-preset').on('click', function () {
-    state.theme = this.dataset.theme
-    $('#config-presets .config-preset').removeClass('on')
-    $(this).addClass('on')
-    applyDisplayConfig()
-  })
-  $('#config-mask input[type="color"][data-token]').on('input', function () {
-    state.themeOverrides[this.dataset.token] = this.value
-    applyDisplayConfig()
-  })
-  $('#config-mask .config-color-clear').on('click', function () {
-    state.themeOverrides[this.dataset.clear] = ''
-    applyDisplayConfig()
-  })
-  $('#config-reset').on('click', () => {
-    state.theme = 'auto'
-    state.themeOverrides = { bg: '', surface: '', text: '', accent: '' }
-    $('#config-presets .config-preset').removeClass('on')
-    $('#config-presets .config-preset[data-theme="auto"]').addClass('on')
-    applyDisplayConfig()
-  })
 }
 
 /** 模板声明的字体（多页模板合并、按 family 去重）；宿主把 /fonts 从本站 public 直接提供，URL 原样可用 */

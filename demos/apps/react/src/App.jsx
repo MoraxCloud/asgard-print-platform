@@ -338,22 +338,14 @@ export default function App() {
   const [configVisible, setConfigVisible] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
   const [showSave, setShowSave] = useState(true)
-  const [theme, setTheme] = useState('auto')
-  const [themeOverrides, setThemeOverrides] = useState({ bg: '', surface: '', text: '', accent: '' })
 
-  // 配置写回设计器：对象入参 themeConfig 走 property，避免属性字符串化
+  // 按钮显隐写回设计器：布尔开关走 property，避免属性字符串化
   useEffect(() => {
     const el = designerRef.current
     if (!el) return
     el.showPreview = showPreview
     el.showSave = showSave
-    el.theme = theme
-    const overrides = {}
-    for (const [key, token] of [['bg', '--pd-bg'], ['surface', '--pd-surface'], ['text', '--pd-text'], ['accent', '--pd-accent']]) {
-      if (themeOverrides[key]) overrides[token] = themeOverrides[key]
-    }
-    el.themeConfig = Object.keys(overrides).length ? { overrides } : undefined
-  }, [showPreview, showSave, theme, themeOverrides])
+  }, [showPreview, showSave])
 
   // 应用自定义字段与数据：即时生效并覆盖当前字段树
   function onApplyCustom(nextFields, nextData) {
@@ -533,10 +525,6 @@ export default function App() {
         setShowPreview={setShowPreview}
         showSave={showSave}
         setShowSave={setShowSave}
-        theme={theme}
-        setTheme={setTheme}
-        overrides={themeOverrides}
-        setOverrides={setThemeOverrides}
       />
     </div>
   )

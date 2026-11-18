@@ -1042,7 +1042,7 @@ body,
   height: 100%;
 }
 
-/* ══ 显示配置弹窗（预览/保存显隐 + 主题色） ══ */
+/* ══ 显示配置弹窗（预览/保存按钮显隐） ══ */
 .config-mask {
   position: fixed;
   inset: 0;
@@ -1101,30 +1101,6 @@ body,
   cursor: pointer;
 }
 .config-row input { width: 15px; height: 15px; accent-color: #165dff; cursor: pointer; }
-.config-presets { display: flex; gap: 8px; }
-.config-preset {
-  flex: 1;
-  padding: 7px 0;
-  border: 1px solid #d9dde6;
-  border-radius: 6px;
-  background: #f4f6fa;
-  color: #2a2e37;
-  font-size: 13px;
-  cursor: pointer;
-}
-.config-preset.on { border-color: #165dff; background: #165dff; color: #fff; }
-.config-colors { display: flex; flex-direction: column; gap: 8px; }
-.config-color { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #2a2e37; }
-.config-color > span { width: 56px; flex-shrink: 0; }
-.config-color input[type="color"] {
-  width: 40px; height: 26px; padding: 0; border: 1px solid #d9dde6;
-  border-radius: 4px; background: none; cursor: pointer;
-}
-.config-color-clear {
-  padding: 3px 10px; border: 1px solid #d9dde6; border-radius: 4px;
-  background: #fff; color: #8b909c; font-size: 12px; cursor: pointer;
-}
-.config-color-clear:hover { color: #2a2e37; background: #f4f6fa; }
 .config-btn {
   align-self: flex-start;
   padding: 6px 18px;
@@ -1136,8 +1112,6 @@ body,
   cursor: pointer;
 }
 .config-btn:hover { background: #0e4fd8; }
-.config-btn.ghost { align-self: auto; background: #f4f6fa; color: #2a2e37; border-color: #d9dde6; }
-.config-btn.ghost:hover { background: #e9ecf2; }
 .config-foot {
   display: flex;
   align-items: center;
@@ -1146,5 +1120,4 @@ body,
   border-top: 1px solid #e9ecf2;
   flex-shrink: 0;
 }
-.config-tip { font-size: 11px; color: #9aa1af; }
 .config-foot .config-btn { margin-left: auto; }

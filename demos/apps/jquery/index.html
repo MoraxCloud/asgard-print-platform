@@ -220,7 +220,7 @@
         </div>
       </div>
 
-      <!-- 显示配置：预览/保存按钮显隐 + 主题色（只作用于设计器外壳，画布纸张不受影响） -->
+      <!-- 显示配置：预览/保存按钮显隐 -->
       <div class="config-mask" id="config-mask" hidden style="display: none">
         <div class="config-panel">
           <div class="config-head">
@@ -239,25 +239,8 @@
                 <span>显示「保存」按钮</span>
               </label>
             </section>
-
-            <section class="config-section">
-              <div class="config-label">主题色</div>
-              <div class="config-presets" id="config-presets">
-                <button type="button" class="config-preset on" data-theme="auto">跟随系统</button>
-                <button type="button" class="config-preset" data-theme="light">浅色</button>
-                <button type="button" class="config-preset" data-theme="dark">深色</button>
-              </div>
-              <div class="config-colors">
-                <label class="config-color"><span>背景</span><input type="color" data-token="bg" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="bg">清空</button></label>
-                <label class="config-color"><span>面板</span><input type="color" data-token="surface" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="surface">清空</button></label>
-                <label class="config-color"><span>文字</span><input type="color" data-token="text" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="text">清空</button></label>
-                <label class="config-color"><span>强调色</span><input type="color" data-token="accent" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="accent">清空</button></label>
-              </div>
-              <button type="button" class="config-btn ghost" id="config-reset">重置配色</button>
-            </section>
           </div>
           <div class="config-foot">
-            <span class="config-tip">配色只改变设计器外壳，纸张与画布保持原样</span>
             <button type="button" class="config-btn" id="config-done">完成</button>
           </div>
         </div>
