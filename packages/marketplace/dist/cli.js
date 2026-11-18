@@ -9,7 +9,7 @@ import {
 // src/cli.ts
 import { resolve } from "path";
 import { fileURLToPath } from "url";
-var VERSION = true ? "1.5.2" : "1.5.2";
+var VERSION = true ? "1.5.3" : "1.5.3";
 var SOURCES = /* @__PURE__ */ new Set(["npm", "github", "gitee", "auto", "local"]);
 var USAGE = `\u7528\u6CD5: worm-print-marketplace <\u547D\u4EE4> [\u9009\u9879]
 

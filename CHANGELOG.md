@@ -4,8 +4,10 @@
 `core` / `plugin-kit` / `canvas` / `echarts` / `skills` 等正式包同号同批发版；
 `contract` / `mcp` 随桌面客户端打包，不单独发布到 npm。
 
-## V1.5.3(待发布)
+## V1.5.3(2026-11-18)
 
+- **体检报告示例接入百度图表插件**：健康体检报告的柱状图与折线图由 `image` 改为插件 `barChart` / `lineChart` 真实元素，声明 `@worm-print-platform/echarts` 插件并按 `chartDataSource` 绑字段；四个宿主 demo 同源同步。
+- **插件市场文档与技能补齐**：新增零基础面单教程计划与脚本设计文档；抖音视频技能补齐片尾卡渲染链路、字幕超宽回归测试、片尾 CTA 新口径与多音字台账。
 - **设计器主题支持参数化配色**：新增 `theme`（`auto` / `light` / `dark`）与 `theme-config` 两个参数，attribute 与 property 双通道；优先级为参数覆盖 > 显式预设 > 系统 `prefers-color-scheme` > CSS 令牌 > 内置浅色。内置暗色预设只作用于设计器外壳，纸张、画布背景、标尺与手柄保持原值，预览所见即所得不受影响。
 - **设计器状态栏显示版本号**：移除底部「未保存 / 已保存」指示，改为显示 `v<canvas 包版本>`（由 `gen-version` 从 package.json 派生，不漂移）；缩放 / 元素数 / 纸张等其余状态项不变，`save()` 的数据层语义不受影响。
 - **宿主契约升级至 1.2.0**：主题令牌清单补全至 55 项，Vue 3 门面同步两个 prop；core 补齐 3 个此前仅有 fallback 的令牌。
