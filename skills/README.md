@@ -14,6 +14,13 @@ ref 方法一致），原 Vue 3 项目只换依赖与 import 即可迁移，模�
 本仓没有 `common` 包（那是拆仓前 worm-vue3-print 的旧包），零框架 / 非 Vue 3 宿主统一消费
 canvas 主入口或其 UMD 产物。框架接入操作方法与 AI 集成提示词见 [docs](../docs/README.md)。
 
+## 规则来源与示例校准
+
+技能中的面单二维码净空（`LINE_OVER_CODE`）、动态表格展开态高度与保存往返验收等判据，取自本仓
+四宿主同源示例 `demos/apps/vue3/src/templates.js` 的 `express-waybill` 与 `thermal-receipt`。
+改动这两个示例或相关校验器时，同步核对 `worm-print-platform-mcp` 的 `SKILL.md` / `references/`
+与 `worm-print-platform-integration` 的 `SKILL.md` / `references/troubleshooting.md`，避免文档与示例漂移。
+
 ## 安装
 
 在目标项目根目录用命令行安装器（`@worm-print-platform/skills`，随仓库 `packages/skills` 维护），**Gitee 优先**（国内网络快）：

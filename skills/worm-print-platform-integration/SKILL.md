@@ -49,7 +49,7 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 2. 按 [安装方式](references/installation.md) 选择 NPM 或源码方案，先安装并验证可解析；Vue 3 迁移见 [接入 API 的迁移对照](references/integration-api.md#4-从-worm-vue3-printcanvas-迁移到本仓)。
 3. 与用户确认打印链路（A / B / C / 并存）。
 4. 按 [接入 API](references/integration-api.md) 接入设计器——原生宿主注册 `<print-designer>` 并注入 property、监听 CustomEvent（框架专属生命周期与坑见 [框架接入要点](references/framework-recipes.md)）；Vue 3 宿主用 `PrintDesigner` / `PrintHtmlPreview` 组件写法。再按 [全栈宿主集成指南](references/host-integration-guide.md) 落地模板管理、设计器页、业务打印入口与后端契约。
-5. 用一条最小链路验证：设计器保存 JSON → 预览渲染 → 浏览器打印；链路 B 再加「模板 JSON + printData → 后端 → render 服务 → PDF」；链路 C 再加「模板 JSON + printData → 本机客户端 → 物理打印机出纸」。
+5. 用一条最小链路验证：设计器保存 JSON → **重新打开回填再预览一次**（画布会把 `<table>` 实测高度回写 `options.height`，动态表格需确认回写后下方元素仍落在表格之下）→ 浏览器打印；链路 B 再加「模板 JSON + printData → 后端 → render 服务 → PDF」；链路 C 再加「模板 JSON + printData → 本机客户端 → 物理打印机出纸」。
 6. 需要 AI 读写当前画布时，按 [宿主 MCP 集成](references/mcp-host-integration.md) 接入桌面客户端实时会话。
 7. 出现样式、类型、依赖解析、打包、PDF 或 MCP 会话问题时，按 [故障排查](references/troubleshooting.md) 定位，不要先改用户业务代码。
 
@@ -118,7 +118,8 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 - 链路 B：密钥只在服务端/代理层，不进前端 bundle；render 服务 `/health` 可达，Linux 已装中文字体。
 - 链路 C：`PrintClient.connect()` 握手成功、`listPrinters()` 能枚举、`print()`/`printHtml()` 指定打印机/份数出纸；`BUSY` 时由宿主侧重试，客户端不排队。
 - 表格数据：明细 `fieldType:'list'`、列表达式用完整路径（如 `{goods.name}`）、printData 对应字段为数组。
-- 表格下方元素：`top` ≥ 表格设计底部（`top + max(height, 行高合计)`）+ 1~2mm 间隙；动态表格（`dataSource`）的 `height` 按画布展开态声明，否则设计器保存回写实测高后下方元素掉出跟随区、渲染落进表格（三链路同判据，刻意层叠覆盖例外）。
+- 表格下方元素：`top` ≥ 表格设计底部（`top + max(height, 行高合计)`）+ 1~2mm 间隙；动态表格（`dataSource`）的 `height` 按画布展开态声明（表头 + data 行高 × 预览行数 + 小计/合计），不能只写静态行高合计，否则设计器保存回写实测高后下方元素掉出跟随区、渲染落进表格（三链路同判据，刻意层叠覆盖例外）。验收要保存后重新打开再预览一次，确认两版落位一致。
+- 码图净空：`hline` / `vline` 不得横穿 `barcode` / `qrcode`（`print_inspect_layout` 的 `LINE_OVER_CODE` 为 error）；码底边与下方分隔线/文字至少留 1mm，避免出纸后压线压字。
 
 ## 7. 关键约束
 
