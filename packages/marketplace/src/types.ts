@@ -11,6 +11,10 @@ export interface MarketIndexEntry {
   entry: string
   kinds: readonly string[]
   exportFormats: readonly string[]
+  description?: string
+  homepage?: string
+  license?: string
+  minCoreVersion?: string
 }
 
 export interface MarketIndex {
@@ -105,6 +109,7 @@ export interface InstallResult {
 export interface RemoveOptions {
   name: string
   dir?: string
+  repo?: string
   cwd?: string
   npmExecutor?: NpmExecutor
 }

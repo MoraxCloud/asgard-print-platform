@@ -219,11 +219,11 @@ export async function installPlugin(options: InstallOptions): Promise<InstallRes
         kinds: fetched.meta.kinds,
         exportFormats: fetched.meta.exportFormats,
         npmName,
-        source: {
-          mode: source,
-          repo: source === 'npm' ? undefined : (options.repo ?? undefined),
-          tag: source === 'npm' ? undefined : buildGitTag(id, fetched.version),
-        },
+        source: source === 'local'
+          ? { mode: source, path: options.repo }
+          : source === 'npm'
+            ? { mode: source }
+            : { mode: source, repo: options.repo ?? undefined, tag: buildGitTag(id, fetched.version) },
         stable: true,
         installedAt: new Date().toISOString(),
       }, cwd)
