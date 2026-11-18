@@ -4,7 +4,7 @@ import {
   MarketError,
   installPlugin,
   removePlugin
-} from "./chunk-7P6GBMU3.js";
+} from "./chunk-Z4HF2OVB.js";
 
 // src/cli.ts
 import { resolve } from "path";

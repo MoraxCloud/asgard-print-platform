@@ -1,6 +1,6 @@
 {
   "name": "@worm-print-platform/echarts",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "type": "module",
   "description": "兼容镜像包：源码唯一真源在 marketplace/plugins/echarts（@worm-print-platform/plugin-echarts），本包由同一源码生成，保留原包名与子路径供存量依赖方零改动使用",
   "main": "./dist/index.cjs",

@@ -45,6 +45,46 @@ import '@worm-print-platform/plugin-echarts/ui'   // 仅设计器 UI
 存量项目若仍依赖 `@worm-print-platform/echarts`，无需改动：兼容镜像保留全部原有子路径
 （`.`、`/kit`、`/ui`、`/node`、`/browser`、`/browser/executor.iife`）与行为。
 
+## 数据标签
+
+属性面板的「自定义属性」页签内含一个可折叠的「数据标签」分组，配置直接写入
+`chartOption.series[].label`（仪表盘写 `series[].detail`），与模板里手写的标签是同一份数据。
+
+| 块 | 字段 | 控件 |
+| --- | --- | --- |
+| 内容 | 显示数据标签、数据标签内容（formatter）、溢出处理 | 开关、预设下拉 + 文本框、下拉 |
+| 位置 | 标签位置、距离、旋转、水平 / 垂直偏移 | 下拉、数字 |
+| 样式 | 字号、字重、文字颜色、背景色、边框色、边框宽度、圆角、内边距 | 数字、下拉、文本 |
+| 引导线 | 显示引导线、引导线长度、第二段长度、平滑引导线 | 开关、数字（饼图 / 环形图 / 漏斗图） |
+
+字段按图表能力分档：柱状 / 条形 / 折线 / 面积开放全部基础项，散点额外支持距离，
+雷达只给内容与字号 / 字重 / 颜色，仪表盘走 `detail`（数值文本）。
+
+formatter 预设：数值 `{c}`、名称: 数值 `{b}: {c}`、名称 `{b}`、百分比 `{d}%`；
+也可以直接手写 ECharts 字符串模板。预设与手写都只写 `formatter` 一个键。
+
+默认行为：
+
+- 未打开总开关时不写入任何 label 键，存量模板渲染结果不变。
+- 打开总开关时按图表写入一套默认集（例：柱状图 `position: 'top'` + `fontSize: 12`；
+  饼图额外写 `overflow: 'none'`，避免小尺寸下标签被 `truncate` 裁空），已有值不覆盖。
+- 关闭总开关只写 `show: false`，字号 / 颜色 / formatter 等配置保留，重开即还原。
+
+手写通道仍然有效，适合需要 `rich` 富文本等面板未覆盖的场景：
+
+```js
+chartOption: {
+  series: [{
+    type: 'bar',
+    data: ['$data'],
+    label: { show: true, position: 'top', formatter: '{b}: {c}' },
+  }],
+}
+```
+
+不支持：`rich` 富文本、`emphasis.label`（SSR 导出只含 normal 态）、`labelLayout`
+（防重叠会改变存量观感，后续单独立项）。
+
 ## 独立发布
 
 两个包均可单独 `npm publish`，且从同一源码生成：
