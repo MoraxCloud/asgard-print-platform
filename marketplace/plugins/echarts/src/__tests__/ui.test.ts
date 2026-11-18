@@ -250,3 +250,15 @@ describe('数据标签分组', () => {
     expect((updates[0]!.chartOption as any).series[0].label.color).toBeUndefined()
   })
 })
+
+describe('数据标签总开关的可见性', () => {
+  it('标签关闭时总开关仍位于 summary 中（不被 details 折叠隐藏）', () => {
+    const { root } = renderProperty('barChart', { chartOption: createDefaultChartOption('barChart') })
+    const group = root.querySelector('.echarts-label-group') as HTMLDetailsElement
+    const toggle = [...root.querySelectorAll('.pd-field')].find(
+      item => item.querySelector('.pd-label')?.textContent?.trim() === '显示数据标签',
+    )!
+    expect(group).not.toBeNull()
+    expect(group.querySelector('summary')?.contains(toggle)).toBe(true)
+  })
+})

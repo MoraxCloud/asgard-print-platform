@@ -1,0 +1,25 @@
+{
+  "id": "echarts",
+  "version": "1.1.0",
+  "name": "百度图表元素",
+  "npmName": "@worm-print-platform/plugin-echarts",
+  "entry": "dist/marketplace.js",
+  "kinds": [
+    { "type": "barChart", "label": "柱状图" },
+    { "type": "barHChart", "label": "条形图" },
+    { "type": "lineChart", "label": "折线图" },
+    { "type": "areaChart", "label": "面积图" },
+    { "type": "pieChart", "label": "饼图" },
+    { "type": "doughnutChart", "label": "环形图" },
+    { "type": "scatterChart", "label": "散点图" },
+    { "type": "radarChart", "label": "雷达图" },
+    { "type": "funnelChart", "label": "漏斗图" },
+    { "type": "gaugeChart", "label": "仪表盘" }
+  ],
+  "exportFormats": [],
+  "peerDeps": {
+    "@worm-print-platform/core": "^1.5.2",
+    "@worm-print-platform/plugin-kit": "^1.5.2"
+  },
+  "files": ["dist/marketplace.js", "plugin.json", "README.md", "LICENSE"]
+}

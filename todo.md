@@ -136,6 +136,7 @@
 - 状态：2026-11-18 已实现（提交 e0ebb9d → 7e4d2e6 等）：marketplace/ 索引 + 百度图表薄包装插件、
   `@worm-print-platform/marketplace` CLI（三源 + 最新稳定版）、core 导出插件契约、根脚本/文档/demo 接线；
   全量测试与端到端三源安装验证通过。实现细节见 `docs/superpowers/plans/2026-11-18-plugin-marketplace.md`。
+ - 2026-11-19 数据标签配置已实现（`plugin-echarts@1.1.0`）：属性面板新增「数据标签」分组，20 项常用配置按图表分档开放，仪表盘走 `detail`；`label.formatter` 豁免表达式求值；新增四宿主「数据标签示例」模板。设计见 `docs/superpowers/specs/2026-11-18-echarts-data-label-design.md`，实施见 `docs/superpowers/plans/2026-11-18-echarts-data-label.md`。
 
 ---
 
@@ -172,3 +173,11 @@
 - 顺序依赖：必须在任务 2 完成后录制，画面要与改后的图表一致；台词 / 卡片 / 封面 / 文案同步更新，避免沿用旧 SVG 图表的说法。
 - 同样走统一 `cta` 浅色片尾卡与技能全链验收（多音字听审、音画同步、四封面、五标签、`verify.mjs`）。
 - **完成记录**：剧本台词/步骤/封面/文案同步到插件图表（血常规柱状图、生化折线图），新增「折 zhé」多音字认下；整链重跑通过，`video_final.mp4` 129.5s / 1920×1080，音画同步、四封面、五标签、`verify.mjs` 全绿；抽帧确认柱状图与折线图在成片中正常出现。
+
+
+# 许愿式编程
+5W2H
+我要什么
+它大概是什么样子
+谁在用
+用来做什么

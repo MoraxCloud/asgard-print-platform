@@ -380,6 +380,7 @@ function fontsOf(tpl) {
 function syncDesigner() {
   const el = designerRef.value
   if (!el) return
+  // 字段
   el.fields = fields.value
   // 插件 UI 的设计态示例数据：图表插件（@worm-print-platform/echarts/ui）按当前示例的真实业务数据画预览，
   // 属性台的数据源下拉也据此列字段；不注入时插件回落 core 的 DEFAULT_DEMO_DATA。

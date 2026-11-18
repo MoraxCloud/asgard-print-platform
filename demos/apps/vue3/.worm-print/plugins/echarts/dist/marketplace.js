@@ -1,5 +1,5 @@
 /*!
- * @worm-print-platform/plugin-echarts v1.0.0
+ * @worm-print-platform/plugin-echarts v1.1.0
  * Copyright (c) 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-FileCopyrightText: 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-License-Identifier: MIT
@@ -23,7 +23,7 @@ var CHART_KIND_DEFINITIONS = [
     icon: "ChartColumn",
     seriesType: "bar",
     orientation: "vertical",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -35,7 +35,7 @@ var CHART_KIND_DEFINITIONS = [
     icon: "ChartBar",
     seriesType: "bar",
     orientation: "horizontal",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -46,7 +46,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u6298\u7EBF\u56FE",
     icon: "ChartLine",
     seriesType: "line",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -57,7 +57,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u9762\u79EF\u56FE",
     icon: "ChartArea",
     seriesType: "line",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -68,7 +68,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u997C\u56FE",
     icon: "ChartPie",
     seriesType: "pie",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -79,7 +79,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u73AF\u5F62\u56FE",
     icon: "Donut",
     seriesType: "pie",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "innerRadius"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "innerRadius", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -90,7 +90,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u6563\u70B9\u56FE",
     icon: "ChartScatter",
     seriesType: "scatter",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "bubble"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "bubble", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 80,
     defaultHeight: 60,
@@ -101,7 +101,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u96F7\u8FBE\u56FE",
     icon: "Radar",
     seriesType: "radar",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "radius"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "radius", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 70,
     defaultHeight: 60,
@@ -112,7 +112,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u6F0F\u6597\u56FE",
     icon: "Funnel",
     seriesType: "funnel",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "padding"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "padding", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -123,7 +123,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u4EEA\u8868\u76D8",
     icon: "Gauge",
     seriesType: "gauge",
-    fields: ["dataSource", "valueFields", ...STYLE_FIELDS, "gaugeRange"],
+    fields: ["dataSource", "valueFields", ...STYLE_FIELDS, "gaugeRange", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -144,16 +144,18 @@ function chartNumber(value) {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : 0;
 }
-function evaluateChartOption(node, data) {
+function evaluateChartOption(node, data, keepStrings = false) {
   if (typeof node === "string") {
     if (node.startsWith("$data")) return node;
+    if (keepStrings) return node;
     return node.includes("{") ? evaluateTemplate(node, data) : node;
   }
-  if (Array.isArray(node)) return node.map((item) => evaluateChartOption(item, data));
+  if (Array.isArray(node)) return node.map((item) => evaluateChartOption(item, data, keepStrings));
   if (node && typeof node === "object") {
     const out = {};
     for (const [key, value] of Object.entries(node)) {
-      out[key] = evaluateChartOption(value, data);
+      const childKeep = keepStrings || key === "label" || key === "detail";
+      out[key] = evaluateChartOption(value, data, childKeep);
     }
     return out;
   }
@@ -810,13 +812,262 @@ function writeRadarRadius(option, percent) {
   return next;
 }
 
+// src/label.ts
+var LABEL_PRESETS = [
+  { key: "value", label: "\u6570\u503C", formatter: "{c}" },
+  { key: "name-value", label: "\u540D\u79F0: \u6570\u503C", formatter: "{b}: {c}" },
+  { key: "name", label: "\u540D\u79F0", formatter: "{b}" },
+  { key: "percent", label: "\u767E\u5206\u6BD4", formatter: "{d}%" }
+];
+var LABEL_POSITIONS = {
+  bar: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "inside", label: "\u5185\u90E8" },
+    { value: "insideTop", label: "\u5185\u90E8\u9876\u7AEF" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "insideBottom", label: "\u5185\u90E8\u5E95\u7AEF" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "middle", label: "\u5C45\u4E2D" }
+  ],
+  line: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "inside", label: "\u5185\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" }
+  ],
+  pie: [
+    { value: "outside", label: "\u5916\u4FA7" },
+    { value: "inside", label: "\u5185\u90E8" },
+    { value: "center", label: "\u4E2D\u5FC3" }
+  ],
+  scatter: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "inside", label: "\u5185\u90E8" }
+  ],
+  radar: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "inside", label: "\u5185\u90E8" }
+  ],
+  funnel: [
+    { value: "outer", label: "\u5916\u4FA7" },
+    { value: "inner", label: "\u5185\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" }
+  ],
+  gauge: []
+};
+var NATIVE_SHOW = {
+  bar: false,
+  line: false,
+  pie: true,
+  scatter: false,
+  radar: false,
+  funnel: true,
+  gauge: true
+};
+var ENABLE_DEFAULTS = {
+  bar: { position: "top", fontSize: 12 },
+  line: { position: "top", fontSize: 12 },
+  pie: { position: "outside", overflow: "none", fontSize: 11 },
+  scatter: { position: "top", fontSize: 11 },
+  radar: { position: "top", fontSize: 10 },
+  funnel: { position: "outer", fontSize: 11 },
+  gauge: { fontSize: 14 }
+};
+var TYPE_DEFAULTS = {
+  barHChart: { position: "right", fontSize: 12 }
+};
+var FIELDS_BY_SERIES = {
+  bar: [
+    "formatter",
+    "overflow",
+    "position",
+    "rotate",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding"
+  ],
+  line: [
+    "formatter",
+    "overflow",
+    "position",
+    "rotate",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding"
+  ],
+  pie: [
+    "formatter",
+    "overflow",
+    "position",
+    "distance",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding",
+    "labelLine.show",
+    "labelLine.length",
+    "labelLine.length2",
+    "labelLine.smooth"
+  ],
+  scatter: [
+    "formatter",
+    "overflow",
+    "position",
+    "distance",
+    "rotate",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding"
+  ],
+  radar: ["formatter", "fontSize", "fontWeight", "color"],
+  funnel: [
+    "formatter",
+    "overflow",
+    "position",
+    "distance",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "labelLine.show",
+    "labelLine.length",
+    "labelLine.smooth"
+  ],
+  gauge: ["formatter", "fontSize", "fontWeight", "color", "offsetX", "offsetY"]
+};
+var VALUE_KEYS = [
+  "formatter",
+  "overflow",
+  "position",
+  "distance",
+  "rotate",
+  "offsetX",
+  "offsetY",
+  "fontSize",
+  "fontWeight",
+  "color",
+  "backgroundColor",
+  "borderColor",
+  "borderWidth",
+  "borderRadius",
+  "padding"
+];
+function seriesOf2(option) {
+  const series = option?.series;
+  return Array.isArray(series) ? series : [];
+}
+function asRecord(node) {
+  return node && typeof node === "object" && !Array.isArray(node) ? { ...node } : {};
+}
+function labelTargetOf(type) {
+  return getChartKindDefinition(type)?.seriesType === "gauge" ? "detail" : "label";
+}
+function labelFieldsOf(type) {
+  const def = getChartKindDefinition(type);
+  return def ? FIELDS_BY_SERIES[def.seriesType] : [];
+}
+function readChartLabel(option, type) {
+  const def = getChartKindDefinition(type);
+  const series = seriesOf2(option);
+  const target = asRecord(series[0]?.[labelTargetOf(type)]);
+  const state = {
+    show: typeof target.show === "boolean" ? target.show : def ? NATIVE_SHOW[def.seriesType] : false,
+    // labelLine 在 ECharts 里是 series 顶层键（与 label 平级），不是 label 的子键
+    labelLine: asRecord(series[0]?.labelLine)
+  };
+  for (const key of VALUE_KEYS) {
+    const value = target[key];
+    if (typeof value === "string" || typeof value === "number") state[key] = value;
+  }
+  return state;
+}
+function defaultSetOf(type) {
+  const def = getChartKindDefinition(type);
+  if (!def) return {};
+  return { ...ENABLE_DEFAULTS[def.seriesType], ...TYPE_DEFAULTS[type] };
+}
+function isEmpty(value) {
+  return value === null || value === void 0 || value === "";
+}
+function updateChartLabel(option, type, patch) {
+  const next = cloneChartOption(option ?? {});
+  const series = Array.isArray(next.series) ? next.series : [];
+  const def = getChartKindDefinition(type);
+  if (!def || series.length === 0) return next;
+  const targetKey = labelTargetOf(type);
+  const { enabled, labelLine, ...values } = patch;
+  for (const item of series) {
+    if (!item || typeof item !== "object") continue;
+    const current = asRecord(item[targetKey]);
+    if (enabled === true) {
+      Object.assign(current, { ...defaultSetOf(type), ...current, show: true });
+    } else if (enabled === false) {
+      current.show = false;
+    }
+    for (const [key, value] of Object.entries(values)) {
+      if (isEmpty(value)) delete current[key];
+      else current[key] = value;
+    }
+    if (labelLine) {
+      const line = asRecord(item.labelLine);
+      for (const [key, value] of Object.entries(labelLine)) {
+        if (isEmpty(value)) delete line[key];
+        else line[key] = value;
+      }
+      item.labelLine = line;
+    }
+    item[targetKey] = current;
+  }
+  return next;
+}
+
 // src/ui.ts
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
   ".echarts-field-row{display:flex;gap:6px;align-items:center}",
   ".echarts-field-row>.pd-input{flex:1;min-width:0}",
-  ".echarts-field-row>.pd-button{flex:none}"
+  ".echarts-field-row>.pd-button{flex:none}",
+  ".echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}",
+  ".echarts-label-group>summary{cursor:pointer;font-weight:600;font-size:12px;list-style:none}",
+  ".echarts-label-sub{font-size:11px;color:var(--pd-text-secondary,#6b7280);margin:8px 0 4px}"
 ].join("");
 var CHART_OPTION_KEYS = [
   "chartOption",
@@ -844,7 +1095,10 @@ var SEARCH_KEYWORDS = [
   "\u6563\u70B9",
   "\u96F7\u8FBE",
   "\u6F0F\u6597",
-  "\u4EEA\u8868"
+  "\u4EEA\u8868",
+  "\u6570\u636E\u6807\u7B7E",
+  "\u6570\u503C\u6807\u7B7E",
+  "label"
 ];
 var PANEL_HINT = "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002";
 var datalistSeq = 0;
@@ -961,6 +1215,176 @@ function checkboxField(labelText, checked, onCommit) {
   input.addEventListener("change", () => onCommit(input.checked));
   wrap.appendChild(input);
   return wrap;
+}
+function selectInput(options, value, onCommit) {
+  const select = el("select", "pd-select");
+  for (const item of options) {
+    const optionEl = el("option");
+    optionEl.value = item.value;
+    optionEl.textContent = item.label;
+    select.appendChild(optionEl);
+  }
+  select.value = value;
+  select.addEventListener("change", () => onCommit(select.value));
+  return select;
+}
+var OVERFLOW_OPTIONS = [
+  { value: "", label: "\u9ED8\u8BA4" },
+  { value: "none", label: "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09" },
+  { value: "truncate", label: "\u622A\u65AD" },
+  { value: "break", label: "\u6362\u884C" }
+];
+var FONT_WEIGHT_OPTIONS = [
+  { value: "", label: "\u9ED8\u8BA4" },
+  { value: "normal", label: "\u5E38\u89C4" },
+  { value: "bold", label: "\u52A0\u7C97" }
+];
+var STYLE_FIELD_LABELS = {
+  distance: "\u8DDD\u79BB",
+  rotate: "\u65CB\u8F6C\uFF08\u5EA6\uFF09",
+  fontSize: "\u5B57\u53F7",
+  fontWeight: "\u5B57\u91CD",
+  color: "\u6587\u5B57\u989C\u8272",
+  backgroundColor: "\u80CC\u666F\u8272",
+  borderColor: "\u8FB9\u6846\u8272",
+  borderWidth: "\u8FB9\u6846\u5BBD\u5EA6",
+  borderRadius: "\u5706\u89D2",
+  padding: "\u5185\u8FB9\u8DDD"
+};
+function renderLabelGroup(ctx, type) {
+  const element = ctx.element;
+  const def = getChartKindDefinition(type);
+  const fields = labelFieldsOf(type);
+  const has = (key) => fields.includes(key);
+  const state = readChartLabel(panelOption(element), type);
+  const commit = (patch) => {
+    commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch));
+  };
+  const commitNumber = (key, raw) => {
+    if (raw.trim() === "") return commit({ [key]: null });
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return;
+    commit({ [key]: value });
+  };
+  const commitLineNumber = (key, raw) => {
+    if (raw.trim() === "") return commit({ labelLine: { [key]: null } });
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return;
+    commit({ labelLine: { [key]: value } });
+  };
+  const numberField = (key, value) => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    wrap.appendChild(
+      textInput({ value: value === void 0 ? "" : String(value), type: "number" }, (raw) => commitNumber(key, raw))
+    );
+    return wrap;
+  };
+  const colorField = (key, value) => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    wrap.appendChild(
+      textInput({ value: value ?? "", placeholder: "#333333\uFF0C\u7559\u7A7A\u4E0D\u8BBE\u7F6E" }, (raw) => commit({ [key]: raw }))
+    );
+    return wrap;
+  };
+  const group = el("details", "echarts-label-group");
+  group.open = state.show;
+  group.appendChild(el("summary", void 0, "\u6570\u636E\u6807\u7B7E"));
+  group.appendChild(checkboxField("\u663E\u793A\u6570\u636E\u6807\u7B7E", state.show, (checked) => commit({ enabled: checked })));
+  if (has("formatter") || has("overflow")) {
+    group.appendChild(el("div", "echarts-label-sub", "\u5185\u5BB9"));
+    if (has("formatter")) {
+      const wrap = field("\u6570\u636E\u6807\u7B7E\u5185\u5BB9");
+      wrap.appendChild(
+        selectInput(
+          [{ value: "", label: "\u81EA\u5B9A\u4E49 / \u9ED8\u8BA4" }, ...LABEL_PRESETS.map((preset) => ({ value: preset.formatter, label: preset.label }))],
+          state.formatter ?? "",
+          (value) => commit({ formatter: value })
+        )
+      );
+      wrap.appendChild(
+        textInput({ value: state.formatter ?? "", placeholder: "\u5982 {b}: {c}" }, (value) => commit({ formatter: value }))
+      );
+      group.appendChild(wrap);
+    }
+    if (has("overflow")) {
+      const wrap = field("\u6EA2\u51FA\u5904\u7406");
+      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? "", (value) => commit({ overflow: value })));
+      group.appendChild(wrap);
+    }
+  }
+  if (has("position") || has("distance") || has("rotate") || has("offsetX")) {
+    group.appendChild(el("div", "echarts-label-sub", "\u4F4D\u7F6E"));
+    if (has("position")) {
+      const wrap = field("\u6807\u7B7E\u4F4D\u7F6E");
+      const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : [];
+      wrap.appendChild(
+        selectInput([{ value: "", label: "\u9ED8\u8BA4" }, ...positions], state.position ?? "", (value) => commit({ position: value }))
+      );
+      group.appendChild(wrap);
+    }
+    if (has("distance")) group.appendChild(numberField("distance", state.distance));
+    if (has("rotate")) group.appendChild(numberField("rotate", state.rotate));
+    if (has("offsetX") || has("offsetY")) {
+      const wrap = field("\u504F\u79FB X / Y");
+      const row = el("div", "echarts-field-row");
+      row.appendChild(
+        textInput({ value: state.offsetX === void 0 ? "" : String(state.offsetX), type: "number" }, (raw) => commitNumber("offsetX", raw))
+      );
+      row.appendChild(
+        textInput({ value: state.offsetY === void 0 ? "" : String(state.offsetY), type: "number" }, (raw) => commitNumber("offsetY", raw))
+      );
+      wrap.appendChild(row);
+      group.appendChild(wrap);
+    }
+  }
+  const styleKeys = ["fontSize", "fontWeight", "color", "backgroundColor", "borderColor", "borderWidth", "borderRadius", "padding"];
+  if (styleKeys.some(has)) {
+    group.appendChild(el("div", "echarts-label-sub", "\u6837\u5F0F"));
+    if (has("fontSize")) group.appendChild(numberField("fontSize", state.fontSize));
+    if (has("fontWeight")) {
+      const wrap = field("\u5B57\u91CD");
+      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
+      group.appendChild(wrap);
+    }
+    for (const key of ["color", "backgroundColor", "borderColor"]) {
+      if (has(key)) group.appendChild(colorField(key, state[key]));
+    }
+    for (const key of ["borderWidth", "borderRadius", "padding"]) {
+      if (has(key)) group.appendChild(numberField(key, state[key]));
+    }
+  }
+  if (has("labelLine.show")) {
+    group.appendChild(el("div", "echarts-label-sub", "\u5F15\u5BFC\u7EBF"));
+    group.appendChild(
+      checkboxField("\u663E\u793A\u5F15\u5BFC\u7EBF", state.labelLine.show === true, (checked) => commit({ labelLine: { show: checked } }))
+    );
+    if (has("labelLine.length")) {
+      const wrap = field("\u5F15\u5BFC\u7EBF\u957F\u5EA6");
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length === void 0 ? "" : String(state.labelLine.length), type: "number" },
+          (raw) => commitLineNumber("length", raw)
+        )
+      );
+      group.appendChild(wrap);
+    }
+    if (has("labelLine.length2")) {
+      const wrap = field("\u7B2C\u4E8C\u6BB5\u957F\u5EA6");
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length2 === void 0 ? "" : String(state.labelLine.length2), type: "number" },
+          (raw) => commitLineNumber("length2", raw)
+        )
+      );
+      group.appendChild(wrap);
+    }
+    if (has("labelLine.smooth")) {
+      group.appendChild(
+        checkboxField("\u5E73\u6ED1\u5F15\u5BFC\u7EBF", state.labelLine.smooth === true, (checked) => commit({ labelLine: { smooth: checked } }))
+      );
+    }
+  }
+  return group;
 }
 function renderProperty(ctx) {
   const element = ctx.element;
@@ -1104,6 +1528,9 @@ function renderProperty(ctx) {
     });
     wrap.appendChild(select);
     form.appendChild(wrap);
+  }
+  if (has("label")) {
+    form.appendChild(renderLabelGroup(ctx, type));
   }
   if (has("stack")) {
     const series = seriesList(panelOption(element));

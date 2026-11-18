@@ -55,7 +55,8 @@ const STYLES = [
   '.echarts-field-row>.pd-input{flex:1;min-width:0}',
   '.echarts-field-row>.pd-button{flex:none}',
   '.echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}',
-  '.echarts-label-group>summary{cursor:pointer;font-weight:600;font-size:12px;list-style:none}',
+  '.echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}',
+  '.echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}',
   '.echarts-label-sub{font-size:11px;color:var(--pd-text-secondary,#6b7280);margin:8px 0 4px}',
 ].join('')
 
@@ -321,8 +322,13 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
 
   const group = el('details', 'echarts-label-group') as HTMLDetailsElement
   group.open = state.show
-  group.appendChild(el('summary', undefined, '数据标签'))
-  group.appendChild(checkboxField('显示数据标签', state.show, checked => commit({ enabled: checked })))
+  // 总开关必须放在 summary 里：关闭标签时 details 折叠，若开关在内容区用户就再也点不到它
+  const summary = el('summary', 'echarts-label-summary')
+  const toggle = checkboxField('显示数据标签', state.show, checked => commit({ enabled: checked }))
+  // 点击开关本身不应连带折叠 details
+  toggle.querySelector('input')?.addEventListener('click', event => event.stopPropagation())
+  summary.appendChild(toggle)
+  group.appendChild(summary)
 
   if (has('formatter') || has('overflow')) {
     group.appendChild(el('div', 'echarts-label-sub', '内容'))
