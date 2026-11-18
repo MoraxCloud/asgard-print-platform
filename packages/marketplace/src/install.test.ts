@@ -109,6 +109,29 @@ describe('三源安装引擎', () => {
     expect(result.version).toBe('1.0.0')
   })
 
+  it('git 源无 tag 时回退默认分支并标记非稳定', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
+    const repo = makeRepo(cwd)
+    const gitExecutor: GitExecutor = async (args) => {
+      if (args[0] === 'ls-remote') return { stdout: '', stderr: '' }
+      if (args[0] === 'clone') {
+        expect(args).not.toContain('--branch')
+        const target = args[args.length - 1]
+        mkdirSync(join(target, 'marketplace/plugins/echarts/dist'), { recursive: true })
+        cpSync(join(repo, 'plugins/echarts/plugin.json'), join(target, 'marketplace/plugins/echarts/plugin.json'))
+        cpSync(join(repo, 'plugins/echarts/dist/index.js'), join(target, 'marketplace/plugins/echarts/dist/index.js'))
+      }
+      return { stdout: '', stderr: '' }
+    }
+    const result = await installPlugin({
+      name: 'echarts', source: 'github', repo: 'https://github.com/x/y.git',
+      cwd, index: indexOf(repo), gitExecutor,
+    })
+    expect(result.stable).toBe(false)
+    expect(result.version).toBe('1.0.0')
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.stable).toBe(false)
+  })
+
   it('remove 清理目录与清单条目', async () => {
     const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
     const repo = makeRepo(cwd)

@@ -234,8 +234,9 @@ async function fetchGit(options, id, source, cwd, gitExecutor) {
   const repoSource = resolveGitSource(source, options.repo);
   const refs = await gitExecutor(["ls-remote", "--tags", "--refs", repoSource.url], cwd);
   const tags = refs.stdout.split("\n").map((line) => line.split("	")[1] ?? "").filter((ref) => ref.includes(`/plugins/${id}/v`));
-  const version = resolveVersion(source, tags, options.version);
-  const tag = buildGitTag(id, version);
+  const fromHead = tags.length === 0 && options.version === void 0;
+  const version = fromHead ? void 0 : resolveVersion(source, tags, options.version);
+  const tag = version ? buildGitTag(id, version) : void 0;
   const tmp = mkdtempSync(join2(tmpdir(), `mp-git-${id}-`));
   const cleanup = () => rmSync(tmp, { recursive: true, force: true });
   try {
@@ -245,8 +246,7 @@ async function fetchGit(options, id, source, cwd, gitExecutor) {
       "1",
       "--filter=blob:none",
       "--sparse",
-      "--branch",
-      tag.replace(/^refs\/tags\//, ""),
+      ...tag ? ["--branch", tag.replace(/^refs\/tags\//, "")] : [],
       repoSource.url,
       tmp
     ], cwd);
@@ -259,7 +259,8 @@ async function fetchGit(options, id, source, cwd, gitExecutor) {
       `marketplace/${entryPath}`
     ], tmp);
     const sourceDir = join2(tmp, "marketplace", entryPath);
-    return { version, sourceDir, meta: readPluginJson(sourceDir), cleanup };
+    const meta = readPluginJson(sourceDir);
+    return { version: version ?? meta.version, sourceDir, meta, stable: !fromHead, cleanup };
   } catch (err) {
     cleanup();
     throw err;
@@ -307,11 +308,22 @@ async function installPlugin(options) {
         kinds: fetched.meta.kinds,
         exportFormats: fetched.meta.exportFormats,
         npmName,
-        source: source === "local" ? { mode: source, path: options.repo } : source === "npm" ? { mode: source } : { mode: source, repo: options.repo ?? void 0, tag: buildGitTag(id, fetched.version) },
-        stable: true,
+        source: source === "local" ? { mode: source, path: options.repo } : source === "npm" ? { mode: source } : {
+          mode: source,
+          repo: options.repo ?? void 0,
+          tag: fetched.stable === false ? void 0 : buildGitTag(id, fetched.version)
+        },
+        stable: fetched.stable !== false,
         installedAt: (/* @__PURE__ */ new Date()).toISOString()
       }, cwd);
-      return { id, version: fetched.version, target, source, stable: true, created: true };
+      return {
+        id,
+        version: fetched.version,
+        target,
+        source,
+        stable: fetched.stable !== false,
+        created: true
+      };
     } catch (err) {
       if (err instanceof MarketError && DETERMINISTIC.has(err.code)) throw err;
       lastError = err;

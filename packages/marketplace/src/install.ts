@@ -56,6 +56,8 @@ interface Fetched {
   version: string
   sourceDir: string
   meta: PluginMeta
+  /** git 无 tag 回退主干时为 false，其余来源为 true */
+  stable?: boolean
   cleanup?: () => void
 }
 
@@ -154,14 +156,17 @@ async function fetchGit(
     .split('\n')
     .map(line => line.split('\t')[1] ?? '')
     .filter(ref => ref.includes(`/plugins/${id}/v`))
-  const version = resolveVersion(source, tags, options.version)
-  const tag = buildGitTag(id, version)
+  // 无 tag 且未指定版本：回退默认分支 HEAD，版本以 plugin.json 为准并标记非稳定
+  const fromHead = tags.length === 0 && options.version === undefined
+  const version = fromHead ? undefined : resolveVersion(source, tags, options.version)
+  const tag = version ? buildGitTag(id, version) : undefined
   const tmp = mkdtempSync(join(tmpdir(), `mp-git-${id}-`))
   const cleanup = () => rmSync(tmp, { recursive: true, force: true })
   try {
     await gitExecutor([
       'clone', '--depth', '1', '--filter=blob:none', '--sparse',
-      '--branch', tag.replace(/^refs\/tags\//, ''), repoSource.url, tmp,
+      ...(tag ? ['--branch', tag.replace(/^refs\/tags\//, '')] : []),
+      repoSource.url, tmp,
     ], cwd)
     const entryPath = options.index.plugins.find(p => p.id === id)?.path ?? `plugins/${id}`
     await gitExecutor([
@@ -169,7 +174,8 @@ async function fetchGit(
       'marketplace/marketplace.json', `marketplace/${entryPath}`,
     ], tmp)
     const sourceDir = join(tmp, 'marketplace', entryPath)
-    return { version, sourceDir, meta: readPluginJson(sourceDir), cleanup }
+    const meta = readPluginJson(sourceDir)
+    return { version: version ?? meta.version, sourceDir, meta, stable: !fromHead, cleanup }
   } catch (err) {
     cleanup()
     throw err
@@ -228,11 +234,18 @@ export async function installPlugin(options: InstallOptions): Promise<InstallRes
           ? { mode: source, path: options.repo }
           : source === 'npm'
             ? { mode: source }
-            : { mode: source, repo: options.repo ?? undefined, tag: buildGitTag(id, fetched.version) },
-        stable: true,
+            : {
+              mode: source,
+              repo: options.repo ?? undefined,
+              tag: fetched.stable === false ? undefined : buildGitTag(id, fetched.version),
+            },
+        stable: fetched.stable !== false,
         installedAt: new Date().toISOString(),
       }, cwd)
-      return { id, version: fetched.version, target, source, stable: true, created: true }
+      return {
+        id, version: fetched.version, target, source,
+        stable: fetched.stable !== false, created: true,
+      }
     } catch (err) {
       if (err instanceof MarketError && DETERMINISTIC.has(err.code)) throw err
       lastError = err
