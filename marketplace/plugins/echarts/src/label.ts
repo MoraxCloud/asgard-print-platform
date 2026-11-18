@@ -183,7 +183,7 @@ export function readChartLabel(option: Record<string, unknown> | undefined, type
   }
   for (const key of VALUE_KEYS) {
     const value = target[key]
-    if (typeof value === 'string' || typeof value === 'number') (state as Record<string, unknown>)[key] = value
+    if (typeof value === 'string' || typeof value === 'number') (state as unknown as Record<string, unknown>)[key] = value
   }
   return state
 }

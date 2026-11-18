@@ -201,3 +201,52 @@ describe('hasProperties', () => {
     expect(ui.hasProperties!({ id: 'empty', printElementType: { type: 'barChart' } } as unknown as RuntimeElement)).toBe(false)
   })
 })
+
+describe('数据标签分组', () => {
+  it('柱状图面板出现数据标签分组与总开关', () => {
+    const { root } = renderProperty('barChart')
+    expect(root.querySelector('.echarts-label-group')).not.toBeNull()
+    expect(labelsOf(root)).toContain('显示数据标签')
+  })
+
+  it('饼图面板含引导线，柱状图不含', () => {
+    expect(labelsOf(renderProperty('pieChart').root)).toContain('显示引导线')
+    expect(labelsOf(renderProperty('barChart').root)).not.toContain('显示引导线')
+  })
+
+  it('仪表盘不出现「标签位置」', () => {
+    expect(labelsOf(renderProperty('gaugeChart').root)).not.toContain('标签位置')
+  })
+
+  it('打开总开关写默认集且只提交一次', () => {
+    const { root, updates } = renderProperty('barChart', { chartOption: createDefaultChartOption('barChart') })
+    const wrap = [...root.querySelectorAll('.pd-field')].find(
+      item => item.querySelector('.pd-label')?.textContent?.trim() === '显示数据标签',
+    )!
+    const box = wrap.querySelector('input[type="checkbox"]') as HTMLInputElement
+    box.checked = true
+    box.dispatchEvent(new Event('change'))
+    expect(updates).toHaveLength(1)
+    expect((updates[0]!.chartOption as any).series[0].label).toEqual({ show: true, position: 'top', fontSize: 12 })
+  })
+
+  it('选择 formatter 预设写入模板字符串', () => {
+    const { root, updates } = renderProperty('barChart', { chartOption: createDefaultChartOption('barChart') })
+    const select = [...root.querySelectorAll('select.pd-select')].find(node =>
+      [...node.options].some(o => o.textContent === '名称: 数值')) as HTMLSelectElement
+    expect(select).toBeDefined()
+    select.value = '{b}: {c}'
+    select.dispatchEvent(new Event('change'))
+    expect((updates[0]!.chartOption as any).series[0].label.formatter).toBe('{b}: {c}')
+  })
+
+  it('颜色留空删除该键', () => {
+    const option = createDefaultChartOption('barChart')
+    ;(option.series as any[])[0].label = { show: true, color: '#ff0000' }
+    const { root, updates } = renderProperty('barChart', { chartOption: option })
+    const input = fieldInput(root, '文字颜色')!
+    input.value = ''
+    input.dispatchEvent(new Event('change'))
+    expect((updates[0]!.chartOption as any).series[0].label.color).toBeUndefined()
+  })
+})

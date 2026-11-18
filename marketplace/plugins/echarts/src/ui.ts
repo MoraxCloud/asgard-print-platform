@@ -20,19 +20,31 @@ import {
   FUNNEL_PADDING_DEFAULTS,
   getChartKindDefinition,
   getChartPalettes,
+  LABEL_POSITIONS,
+  LABEL_PRESETS,
+  labelFieldsOf,
   normalizeChartOption,
   previewChartOption,
   RADAR_RADIUS_DEFAULT,
+  readChartLabel,
   readFunnelPadding,
   readPaletteKey,
   readRadarRadius,
   renderChartToSvg,
   resolveChartPanelFields,
   syncSeriesCount,
+  updateChartLabel,
   writeFunnelPadding,
   writeRadarRadius,
 } from './kit.js'
-import type { ChartFieldKey, ChartKindDefinition, FunnelPadding } from './kit.js'
+import type {
+  ChartFieldKey,
+  ChartKindDefinition,
+  ChartLabelPatch,
+  ChartLabelState,
+  FunnelPadding,
+  LabelFieldKey,
+} from './kit.js'
 
 /** 画布容器与 Vue 侧 ChartElement.vue 同形：铺满元素框且不吃指针事件 */
 const CANVAS_STYLE = 'width:100%;height:100%;min-width:0;min-height:0;pointer-events:none'
@@ -42,6 +54,9 @@ const STYLES = [
   '.echarts-field-row{display:flex;gap:6px;align-items:center}',
   '.echarts-field-row>.pd-input{flex:1;min-width:0}',
   '.echarts-field-row>.pd-button{flex:none}',
+  '.echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}',
+  '.echarts-label-group>summary{cursor:pointer;font-weight:600;font-size:12px;list-style:none}',
+  '.echarts-label-sub{font-size:11px;color:var(--pd-text-secondary,#6b7280);margin:8px 0 4px}',
 ].join('')
 
 /** 与 Vue 设计器轨道 ChartPropertyGroup 同口径的 hasProperties / searchKeywords 同口径 */
@@ -51,7 +66,7 @@ const CHART_OPTION_KEYS = [
 
 const SEARCH_KEYWORDS = [
   '图表', 'echarts', 'option', '配置', '数据源', '类目', '数值', '系列', '柱状', '条形',
-  '折线', '面积', '饼', '环形', '散点', '雷达', '漏斗', '仪表',
+  '折线', '面积', '饼', '环形', '散点', '雷达', '漏斗', '仪表', '数据标签', '数值标签', 'label',
 ] as const
 
 const PANEL_HINT = '数据由模板绑定阶段注入：series/xAxis 的 data 保留 `$data` 占位即可；复杂样式可在模板 JSON 中手写 chartOption。'
@@ -223,6 +238,193 @@ function checkboxField(labelText: string, checked: boolean, onCommit: (checked: 
   return wrap
 }
 
+function selectInput(
+  options: readonly { value: string; label: string }[],
+  value: string,
+  onCommit: (value: string) => void,
+): HTMLSelectElement {
+  const select = el('select', 'pd-select')
+  for (const item of options) {
+    const optionEl = el('option')
+    optionEl.value = item.value
+    optionEl.textContent = item.label
+    select.appendChild(optionEl)
+  }
+  select.value = value
+  select.addEventListener('change', () => onCommit(select.value))
+  return select
+}
+
+const OVERFLOW_OPTIONS = [
+  { value: '', label: '默认' },
+  { value: 'none', label: '不处理（显示完整）' },
+  { value: 'truncate', label: '截断' },
+  { value: 'break', label: '换行' },
+] as const
+
+const FONT_WEIGHT_OPTIONS = [
+  { value: '', label: '默认' },
+  { value: 'normal', label: '常规' },
+  { value: 'bold', label: '加粗' },
+] as const
+
+const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
+  distance: '距离',
+  rotate: '旋转（度）',
+  fontSize: '字号',
+  fontWeight: '字重',
+  color: '文字颜色',
+  backgroundColor: '背景色',
+  borderColor: '边框色',
+  borderWidth: '边框宽度',
+  borderRadius: '圆角',
+  padding: '内边距',
+}
+
+/** 数据标签分组：一个可折叠 details，内部按「内容 / 位置 / 样式 / 引导线」分块 */
+function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDetailsElement {
+  const element = ctx.element
+  const def = getChartKindDefinition(type)
+  const fields = labelFieldsOf(type)
+  const has = (key: LabelFieldKey): boolean => fields.includes(key)
+  const state = readChartLabel(panelOption(element), type)
+
+  const commit = (patch: ChartLabelPatch): void => {
+    commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch))
+  }
+  const commitNumber = (key: LabelFieldKey, raw: string): void => {
+    if (raw.trim() === '') return commit({ [key]: null } as ChartLabelPatch)
+    const value = Number(raw)
+    if (!Number.isFinite(value)) return
+    commit({ [key]: value } as ChartLabelPatch)
+  }
+  const commitLineNumber = (key: 'length' | 'length2', raw: string): void => {
+    if (raw.trim() === '') return commit({ labelLine: { [key]: null } })
+    const value = Number(raw)
+    if (!Number.isFinite(value)) return
+    commit({ labelLine: { [key]: value } })
+  }
+  const numberField = (key: LabelFieldKey, value: number | undefined): HTMLDivElement => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    wrap.appendChild(
+      textInput({ value: value === undefined ? '' : String(value), type: 'number' }, raw => commitNumber(key, raw)),
+    )
+    return wrap
+  }
+  const colorField = (key: LabelFieldKey, value: string | undefined): HTMLDivElement => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    wrap.appendChild(
+      textInput({ value: value ?? '', placeholder: '#333333，留空不设置' }, raw => commit({ [key]: raw } as ChartLabelPatch)),
+    )
+    return wrap
+  }
+
+  const group = el('details', 'echarts-label-group') as HTMLDetailsElement
+  group.open = state.show
+  group.appendChild(el('summary', undefined, '数据标签'))
+  group.appendChild(checkboxField('显示数据标签', state.show, checked => commit({ enabled: checked })))
+
+  if (has('formatter') || has('overflow')) {
+    group.appendChild(el('div', 'echarts-label-sub', '内容'))
+    if (has('formatter')) {
+      const wrap = field('数据标签内容')
+      wrap.appendChild(
+        selectInput(
+          [{ value: '', label: '自定义 / 默认' }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: preset.label }))],
+          state.formatter ?? '',
+          value => commit({ formatter: value }),
+        ),
+      )
+      wrap.appendChild(
+        textInput({ value: state.formatter ?? '', placeholder: '如 {b}: {c}' }, value => commit({ formatter: value })),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('overflow')) {
+      const wrap = field('溢出处理')
+      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? '', value => commit({ overflow: value })))
+      group.appendChild(wrap)
+    }
+  }
+
+  if (has('position') || has('distance') || has('rotate') || has('offsetX')) {
+    group.appendChild(el('div', 'echarts-label-sub', '位置'))
+    if (has('position')) {
+      const wrap = field('标签位置')
+      const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : []
+      wrap.appendChild(
+        selectInput([{ value: '', label: '默认' }, ...positions], state.position ?? '', value => commit({ position: value })),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('distance')) group.appendChild(numberField('distance', state.distance))
+    if (has('rotate')) group.appendChild(numberField('rotate', state.rotate))
+    if (has('offsetX') || has('offsetY')) {
+      const wrap = field('偏移 X / Y')
+      const row = el('div', 'echarts-field-row')
+      row.appendChild(
+        textInput({ value: state.offsetX === undefined ? '' : String(state.offsetX), type: 'number' }, raw => commitNumber('offsetX', raw)),
+      )
+      row.appendChild(
+        textInput({ value: state.offsetY === undefined ? '' : String(state.offsetY), type: 'number' }, raw => commitNumber('offsetY', raw)),
+      )
+      wrap.appendChild(row)
+      group.appendChild(wrap)
+    }
+  }
+
+  const styleKeys: LabelFieldKey[] = ['fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding']
+  if (styleKeys.some(has)) {
+    group.appendChild(el('div', 'echarts-label-sub', '样式'))
+    if (has('fontSize')) group.appendChild(numberField('fontSize', state.fontSize))
+    if (has('fontWeight')) {
+      const wrap = field('字重')
+      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? '', value => commit({ fontWeight: value })))
+      group.appendChild(wrap)
+    }
+    for (const key of ['color', 'backgroundColor', 'borderColor'] as const) {
+      if (has(key)) group.appendChild(colorField(key, state[key]))
+    }
+    for (const key of ['borderWidth', 'borderRadius', 'padding'] as const) {
+      if (has(key)) group.appendChild(numberField(key, state[key]))
+    }
+  }
+
+  if (has('labelLine.show')) {
+    group.appendChild(el('div', 'echarts-label-sub', '引导线'))
+    group.appendChild(
+      checkboxField('显示引导线', state.labelLine.show === true, checked => commit({ labelLine: { show: checked } })),
+    )
+    if (has('labelLine.length')) {
+      const wrap = field('引导线长度')
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length === undefined ? '' : String(state.labelLine.length), type: 'number' },
+          raw => commitLineNumber('length', raw),
+        ),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('labelLine.length2')) {
+      const wrap = field('第二段长度')
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length2 === undefined ? '' : String(state.labelLine.length2), type: 'number' },
+          raw => commitLineNumber('length2', raw),
+        ),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('labelLine.smooth')) {
+      group.appendChild(
+        checkboxField('平滑引导线', state.labelLine.smooth === true, checked => commit({ labelLine: { smooth: checked } })),
+      )
+    }
+  }
+
+  return group
+}
+
 function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   const element = ctx.element
   const type = elementType(element)
@@ -374,6 +576,10 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     })
     wrap.appendChild(select)
     form.appendChild(wrap)
+  }
+
+  if (has('label')) {
+    form.appendChild(renderLabelGroup(ctx, type))
   }
 
   if (has('stack')) {
