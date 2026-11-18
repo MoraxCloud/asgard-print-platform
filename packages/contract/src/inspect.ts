@@ -26,7 +26,7 @@ export interface InspectFinding {
 const NON_OVERLAP_TYPES = new Set(['hline', 'vline', 'rect', 'oval'])
 
 /** 背景/装饰层候选：随版面比例判定的类型（文本/表格/码类不算背景） */
-const BACKGROUND_CANDIDATE_TYPES = new Set(['rect', 'oval', 'image', 'vline', 'hline'])
+const BACKGROUND_CANDIDATE_TYPES = new Set(['rect', 'oval', 'image'])
 
 /** 占版面比例阈值：宽或高达到内容区的 80% 即视为背景/装饰层 */
 const BACKGROUND_RATIO = 0.8

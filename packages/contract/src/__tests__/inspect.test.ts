@@ -160,6 +160,18 @@ describe('inspectTemplate', () => {
     expect(r3.findings.some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(false)
   })
 
+  it('全宽 hline/vline 不报 BACKGROUND_NOT_PAGEABLE，全宽 rect 仍报', () => {
+    const line = (type: 'hline' | 'vline'): PrintElementData => ({
+      id: 'l1', type, printElementType: { type },
+      options: { left: 0, top: 0, width: CONTENT_W, height: CONTENT_H } as ElementOptions,
+    })
+    expect(inspectTemplate(tpl([line('hline')])).findings.some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(false)
+    expect(inspectTemplate(tpl([line('vline')])).findings.some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(false)
+    expect(inspectTemplate(tpl([{ id: 'r', type: 'rect', printElementType: { type: 'rect' },
+      options: { left: 0, top: 0, width: CONTENT_W, height: CONTENT_H } } as PrintElementData])).findings
+      .some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(true)
+  })
+
   it('BARCODE_MISSING_BAR_HEIGHT：条码未给 barHeight 时提示实际条高可能不符', () => {
     const barcode = {
       id: 'bc', type: 'barcode', printElementType: { type: 'barcode' },
