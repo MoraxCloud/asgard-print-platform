@@ -28,6 +28,15 @@ export type { ChartPalette, ChartPaletteDefinition, ChartPluginConfig } from './
 export { CHART_KINDS, CHART_KIND_DEFINITIONS, getChartKindDefinition, resolveChartPanelFields } from './kinds.js'
 export type { ChartFieldKey, ChartKindDefinition, ChartSeriesType } from './kinds.js'
 export { createDefaultChartOption } from './defaults.js'
+export {
+  LABEL_POSITIONS,
+  LABEL_PRESETS,
+  labelFieldsOf,
+  labelTargetOf,
+  readChartLabel,
+  updateChartLabel,
+} from './label.js'
+export type { ChartLabelPatch, ChartLabelState, LabelFieldKey } from './label.js'
 export { normalizeChartOption } from './normalize.js'
 export { bindChartData } from './bind.js'
 export { fitSvgRoot, mmToChartPx, renderChartElement, renderChartToSvg } from './renderer.js'
