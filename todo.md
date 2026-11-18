@@ -1,11 +1,26 @@
 # Gitee issues 核查（来源：gitee.com/liulong_oschina/worm-vue3-print/issues）
 
-> 核查日期 2026-11-17。本仓为 canvas 权威实现（v1.5.1），由 worm-vue3-print 拆仓分叉而来，
-> 议题针对 canvas/core 1.4.8。逐项在本仓验证是否存在同类问题。
+> 核查日期 2026-11-17，2026-11-18 复查并标记完成状态。本仓为 canvas 权威实现（v1.5.2），
+> 由 worm-vue3-print 拆仓分叉而来，议题针对 canvas/core 1.4.8。逐项在本仓验证是否存在同类问题。
 
-## 已修复（2026-11-17）
+## 状态总览（2026-11-18 复查）
 
-### #IKVLU4 固定纸上宽元素未超出纸面却被拆到第二页（提交 bcea1ba）
+| 编号 | 事项 | 状态 |
+| --- | --- | --- |
+| #IKVLU4 | 固定纸上宽元素被误判换页 | ✅ 已修复（bcea1ba） |
+| #IKVLXT | 缺数据时预览显示表达式原文 | ✅ 已修复（8f9087e） |
+| #IKVLZT | 设计器不跟随宿主浅色/暗色 | ✅ 已修复（2b5443c） |
+| — | 打印预览按钮可以配置隐藏 | ✅ 已完成（5174b90 + demo 配置弹窗） |
+| #IKVLXY | 素材区图标/面板不能由宿主替换 | ⚠️ 部分完成（图标已可替换，隐藏页签仍缺） |
+| #IKVLXM | 字段绑到已有文本操作容易用错 | ⚠️ 部分完成（有替代入口，无光标处直接插入） |
+| #IKUJ0X | checkbox / radio 打印元素 | ⏸ 需求类，未实现 |
+| #IKRSXT | 添加常用表格元素 | ⏸ 信息不足 |
+| PR #15 | 同纸型多页横纵混排 | ✅ 已移植，遗留硬件验收 |
+| 插件市场 | Git 仓库式分发 | ⏸ 方案已定，待实现 |
+
+## 已修复
+
+### #IKVLU4 固定纸上宽元素未超出纸面却被拆到第二页（提交 bcea1ba，2026-11-17）
 - 现象：自定义纸（如 80×60mm）上横贯多列的文本，绝对底边在本页可用高度内，预览仍整段挪到第二页。
 - 根因（修复前）：`packages/core/src/render/pagination-engine.ts:559` 的 `depthIn(x)` 把横向相交列的已占高度**累加**；
   `:601 remainingIn()`、`:871` 的 `elHeight <= remainingIn(x)` 只用元素自身高度对比剩余预算，
@@ -18,44 +33,53 @@
   `dist/node/index.js` 构建产物的既有问题，与本修复无关）。
 - 说明：本仓已有的二维预算修复（`#IKOUJI`）只解决"横向不相交元素互不占高"，不覆盖"单个宽元素横跨多列"的情形。
 
-## 确认存在（缺陷）
-
-### #IKVLXT 没有打印数据时预览显示表达式原文 —— 存在
+### #IKVLXT 没有打印数据时预览显示表达式原文 —— ✅ 已修复（提交 8f9087e，2026-11-17）
 - 现象：`printData` 为空/缺字段时，预览显示 `物料名称：{ItemName}` 原文，看不出绑定是否生效。
-- 根因：`packages/core/src/render/expression-eval.ts:103-125` 单个 `{expr}` 求值失败时保留原表达式文本；
-  `packages/canvas/src/vue3/PrintHtmlPreview.ts:102-108` 把 `printData` 原样传给 `renderHtmlPages`，无示例值兜底。
-  模板元素无"示例值"属性，`designData`（element-definitions.ts:24、host-contract.ts:44）仅用于设计态画布占位，不进预览。
-- 期望未满足：缺字段时用示例值并标明为示例，真实数据优先。
+- 根因（修复前）：`packages/core/src/render/expression-eval.ts` 单个 `{expr}` 求值失败时保留原表达式文本；
+  `packages/canvas/src/vue3/PrintHtmlPreview.ts` 把 `printData` 原样传给 `renderHtmlPages`，无示例值兜底。
+- 修复：提交 `8f9087e` 为 `ElementOptions` 新增 `exampleValue` 字段，text/longText/barcode/qrcode 出厂带默认显示内容；
+  `evaluateTemplate` 增加可选 `errorFallback`，仅在求值失败（缺字段）时整段回落；`bindElement` 按元素类型取示例值。
+  真实数据优先、求值为空不触发。
+- 验证：core / contract 补充 `exampleValue` 与回落逻辑的测试（data-binder、expression-eval），全量通过。
+- 备注：期望中的"标明为示例"通过示例占位内容（如「示例文本」）体现，未做独立的"示例"角标 UI。
 
-### #IKVLZT 设计器不跟随宿主浅色/暗色 —— 存在
+### #IKVLZT 设计器不跟随宿主浅色/暗色 —— ✅ 已修复（提交 2b5443c，2026-11-18）
 - 现象：`--pd-*` 变量缺省全是浅色，组件不读 `prefers-color-scheme`，无内置暗色主题。
-- 证据：`packages/core/src/styles/theme.css` 仅一套 `:root` 浅色令牌，无暗色变量集；全局无 `prefers-color-scheme`。
-  `packages/canvas/src/host-contract.ts:114-123` 仅说明宿主可自行覆盖部分 `--pd-*` 令牌。
-  changelog（canvas/src/shell/help-content/changelog.ts:201）"换深色不再出现白色死角"只指属性台控件接入了变量，
-  并非提供成套暗色预设或自动跟随。
-- 期望未满足：内置一套暗色变量，或明确列出暗色模式下需覆盖的完整 `--pd-*` 清单。
+- 根因（修复前）：`packages/core/src/styles/theme.css` 仅一套 `:root` 浅色令牌，无暗色变量集；全局无 `prefers-color-scheme`；
+  Shadow DOM 内 `.designer-container` 的令牌声明还会遮蔽外部变量。
+- 修复：提交 `2b5443c` 新增 `theme`（`auto`/`light`/`dark` 预设）与 `theme-config`（色值覆盖对象）参数，
+  内置暗色预设只改设计器外壳，纸张/画布背景/标尺/手柄保持原值；参数写入内部容器行内变量，优先级高于 CSS 令牌。
+  同时补全主题令牌清单至 55 项，core 补齐 3 个此前仅有 fallback 的令牌，宿主契约升级至 1.2.0。
+- 补充：四个 demo 顶部新增「配置」弹窗作参考实现（最终只暴露显隐开关，配色靠传参）；demo 内置「更新记录」补齐至 V1.5.2。
+- 验证：core 1420 / canvas 478 项测试通过，`npm run build` 成功；四 demo 经 Playwright 点检 36 项全通过。
 
 ## 部分存在（有缓解但未完全解决）
 
 ### #IKVLXY 素材区图标/面板不能由宿主替换 —— 图标已可替换，隐藏页签不支持
-- 图标方面已解决：`packages/canvas/src/core/element-definitions.ts:37-78` 图标改为 lucide 图标名 + 统一注册表，
+- 图标方面已解决：`packages/canvas/src/core/element-definitions.ts` 图标改为 lucide 图标名 + 统一注册表，
   宿主可用 `registerElementDefinition` 覆盖素材卡的图标/标签/分组（origin: custom）。
-- 仍缺：`print-designer` 无"隐藏指定页签"的属性。`packages/canvas/src/shell/panels.ts:57-66` 的「元素/字段/图层」
-  三个页签写死，`host-contract.ts` 的 attribute/property（`:23-53`）无隐藏页签项，宿主无法只显示部分栏。
+- 仍缺：`print-designer` 无"隐藏指定页签"的属性。`packages/canvas/src/shell/panels.ts` 的「元素/字段/图层」
+  三个页签写死，`host-contract.ts` 无隐藏页签项（2026-11-18 复查确认仍无），宿主无法只显示部分栏。
 
 ### #IKVLXM 字段绑到已有文本操作容易用错 —— 已有替代入口，但无画布光标处直接插入
 - 已有缓解（拆仓后新增）：素材台单击字段复制中文名（Gitee #IKRIZM）、表达式弹窗 Ctrl/⌘+双击插入中文字段名、
   素材台 Ctrl/⌘+拖拽生成静态文本元素（见 changelog V1.4.2、ctrl-field-label.spec.ts、field-tree.spec.ts）。
 - 仍缺：议题期望"选中画布文本后，双击或拖入字段，默认在光标处插入 `{字段名}`"——本仓字段插入取值仍需
-  点进右侧内容框/双击弹开表达式编辑器再双击字段（binding.ts:4、expression-editor.ts），画布上无直接插入光标入口。
+  点进右侧内容框/双击弹开表达式编辑器再双击字段（binding.ts、expression-editor.ts），画布上无直接插入光标入口。
 
 ## 需求类（非缺陷，暂不列为待修）
 
 ### #IKUJ0X checkbox 多选 / radio 单选打印元素 —— 未实现
-- 内置元素仅 13 类（element-definitions.ts:62-78），无 checkbox/radio 打印元素；属功能需求，议题无描述。
+- 内置元素仅 13 类（element-definitions.ts），无 checkbox/radio 打印元素；属功能需求，议题无描述。
 
 ### #IKRSXT 添加常用表格元素 —— 信息不足
-- 已内置 `table` 表格元素（element-definitions.ts:67），议题正文为空，无法确认具体诉求。
+- 已内置 `table` 表格元素（element-definitions.ts），议题正文为空，无法确认具体诉求。
+
+## 已完成：打印预览按钮可以配置隐藏
+- 设计器侧：V1.5.2（提交 `5174b90`）已新增 `showPreview` / `showSave` 布尔开关（`show-preview` / `show-save` attribute），
+  默认显示，置 `false` 隐藏，不影响 `save()` 与事件。
+- 示例侧：本会话四个 demo 顶部新增「配置」弹窗，以两个开关演示显隐配置（提交 `bf718a3`/`6e576f3`/`34ceab7`/`d894b35`，
+  vue2 修复 `f88dc3e`；配色控件已按需求从示例移除，见 `9fd6228`）。
 
 ---
 
@@ -89,8 +113,6 @@
 
 ---
 
-# 打印预览按钮可以配置隐藏
-
 # 插件市场（Git 仓库式分发）—— 方案已定，待实现
 
 > 记录日期 2026-11-17。完整方案见 docs/plugin-marketplace-plan.md。
@@ -99,4 +121,4 @@
 - 已定决策：独立索引仓库（先在本仓 marketplace/ 目录孵化，后手工建仓）；文件安装 +
   `.worm-print/plugins.json` 清单；新包 `@worm-print-platform/marketplace` 纳入 publish:npm；首个插件 qrcode。
 - 复用点：packages/skills 双源/稀疏检出骨架；core/plugin-kit Symbol.for 注册表；echarts 插件样板。
-- 状态：仅方案记录，未动代码。实现入口见方案文档「实施顺序」六步。
+- 状态：仅方案记录，未动代码（2026-11-18 复查确认）。实现入口见方案文档「实施顺序」六步。
