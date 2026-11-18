@@ -89,6 +89,7 @@
             <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
           </div>
         </span>
+        <button type="button" class="demo-print-btn" id="btn-config">配置</button>
         <button type="button" class="demo-print-btn" id="btn-print-output">打印输出</button>
         <input type="file" accept="application/json,.json" class="demo-file-input" id="template-file-input" />
       </header>
@@ -215,6 +216,49 @@
               <button type="button" class="custom-btn ghost" id="custom-cancel">取消</button>
               <button type="button" class="custom-btn" id="custom-apply">应用</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 显示配置：预览/保存按钮显隐 + 主题色（只作用于设计器外壳，画布纸张不受影响） -->
+      <div class="config-mask" id="config-mask" hidden style="display: none">
+        <div class="config-panel">
+          <div class="config-head">
+            <span class="config-title">显示配置</span>
+            <span class="config-close" id="config-close">×</span>
+          </div>
+          <div class="config-body">
+            <section class="config-section">
+              <div class="config-label">按钮显隐</div>
+              <label class="config-row">
+                <input type="checkbox" id="config-show-preview" checked />
+                <span>显示「预览」按钮</span>
+              </label>
+              <label class="config-row">
+                <input type="checkbox" id="config-show-save" checked />
+                <span>显示「保存」按钮</span>
+              </label>
+            </section>
+
+            <section class="config-section">
+              <div class="config-label">主题色</div>
+              <div class="config-presets" id="config-presets">
+                <button type="button" class="config-preset on" data-theme="auto">跟随系统</button>
+                <button type="button" class="config-preset" data-theme="light">浅色</button>
+                <button type="button" class="config-preset" data-theme="dark">深色</button>
+              </div>
+              <div class="config-colors">
+                <label class="config-color"><span>背景</span><input type="color" data-token="bg" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="bg">清空</button></label>
+                <label class="config-color"><span>面板</span><input type="color" data-token="surface" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="surface">清空</button></label>
+                <label class="config-color"><span>文字</span><input type="color" data-token="text" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="text">清空</button></label>
+                <label class="config-color"><span>强调色</span><input type="color" data-token="accent" value="#ffffff" /><button type="button" class="config-color-clear" data-clear="accent">清空</button></label>
+              </div>
+              <button type="button" class="config-btn ghost" id="config-reset">重置配色</button>
+            </section>
+          </div>
+          <div class="config-foot">
+            <span class="config-tip">配色只改变设计器外壳，纸张与画布保持原样</span>
+            <button type="button" class="config-btn" id="config-done">完成</button>
           </div>
         </div>
       </div>
