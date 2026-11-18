@@ -1,8 +1,8 @@
 # apps/jquery · jQuery 宿主直挂集成示例（无打包器）
 
 这一份演示的是**传统项目最原始的接法**：插件不进 `import`，页面上只挂一个 `<link>` 和一个 `<script>`，
-业务代码用 `window.WormPrintCanvas` 全局 + jQuery 操作 DOM。界面版式与 `../../../demo`（Vue 3 打印设计器示例）
-完全一致，宿主样式来自同源生成的 `src/styles/demo-ui.css`。
+业务代码用 `window.WormPrintCanvas` 全局 + jQuery 操作 DOM。界面版式与 vue3 子工程完全一致，
+宿主样式 `src/styles/demo-ui.css` 由 `npm run styles:demos` 从 vue3 同源同步。
 
 ## 跑起来
 
@@ -46,8 +46,8 @@ src/print-dialog.js         打印输出弹窗：服务端 PDF + 客户端静默
 src/render-client.js        /render-api 调用封装（只用 fetch，无 bare import）
 src/browser-render.js       WormPrintCanvas.renderHtmlPages + browserCodeRenderer 的薄封装
 src/ui.js                   弹层显隐、提示文案、JSON 下载等零碎 DOM 工具
-src/templates.js            十个示例的模板 / 字段 / 数据 / 批量数据（sync-demo-samples.mjs 从 demo 生成，勿手改）
-src/styles/demo-ui.css      宿主样式（sync-demo-styles.mjs 从 demo 逐字抽取，勿手改）
+src/templates.js            示例的模板 / 字段 / 数据 / 批量数据（npm run samples:demos 从 vue3 同步，勿手改）
+src/styles/demo-ui.css      宿主样式（npm run styles:demos 从 vue3 同步，勿手改）
 ```
 
 浏览器原生 ESM 只走相对路径：`src/*.js` 之间互相 `import`，npm 包名一律不出现，

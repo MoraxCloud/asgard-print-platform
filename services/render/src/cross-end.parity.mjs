@@ -1,5 +1,5 @@
 // 跨端产物比对（本地/发布前人工执行）：
-//   node services/print-render/src/cross-end.parity.mjs <服务端 PDF> <客户端 PDF>
+//   node services/render/src/cross-end.parity.mjs <服务端 PDF> <客户端 PDF>
 // 判定范围：页数与 MediaBox（档位一只保证逻辑同源；文字/条码的位图差异属已知字体残留差异）。
 // 客户端产物需真机打印一次并开启「保留生成的 PDF」，故本脚本不接入 CI 自动执行。
 import { readFileSync } from 'node:fs'

@@ -2,7 +2,7 @@
 
 独立 npm 工程，只用公开包 `@worm-print-platform/canvas` + `@worm-print-platform/core`，
 把集成过程全摊开：设计器挂载、模板/字段注入、宿主回调、事件、三条打印链路。
-界面版式与 `../../../demo`（Vue 3 打印设计器示例）**完全一致**，样式为同源单一文件。
+界面版式与 vue3 子工程**完全一致**，样式由 `npm run styles:demos` 从 vue3 同源同步。
 
 ## 跑起来
 
@@ -25,7 +25,7 @@ npm run dev -w @worm-print-platform/render     # 服务端 PDF（3001）
 | --- | --- |
 | `npm i @worm-print-platform/canvas @worm-print-platform/core` | 两个包，无 UI 组件库依赖（`canvas` 与主线同号发布正式版，取 `latest`，为后续维护迭代的稳定主版本） |
 | `src/main.jsx` | `registerAll()` 一次 + `import './styles/demo-ui.css'` |
-| `src/styles/demo-ui.css` | demo 同源样式（由 `demos/scripts/sync-demo-styles.mjs` 逐字抽取，四个工程同 MD5，**勿手改**） |
+| `src/styles/demo-ui.css` | 同源样式（由 `npm run styles:demos` 从 vue3 同步，四个工程同 MD5，**勿手改**） |
 | `src/App.jsx` | 顶栏 + `<print-designer>` + 预览层 + property 注入 + 事件监听 + 出纸调用 |
 | `src/components/*.jsx` | 打印输出 / 示例库 / 自定义字段三个弹窗，各自独立 |
 | `src/SampleThumb.jsx` | 示例卡片版式缩略图（几何工具从 `@worm-print-platform/core` 具名导入） |
@@ -57,7 +57,7 @@ React 侧没有 `isCustomElement` 这种编译配置：未知标签 `print-desig
 
 ## 页面上可点的动作（与 vue3 子工程完全一致）
 
-示例模板库切换（10 个与 demo 同源的示例：单据 / 标签拼版 / 连续纸小票）· 自定义字段与数据 · 导出/导入/清空模板 ·
+示例模板库切换（与 vue3 同源的示例：单据 / 标签拼版 / 连续纸小票）· 自定义字段与数据 · 导出/导入/清空模板 ·
 设计器自身「预览」唤出的全屏预览层与浏览器打印 · 打印输出弹窗内的服务端 PDF 与客户端静默打印 ·
 批量份数开关（把打印数据切成数组，三链路共用）。
 

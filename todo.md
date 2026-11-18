@@ -3,16 +3,22 @@
 > 核查日期 2026-11-17。本仓为 canvas 权威实现（v1.5.1），由 worm-vue3-print 拆仓分叉而来，
 > 议题针对 canvas/core 1.4.8。逐项在本仓验证是否存在同类问题。
 
-## 确认存在（缺陷）
+## 已修复（2026-11-17）
 
-### #IKVLU4 固定纸上宽元素未超出纸面却被拆到第二页 —— 存在
+### #IKVLU4 固定纸上宽元素未超出纸面却被拆到第二页（提交 bcea1ba）
 - 现象：自定义纸（如 80×60mm）上横贯多列的文本，绝对底边在本页可用高度内，预览仍整段挪到第二页。
-- 根因：`packages/core/src/render/pagination-engine.ts:559` 的 `depthIn(x)` 把横向相交列的已占高度**累加**；
+- 根因（修复前）：`packages/core/src/render/pagination-engine.ts:559` 的 `depthIn(x)` 把横向相交列的已占高度**累加**；
   `:601 remainingIn()`、`:871` 的 `elHeight <= remainingIn(x)` 只用元素自身高度对比剩余预算，
   没有用元素自身的 `outerBottom` 判断是否落在页内。宽元素同时压到左文字与右二维码时，两侧高度被相加
   再加 `SAFETY_MARGIN = 2`（`:30`），越过预算即整段换页。
-- 验证：已用临时分页测试复现（80×60 纸、宽 78mm 文本底边 45mm 在本页内），结果被拆到第 2 页；测试已删除。
+- 修复：提交 `bcea1ba` 新增 `inflatedByDisjointColumns(x)` 检测并排互不相交列造成的虚假预算；首页元素改用
+  自身底边 `settle.outerBottom <= contentHeight` 判断落页（仅首页生效，续页流式布局累加语义不变）。
+- 验证：`pagination-engine.2d.test.ts:188-221` 新增 2 个针对性用例（底边在纸内留首页 / 底边越界仍换页），
+  连同该文件共 11 项全部通过；core 全量 1418/1420 通过（另 2 项为 `executor-bundle.spec.ts` 缺
+  `dist/node/index.js` 构建产物的既有问题，与本修复无关）。
 - 说明：本仓已有的二维预算修复（`#IKOUJI`）只解决"横向不相交元素互不占高"，不覆盖"单个宽元素横跨多列"的情形。
+
+## 确认存在（缺陷）
 
 ### #IKVLXT 没有打印数据时预览显示表达式原文 —— 存在
 - 现象：`printData` 为空/缺字段时，预览显示 `物料名称：{ItemName}` 原文，看不出绑定是否生效。
@@ -80,3 +86,17 @@
   client 213 / canvas 455 项测试全部通过；`npm run build` 全仓成功。
 - 范围限制（保留）：仅同一纸型内横纵混排，仍拒绝 A4/A3 混用、连续纸多页、多页拼版。
 - **遗留：实体打印机逐页方向识别需目标驱动验收**（本机无对应硬件，无法自动化）。
+
+---
+
+# 打印预览按钮可以配置隐藏
+
+# 插件市场（Git 仓库式分发）—— 方案已定，待实现
+
+> 记录日期 2026-11-17。完整方案见 docs/plugin-marketplace-plan.md。
+
+- 目标：索引仓库 + CLI 安装器 + qrcode 样板插件，打通「收录 → 安装 → 宿主加载」，无中心化服务端。
+- 已定决策：独立索引仓库（先在本仓 marketplace/ 目录孵化，后手工建仓）；文件安装 +
+  `.worm-print/plugins.json` 清单；新包 `@worm-print-platform/marketplace` 纳入 publish:npm；首个插件 qrcode。
+- 复用点：packages/skills 双源/稀疏检出骨架；core/plugin-kit Symbol.for 注册表；echarts 插件样板。
+- 状态：仅方案记录，未动代码。实现入口见方案文档「实施顺序」六步。

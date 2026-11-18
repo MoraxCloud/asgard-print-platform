@@ -1,6 +1,6 @@
 {
   "name": "worm-print-platform",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "private": true,
   "type": "module",
   "description": "跨框架可视化打印模板设计器（Web Components）+ 表达式引擎 + 同构渲染管线 + 渲染微服务 + 静默打印客户端（开源 monorepo）",
@@ -23,6 +23,8 @@
     "dev:demos:react": "npm run dev --prefix demos/apps/react",
     "dev:demos:jquery": "npm run dev --prefix demos/apps/jquery",
     "install:demos:all": "node demos/scripts/install-all.mjs",
+    "styles:demos": "node demos/scripts/sync-demo-styles.mjs",
+    "samples:demos": "node demos/scripts/sync-demo-samples.mjs",
     "build": "npm run build -w @worm-print-platform/core && npm run build -w @worm-print-platform/plugin-kit && npm run build -w @worm-print-platform/contract && npm run build -w @worm-print-platform/mcp && npm run build -w @worm-print-platform/canvas && npm run build -w @worm-print-platform/echarts && npm run build -w @worm-print-platform/render && npm run build -w @worm-print-platform/client && npm run build -w @worm-print-platform/skills",
     "test": "npm run test -w @worm-print-platform/core && npm run test -w @worm-print-platform/plugin-kit && npm run test -w @worm-print-platform/contract && npm run test -w @worm-print-platform/mcp && npm run test -w @worm-print-platform/echarts && npm run test -w @worm-print-platform/canvas && npm run test -w @worm-print-platform/client && npm run test -w @worm-print-platform/render && npm run test -w @worm-print-platform/skills",
     "parity:cross-end": "node services/render/src/cross-end.parity.mjs",

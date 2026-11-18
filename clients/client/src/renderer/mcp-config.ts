@@ -1,5 +1,5 @@
 // 生成可直接粘贴进 MCP 客户端配置文件的完整 mcpServers 配置块。
-// 服务名称与 docs/中文/指南/AI接入.md 的示例一致；它只是配置文件里的 key，
+// 服务名称与 skills/worm-print-platform-mcp/references/desktop.md 的示例一致；它只是配置文件里的 key，
 // 与 MCP 协议层 serverInfo.name（worm-print-platform-client）不是同一个概念。
 export const MCP_SERVICE_NAME = 'worm-print-platform'
 
@@ -37,7 +37,7 @@ export const MCP_PROMPT_SCENARIOS = [
   {
     id: 'canvas',
     label: 'Canvas 项目接入',
-    skills: ['worm-print-platform-mcp', 'worm-print-platform-canvas'],
+    skills: ['worm-print-platform-mcp', 'worm-print-platform-integration'],
   },
 ] as const
 

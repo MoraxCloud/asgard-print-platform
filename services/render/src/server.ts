@@ -1,4 +1,4 @@
-// services/print-render/src/server.ts
+// services/render/src/server.ts
 // 打印渲染服务入口
 
 import express from 'express'

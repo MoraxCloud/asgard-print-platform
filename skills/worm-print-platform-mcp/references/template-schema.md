@@ -196,6 +196,8 @@ Chromium 会合成粗体，度量漂移会静默改分页。
   [布局配方避坑 11](layout-recipes.md#避坑清单每条都对应真实故障)）。`dataSource` 表的 `height`
   按**画布展开态**声明（≈ 表头 + data 行高 × 画布预览行数 + 小计/合计），只写静态行高合计时，
   设计器按预览数据展开回写实测 height 后，下方元素会掉出跟随区、渲染落进表格。刻意层叠覆盖例外。
+  **注意 `print_preview_template` 用的是模板当前值，不模拟这次回写**：回写前预览正常、回写后才坏，
+  因此动态表格要把实测高度回写 `height` 后再预览一次，两版下方元素落位一致才算通过。
 - 单元格常用字段：`formatter`、`cellType`（`text`/`barcode`/`qrcode`/`image`）、`align`（`left`/`center`/`right`/`justify`）、`valign`、
   `fontSize`、`fontWeight`、`color`、`backgroundColor`、`padding`、`borders`（`{top,right,bottom,left}`，
   每边 `{width(pt), style, color}`）、`colspan`、`rowspan`

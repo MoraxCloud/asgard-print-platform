@@ -103,7 +103,7 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // /vendor/*、/images/*、/fonts/* 映射到 public/ 下同名目录（vendor 由 sync-assets 拷包产物，images/fonts 由 sync-demo-samples 拷示例资源），其余按工程根目录取文件
+  // /vendor/*、/images/*、/fonts/* 映射到 public/ 下同名目录（vendor 为包产物，images/fonts 为示例静态资源），其余按工程根目录取文件
   const fromPublic = /^\/(vendor|images|fonts)\//.test(path)
   const target = fromPublic ? `public${path}` : path
   const rel = normalize(target.replace(/^\/+/, '') || 'index.html')

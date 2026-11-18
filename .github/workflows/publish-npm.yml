@@ -2,18 +2,22 @@ name: Publish npm
 
 # 仅手动触发：推 tag 不会自动发布。
 # 触发：Actions → Publish npm → Run workflow，或
-#   gh workflow run publish-npm.yml -f tag=v1.5.0 -f dry_run=true
+#   gh workflow run publish-npm.yml -f tag=v1.5.2 -f dry_run=true
 # 首次验证用 dry_run=true；确认无误后再用 dry_run=false 真正上传。
 # 四个代码包（core / plugin-kit / canvas / echarts）按依赖顺序同批发布，
 # echarts 内含 Web Components 适配层（./ui 子路径）。
-# 认证：优先 Trusted Publishing（OIDC，需在 npmjs.com 各包 Settings → Trusted Publisher 绑定本 workflow），
-# 环境变量 NODE_AUTH_TOKEN 仅作为 OIDC 未配置时的回退。
-# 若之后建好 npm-publish 环境并加入同名环境密钥，给 job 加 environment: npm-publish 即可。
+#
+# 认证：纯 Trusted Publishing（OIDC）。工作区不注入任何 npm token，
+# npm CLI 检测到 GitHub Actions 的 OIDC 环境后自动用短时身份令牌发布。
+# 前提：npmjs.com 各包 Settings → Trusted Publisher 已绑定本 workflow
+#   （Organization=user: worm-longliu / Repository: worm-print-platform /
+#    Workflow filename: publish-npm.yml / Environment 留空 /
+#    Allowed actions 勾选 npm publish）。
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: '要发布的版本标签（如 v1.5.0，需已推送到远端）'
+        description: '要发布的版本标签（如 v1.5.2，需已推送到远端）'
         required: true
         type: string
       dry_run:
@@ -71,20 +75,14 @@ jobs:
           done
           echo "标签与全量发布链版本一致：$TAG"
 
-      - name: 验证 npm 登录态
-        run: npm whoami --registry=https://registry.npmjs.org
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # echarts 依赖 core，必须先发 core
+      # 纯 OIDC 认证：不注入 NODE_AUTH_TOKEN，避免 npm CLI 回退到 token 路径触发 2FA。
+      # echarts 依赖 core，必须先发 core。
       - name: 发布 @worm-print-platform/core
         working-directory: packages/core
         run: |
           EXTRA=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
           npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # plugin-kit 是 canvas 的 runtime dependency，必须先于 canvas 发布
       - name: 发布 @worm-print-platform/plugin-kit
@@ -93,8 +91,6 @@ jobs:
           EXTRA=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
           npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 发布 @worm-print-platform/canvas（设计器权威实现）
         working-directory: packages/canvas
@@ -102,8 +98,6 @@ jobs:
           EXTRA=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
           npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 发布 @worm-print-platform/echarts（含 Web Components 适配层）
         working-directory: packages/echarts
@@ -111,5 +105,3 @@ jobs:
           EXTRA=""
           if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
           npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -11,9 +11,15 @@
 ## 对象/函数入参不生效
 
 1. `fields`、`template`、`fonts`、`designData`、`uploadImage` 等对象/数组/函数只能赋 **property**，写进 attribute 会被字符串化成 `[object Object]` 或丢失函数。
-2. 字符串开关 `is-edit="true"`、`show-help="true"` 才写 attribute。
+2. 字符串开关 `is-edit="true"`、`show-help="true"`、`show-preview="false"`、`show-save="false"` 才写 attribute。
 3. 改字段、切示例、导入或清空模板后，显式再次赋 property（宿主自己调 sync 函数），不要监听元素本身猜注入时机。
 4. `fields` 只有 setter，读回用 `el.store.fields`；`el.template` getter 返回当前画布 JSON 字符串。
+
+## 想隐藏工具栏「预览 / 保存」按钮（自定义打印/预览业务）
+
+1. 用 `showPreview` / `showSave` 开关（契约 1.1.0 起）：原生 `el.showPreview = false` / `el.showSave = false` 或声明式 `show-preview="false"` / `show-save="false"`；Vue 3 门面 `:show-preview="false"` / `:show-save="false"`。默认显示，两个开关独立。
+2. 不要试图用 CSS 覆盖 Shadow DOM 内部按钮来隐藏——开关才是契约面；`::part(toolbar)` 只用于容器级外观。
+3. 隐藏后 `save()` 方法与 `save` / `preview` 事件仍可用，宿主业务按钮里照常调 `el.save()`；旧版本包（契约 1.0.0）没有这两个开关，先升级 core/canvas 同批版本。
 
 ## TypeScript 找不到导出或类型
 
@@ -54,6 +60,16 @@
    可从画布回写值取）；② 下方元素 `top` ≥ 设计底部 + 1~2mm 间隙。两条链路以回写后的 height 为准核对。
 4. 边界：刻意层叠覆盖（水印、角标、骑缝章）依赖的正是绝对定位，属例外；`print_inspect_layout`
    静态体检不判真实行高展开后的重叠，用附足量样例数据的预览验证。
+5. 验收必须做**保存往返**：`print_preview_template` 用的是模板当前值、不模拟设计器回写，回写前预览
+   正常、回写后才坏。把实测高度回写 `options.height` 后再预览一次，两版下方元素都在表格之下才算修好。
+
+## 条码/二维码被分隔线盖住、扫不出来
+
+1. 现象：出纸后码图上有横线/竖线穿过，识读失败；静态体检过去因线类不参与重叠判定而漏报。
+2. 判据：`hline` / `vline` 与 `barcode` / `qrcode` 矩形相交即为 `LINE_OVER_CODE`（error，必须修）；
+   全宽分隔线不再计入 `BACKGROUND_NOT_PAGEABLE`。
+3. 修复：缩小码高使底边与分隔线留 ≥1mm（如 100×150 面单的二维码 24mm→18mm），或移动分隔线/底部文字；
+   排版时先定右侧信息块底边，再排分隔线，最后排底部文字，据此反推码高。
 
 ## 图片不显示
 

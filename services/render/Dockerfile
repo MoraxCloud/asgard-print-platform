@@ -1,6 +1,6 @@
 # 渲染服务镜像：构建上下文为 monorepo 仓库根目录。
 #   构建命令（在仓库根执行）：
-#   docker build -f services/print-render/Dockerfile -t worm-print-platform-render .
+#   docker build -f services/render/Dockerfile -t worm-print-platform-render .
 # core 经 npm workspace 本地软链，无需从 npm registry 安装。
 FROM mcr.microsoft.com/playwright:v1.60.0-noble
 
@@ -39,4 +39,4 @@ RUN npm ci --include=dev \
 
 EXPOSE 3001
 
-CMD ["node", "services/print-render/dist/server.js"]
+CMD ["node", "services/render/dist/server.js"]

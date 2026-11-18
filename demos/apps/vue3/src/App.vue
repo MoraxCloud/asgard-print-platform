@@ -56,6 +56,7 @@
         ref="designerRef"
         is-edit="true"
         show-help="true"
+        :show-preview="true"
         @save="onSave"
         @preview="onPreview"
         @help="onHelp"
@@ -657,7 +658,7 @@ async function refreshRenderStatus() {
   if (!health) {
     renderStatus.value = 'offline'
     renderStatusText.value = '渲染服务离线'
-    renderStatusTitle.value = '请启动 services/print-render'
+    renderStatusTitle.value = '请启动 services/render'
     return
   }
   renderStatus.value = 'online'
@@ -746,7 +747,14 @@ async function connectPrintClient() {
     })
   }
   try {
-    await client.connect()
+    // 客户端未启动时端口扫描（默认 20 个）要 ~30s 才失败，加 5s 兜底让状态及时降级为「离线」。
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), 5000)
+    try {
+      await client.connect(ac.signal)
+    } finally {
+      clearTimeout(timer)
+    }
     clientStatus.value = 'online'
     clientStatusText.value = '打印客户端在线'
     await refreshClientPrinters()

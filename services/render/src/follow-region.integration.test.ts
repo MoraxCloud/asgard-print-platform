@@ -1,4 +1,4 @@
-// services/print-render/src/follow-region.integration.test.ts
+// services/render/src/follow-region.integration.test.ts
 // 端到端：表格真实分页产生的「跟随区」里的线条元素，落纸几何是否保留（台账 T-11 C1）。
 // 这里跑的是服务端真链路：绑定 → 测量趟（Chromium 实测行高）→ 分页引擎自己检出 followElementIds → 最终 HTML。
 // 与 core 的声明级用例互补：那边钉住 `needsHeight`，这边钉住「分页引擎真的会把竖线吸进跟随区，且吸进去后还有长度」。

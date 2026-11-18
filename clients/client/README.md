@@ -1,4 +1,4 @@
-# @worm-print-platform/print-client
+# @worm-print-platform/client
 
 worm-print-platform 跨平台（Windows / Linux / macOS）静默打印桌面客户端。宿主 Web 系统通过浏览器端 SDK（core 子路径 `@worm-print-platform/core/client`）连接本机运行的本客户端，复用 `@worm-print-platform/core` 的同构渲染管线，在隐藏窗口里渲染出最终 HTML，再用 Electron `printToPDF` 生成 PDF 并交给系统打印命令静默出纸——无浏览器打印对话框、不依赖浏览器插件。
 
@@ -64,8 +64,8 @@ PrintEngine（串行锁，并发直接 BUSY）
 ```bash
 npm install                      # 在仓库根目录
 npm run dev:client               # 启动客户端（electron-vite dev，根脚本短别名）
-npm run test -w @worm-print-platform/print-client  # 单元/集成测试（node + happy-dom，不依赖 Electron）
-npm run build -w @worm-print-platform/print-client # electron-vite 三环境构建到 out/
+npm run test -w @worm-print-platform/client  # 单元/集成测试（node + happy-dom，不依赖 Electron）
+npm run build -w @worm-print-platform/client # electron-vite 三环境构建到 out/
 ```
 
 ## 打包
@@ -88,7 +88,7 @@ npm run pack:client:release  # 额外生成 SHA256SUMS.txt 并打印发行版附
 > export ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
 > ```
 
-产物（`clients/print-client/dist/`，目录 `dist/` 已被 `.gitignore` 排除，安装包不入库）：
+产物（`clients/client/dist/`，目录 `dist/` 已被 `.gitignore` 排除，安装包不入库）：
 
 | 文件 | 用途 |
 | --- | --- |
@@ -127,7 +127,7 @@ npm run pack:client:linux:native
 
 - 为什么要容器：`rpm` 目标要调用 `rpmbuild`，宿主 macOS 没有这个可执行文件。`deb` 与 `AppImage` 实测可在 macOS 直接交叉产出，但三类产物同源同环境，口径不分叉。
 - 前置：安装并启动 Docker Desktop（或任意 Linux 容器运行时，脚本会自动探测 `docker` 与 `/Applications/Docker.app/Contents/Resources/bin/docker`）。
-- 首次约 10 分钟：拉 `node:22-bookworm` 镜像 + 容器内 `npm ci`。源码与依赖分别放在容器工作卷 `worm-print-client-linux-work` 里，之后只同步源码；`package-lock.json` 未变则跳过 `npm ci`。
+- 首次约 10 分钟：拉 `node:22-bookworm` 镜像 + 容器内 `npm ci`。源码与依赖分别放在容器工作卷 `worm-print-platform-client-linux-work` 里，之后只同步源码；`package-lock.json` 未变则跳过 `npm ci`。
 - 容器把仓库只读挂载到 `/src`，产物只回拷三类安装包，`dist/` 里已有的 mac/win 安装包不会被覆盖。
 - 实现见 `scripts/pack-client-linux.mjs`；镜像可用 `WORM_LINUX_BUILDER_IMAGE` 覆盖。
 
@@ -152,14 +152,14 @@ npm run pack:client:linux:native
 
 ```bash
 gh auth login   # 仅首次
-gh release upload v1.4.7 \
-  clients/print-client/dist/WormPrintClient-1.4.7-mac-x64.dmg \
-  clients/print-client/dist/WormPrintClient-1.4.7-mac-arm64.dmg \
-  clients/print-client/dist/WormPrintClient-1.4.7-win-x64.exe \
-  clients/print-client/dist/WormPrintClient-1.4.7-linux-amd64.deb \
-  clients/print-client/dist/WormPrintClient-1.4.7-linux-x86_64.rpm \
-  clients/print-client/dist/WormPrintClient-1.4.7-linux-x86_64.AppImage \
-  clients/print-client/dist/SHA256SUMS.txt --clobber
+gh release upload v1.5.1 \
+  clients/client/dist/WormPrintClient-1.5.1-mac-x64.dmg \
+  clients/client/dist/WormPrintClient-1.5.1-mac-arm64.dmg \
+  clients/client/dist/WormPrintClient-1.5.1-win-x64.exe \
+  clients/client/dist/WormPrintClient-1.5.1-linux-amd64.deb \
+  clients/client/dist/WormPrintClient-1.5.1-linux-x86_64.rpm \
+  clients/client/dist/WormPrintClient-1.5.1-linux-x86_64.AppImage \
+  clients/client/dist/SHA256SUMS.txt --clobber
 ```
 
 文件名以 `npm run pack:client:release` 输出的命令为准（它按 `dist/` 里的实际产物拼装）。注意 `SHA256SUMS.txt` 里记录的是**裸文件名**，所以下载方要与安装包放在同一目录里校验：`shasum -a 256 -c SHA256SUMS.txt`（Linux 为 `sha256sum -c`）。未装或未登录 `gh` 时，在 GitHub 发行版的编辑页面把同一批文件拖进 Assets 区域即可。`.github/workflows/release.yml` 创建发行版时不传 `files:`，附件必须由本步骤单独上传。
@@ -174,9 +174,9 @@ npm run pack:client:dir
 
 产物（`npm run pack:client:dir` 只产出**宿主平台**的目录版；要交叉产出别的平台用 `electron-builder --win --dir` / `--linux`，Linux 目录版已在 macOS 交叉实测通过）：
 
-- macOS：`clients/print-client/dist/mac/WormPrintClient.app`
-- Windows：`clients/print-client/dist/win-unpacked/`
-- Linux：`clients/print-client/dist/linux-unpacked/`
+- macOS：`clients/client/dist/mac/WormPrintClient.app`
+- Windows：`clients/client/dist/win-unpacked/`
+- Linux：`clients/client/dist/linux-unpacked/`
 
 ## WebSocket 协议
 
@@ -222,7 +222,7 @@ npm run pack:client:dir
 - **外部访问如实声明**：`print_preview_template` / `print_compare_with_reference` 在客户端本地渲染、不上传数据，但模板内引用的远程图片/字体 URL 与 `file://` 资源会由隐藏窗口真实取回，故两者注解为 `openWorldHint: true`；`print_analyze_reference_image` 只按绝对路径读本地图片（限 20MB、长边 4000px、总像素 2000 万，超限在解码前拒绝），`openWorldHint` 保持 false。宿主 Agent 应把渲染类工具当作可能触网的只读操作，必要时请用户批准。
 - `print_get_open_template` / `print_patch_open_template` / `print_apply_open_template` 读写的是浏览器里**正在编辑**的实时模板：宿主页面（demo 或业务页）用浏览器 SDK `setRequestHandler` 注册 `template.get/apply` 处理器并 `attachTemplate` 签到；`apply` 带防覆盖 revision（陈旧 `baseRevision` 返回冲突，需重新读取），并拒绝 `html` 等封禁元素。同一 sessionId 跨 Origin 重连被拒，页面断开后台自动回收会话。
 
-工作流：demo 打开设计器 → 客户端开启 MCP → Agent 直连 `/mcp` 读取/修改画布模板。宿主接入方式见 [AI 接入](../../docs/中文/指南/AI接入.md)。
+工作流：demo 打开设计器 → 客户端开启 MCP → Agent 直连 `/mcp` 读取/修改画布模板。宿主接入方式见 [宿主端 MCP 集成](../../skills/worm-print-platform-integration/references/mcp-host-integration.md)。
 
 ## 连续纸（热敏/标签）纸长策略
 

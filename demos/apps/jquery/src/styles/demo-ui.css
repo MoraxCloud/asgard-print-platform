@@ -1,9 +1,10 @@
 /*
- * 宿主 UI 样式：与 ./demo（Vue 3 打印设计器示例）完全一致。
- * 由上游 worm-vue3-print 仓的同步脚本自动生成，请勿手改。
+ * 宿主 UI 样式：四个宿主工程同源，以 apps/vue3 的这份为唯一源。
+ * 改动后运行 npm run styles:demos 同步到其余三宿主（那三份勿手改）。
+ * 分段注释里的「原上游 demo/src/...」为历史来源标记，非本仓路径。
  */
 
-/* ══ demo 骨架：顶栏 / 画布容器 / 全屏预览层 ══ 逐字来自 demo/src/App.vue */
+/* ══ demo 骨架：顶栏 / 画布容器 / 全屏预览层 ══ 原上游 demo/src/App.vue */
 /* 设计器内部控件基于原生样式，需全局引入一次 */
 html,
 body,
@@ -73,7 +74,7 @@ body,
   background: #e9ecf2;
   vertical-align: middle;
 }
-/* 宿主示例互跳：无 JS 的 details 下拉，五个工程各写一份；链接用 <a> 不用 <button>（顶栏动作数口径不变） */
+/* 宿主示例互跳：无 JS 的 details 下拉，四个工程各写一份；链接用 <a> 不用 <button>（顶栏动作数口径不变） */
 .demo-host-switch {
   position: relative;
 }
@@ -136,6 +137,11 @@ body,
   background: #165dff;
   color: #ffffff;
   cursor: default;
+}
+/* <details> 闭合时 UA 会隐藏 summary 之外的内容，上面作者规则的 display:flex 会盖掉它，
+   导致菜单常驻可见并压在画布上；此处显式补闭合态隐藏（与顶栏收纳无关）。 */
+.demo-host-switch:not([open]) > .demo-host-switch-menu {
+  display: none;
 }
 .demo-badge {
   padding: 2px 10px;
@@ -293,7 +299,7 @@ body,
   line-height: 1.6;
 }
 
-/* ══ 顶栏「更多」收纳面板（子 demo 用同一套类名与状态类） ══ 逐字来自 demo/src/components/DemoTopbarMore.vue */
+/* ══ 顶栏「更多」收纳面板（子 demo 用同一套类名与状态类） ══ 原上游 demo/src/components/DemoTopbarMore.vue */
 .demo-more-group {
   position: relative;
   display: flex;
@@ -384,7 +390,7 @@ body,
   gap: 8px;
 }
 
-/* ══ 打印输出弹窗（服务端 PDF / 客户端静默打印） ══ 逐字来自 demo/src/components/PrintOutputDialog.vue */
+/* ══ 打印输出弹窗（服务端 PDF / 客户端静默打印） ══ 原上游 demo/src/components/PrintOutputDialog.vue */
 .print-mask {
   position: fixed;
   inset: 0;
@@ -555,7 +561,7 @@ body,
   color: #dc2626;
 }
 
-/* ══ 示例模板库弹窗 ══ 逐字来自 demo/src/components/TemplateGalleryDialog.vue */
+/* ══ 示例模板库弹窗 ══ 原上游 demo/src/components/TemplateGalleryDialog.vue */
 .gallery-mask {
   position: fixed;
   inset: 0;
@@ -733,7 +739,7 @@ body,
   border: 1px solid #d9dde6;
 }
 
-/* ══ 自定义字段与数据弹窗 ══ 逐字来自 demo/src/components/CustomDataDialog.vue */
+/* ══ 自定义字段与数据弹窗 ══ 原上游 demo/src/components/CustomDataDialog.vue */
 .custom-mask {
   position: fixed;
   inset: 0;
@@ -868,7 +874,7 @@ body,
   background: #e9ecf2;
 }
 
-/* ══ 示例卡片缩略图 ══ 逐字来自 demo/src/components/SampleThumb.vue */
+/* ══ 示例卡片缩略图 ══ 原上游 demo/src/components/SampleThumb.vue */
 .thumb-stage {
   width: 148px;
   height: 108px;

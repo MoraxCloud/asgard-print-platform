@@ -101,6 +101,8 @@ export default function App() {
   fieldsRef.current = fields
   const currentSampleRef = useRef(currentSample)
   currentSampleRef.current = currentSample
+  const activeDataRef = useRef(activeData)
+  activeDataRef.current = activeData
   const [aiStatus, setAiStatus] = useState('unreachable')
   const [aiStatusError, setAiStatusError] = useState('')
 
@@ -115,6 +117,8 @@ export default function App() {
     el.fields = nextFields
     el.template = nextTemplate
     el.fonts = fontsOf(nextTemplate)
+    // 设计态示例数据：让图片/码等表达式在设计画布也能求值（如动态 base64 图片）
+    el.designData = activeDataRef.current
     console.log(`[demo] 注入 fields(${nextFields.length} 个字段) 与 template(${nextTemplate.paperSize})`)
   }, [])
 
@@ -192,6 +196,7 @@ export default function App() {
     setTemplateData(nextTemplate)
     setFields(nextFields)
     setActiveData(sample.data)
+    activeDataRef.current = sample.data
     setCurrentSample(sample)
     setCustomDataActive(false)
     setGalleryVisible(false)
@@ -332,6 +337,7 @@ export default function App() {
   function onApplyCustom(nextFields, nextData) {
     setFields(nextFields)
     setActiveData(nextData)
+    activeDataRef.current = nextData
     setCustomDataActive(true)
     setCustomDialogVisible(false)
     syncDesigner(nextFields, templateData)

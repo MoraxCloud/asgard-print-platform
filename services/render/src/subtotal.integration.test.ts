@@ -1,4 +1,4 @@
-// services/print-render/src/subtotal.integration.test.ts
+// services/render/src/subtotal.integration.test.ts
 // 端到端：含小计行/汇总行的跨页表格，经 测量→分页→PDF 完整链路正常渲染。
 import { describe, it, expect } from 'vitest'
 import { renderPdf } from './pdf-render.js'

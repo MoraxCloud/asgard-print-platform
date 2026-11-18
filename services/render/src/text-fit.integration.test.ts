@@ -1,4 +1,4 @@
-// services/print-render/src/text-fit.integration.test.ts
+// services/render/src/text-fit.integration.test.ts
 // 端到端：文字溢出三种形式（截断 / 自动缩小 / 自适应行高）在真实 Chromium 排版下的行为。
 // happy-dom 无排版引擎，二分字号只能在这里得到验证——本文件是「自动缩小真的放得下」的唯一证据。
 import { describe, it, expect } from 'vitest'

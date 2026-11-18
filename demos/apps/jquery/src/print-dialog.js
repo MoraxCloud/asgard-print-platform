@@ -44,7 +44,7 @@ async function refreshRenderStatus() {
   refreshServerButtons()
   const health = await checkRenderHealth()
   if (!health) {
-    setStatus('render', 'offline', '渲染服务离线', '请启动 services/print-render')
+    setStatus('render', 'offline', '渲染服务离线', '请启动 services/render')
   } else {
     setStatus('render', 'online', '渲染服务在线',
       `活跃 ${health.activeRenders} / 并发 ${health.maxConcurrent} · 队列 ${health.queueLength}`)
@@ -140,7 +140,14 @@ async function connectPrintClient() {
     })
   }
   try {
-    await client.connect()
+    // 客户端未启动时端口扫描（默认 20 个）要 ~30s 才失败，加 5s 兜底让状态及时降级为「离线」。
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), 5000)
+    try {
+      await client.connect(ac.signal)
+    } finally {
+      clearTimeout(timer)
+    }
     setStatus('client', 'online', '打印客户端在线')
     await listPrintersSafe()
   } catch {

@@ -1,6 +1,6 @@
 {
   "name": "@worm-print-platform/echarts",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "type": "module",
   "description": "打印模板 ECharts 图表元素可选包：SSR/浏览器 SVG 渲染器、页面执行器与设计器图表扩展（主包不依赖图表库）",
   "main": "./dist/index.cjs",
@@ -61,8 +61,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@worm-print-platform/core": "^1.5.1",
-    "@worm-print-platform/plugin-kit": "^1.5.1",
+    "@worm-print-platform/core": "^1.5.2",
+    "@worm-print-platform/plugin-kit": "^1.5.2",
     "echarts": "^6.1.0"
   },
   "devDependencies": {

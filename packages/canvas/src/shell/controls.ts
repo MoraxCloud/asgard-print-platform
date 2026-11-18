@@ -47,6 +47,9 @@ export interface ShellCtx {
   fire: (action: string, arg?: unknown) => void
   /** 宿主能力开关 */
   showHelp: boolean
+  /** 工具栏「预览 / 保存」按钮显隐：缺省显示，显式 false 才隐藏（与布尔 attribute 的 'false' 判定同口径） */
+  showPreview?: boolean
+  showSave?: boolean
   isEdit: boolean
   /** 宿主注入能力（图片上传、设计背景上传、字体清单），未注入时相关入口置灰 */
   host: {

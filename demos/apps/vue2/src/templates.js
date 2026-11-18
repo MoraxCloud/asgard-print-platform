@@ -1,6 +1,5 @@
-// 宿主示例库：与 ./demo（Vue 3 打印设计器示例）同源，整份文件可以直接抄进业务项目改造成你自己的数据源。
-// 由 demos/scripts/sync-demo-samples.mjs 从 demo/src/samples 自动生成，请勿手改；
-// 示例的增删改只在 demo 侧做，重跑脚本即可同步到四个宿主。
+// 宿主示例库：四个宿主工程同源，整份文件可以直接抄进业务项目改造成你自己的数据源。
+// 本文件（apps/vue3）是唯一源，改动后运行 npm run samples:demos 同步到其余三宿主；其余三份请勿手改。
 // 纸面口径与 core 渲染管线一致：单位 mm，tableColWidths 之和 = 表格元素宽度，
 // tableRows 行高之和 = 表格元素高度，明细行用 rowType 'data' + '{goods.xxx}' 表达式绑定列表。
 
@@ -4623,7 +4622,7 @@ export const SAMPLES = [
         {
           id: 'ew-10',
           type: 'qrcode',
-          options: { left: 0, top: 52, width: 24, height: 24, formatter: '{waybill.qrcode}', qrCodeLevel: 'M' },
+          options: { left: 0, top: 52, width: 24, height: 18, formatter: '{waybill.qrcode}', qrCodeLevel: 'M' },
           printElementType: { type: 'qrcode', title: '二维码' },
         },
         {
@@ -6647,6 +6646,251 @@ export const SAMPLES = [
     },
     batchData: [{}, {}, {}],
   },
+  // ───────────────────────── 示例：住院费用结算单（A4 纵向 · 190mm 版心） ─────────────────────────
+  {
+    id: 'hospital-expense-settlement',
+    name: '费用结算单',
+    group: '单据',
+    desc: '住院费用结算单：患者信息抬头 + 费用明细表（笔数与金额合计）+ 操作员与结算校验码，sys 系统信息随页眉页脚呈现。',
+    paper: 'A4 纵向 · 190mm 版心',
+    fields: [
+      { id: '1', fieldKey: '系统信息', fieldLabel: '系统信息', fieldType: 'string', sortOrder: 1 },
+      { id: '2', fieldKey: '系统信息.机构编号', fieldLabel: '机构编号', fieldType: 'string', sortOrder: 2 },
+      { id: '3', fieldKey: '系统信息.机构名称', fieldLabel: '机构名称', fieldType: 'string', sortOrder: 3 },
+      { id: '4', fieldKey: '系统信息.科室编号', fieldLabel: '科室编号', fieldType: 'string', sortOrder: 4 },
+      { id: '5', fieldKey: '系统信息.科室名称', fieldLabel: '科室名称', fieldType: 'string', sortOrder: 5 },
+      { id: '6', fieldKey: '系统信息.操作员编号', fieldLabel: '操作员编号', fieldType: 'string', sortOrder: 6 },
+      { id: '7', fieldKey: '系统信息.操作员姓名', fieldLabel: '操作员姓名', fieldType: 'string', sortOrder: 7 },
+      { id: '8', fieldKey: '系统信息.操作员头像', fieldLabel: '操作员头像', fieldType: 'string', sortOrder: 8 },
+      { id: '9', fieldKey: '系统信息.操作员签名', fieldLabel: '操作员签名', fieldType: 'string', sortOrder: 9 },
+      { id: '10', fieldKey: '系统信息.结算校验码', fieldLabel: '结算校验码', fieldType: 'string', sortOrder: 10 },
+      { id: '11', fieldKey: '系统信息.终端IP地址', fieldLabel: '终端 IP 地址', fieldType: 'string', sortOrder: 11 },
+      { id: '12', fieldKey: '系统信息.结算时间', fieldLabel: '结算时间', fieldType: 'string', sortOrder: 12 },
+      { id: '13', fieldKey: '住院信息', fieldLabel: '住院信息', fieldType: 'string', sortOrder: 13 },
+      { id: '14', fieldKey: '住院信息.住院号', fieldLabel: '住院号', fieldType: 'string', sortOrder: 14 },
+      { id: '15', fieldKey: '住院信息.患者姓名', fieldLabel: '患者姓名', fieldType: 'string', sortOrder: 15 },
+      { id: '16', fieldKey: '住院信息.性别', fieldLabel: '性别', fieldType: 'string', sortOrder: 16 },
+      { id: '17', fieldKey: '住院信息.科室', fieldLabel: '科室', fieldType: 'string', sortOrder: 17 },
+      { id: '18', fieldKey: '住院信息.病区', fieldLabel: '病区', fieldType: 'string', sortOrder: 18 },
+      { id: '19', fieldKey: '住院信息.医生', fieldLabel: '医生', fieldType: 'string', sortOrder: 19 },
+      { id: '20', fieldKey: '费用明细', fieldLabel: '费用明细', fieldType: 'list', sortOrder: 20 },
+      { id: '21', fieldKey: '费用明细.项目名称', fieldLabel: '项目名称', fieldType: 'string', sortOrder: 21 },
+      { id: '22', fieldKey: '费用明细.规格', fieldLabel: '规格', fieldType: 'string', sortOrder: 22 },
+      { id: '23', fieldKey: '费用明细.单位', fieldLabel: '单位', fieldType: 'string', sortOrder: 23 },
+      { id: '24', fieldKey: '费用明细.数量', fieldLabel: '数量', fieldType: 'number', sortOrder: 24 },
+      { id: '25', fieldKey: '费用明细.单价', fieldLabel: '单价', fieldType: 'number', sortOrder: 25 },
+      { id: '26', fieldKey: '费用明细.金额', fieldLabel: '金额', fieldType: 'number', sortOrder: 26 },
+      { id: '27', fieldKey: '费用明细.计费日期', fieldLabel: '计费日期', fieldType: 'date', sortOrder: 27 },
+    ],
+    data: {
+      系统信息: {
+        机构编号: 'H20190101',
+        机构名称: '杭州市第一人民医院',
+        科室编号: 'K035',
+        科室名称: '住院五官科',
+        操作员编号: 'U10023',
+        操作员姓名: '刘晓虹',
+        操作员头像: '',
+        操作员签名: '',
+        结算校验码: 'A3F98C2155D07B4E2E91C6A00D4F8B12',
+        终端IP地址: '192.168.1.105',
+        结算时间: '2019-01-01 14:30:00',
+      },
+      住院信息: { 住院号: '20130200', 患者姓名: '王复公', 性别: '女', 科室: '住院五官科', 病区: '五官科病区', 医生: '刘医生' },
+      费用明细: [
+        { 项目名称: '二级护理', 规格: '', 单位: '次', 数量: 1, 单价: 2, 金额: 2, 计费日期: '2019-01-01' },
+        { 项目名称: '三级护理', 规格: '', 单位: '次', 数量: 3, 单价: 1.5, 金额: 4.5, 计费日期: '2019-01-01' },
+        { 项目名称: '一级护理', 规格: '', 单位: '次', 数量: 2, 单价: 3, 金额: 6, 计费日期: '2019-01-01' },
+        { 项目名称: '普通床位费', 规格: '', 单位: '床日', 数量: 4, 单价: 28, 金额: 112, 计费日期: '2019-01-01' },
+        { 项目名称: '陪客床费', 规格: '', 单位: '床日', 数量: 4, 单价: 10, 金额: 40, 计费日期: '2019-01-01' },
+        { 项目名称: '静脉输液材料', 规格: '', 单位: '套', 数量: 6, 单价: 3.5, 金额: 21, 计费日期: '2019-01-01' },
+        { 项目名称: '0.9%氯化钠注射液', 规格: '500ml', 单位: '瓶', 数量: 4, 单价: 3.2, 金额: 12.8, 计费日期: '2019-01-01' },
+        { 项目名称: '注射用头孢呋辛钠', 规格: '0.5g', 单位: '支', 数量: 4, 单价: 18.5, 金额: 74, 计费日期: '2019-01-01' },
+        { 项目名称: '血常规检验', 规格: '', 单位: '项', 数量: 1, 单价: 25, 金额: 25, 计费日期: '2019-01-01' },
+        { 项目名称: '尿常规检验', 规格: '', 单位: '项', 数量: 1, 单价: 15, 金额: 15, 计费日期: '2019-01-01' },
+        { 项目名称: '胸部正位DR摄片', 规格: '', 单位: '次', 数量: 1, 单价: 120, 金额: 120, 计费日期: '2019-01-01' },
+        { 项目名称: '心电图检查', 规格: '', 单位: '次', 数量: 1, 单价: 30, 金额: 30, 计费日期: '2019-01-01' },
+        { 项目名称: '耳鼻喉专科检查', 规格: '', 单位: '次', 数量: 1, 单价: 20, 金额: 20, 计费日期: '2019-01-01' },
+        { 项目名称: '换药（小）', 规格: '', 单位: '次', 数量: 2, 单价: 10, 金额: 20, 计费日期: '2019-01-01' },
+        { 项目名称: '雾化吸入治疗', 规格: '', 单位: '次', 数量: 3, 单价: 12, 金额: 36, 计费日期: '2019-01-01' },
+        { 项目名称: '氧气吸入（低流量）', 规格: '', 单位: '小时', 数量: 8, 单价: 2.5, 金额: 20, 计费日期: '2019-01-01' },
+      ],
+    },
+    template: {
+      unit: 'mm',
+      paperSize: 'A4',
+      orientation: 'portrait',
+      margins: { top: 10, right: 10, bottom: 10, left: 10 },
+      header: {
+        height: 12,
+        elements: [
+          {
+            id: 'el-1763288400001-settle-jgmc',
+            type: 'text',
+            options: { left: 0, top: 0, width: 90, height: 5, formatter: '{系统信息.机构名称}', fontSize: 9, textAlign: 'left', color: '#666666' },
+            printElementType: { type: 'text', title: '文本' },
+          },
+          {
+            id: 'el-1763288400002-settle-title',
+            type: 'text',
+            options: {
+              left: 0,
+              top: 5.2,
+              width: 190,
+              height: 6.5,
+              formatter: '住院费用结算单',
+              fontSize: 14,
+              textAlign: 'center',
+              fontWeight: 'bold',
+              letterSpacing: 2,
+            },
+            printElementType: { type: 'text', title: '文本' },
+          },
+        ],
+      },
+      footer: {
+        height: 10,
+        elements: [
+          {
+            id: 'el-1763288400003-settle-forg',
+            type: 'text',
+            options: { left: 0, top: 2.7, width: 100, height: 5.3, formatter: '{系统信息.机构名称} · {系统信息.终端IP地址}', fontSize: 9, textAlign: 'left', color: '#666666' },
+            printElementType: { type: 'text', title: '文本' },
+          },
+          {
+            id: 'el-1763288400004-settle-fpage',
+            type: 'text',
+            options: { left: 145.7, top: 2.7, width: 42.3, height: 5.3, formatter: '{pageIndex}/{totalPages}', fontSize: 12, textAlign: 'left' },
+            printElementType: { type: 'text', title: '文本' },
+          },
+        ],
+      },
+      elements: [
+        {
+          id: 'el-1763288400010-settle-patient',
+          type: 'table',
+          options: {
+            left: 0,
+            top: 0,
+            width: 190,
+            height: 14,
+            tableRows: [
+              {
+                id: 'row-settle-p1',
+                type: 'header',
+                height: 7,
+                cells: [
+                  { id: 'cell-settle-p1a', formatter: '住院号', align: 'right' },
+                  { id: 'cell-settle-p1b', formatter: '{住院信息.住院号}', align: 'left' },
+                  { id: 'cell-settle-p1c', formatter: '患者姓名', align: 'right' },
+                  { id: 'cell-settle-p1d', formatter: '{住院信息.患者姓名}', align: 'left' },
+                  { id: 'cell-settle-p1e', formatter: '性别', align: 'right' },
+                  { id: 'cell-settle-p1f', formatter: '{住院信息.性别}', align: 'left' },
+                ],
+              },
+              {
+                id: 'row-settle-p2',
+                type: 'header',
+                height: 7,
+                cells: [
+                  { id: 'cell-settle-p2a', formatter: '科室', align: 'right' },
+                  { id: 'cell-settle-p2b', formatter: '{住院信息.科室}', align: 'left' },
+                  { id: 'cell-settle-p2c', formatter: '病区', align: 'right' },
+                  { id: 'cell-settle-p2d', formatter: '{住院信息.病区}', align: 'left' },
+                  { id: 'cell-settle-p2e', formatter: '医生', align: 'right' },
+                  { id: 'cell-settle-p2f', formatter: '{住院信息.医生}', align: 'left' },
+                ],
+              },
+            ],
+            tableColWidths: [25, 38, 25, 38, 20, 44],
+            tableDefaultFontSize: 10,
+            tableDefaultColor: '#333333',
+            tableDefaultPadding: 1,
+            tablePagination: { enabled: true },
+          },
+          printElementType: { type: 'table', title: '表格' },
+        },
+        {
+          id: 'el-1763288400011-settle-detail',
+          type: 'table',
+          options: {
+            left: 0,
+            top: 16,
+            width: 190,
+            // height 须与画布展开态一致（设计器按数据预览行回写实测高 ≈46mm）：跟随判据按
+            // max(height, 静态行高合计) 计表格设计底部，声明过小会让下方文本掉出跟随区
+            height: 46,
+            tableRows: [
+              {
+                id: 'row-settle-d1',
+                type: 'header',
+                height: 8,
+                repeatOnPage: true,
+                cells: [
+                  { id: 'cell-settle-d1a', formatter: '项目名称', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d1b', formatter: '规格', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d1c', formatter: '单位', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d1d', formatter: '数量', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d1e', formatter: '单价', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d1f', formatter: '金额', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d1g', formatter: '计费日期', align: 'center', fontWeight: 'bold' },
+                ],
+              },
+              {
+                id: 'row-settle-d2',
+                type: 'data',
+                height: 7,
+                cells: [
+                  { id: 'cell-settle-d2a', formatter: '{费用明细.项目名称}', align: 'left' },
+                  { id: 'cell-settle-d2b', formatter: '{费用明细.规格}', align: 'center' },
+                  { id: 'cell-settle-d2c', formatter: '{费用明细.单位}', align: 'center' },
+                  { id: 'cell-settle-d2d', formatter: '{费用明细.数量}', align: 'right' },
+                  { id: 'cell-settle-d2e', formatter: '{费用明细.单价}', align: 'right' },
+                  { id: 'cell-settle-d2f', formatter: '{费用明细.金额}', align: 'right' },
+                  { id: 'cell-settle-d2g', formatter: '{费用明细.计费日期}', align: 'center' },
+                ],
+              },
+              {
+                id: 'row-settle-d3',
+                type: 'summary',
+                height: 8,
+                cells: [
+                  { id: 'cell-settle-d3a', formatter: '合计', align: 'center', fontWeight: 'bold' },
+                  { id: 'cell-settle-d3b', formatter: '', merged: true, rowspan: 1, colspan: 1 },
+                  { id: 'cell-settle-d3c', formatter: '', merged: true, rowspan: 1, colspan: 1 },
+                  { id: 'cell-settle-d3d', formatter: '{COUNT(费用明细.项目名称)}', align: 'right' },
+                  { id: 'cell-settle-d3e', formatter: '', merged: true, rowspan: 1, colspan: 1 },
+                  { id: 'cell-settle-d3f', formatter: '{MONEY(SUM(费用明细.金额))}', align: 'right', fontWeight: 'bold' },
+                  { id: 'cell-settle-d3g', formatter: '', merged: true, rowspan: 1, colspan: 1 },
+                ],
+              },
+            ],
+            tableColWidths: [48, 22, 16, 20, 22, 30, 32],
+            tableDefaultFontSize: 10,
+            tableDefaultColor: '#333333',
+            tableDefaultPadding: 1,
+            tablePagination: { enabled: true },
+          },
+          printElementType: { type: 'table', title: '表格' },
+        },
+        {
+          id: 'el-1763288400012-settle-sign',
+          type: 'text',
+          // top 须落在明细表设计底部（62.3mm）之下，才会被认领进表格跟随区随切片移页
+          options: { left: 0, top: 65, width: 190, height: 6, formatter: '操作员：{系统信息.操作员姓名}（{系统信息.操作员编号}）    结算时间：{系统信息.结算时间}', fontSize: 10, textAlign: 'left' },
+          printElementType: { type: 'text', title: '文本' },
+        },
+        {
+          id: 'el-1763288400013-settle-hash',
+          type: 'text',
+          options: { left: 0, top: 73, width: 190, height: 5, formatter: '结算校验码：{系统信息.结算校验码}', fontSize: 8, textAlign: 'left', color: '#999999' },
+          printElementType: { type: 'text', title: '文本' },
+        },
+      ],
+      watermark: {},
+      guides: [],
+    },
+  },
   // ───────────────────────── 示例10：称签打印（标签纸 60×40mm · 单枚） ─────────────────────────
   {
     id: 'weight-label',
@@ -6945,6 +7189,102 @@ export const SAMPLES = [
       {
         shop: { name: '鲜享生活超市' },
         product: { name: '手打牛肉丸', spec: '500g', unit: '盒', price: 42, oldPrice: 52, barcode: '6901234567960' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '五常稻花香米', spec: '10kg 装', unit: '袋', price: 79.9, oldPrice: 99.9, barcode: '6901234568001' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '压榨花生油', spec: '5L', unit: '桶', price: 129, oldPrice: 159, barcode: '6901234568002' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '纯牛奶', spec: '250ml×12', unit: '箱', price: 59.9, oldPrice: 72, barcode: '6901234568003' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '希腊酸奶', spec: '100g×8', unit: '组', price: 39.9, oldPrice: 48, barcode: '6901234568004' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '土鸡蛋', spec: '30 枚装', unit: '盒', price: 29.9, oldPrice: 36, barcode: '6901234568005' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '黄油吐司', spec: '350g', unit: '袋', price: 15.8, oldPrice: 19.8, barcode: '6901234568006' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '速冻水饺', spec: '1kg', unit: '袋', price: 32.9, oldPrice: 42, barcode: '6901234568007' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '火锅牛肉卷', spec: '500g', unit: '盒', price: 45, oldPrice: 58, barcode: '6901234568008' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '有机西兰花', spec: '300g', unit: '份', price: 8.9, oldPrice: 11.9, barcode: '6901234568009' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '番茄', spec: '500g', unit: '份', price: 6.5, oldPrice: 8.5, barcode: '6901234568010' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '红富士苹果', spec: '单果 80mm 起', unit: '个', price: 5.9, oldPrice: 7.9, barcode: '6901234568011' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '香蕉', spec: '500g', unit: '份', price: 4.9, oldPrice: 6.5, barcode: '6901234568012' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '巨峰葡萄', spec: '500g', unit: '份', price: 12.9, oldPrice: 16.9, barcode: '6901234568013' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '脐橙', spec: '单果 75mm 起', unit: '个', price: 4.5, oldPrice: 6, barcode: '6901234568014' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '生抽酱油', spec: '500ml', unit: '瓶', price: 13.9, oldPrice: 17.9, barcode: '6901234568015' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '陈醋', spec: '500ml', unit: '瓶', price: 9.9, oldPrice: 12.9, barcode: '6901234568016' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '蚝油', spec: '700g', unit: '瓶', price: 16.8, oldPrice: 21, barcode: '6901234568017' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '食用盐', spec: '400g', unit: '袋', price: 2.5, oldPrice: 3.5, barcode: '6901234568018' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '白砂糖', spec: '500g', unit: '袋', price: 7.9, oldPrice: 9.9, barcode: '6901234568019' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '挂面', spec: '900g', unit: '袋', price: 8.5, oldPrice: 11, barcode: '6901234568020' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '方便面', spec: '5 连包', unit: '组', price: 14.9, oldPrice: 18.9, barcode: '6901234568021' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '薯片', spec: '100g', unit: '袋', price: 9.9, oldPrice: 12.9, barcode: '6901234568022' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '巧克力', spec: '80g', unit: '块', price: 12.5, oldPrice: 15.9, barcode: '6901234568023' },
+      },
+      {
+        shop: { name: '鲜享生活超市' },
+        product: { name: '矿泉水', spec: '550ml×24', unit: '箱', price: 35.9, oldPrice: 48, barcode: '6901234568024' },
       },
     ],
     template: {
@@ -8483,7 +8823,7 @@ export const SAMPLES = [
             left: 0,
             top: 25.5,
             width: 76,
-            height: 17.5,
+            height: 45,
             tableMode: 'dynamic',
             dataSource: 'items',
             tableColWidths: [38, 12, 13, 13],
@@ -8531,7 +8871,7 @@ export const SAMPLES = [
         {
           id: 'rc-13',
           type: 'text',
-          options: { left: 0, top: 45, width: 76, height: 4, formatter: '支付方式：{order.payMethod}', fontSize: 8.5, verticalAlign: 'middle' },
+          options: { left: 0, top: 72.5, width: 76, height: 4, formatter: '支付方式：{order.payMethod}', fontSize: 8.5, verticalAlign: 'middle' },
           printElementType: { type: 'text', title: '文本' },
         },
         {
@@ -8539,7 +8879,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 49,
+            top: 76.5,
             width: 76,
             height: 4,
             formatter: '实付：¥{MONEY(order.paid)}    找零：¥{MONEY(order.change)}',
@@ -8553,7 +8893,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 53,
+            top: 80.5,
             width: 76,
             height: 4,
             formatter: '会员卡号：{order.memberNo}    本次积分：{order.points}',
@@ -8565,13 +8905,13 @@ export const SAMPLES = [
         {
           id: 'rc-16',
           type: 'hline',
-          options: { left: 0, top: 57.5, width: 76, height: 0.2, borderWidth: 0.4, borderColor: '#999999' },
+          options: { left: 0, top: 85, width: 76, height: 0.2, borderWidth: 0.4, borderColor: '#999999' },
           printElementType: { type: 'hline', title: '横线' },
         },
         {
           id: 'rc-17',
           type: 'qrcode',
-          options: { left: 26, top: 59, width: 24, height: 24, formatter: '{order.qrcode}', qrCodeLevel: 'M' },
+          options: { left: 26, top: 86.5, width: 24, height: 24, formatter: '{order.qrcode}', qrCodeLevel: 'M' },
           printElementType: { type: 'qrcode', title: '二维码' },
         },
         {
@@ -8579,7 +8919,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 84,
+            top: 111.5,
             width: 76,
             height: 5,
             formatter: '谢谢惠顾，欢迎下次光临！',
@@ -8595,7 +8935,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 89,
+            top: 116.5,
             width: 76,
             height: 4,
             formatter: '小票号 {order.no}   {order.time}',
@@ -8611,7 +8951,7 @@ export const SAMPLES = [
           type: 'text',
           options: {
             left: 0,
-            top: 93,
+            top: 120.5,
             width: 76,
             height: 4,
             formatter: '凭此小票 7 日内可办理退换货',
@@ -9266,4 +9606,269 @@ export const SAMPLES = [
       ],
     },
   },
+{
+    "id": "image-base64",
+    "name": "Base64 图片验证",
+    "group": "标签",
+    "desc": "图片 src 内联 base64（data:image/png;base64）的验证示例：上方图片把 base64 直接写进 src，下方图片由 printData.logo 经 {logo} 表达式注入。在画布、浏览器预览、服务端 PDF 三处肉眼确认图片是否渲染。",
+    "paper": "A5 纵向 · 128mm 版心",
+    "fields": [
+      {
+        "id": "b64-1",
+        "fieldKey": "remark",
+        "fieldLabel": "验证结论",
+        "fieldType": "string",
+        "sortOrder": 1
+      },
+      {
+        "id": "b64-2",
+        "fieldKey": "logo",
+        "fieldLabel": "Logo 图片 Base64",
+        "fieldType": "string",
+        "sortOrder": 2
+      }
+    ],
+    "data": {
+      "remark": "BASE64 图片验证",
+      "logo": "data:image/png;base64,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",
+      "imgRows": [
+        {
+          "no": 1,
+          "logo": "data:image/png;base64,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"
+        }
+      ]
+    },
+    "template": {
+      "unit": "mm",
+      "paperSize": "A5",
+      "orientation": "portrait",
+      "margins": {
+        "top": 10,
+        "right": 10,
+        "bottom": 10,
+        "left": 10
+      },
+      "header": {
+        "height": 0,
+        "elements": []
+      },
+      "footer": {
+        "height": 0,
+        "elements": []
+      },
+      "watermark": {},
+      "elements": [
+        {
+          "id": "b64-t1",
+          "type": "text",
+          "options": {
+            "left": 0,
+            "top": 0,
+            "width": 128,
+            "height": 10,
+            "formatter": "Base64 图片支持验证",
+            "fontSize": 16,
+            "fontWeight": "bold",
+            "textAlign": "center",
+            "verticalAlign": "middle"
+          },
+          "printElementType": {
+            "type": "text",
+            "title": "文本"
+          }
+        },
+        {
+          "id": "b64-t2",
+          "type": "text",
+          "options": {
+            "left": 0,
+            "top": 11,
+            "width": 128,
+            "height": 9,
+            "formatter": "上：src 内联 data:image/png;base64　｜　下：printData.logo 表达式注入",
+            "fontSize": 9,
+            "color": "#5a6577",
+            "textAlign": "center",
+            "verticalAlign": "middle"
+          },
+          "printElementType": {
+            "type": "text",
+            "title": "文本"
+          }
+        },
+        {
+          "id": "b64-img-1",
+          "type": "image",
+          "options": {
+            "left": 0,
+            "top": 22,
+            "width": 88,
+            "height": 27.5,
+            "fit": "contain",
+            "src": "data:image/png;base64,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"
+          },
+          "printElementType": {
+            "type": "image",
+            "title": "图片"
+          }
+        },
+        {
+          "id": "b64-t3",
+          "type": "text",
+          "options": {
+            "left": 92,
+            "top": 26,
+            "width": 36,
+            "height": 20,
+            "formatter": "① 静态内联",
+            "fontSize": 11,
+            "color": "#2e8b6b",
+            "verticalAlign": "middle"
+          },
+          "printElementType": {
+            "type": "text",
+            "title": "文本"
+          }
+        },
+        {
+          "id": "b64-img-2",
+          "type": "image",
+          "options": {
+            "left": 0,
+            "top": 56,
+            "width": 88,
+            "height": 27.5,
+            "fit": "contain",
+            "src": "{logo}"
+          },
+          "printElementType": {
+            "type": "image",
+            "title": "图片"
+          }
+        },
+        {
+          "id": "b64-t4",
+          "type": "text",
+          "options": {
+            "left": 92,
+            "top": 60,
+            "width": 36,
+            "height": 20,
+            "formatter": "② 动态注入",
+            "fontSize": 11,
+            "color": "#c0392b",
+            "verticalAlign": "middle"
+          },
+          "printElementType": {
+            "type": "text",
+            "title": "文本"
+          }
+        },
+        {
+          "id": "b64-table",
+          "type": "table",
+          "options": {
+            "left": 0,
+            "top": 88,
+            "width": 128,
+            "height": 52,
+            "tableMode": "dynamic",
+            "tableColWidths": [
+              20,
+              54,
+              54
+            ],
+            "tableDefaultFontSize": 10,
+            "tableRows": [
+              {
+                "id": "b64-tr-h",
+                "type": "header",
+                "height": 8,
+                "repeatOnPage": true,
+                "cells": [
+                  {
+                    "id": "b64-th-1",
+                    "formatter": "说明",
+                    "align": "center",
+                    "valign": "middle",
+                    "fontWeight": "bold",
+                    "backgroundColor": "#f6f8fb"
+                  },
+                  {
+                    "id": "b64-th-2",
+                    "formatter": "静态 base64",
+                    "align": "center",
+                    "valign": "middle",
+                    "fontWeight": "bold",
+                    "backgroundColor": "#f6f8fb"
+                  },
+                  {
+                    "id": "b64-th-3",
+                    "formatter": "动态注入(字段)",
+                    "align": "center",
+                    "valign": "middle",
+                    "fontWeight": "bold",
+                    "backgroundColor": "#f6f8fb"
+                  }
+                ]
+              },
+              {
+                "id": "b64-tr-d",
+                "type": "data",
+                "height": 26,
+                "cells": [
+                  {
+                    "id": "b64-td-1",
+                    "formatter": "表格图片",
+                    "align": "center",
+                    "valign": "middle"
+                  },
+                  {
+                    "id": "b64-td-2",
+                    "cellType": "image",
+                    "formatter": "data:image/png;base64,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",
+                    "align": "center",
+                    "valign": "middle",
+                    "fit": "contain"
+                  },
+                  {
+                    "id": "b64-td-3",
+                    "cellType": "image",
+                    "formatter": "{logo}",
+                    "align": "center",
+                    "valign": "middle",
+                    "fit": "contain"
+                  }
+                ]
+              }
+            ],
+            "dataSource": "imgRows"
+          },
+          "printElementType": {
+            "type": "table",
+            "title": "表格"
+          }
+        },
+        {
+          "id": "b64-t5",
+          "type": "text",
+          "options": {
+            "left": 0,
+            "top": 146,
+            "width": 128,
+            "height": 10,
+            "formatter": "验证结论：{remark}",
+            "fontSize": 10,
+            "color": "#333333",
+            "textAlign": "center",
+            "verticalAlign": "middle"
+          },
+          "printElementType": {
+            "type": "text",
+            "title": "文本"
+          }
+        }
+      ]
+    }
+  }
 ]

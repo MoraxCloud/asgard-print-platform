@@ -112,15 +112,18 @@ export function renderToolbar(ctx: ShellCtx, formatSection: unknown) {
         onClick: () => ctx.fire('help'),
       }, [h('span', { class: 'help-icon', text: '?' })]),
     ]) : '',
-    h('div', { class: 'tb-group' }, [
-      h('button', {
-        type: 'button', class: 'btn-secondary', dataset: { tip: '预览模板打印效果' },
-        text: '预览', onClick: () => ctx.fire('preview'),
-      }),
-      h('button', {
-        type: 'button', class: 'btn-primary', dataset: { tip: '保存模板' },
-        text: '保存', onClick: () => ctx.fire('save'),
-      }),
-    ]),
+    (() => {
+      const actions = [
+        ctx.showPreview !== false ? h('button', {
+          type: 'button', class: 'btn-secondary', dataset: { tip: '预览模板打印效果' },
+          text: '预览', onClick: () => ctx.fire('preview'),
+        }) : '',
+        ctx.showSave !== false ? h('button', {
+          type: 'button', class: 'btn-primary', dataset: { tip: '保存模板' },
+          text: '保存', onClick: () => ctx.fire('save'),
+        }) : '',
+      ].filter(Boolean)
+      return actions.length ? h('div', { class: 'tb-group' }, actions) : ''
+    })(),
   ].filter(Boolean) as never)
 }

@@ -3,15 +3,15 @@ import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// 子 demo 验收：版式必须与 ./demo 完全一致，且四条集成链路真的跑得通。
+// 子 demo 验收：版式必须与 vue3 子工程完全一致，且四条集成链路真的跑得通。
 // 用法：node demos/scripts/verify-demo.mjs [url]   （默认 http://localhost:9331/）
-// 四个宿主类名逐字相同（样式由 sync-demo-styles.mjs 同源生成），故一律按 demo 类名断言；
+// 四个宿主类名逐字相同（样式由 npm run styles:demos 从 vue3 同源同步），故一律按 demo 类名断言；
 // 遮罩是 position:fixed，可见性只能按尺寸 + hidden + display 判定，不能用 offsetParent。
-const require = createRequire(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'demo', 'package.json'))
+const require = createRequire(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'package.json'))
 const { chromium } = require('playwright')
 
 const URL_ = process.argv[2] || 'http://localhost:9331/'
-// 示例库由 sync-demo-samples.mjs 从 demo 同源生成（四份同 MD5），断言口径直接读产物，不再手工维护计数。
+// 示例库由 npm run samples:demos 从 vue3 同源同步（四份同 MD5），断言口径直接读产物，不再手工维护计数。
 const { SAMPLES } = await import(new URL('../apps/vue3/src/templates.js', import.meta.url))
 const { CHART_SAMPLES } = await import(new URL('../apps/vue3/src/templates-chart.js', import.meta.url))
 const DEFAULT_SAMPLE = SAMPLES[0]
@@ -130,7 +130,7 @@ const overflow = await page.evaluate(() => {
 check('顶栏接入自适应收纳（T-10）', overflow.group && overflow.units >= 9 && overflow.slots === overflow.units,
   `组=${overflow.group} 单元=${overflow.units} 槽=${overflow.slots}`)
 check('收纳数与「更多」组显隐一致', (overflow.moved === 0) === overflow.groupHidden, `收纳=${overflow.moved} 组隐藏=${overflow.groupHidden}`)
-// 顶栏「宿主示例」下拉：默认收起，五个工程入口齐备（链接用 <a>，不计入上面的按钮数），summary 标出当前宿主
+// 顶栏「宿主示例」下拉：默认收起，四个宿主入口齐备（链接用 <a>，不计入上面的按钮数），summary 标出当前宿主
 const HOST_PORTS = ['9331', '9332', '9335', '9334']
 const SWITCH_NAME_BY_PORT = { '9331': 'Vue3', '9332': 'Vue2', '9335': 'React', '9334': 'jQuery' }
 const hostOrigin = new URL(URL_).origin + '/'
@@ -142,7 +142,7 @@ const switchOk =
   sw.links.filter(a => a.on).length === 1 &&
   sw.links.find(a => a.on).href === hostOrigin &&
   sw.summary.endsWith(SWITCH_NAME_BY_PORT[new URL(URL_).port])
-check('宿主示例下拉收起态：五入口齐备且 summary 标出当前宿主', switchOk,
+check('宿主示例下拉收起态：四入口齐备且 summary 标出当前宿主', switchOk,
   `${sw.summary}·open=${sw.open}·${sw.links.map(a => a.href).join(' ')}`)
 // 展开态：菜单可见、挂在顶栏下方，且命中测试归菜单所有（顶栏与画布容器是同级 flex item，
 // 浏览器按原子层整体绘制，菜单层级不够就会被设计器元素盖住——只看 rect 会漏判）
@@ -208,8 +208,8 @@ const gallery = await page.evaluate(() => ({
 // vue3 宿主额外安装了 @worm-print-platform/echarts/ui，示例库比其余三个宿主多一组图表示例；
 // 按宿主实际是否出现「图表」页签派生期望值，示例增删后断言仍自动跟着生成产物走。
 const hasChartTab = gallery.tabs.some(t => /图表/.test(t))
-// 四宿主按生成产物派生；主站 demo 的示例库由 demo/src/samples 直接提供（可能多一组），
-// 此时以宿主「全部」页签的计数为准，两种口径都保证卡片数与页签计数一致。
+// 四宿主示例库由 npm run samples:demos 从 vue3 同源派生；
+// 以宿主「全部」页签的计数为准，保证卡片数与页签计数一致。
 const generatedCards = SAMPLES.length + (hasChartTab ? CHART_SAMPLES.length : 0)
 const tabTotal = Number((gallery.tabs[0]?.match(/(\d+)/) || [])[1] || 0)
 const expectedCards = tabTotal || generatedCards

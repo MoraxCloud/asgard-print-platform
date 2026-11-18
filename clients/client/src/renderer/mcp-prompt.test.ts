@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import * as mcpConfig from './mcp-config'
 
-/** 当前客户端 MCP 的完整工具清单：与 local-server 的 tools/list 及 print-client/README 保持一致 */
+/** 当前客户端 MCP 的完整工具清单：与 local-server 的 tools/list 及 client/README 保持一致 */
 const MCP_TOOL_NAMES = [
   // 纯计算
   'print_element_kinds',
@@ -80,13 +80,13 @@ describe('buildMcpAgentPrompt', () => {
       scenario: 'canvas',
       commands: [
         'npx @worm-print-platform/skills worm-print-platform-mcp',
-        'npx @worm-print-platform/skills worm-print-platform-canvas',
+        'npx @worm-print-platform/skills worm-print-platform-integration',
       ],
       giteeCommands: [
         'npx @worm-print-platform/skills worm-print-platform-mcp --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
-        'npx @worm-print-platform/skills worm-print-platform-canvas --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
+        'npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git',
       ],
-      excluded: ['npx @worm-print-platform/skills worm-print-platform-integration'],
+      excluded: ['worm-print-platform-canvas'],
     },
   ] as const)('$scenario 场景生成对应技能安装命令', ({ scenario, commands, giteeCommands, excluded }) => {
     const prompt = mcpConfig.buildMcpAgentPrompt(

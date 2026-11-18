@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 // 一次起四个包的 watch 构建 + 四个宿主 demo 的 dev server（各自独立 npm 工程，所以各起各的进程），
-// 外加 :9300 的宿主示例总览页（serve-nav.mjs，五个工程互跳的入口）。
+// 外加 :9300 的宿主示例总览页（serve-nav.mjs，四个宿主互跳的入口）。
 // 端口：vue3 9331 / vue2 9332 / react 9335 / jquery 9334 / 总览 9300。
 // 包 watch 先于 demo 启动：改 packages/*/src 后自动重建 dist，Vite 宿主据此整页刷新、jquery 宿主重拷 vendor 并刷新；
 // watch 首次构建完成前打开的页面需手动刷新一次。
@@ -44,7 +44,7 @@ children.push(
   }),
 )
 
-// 总览页（:9300）：五个工程的互跳入口，与四个 dev server 同组启动、同组退出
+// 总览页（:9300）：四个宿主的互跳入口，与四个 dev server 同组启动、同组退出
 const nav = spawn(process.execPath, [join(HERE, 'serve-nav.mjs')], { cwd: join(HERE, '..') })
 nav.stdout.on('data', chunk => process.stdout.write(prefixed('nav') + chunk))
 nav.stderr.on('data', chunk => process.stderr.write(prefixed('nav') + chunk))

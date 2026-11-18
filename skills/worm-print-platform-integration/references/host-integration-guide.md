@@ -162,6 +162,8 @@ async function load(id) {
 
 React 宿主把上面 `syncDesigner()` 放进 `useEffect`，并把 `el.addEventListener` 与对应 `removeEventListener` 成对登记（React StrictMode dev 会双跑）。
 
+**自定义打印/预览业务时隐藏工具栏按钮**：宿主接管打印与预览逻辑（自己的按钮、弹窗、出纸链路）时，把设计器工具栏的「预览 / 保存」按钮藏掉，避免两套入口并存：原生写 `el.showPreview = false` / `el.showSave = false`（或声明式 `show-preview="false"` / `show-save="false"`），Vue 3 门面写 `:show-preview="false"` / `:show-save="false"`。两个开关独立、默认显示（契约 1.1.0 起）。隐藏只影响按钮出图：`save()` 方法、`save` / `preview` 事件照常可用，宿主仍可在自己的业务流程里调 `el.save()` 触发校验与保存事件。
+
 **形态二：Vue 3 门面组件（Vue 3 宿主；原 `@worm-vue3-print/canvas` 项目迁移后写法不变）**
 
 ```vue

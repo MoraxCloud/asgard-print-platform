@@ -109,6 +109,8 @@ interface TableCtx {
   selection: TableSelection | null
   /** 页面打印范围宽度（mm）= 纸宽 - 左右边距，表格总列宽不得超过 */
   maxTableWidth: number
+  /** 宿主注入的设计态示例数据；图片等单元格表达式据此求值 */
+  designData?: readonly Record<string, unknown>[]
 }
 
 function findRealElement(store: DesignerStore, id: string): RuntimeElement | null {
@@ -127,7 +129,7 @@ function effectiveSelection(store: DesignerStore, el: RuntimeElement): TableSele
   return s
 }
 
-function makeCtx(store: DesignerStore, fire: TableFire, el: RuntimeElement): TableCtx | null {
+function makeCtx(store: DesignerStore, fire: TableFire, el: RuntimeElement, designData?: readonly Record<string, unknown>[]): TableCtx | null {
   const real = findRealElement(store, el.id)
   if (!real) return null
   const options = el.options
@@ -138,6 +140,7 @@ function makeCtx(store: DesignerStore, fire: TableFire, el: RuntimeElement): Tab
     isSelected: store.selectedIds.has(el.id),
     selection: effectiveSelection(store, el),
     maxTableWidth: maxTableWidthOf(store),
+    designData,
   }
 }
 
@@ -377,11 +380,13 @@ function cellPlaceholder(): HTMLElement {
   return box
 }
 
-/** 设计态：{字段} 表达式用 demo 数据求值（与 CellImage.vue 的 designMode 分支同口径） */
-function cellImageSrc(cell: TableCell): string {
+/** 设计态：{字段} 表达式优先用宿主注入的设计数据求值，未注入回落内置 demo 数据 */
+function cellImageSrc(cell: TableCell, ctx: TableCtx): string {
   const raw = cell.formatter || ''
   if (!raw) return ''
-  return raw.includes('{') ? evaluateTemplate(raw, DEFAULT_DEMO_DATA) : raw
+  if (!raw.includes('{')) return raw
+  const demoData = ctx.designData?.length ? ctx.designData[0] : DEFAULT_DEMO_DATA
+  return evaluateTemplate(raw, demoData)
 }
 
 function cellImageNode(ctx: TableCtx, ri: number, cell: TableCell): HTMLElement {
@@ -392,7 +397,7 @@ function cellImageNode(ctx: TableCtx, ri: number, cell: TableCell): HTMLElement 
   if (boxMm !== undefined) {
     holder.style.height = `${boxMm}mm`
   }
-  const src = cellImageSrc(cell)
+  const src = cellImageSrc(cell, ctx)
   if (!src) {
     holder.appendChild(cellPlaceholder())
     return holder
@@ -850,8 +855,8 @@ function colBoundaryLeftMm(ctx: TableCtx, i: number): number {
   return ctx.colWidths.slice(0, i).reduce((s, w) => s + w, 0)
 }
 
-export function renderTable(el: RuntimeElement, store: DesignerStore, fire: TableFire): El {
-  const ctx = makeCtx(store, fire, el)
+export function renderTable(el: RuntimeElement, store: DesignerStore, fire: TableFire, designData?: readonly Record<string, unknown>[]): El {
+  const ctx = makeCtx(store, fire, el, designData)
   if (!ctx) return h('div', { class: 'print-table' })
   const children: unknown[] = [
     h('table', { style: { fontSize: `${defaultFontSize(ctx)}pt`, color: defaultColor(ctx) } }, [

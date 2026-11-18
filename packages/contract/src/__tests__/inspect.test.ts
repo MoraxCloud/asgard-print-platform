@@ -160,6 +160,18 @@ describe('inspectTemplate', () => {
     expect(r3.findings.some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(false)
   })
 
+  it('全宽 hline/vline 不报 BACKGROUND_NOT_PAGEABLE，全宽 rect 仍报', () => {
+    const line = (type: 'hline' | 'vline'): PrintElementData => ({
+      id: 'l1', type, printElementType: { type },
+      options: { left: 0, top: 0, width: CONTENT_W, height: CONTENT_H } as ElementOptions,
+    })
+    expect(inspectTemplate(tpl([line('hline')])).findings.some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(false)
+    expect(inspectTemplate(tpl([line('vline')])).findings.some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(false)
+    expect(inspectTemplate(tpl([{ id: 'r', type: 'rect', printElementType: { type: 'rect' },
+      options: { left: 0, top: 0, width: CONTENT_W, height: CONTENT_H } } as PrintElementData])).findings
+      .some(f => f.code === 'BACKGROUND_NOT_PAGEABLE')).toBe(true)
+  })
+
   it('BARCODE_MISSING_BAR_HEIGHT：条码未给 barHeight 时提示实际条高可能不符', () => {
     const barcode = {
       id: 'bc', type: 'barcode', printElementType: { type: 'barcode' },
@@ -171,5 +183,27 @@ describe('inspectTemplate', () => {
     const withHeight = { ...barcode, options: { ...barcode.options, barHeight: 15 } }
     const r2 = inspectTemplate(tpl([withHeight] as PrintElementData[]))
     expect(r2.findings.some(f => f.code === 'BARCODE_MISSING_BAR_HEIGHT')).toBe(false)
+  })
+
+  it('LINE_OVER_CODE：横线穿二维码 / 竖线穿条码报 error，贴边不报', () => {
+    const code = (id: string, type: 'barcode' | 'qrcode'): PrintElementData => ({
+      id, type, printElementType: { type },
+      options: { left: 10, top: 10, width: 20, height: 20 } as ElementOptions,
+    })
+    const hline: PrintElementData = { id: 'l1', type: 'hline', printElementType: { type: 'hline' },
+      options: { left: 0, top: 15, width: 50 } as ElementOptions } // 故意省略 height
+    const hit = inspectTemplate(tpl([code('q1', 'qrcode'), hline]))
+    expect(hit.ok).toBe(false)
+    expect(hit.findings.some(f => f.code === 'LINE_OVER_CODE' && f.level === 'error' && f.path === 'elements[1]')).toBe(true)
+
+    const vline: PrintElementData = { id: 'l2', type: 'vline', printElementType: { type: 'vline' },
+      options: { left: 15, top: 5, width: 0.2, height: 30 } as ElementOptions }
+    expect(inspectTemplate(tpl([code('b1', 'barcode'), vline])).findings
+      .some(f => f.code === 'LINE_OVER_CODE' && f.path === 'elements[1]')).toBe(true)
+
+    const aside: PrintElementData = { id: 'l3', type: 'hline', printElementType: { type: 'hline' },
+      options: { left: 0, top: 30, width: 50, height: 0.2 } as ElementOptions }
+    expect(inspectTemplate(tpl([code('q2', 'qrcode'), aside])).findings
+      .some(f => f.code === 'LINE_OVER_CODE')).toBe(false)
   })
 })

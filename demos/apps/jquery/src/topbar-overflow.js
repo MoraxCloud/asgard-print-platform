@@ -6,8 +6,9 @@
 /** 直挂形态拿不到裸包名，判定函数由 /vendor/worm-print-canvas.js 挂在全局 WormPrintCanvas 上（canvas 的 browser-bundle 代供）。 */
 const { resolveToolbarOverflow } = window.WormPrintCanvas
 
-/** 收纳优先级链（越靠前越先被收进「更多」），与 index.html 的 data-overflow-unit 一一对应 */
-const CHAIN = ['biz', 'host-switch', 'host-badge', 'clear', 'import', 'export', 'custom', 'batch', 'gallery']
+/** 收纳优先级链（越靠前越先被收进「更多」），与 index.html 的 data-overflow-unit 一一对应。
+    宿主示例是跨宿主导航入口，收起态也要常驻顶栏供验收/录屏取用，故排在链末最后收纳。 */
+const CHAIN = ['biz', 'host-badge', 'clear', 'import', 'export', 'custom', 'batch', 'gallery', 'host-switch']
 /** 与 canvas useToolbarOverflow 同一组常数：判据只在 core 与这一处结算 */
 const GAP = 2
 /** 「更多」触发钮占位宽：收纳态下才可见、量不到稳定值，故与 demo 一样按固定宽预算 */

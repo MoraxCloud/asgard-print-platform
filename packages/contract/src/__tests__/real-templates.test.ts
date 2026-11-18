@@ -22,7 +22,7 @@ function collect(): string[] {
       if (pattern.test(name)) files.push(join(dir, name))
     }
   }
-  files.push('clients/print-client/src/main/test-template.json')
+  files.push('clients/client/src/main/test-template.json')
   return files.filter(f => existsSync(join(ROOT, f)))
 }
 

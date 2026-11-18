@@ -52,6 +52,8 @@ interface HostState {
   uploadDesignBackground?: typeof uploadA
   isEdit?: boolean
   showHelp?: boolean
+  showPreview?: boolean
+  showSave?: boolean
 }
 
 const apps: App[] = []
@@ -80,6 +82,8 @@ function mount(initial: HostState = {}) {
     uploadDesignBackground: state.uploadDesignBackground,
     isEdit: state.isEdit,
     showHelp: state.showHelp,
+    showPreview: state.showPreview,
+    showSave: state.showSave,
     onSave: (json: string) => { saved.push(json) },
     onPreview: () => { previewHits.push(1) },
   }) as any
@@ -148,6 +152,42 @@ describe('PrintDesigner 门面：props → element property', () => {
 
     expect((el as unknown as { store: { fields: PrintBusinessField[] } }).store.fields).toEqual([nextField])
     expect(el.uploadImage).toBe(uploadB)
+  })
+})
+
+describe('PrintDesigner 门面：showPreview / showSave 显隐', () => {
+  const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  const btn = (el: PrintDesignerElement, cls: string, text: string) =>
+    [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>(`.designer-toolbar ${cls}`)]
+      .find(b => b.textContent === text)
+
+  it('传 false 时写布尔 attribute 且工具栏按钮隐藏', async () => {
+    const { el } = mount({ showPreview: false, showSave: false })
+    await frame()
+    expect(el.getAttribute('show-preview')).toBe('false')
+    expect(el.getAttribute('show-save')).toBe('false')
+    expect(btn(el, '.btn-secondary', '预览')).toBeUndefined()
+    expect(btn(el, '.btn-primary', '保存')).toBeUndefined()
+  })
+
+  it('不传时保持元素默认（两按钮显示，不写 attribute）', async () => {
+    const { el } = mount({ fields: [] })
+    await frame()
+    expect(el.hasAttribute('show-preview')).toBe(false)
+    expect(el.hasAttribute('show-save')).toBe(false)
+    expect(btn(el, '.btn-secondary', '预览')).toBeTruthy()
+    expect(btn(el, '.btn-primary', '保存')).toBeTruthy()
+  })
+
+  it('props 变化同步到元素并反映到工具栏', async () => {
+    const { el, state } = mount({ showPreview: false })
+    await frame()
+    expect(btn(el, '.btn-secondary', '预览')).toBeUndefined()
+    state.showPreview = true
+    await nextTick()
+    await frame()
+    expect(el.getAttribute('show-preview')).toBe('true')
+    expect(btn(el, '.btn-secondary', '预览')).toBeTruthy()
   })
 })
 

@@ -47,10 +47,10 @@ el.addEventListener('preview', e => openPreview(e.detail)) // detail 已是当�
 
 修改字段、切换示例、导入或清空模板后，显式再次给 property 赋值；不要监听 element 自身猜测注入时机。`fields` 只有 setter，读回用 `el.store.fields`；`el.template` getter 返回当前画布 JSON 字符串。
 
-## 2. `<print-designer>` 契约（版本化，当前 1.0.0）
+## 2. `<print-designer>` 契约（版本化，当前 1.1.0）
 
 **attribute（字符串形态）**：`template` · `fields` · `name` · `fonts` · `design-data`
-**布尔 attribute（property 开关）**：`is-edit` · `show-help`
+**布尔 attribute（property 开关）**：`is-edit` · `show-help` · `show-preview` · `show-save`
 **property**：
 
 | property | 说明 |
@@ -60,6 +60,7 @@ el.addEventListener('preview', e => openPreview(e.detail)) // detail 已是当�
 | `fonts` | 模板级字体声明数组，注入 `@font-face` 并随保存写回模板 |
 | `designData` | 设计态示例数据（单对象 / 数组信封 / JSON 串），供插件按真实数据预览 |
 | `isEdit` / `showHelp` | 布尔开关，同时写 `is-edit` / `show-help` attribute |
+| `showPreview` / `showSave` | 工具栏「预览 / 保存」按钮显隐，默认显示，置 `false` 隐藏；同时写 `show-preview` / `show-save` attribute。隐藏只影响按钮出图，`save()` 方法与 `save` / `preview` 事件照常可用（宿主自定义打印/预览业务的旁路） |
 | `uploadImage` / `uploadDesignBackground` | 宿主上传函数 `(file: File) => string \| Promise<string>` |
 
 **方法**：
@@ -152,7 +153,7 @@ async function uploadImage(file: File) {
 
 ### 门面组件契约
 
-`PrintDesigner` props：`initial-template`、`initial-elements`、`fields`、`is-edit`、`upload-image`、`upload-design-background`、`show-help`、`fonts`、`designData`。事件：`save(json: string)`、`preview()`（无载荷）。expose：`getTemplateJson()`（返回**对象**，不是字符串）、`validateTemplate()`、`getGeometryWarnings()`。
+`PrintDesigner` props：`initial-template`、`initial-elements`、`fields`、`is-edit`、`upload-image`、`upload-design-background`、`show-help`、`show-preview`、`show-save`、`fonts`、`designData`。事件：`save(json: string)`、`preview()`（无载荷）。expose：`getTemplateJson()`（返回**对象**，不是字符串）、`validateTemplate()`、`getGeometryWarnings()`。
 
 `PrintHtmlPreview` props：`template-json`、`print-data`、`base-url`、`font-base-url`、`renderers`。事件：`rendered(pageCount, copies)`、`error(message)`。expose：`print()`、`rerender()`、`setViewZoom(key)` 及缩放只读属性。
 
@@ -183,8 +184,8 @@ Vue 3 项目迁移的目标是**业务代码零改动**，只换依赖与 import
 ```diff
 - "@worm-vue3-print/canvas": "^1.4.8"
 - "@worm-vue3-print/core": "^1.4.8"
-+ "@worm-print-platform/canvas": "^1.5.1"
-+ "@worm-print-platform/core": "^1.5.1"
++ "@worm-print-platform/canvas": "^1.5.2"
++ "@worm-print-platform/core": "^1.5.2"
 + "vue": "^3.5.0"
 ```
 

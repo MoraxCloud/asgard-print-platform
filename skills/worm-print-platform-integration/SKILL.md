@@ -13,7 +13,7 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 - `packages/canvas/vue3`（`@worm-print-platform/canvas/vue3`）是 Vue 3 的**正式兼容门面**，导出 `PrintDesigner` / `PrintHtmlPreview` 组件，其 props / 事件 / `ref` 方法与原 `@worm-vue3-print/canvas` 的 Vue 3 组件同形（且为其超集）。**Vue 3 宿主应优先用这个门面**：原本消费 `@worm-vue3-print/canvas` 的项目，只需换依赖与 import 路径，模板、事件回调、ref 调用、业务逻辑一行不动即可迁移。底层仍是同一份零框架 canvas，vue 为本子路径的可选 peer。迁移步骤见 [接入 API](references/integration-api.md#3-vue-3-组件写法正式门面)。
 - `packages/core`（`@worm-print-platform/core`）是纯 TS 逻辑：表达式引擎、同构渲染管线与设计器内核，子路径 `/designer`、`/browser`、`/client`、`/node`。
 - 本仓**没有 `common` 包**（那是从 worm-vue3-print 拆仓前的旧包）。零框架 / 无打包器宿主直接消费 canvas 主入口或其 UMD 产物，见 [安装方式的直挂节](references/installation.md#浏览器直挂无打包器--jquery--传统项目) 与 [框架接入要点](references/framework-recipes.md)。
-- 版本以 workspace 当前版本为准（`1.5.1`）；core 与 canvas 及 plugin-kit 同号同批发版，安装时不要只锁其中两个版本号。
+- 版本以 workspace 当前版本为准（`1.5.2`）；core 与 canvas 及 plugin-kit 同号同批发版，安装时不要只锁其中两个版本号。
 
 ## 1. 先确认集成场景
 
@@ -49,7 +49,7 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 2. 按 [安装方式](references/installation.md) 选择 NPM 或源码方案，先安装并验证可解析；Vue 3 迁移见 [接入 API 的迁移对照](references/integration-api.md#4-从-worm-vue3-printcanvas-迁移到本仓)。
 3. 与用户确认打印链路（A / B / C / 并存）。
 4. 按 [接入 API](references/integration-api.md) 接入设计器——原生宿主注册 `<print-designer>` 并注入 property、监听 CustomEvent（框架专属生命周期与坑见 [框架接入要点](references/framework-recipes.md)）；Vue 3 宿主用 `PrintDesigner` / `PrintHtmlPreview` 组件写法。再按 [全栈宿主集成指南](references/host-integration-guide.md) 落地模板管理、设计器页、业务打印入口与后端契约。
-5. 用一条最小链路验证：设计器保存 JSON → 预览渲染 → 浏览器打印；链路 B 再加「模板 JSON + printData → 后端 → render 服务 → PDF」；链路 C 再加「模板 JSON + printData → 本机客户端 → 物理打印机出纸」。
+5. 用一条最小链路验证：设计器保存 JSON → **重新打开回填再预览一次**（画布会把 `<table>` 实测高度回写 `options.height`，动态表格需确认回写后下方元素仍落在表格之下）→ 浏览器打印；链路 B 再加「模板 JSON + printData → 后端 → render 服务 → PDF」；链路 C 再加「模板 JSON + printData → 本机客户端 → 物理打印机出纸」。
 6. 需要 AI 读写当前画布时，按 [宿主 MCP 集成](references/mcp-host-integration.md) 接入桌面客户端实时会话。
 7. 出现样式、类型、依赖解析、打包、PDF 或 MCP 会话问题时，按 [故障排查](references/troubleshooting.md) 定位，不要先改用户业务代码。
 
@@ -59,7 +59,7 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 
 **前端（5 个必备片段）**
 1. 模板管理列表页：模板元信息（名称/业务类型/备注/默认标记）的增删改查。
-2. 设计器页：挂载 `<print-designer>`，`save` 事件提交模板 JSON，`preview` 事件打开预览（事件 `detail` 自带当前画布 JSON）。
+2. 设计器页：挂载 `<print-designer>`，`save` 事件提交模板 JSON，`preview` 事件打开预览（事件 `detail` 自带当前画布 JSON）。宿主接管打印/预览业务时用 `show-preview` / `show-save` 隐藏工具栏按钮（默认显示，隐藏不影响 `save()` 与事件旁路），见 [集成指南 §5.2](references/host-integration-guide.md)。
 3. 新建模板弹窗：元信息表单 + 用 `createDefaultTemplate()` 生成可渲染的初始 elements。
 4. 业务打印入口（按钮组件）：按业务类型选模板 → 向后端取 `{templateJson, printData, baseUrl}` → 打开预览。
 5. 预览弹窗：用 `@worm-print-platform/core/browser` 的 `renderHtmlPages` 同构渲染进全屏 iframe → `contentWindow.print()`；链路 B 再加「下载 PDF」；链路 C 再加 `PrintClient.printHtml()` 静默打印按钮。
@@ -109,8 +109,8 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 ## 6. 验收要点（委托或集成完成后逐项核对）
 
 - 安装方式与样式导入匹配：NPM/`file:` 用 `@worm-print-platform/canvas/style.css`；浏览器直挂用 UMD 产物 + `dist/canvas.css`；Vue 3 门面从 `@worm-print-platform/canvas/vue3` 导入组件，无需额外引样式。
-- Vue 3 门面：组件从 `@worm-print-platform/canvas/vue3` 导入；`PrintDesigner` props `initial-template/initial-elements/fields/is-edit/upload-image/show-help/fonts/design-data`，事件 `save(json)` / `preview()`（无载荷），expose `getTemplateJson()`（返回对象）/ `validateTemplate()` / `getGeometryWarnings()`；`PrintHtmlPreview` props `template-json/print-data/base-url/font-base-url/renderers`，事件 `rendered` / `error`，expose `print/rerender/setViewZoom`。业务代码与旧 Vue 3 轨一致，不改。
-- 原生 `<print-designer>` 只用真实契约：attribute `template/fields/name/fonts/design-data` + 布尔开关 `is-edit/show-help`；方法 `getTemplateJson/loadTemplate/save/validateTemplate/getGeometryWarnings`；事件 `save/preview/help/dblclick-element/dblclick-cell`。可运行时读 `getHostContract()` / `PrintDesignerElement.contractVersion` 自检。
+- Vue 3 门面：组件从 `@worm-print-platform/canvas/vue3` 导入；`PrintDesigner` props `initial-template/initial-elements/fields/is-edit/upload-image/show-help/show-preview/show-save/fonts/design-data`，事件 `save(json)` / `preview()`（无载荷），expose `getTemplateJson()`（返回对象）/ `validateTemplate()` / `getGeometryWarnings()`；`PrintHtmlPreview` props `template-json/print-data/base-url/font-base-url/renderers`，事件 `rendered` / `error`，expose `print/rerender/setViewZoom`。业务代码与旧 Vue 3 轨一致，不改。
+- 原生 `<print-designer>` 只用真实契约：attribute `template/fields/name/fonts/design-data` + 布尔开关 `is-edit/show-help/show-preview/show-save`；方法 `getTemplateJson/loadTemplate/save/validateTemplate/getGeometryWarnings`；事件 `save/preview/help/dblclick-element/dblclick-cell`。可运行时读 `getHostContract()` / `PrintDesignerElement.contractVersion` 自检。`show-preview` / `show-save` 控制工具栏「预览 / 保存」按钮显隐（默认显示），隐藏不影响 `save()` 与 `save`/`preview` 事件，供宿主自定义打印/预览业务。
 - 原生宿主：对象与函数赋 property，不写进 attribute；`fields` 只有 setter，读回看 `el.store.fields`。
 - 原生事件：`save`/`preview` 的 `event.detail` 是模板 JSON 字符串；`dblclick-element` 的 detail 是元素 id 字符串，`dblclick-cell` 是 `{ elementId, r, c, cellId }` 对象，后两者不做 `JSON.parse`。这与门面组件 `@save` 首参为 json 字符串、`@preview` 无载荷的口径不同，按所用形态对齐。
 - 模板 JSON 与宿主元信息分离；列表/详情能正确回填 elements。
@@ -118,7 +118,8 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 - 链路 B：密钥只在服务端/代理层，不进前端 bundle；render 服务 `/health` 可达，Linux 已装中文字体。
 - 链路 C：`PrintClient.connect()` 握手成功、`listPrinters()` 能枚举、`print()`/`printHtml()` 指定打印机/份数出纸；`BUSY` 时由宿主侧重试，客户端不排队。
 - 表格数据：明细 `fieldType:'list'`、列表达式用完整路径（如 `{goods.name}`）、printData 对应字段为数组。
-- 表格下方元素：`top` ≥ 表格设计底部（`top + max(height, 行高合计)`）+ 1~2mm 间隙；动态表格（`dataSource`）的 `height` 按画布展开态声明，否则设计器保存回写实测高后下方元素掉出跟随区、渲染落进表格（三链路同判据，刻意层叠覆盖例外）。
+- 表格下方元素：`top` ≥ 表格设计底部（`top + max(height, 行高合计)`）+ 1~2mm 间隙；动态表格（`dataSource`）的 `height` 按画布展开态声明（表头 + data 行高 × 预览行数 + 小计/合计），不能只写静态行高合计，否则设计器保存回写实测高后下方元素掉出跟随区、渲染落进表格（三链路同判据，刻意层叠覆盖例外）。验收要保存后重新打开再预览一次，确认两版落位一致。
+- 码图净空：`hline` / `vline` 不得横穿 `barcode` / `qrcode`（`print_inspect_layout` 的 `LINE_OVER_CODE` 为 error）；码底边与下方分隔线/文字至少留 1mm，避免出纸后压线压字。
 
 ## 7. 关键约束
 

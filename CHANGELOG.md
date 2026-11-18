@@ -4,6 +4,13 @@
 `core` / `plugin-kit` / `canvas` / `echarts` / `skills` 等正式包同号同批发版；
 `contract` / `mcp` 随桌面客户端打包，不单独发布到 npm。
 
+## V1.5.2(2026-11-17)
+
+- **图片 base64 支持增强**：设计态图片元素与表格图片单元格的 `{字段}` 表达式，改为优先用宿主注入的 `designData` 求值（未注入仍回落内置 demo 数据），动态 base64 图片现可在设计画布直接渲染；新增「Base64 图片验证」示例覆盖静态内联与动态注入两种写法（四宿主同源）。
+- **宿主契约升级至 1.1.0**：新增 `showPreview` / `showSave` 布尔开关（`show-preview` / `show-save` attribute），宿主可隐藏工具栏「预览 / 保存」按钮并自行接管出图业务；隐藏不影响 `save()` 方法与 `save` / `preview` 事件。Vue 3 门面同步提供同名 props。
+- **版本载体对齐**：各工作区包与 demos 同步至 `1.5.2`，MCP 客户端版本常量一并更新；桌面客户端源码无变更，沿用 v1.5.1 安装包。
+- 补充 `image-design-data` / `toolbar-visibility` 回归测试，更新 canvas README / PARITY / 集成技能文档。
+
 ## V1.5.1(2026-11-16)
 
 - **首个 GitHub Release**：新增桌面客户端安装包发行版，mac（x64 / arm64）、Windows、Linux（deb / rpm / AppImage）

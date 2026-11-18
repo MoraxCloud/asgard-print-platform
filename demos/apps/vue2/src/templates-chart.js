@@ -1,6 +1,5 @@
-// 图表宿主示例库：与 ./demo 的图表样例同口径，只在安装了 @worm-print-platform/echarts/ui 的
-// 宿主（当前为 vue3）生成；plugins 清单按 strict 校验声明图表插件 id。
-// 与 demos 示例库同源生成；图表样例文案按本仓 canvas 宿主口径调整，请勿手改。
+// 图表宿主示例库：只在安装了 @worm-print-platform/echarts/ui 的宿主（当前为 vue3）使用；
+// plugins 清单按 strict 校验声明图表插件 id。四份同源，改后需同步到其余三个工程。
 
 /** 图表类示例：需要宿主 import '@worm-print-platform/echarts/ui' 才有素材卡与画布渲染 */
 export const CHART_SAMPLES = [

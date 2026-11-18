@@ -1,5 +1,5 @@
-/* 顶部操作区自适应收纳（issue #4 拆解项 T-10 的 jQuery 宿主形态）。
-   宿主视觉样式 demo-ui.css 由 sync-demo-styles 从 demo 逐字抽取、禁止手改，
+/* 顶部操作区自适应收纳（issue #4 拆解项 T-10）。
+   宿主视觉样式 demo-ui.css 由 npm run styles:demos 从 vue3 同源同步、禁止手改，
    故这里只补收纳机制自身需要的布局约束，不改任何一个既有像素值。 */
 .demo-topbar {
   flex-wrap: nowrap;
@@ -95,13 +95,7 @@
   flex: 0 0 auto;
 }
 
-/* 实测发现（与收纳无关，但同一顶栏内）：宿主示例下拉只有作者规则 display:flex，
-   它盖掉了 <details> 闭合时 UA 的隐藏，导致菜单常驻可见并压在画布上。
-   demo-ui.css 是从 demo 逐字抽取的产物、禁止手改，故在此补闭合态隐藏；
-   根治应在 demo/src/App.vue 的样式源里补同一条，再重跑 sync-demo-styles。 */
-.demo-host-switch:not([open]) > .demo-host-switch-menu {
-  display: none;
-}
+/* 宿主示例下拉的闭合态隐藏已并入同源产物 demo-ui.css（npm run styles:demos 同步）。 */
 
 /* 面板与落位槽的显式布局：包裹层是 span（宿主模板里为避免 div-in-span 的重排风险统一用 span），
    必须显式给出 flex 列，否则内部 block 子节点会脱离行内盒 */
