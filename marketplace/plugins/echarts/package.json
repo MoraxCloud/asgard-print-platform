@@ -1,0 +1,46 @@
+{
+  "name": "@worm-print-platform/plugin-echarts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "worm-print-platform 百度图表市场插件：副作用注册十类 ECharts 图表元素与设计器 UI，图表库保持独立发布。",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "plugin.json", "README.md", "LICENSE"],
+  "wormPrint": {
+    "id": "echarts",
+    "version": "1.0.0",
+    "entry": "dist/index.js",
+    "kinds": ["barChart", "barHChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "scatterChart", "radarChart", "funnelChart", "gaugeChart"],
+    "exportFormats": [],
+    "peerDeps": {
+      "@worm-print-platform/core": "^1.5.2",
+      "@worm-print-platform/plugin-kit": "^1.5.2"
+    }
+  },
+  "peerDependencies": {
+    "@worm-print-platform/core": "^1.5.2",
+    "@worm-print-platform/plugin-kit": "^1.5.2"
+  },
+  "dependencies": {
+    "@worm-print-platform/echarts": "^1.5.2"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^1.6.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run"
+  },
+  "keywords": ["print", "echarts", "chart", "plugin", "worm-print-platform"]
+}
