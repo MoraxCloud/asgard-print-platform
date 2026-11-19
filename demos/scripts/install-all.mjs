@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 // 四个宿主 demo 是彼此独立的 npm 工程，逐个安装（file: 依赖指向本仓库 packages/）。
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, '..')
-const APPS = ['apps/vue3', 'apps/vue2', 'apps/react', 'apps/jquery']
+const APPS = ['apps/vue3', 'apps/vue2', 'apps/react', 'apps/jquery', 'apps/print-demo']
 const REPO = join(ROOT, '..')
 
 /** 宿主 import 前必须存在的 dist 产物：按依赖顺序构建（plugin-kit 先于 canvas 与 echarts） */

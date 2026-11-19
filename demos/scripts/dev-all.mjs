@@ -21,6 +21,7 @@ const APPS = [
   { name: 'vue2', dir: 'apps/vue2' },
   { name: 'react', dir: 'apps/react' },
   { name: 'jquery', dir: 'apps/jquery' },
+  { name: 'print-demo', dir: 'apps/print-demo' },
 ]
 
 function prefixed(name) {
