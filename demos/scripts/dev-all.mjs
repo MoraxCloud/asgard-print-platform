@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// 前置全量构建四个包，再起五个 demo 的 dev server（各自独立 npm 工程，各起各的进程），
+// 前置全量构建五个包，再起五个 demo 的 dev server（各自独立 npm 工程，各起各的进程），
 // 外加 :9300 的示例总览页（serve-nav.mjs，五个示例互跳的入口）。
 // 端口：vue3 9331 / vue2 9332 / react 9335 / jquery 9334 / print-demo 9336 / 总览 9300。
 // 启动顺序：先按依赖顺序串行全量构建一次，全部成功后再起 demo server。
@@ -15,6 +15,7 @@ const LIBS = [
   '@worm-print-platform/plugin-kit',
   '@worm-print-platform/canvas',
   '@worm-print-platform/echarts',
+  '@worm-print-platform/plugin-data-preview',
 ]
 const APPS = [
   { name: 'vue3', dir: 'apps/vue3' },
@@ -28,7 +29,7 @@ function prefixed(name) {
   return `[${name}]`.padEnd(9, ' ')
 }
 
-// 前置全量构建：LIBS 顺序即依赖顺序（core → plugin-kit → canvas → echarts），串行确保 dist 就绪。
+// 前置全量构建：LIBS 顺序即依赖顺序（core → plugin-kit → canvas → echarts → plugin-data-preview），串行确保 dist 就绪。
 // 任一失败立即中止，避免 demo 起在半就绪的 dist 上导致 Vite 解析失败。
 for (const name of LIBS) {
   const result = spawnSync('npm', ['run', 'build', '-w', name], {
