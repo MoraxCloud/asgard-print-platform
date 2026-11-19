@@ -265,7 +265,23 @@
             </label>
             <label class="config-row">
               <input v-model="showFieldKey" type="checkbox" />
-              <span>中文名旁显示字段 key（表头换行显示）</span>
+              <span>数据源预览：中文名旁显示字段 key（表头换行显示）</span>
+            </label>
+          </section>
+          <section class="config-section">
+            <div class="config-label">字段显示</div>
+            <span class="section-hint">控制素材台字段行与表达式编辑器「字段」页签的显示；分组名始终显示，搜索、复制、双击插入与拖拽不受影响；只显示 key 时套用中文名样式。</span>
+            <label class="config-row">
+              <input v-model="fieldDisplay" type="radio" name="config-field-display" value="both" />
+              <span>两者都显示（默认）</span>
+            </label>
+            <label class="config-row">
+              <input v-model="fieldDisplay" type="radio" name="config-field-display" value="label" />
+              <span>只显示中文名</span>
+            </label>
+            <label class="config-row">
+              <input v-model="fieldDisplay" type="radio" name="config-field-display" value="key" />
+              <span>只显示字段 key</span>
             </label>
           </section>
           <section class="config-section">
@@ -348,8 +364,10 @@ const showSave = ref(true)
 const themeMode = ref('auto')
 // 宿主端开关：是否暴露「数据源预览」入口（插件本身只提供触发 API）
 const dataPreviewEnabled = ref(true)
-// 传给插件的入参：中文名旁是否显示字段 key
+// 数据源预览插件的入参：中文名旁是否显示字段 key（与设计器字段显示配置无关）
 const showFieldKey = ref(false)
+// 宿主注入设计器的字段行显示模式：both（默认）/ label / key，走 property 写回
+const fieldDisplay = ref('both')
 
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
@@ -914,16 +932,17 @@ const aiSession = createTemplateSession({
   onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
 })
 
-/** 把按钮显隐与主题预设写回设计器：全部走 property，避免自定义元素属性字符串化 */
+/** 把按钮显隐、字段显示与主题预设写回设计器：全部走 property，避免自定义元素属性字符串化 */
 function applyDisplayConfig() {
   const el = designerRef.value
   if (!el) return
   el.showPreview = showPreview.value
   el.showSave = showSave.value
+  el.fieldDisplay = fieldDisplay.value
   el.theme = themeMode.value
 }
 
-watch([showPreview, showSave, themeMode], applyDisplayConfig)
+watch([showPreview, showSave, fieldDisplay, themeMode], applyDisplayConfig)
 
 onMounted(() => {
   initTopbarOverflow()
