@@ -1,0 +1,35 @@
+{
+  "name": "@worm-print-platform/demo-print",
+  "version": "1.5.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@worm-print-platform/canvas": "file:../../../packages/canvas",
+    "@worm-print-platform/core": "file:../../../packages/core",
+    "@worm-print-platform/echarts": "file:../../../packages/echarts",
+    "@worm-print-platform/plugin-kit": "file:../../../packages/plugin-kit",
+    "axios": "^1.21.0",
+    "element-plus": "^2.14.0",
+    "msw": "2.15.0",
+    "vue": "^3.5.45",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^20.14.6",
+    "sass": "^1.77.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.7",
+    "vitest": "^4.1.12",
+    "vue-tsc": "^2.2.12"
+  }
+}
