@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案草图 05 · Excel / Word 导出插件与宿主菜单</title>
+<style>
+  :root{--bg:#f4f6f9;--ink:#1b2330;--muted:#6b7688;--line:#e2e7ee;--brand:#2f6df6;--brand-bg:#eef4ff;--green:#2e9e5b;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 24px 72px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand)}
+  h1{font-size:26px;margin:8px 0 6px}
+  .lead{color:var(--muted);font-size:14px;max-width:900px;margin:0 0 22px}
+  .board{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 24px rgba(27,35,48,.05);overflow:hidden}
+  .ph{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .pb{padding:14px 16px;font-size:12px}
+
+  .topbar{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:12px;position:relative}
+  .topbar .logo{font-weight:800;color:var(--brand)}
+  .topbar .sp{flex:1}
+  .menu-btn{border:1px solid #c9d9f5;color:var(--brand);background:var(--brand-bg);border-radius:6px;padding:5px 12px;font-weight:700}
+  .dropdown{position:absolute;right:14px;top:44px;width:240px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(27,35,48,.14);padding:6px;z-index:2}
+  .mi{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px}
+  .mi:hover{background:#f5f8ff}
+  .mi .ic{width:26px;height:26px;border-radius:6px;background:#eef1f6;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#63708a;flex-shrink:0}
+  .mi.new .ic{background:var(--brand-bg);color:var(--brand)}
+  .mi b{font-size:12px}.mi small{color:var(--muted);font-size:10px;display:block}
+  .mi .flag{margin-left:auto;font-size:9px;background:var(--brand-bg);color:var(--brand);border-radius:999px;padding:1px 6px}
+
+  .fld{margin-bottom:10px}
+  .fld label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .fld select,.fld input{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:11px;background:#fbfcfe;color:var(--ink)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .chk{display:flex;align-items:center;gap:6px;font-size:11px;margin:5px 0}
+
+  .plug{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:9px;display:flex;gap:10px}
+  .plug .pi{width:38px;height:38px;border-radius:9px;background:#eaf7ef;color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+  .plug .pn{font-weight:700;font-size:12px}
+  .plug .pd{font-size:10px;color:var(--muted);margin:3px 0 6px}
+  .plug .pa{font-size:10px;border:1px solid var(--line);border-radius:5px;padding:2px 8px;color:var(--muted);background:#fff}
+  .plug .pa.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+  .flow{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .flow h3{margin:0 0 12px;font-size:14px}
+  .steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px}
+  .st{border:1px solid var(--line);border-radius:8px;padding:7px 11px;background:#fbfcfe}
+  .st.hl{border-color:var(--brand);background:var(--brand-bg);color:var(--brand);font-weight:700}
+  .fa{color:var(--brand);font-weight:700}
+  .notes{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .notes h3{margin:0 0 12px;font-size:16px}
+  .notes ol{margin:0;padding-left:22px}
+  .notes li{font-size:13px;margin:7px 0;color:#445064}
+  .notes code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:11px}
+  .callout{margin-top:14px;background:var(--brand-bg);border-left:3px solid var(--brand);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#274a8a}
+  .nav{margin-top:20px;font-size:13px}.nav a{color:var(--brand);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">方案草图 05 / 06 · P2</div>
+  <h1>真实 Excel / Word 导出插件与宿主菜单</h1>
+  <p class="lead">导出插件注册表 <code>export-plugin-registry.ts</code> 已用 <code>Symbol.for</code> 实现跨 bundle 单实例，但 <code>marketplace.json</code> 的 <code>exportFormats</code> 全空、没有真实插件，设计器也没有导出入口。本方案补上插件与菜单，打通「设计 → 多格式交付」闭环。</p>
+
+  <div class="topbar">
+    <span class="logo">◧ 打印设计器</span><span>销售单模板</span><span class="sp"></span>
+    <span class="menu-btn">导出 ▾</span>
+    <div class="dropdown">
+      <div class="mi"><span class="ic">PDF</span><span><b>导出 PDF</b><small>现有链路 · 服务端 / 客户端</small></span></div>
+      <div class="mi new"><span class="ic">PNG</span><span><b>导出 PNG 图片</b><small>对应功能 04</small></span><span class="flag">新</span></div>
+      <div class="mi new"><span class="ic">XLS</span><span><b>导出 Excel（.xlsx）</b><small>按表格元素还原为工作表</small></span><span class="flag">插件</span></div>
+      <div class="mi new"><span class="ic">DOC</span><span><b>导出 Word（.docx）</b><small>文本 / 表格 / 图片版式还原</small></span><span class="flag">插件</span></div>
+      <div class="mi new"><span class="ic">CSV</span><span><b>导出 CSV</b><small>仅明细表数据</small></span><span class="flag">插件</span></div>
+    </div>
+  </div>
+  <div style="height:150px"></div>
+
+  <div class="board">
+    <div class="panel">
+      <div class="ph">Excel 导出插件 · 配置面板</div>
+      <div class="pb">
+        <div class="fld"><label>数据源</label><select><option>当前打印数据（printData）</option><option>字段树样例</option></select></div>
+        <div class="fld"><label>表格元素 → 工作表</label><select><option>明细表 → Sheet1（自动分页）</option><option>每个表格独立 Sheet</option></select></div>
+        <div class="grid2">
+          <div class="fld"><label>表头样式</label><select><option>跟随模板主题</option><option>简洁灰底</option></select></div>
+          <div class="fld"><label>金额列</label><select><option>保留数字格式</option><option>纯文本</option></select></div>
+        </div>
+        <div class="chk"><input type="checkbox" checked> 合并单元格按模板还原</div>
+        <div class="chk"><input type="checkbox" checked> 冻结首行表头</div>
+        <div class="chk"><input type="checkbox"> 大数据量时按 500 行分 Sheet</div>
+        <div style="background:var(--brand-bg);border-radius:8px;padding:8px 10px;font-size:11px;color:#274a8a;margin-top:10px">导出前用现有表达式引擎求值：金额、合计、日期等表达式先算出结果再写入单元格，避免 Excel 内二次计算与模板不一致。</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">插件市场 · 导出类插件</div>
+      <div class="pb">
+        <div class="plug">
+          <div class="pi">XLSX</div>
+          <div><div class="pn">Excel 导出插件</div><div class="pd">@worm-print-platform/plugin-export-xlsx · v0.1.0</div><span class="pa on">已启用</span></div>
+        </div>
+        <div class="plug">
+          <div class="pi" style="background:#eef4ff;color:var(--brand)">DOCX</div>
+          <div><div class="pn">Word 导出插件</div><div class="pd">@worm-print-platform/plugin-export-docx · v0.1.0</div><span class="pa">安装</span></div>
+        </div>
+        <div class="plug">
+          <div class="pi" style="background:#f1f4f8;color:var(--muted)">CSV</div>
+          <div><div class="pn">CSV 导出插件</div><div class="pd">@worm-print-platform/plugin-export-csv · v0.1.0</div><span class="pa">安装</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px">安装方式：沿用 <code>worm-print-marketplace</code> 四源 CLI；插件声明 <code>exportFormats</code> 后自动出现在设计器导出菜单。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <h3>导出数据流</h3>
+    <div class="steps">
+      <span class="st">设计器导出菜单</span><span class="fa">→</span>
+      <span class="st hl">export-plugin-registry（Symbol.for 单实例）</span><span class="fa">→</span>
+      <span class="st">插件渲染器：表达式求值 + 元素映射</span><span class="fa">→</span>
+      <span class="st">生成 xlsx / docx</span><span class="fa">→</span>
+      <span class="st">浏览器下载 / 客户端落盘</span>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>设计要点（与现有代码的衔接）</h3>
+    <ol>
+      <li><b>复用注册表</b>：<code>packages/core/src/designer/export-plugin-registry.ts</code> 已经实现（`Symbol.for` 跨 bundle 单实例），本功能不重写注册表，只新增符合契约的插件实现并在 <code>marketplace.json</code> 声明 <code>exportFormats</code>。</li>
+      <li><b>数据一致性</b>：导出前调用 core 表达式引擎对模板求值，保证 xlsx / docx 中的金额、日期、合计与 PDF / 打印结果一致，不依赖 Excel / Word 自身计算。</li>
+      <li><b>宿主接入</b>：在 <code>packages/canvas</code> 顶栏增加「导出」菜单，菜单项由注册表动态生成（PDF / PNG 为内置，其余来自已安装插件）。</li>
+      <li><b>边界</b>：遵循现有市场边界——不做沙箱、不做市场静态站点；插件作为 npm 包安装并声明导出格式即可。</li>
+      <li><b>与功能 04 协同</b>：PNG 作为内置导出项复用缩略图 / 截图接口，和插件导出共用同一个菜单入口。</li>
+    </ol>
+    <div class="callout">独立功能：不依赖 AI 会话，但扩展了整体交付形态；可与功能 04 的 PNG 导出一并实施。</div>
+  </div>
+
+  <div class="nav"><a href="04-render-thumbnail.html">← 上一个</a> &nbsp;·&nbsp; <a href="index.html">草图导航</a> &nbsp;·&nbsp; <a href="06-template-version-history.html">下一个：版本历史 →</a></div>
+</div>
+</body>
+</html>

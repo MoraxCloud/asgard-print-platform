@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案草图 04 · PNG 截图与缩略图 API</title>
+<style>
+  :root{--bg:#f4f6f9;--ink:#1b2330;--muted:#6b7688;--line:#e2e7ee;--brand:#2f6df6;--brand-bg:#eef4ff;--green:#2e9e5b;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 24px 72px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand)}
+  h1{font-size:26px;margin:8px 0 6px}
+  .lead{color:var(--muted);font-size:14px;max-width:900px;margin:0 0 22px}
+  .board{display:grid;grid-template-columns:0.85fr 1.15fr;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 24px rgba(27,35,48,.05);overflow:hidden}
+  .ph{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+  .pb{padding:14px 16px;font-size:12px}
+  .ep{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:#fff;background:#243046;border-radius:7px;padding:6px 10px;margin-bottom:10px}
+  .ep.post::before{content:"POST ";color:#8fe0a8}
+  .ep.get::before{content:"GET ";color:#ffd479}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .row label{width:88px;color:var(--muted);font-size:11px;flex-shrink:0}
+  .row .val{border:1px solid var(--line);border-radius:6px;padding:4px 8px;flex:1;font-family:ui-monospace,monospace;font-size:11px;background:#fbfcfe}
+  .resp{background:#f6f8fb;border:1px dashed var(--line);border-radius:8px;padding:9px 11px;font:10px/1.7 ui-monospace,monospace;color:#475569;margin-top:10px;white-space:pre-wrap}
+  .limit{font-size:10px;color:var(--muted);background:#fffbeb;border:1px solid #fde9b8;border-radius:7px;padding:7px 10px;margin-top:10px}
+
+  .wall{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tpl{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .thumb{height:124px;background:#eef1f5;display:flex;align-items:center;justify-content:center;padding:8px}
+  .mini-paper{width:76px;height:104px;background:#fff;box-shadow:0 2px 7px rgba(0,0,0,.12);padding:7px 6px}
+  .mh{height:9px;background:#2f6df6;border-radius:2px;margin-bottom:5px}
+  .ml{height:4px;background:#e2e8f0;border-radius:2px;margin-bottom:3px}
+  .mt{border:1px solid #cbd5e1;margin-top:6px}
+  .mtr{height:9px;border-bottom:1px solid #e2e8f0}
+  .mtr:last-child{border:none}
+  .tpl .info{padding:7px 9px;font-size:11px}
+  .tpl .info b{display:block;font-size:11px;margin-bottom:2px}
+  .tpl .info span{color:var(--muted);font-size:10px}
+  .flow{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .flow h3{margin:0 0 12px;font-size:14px}
+  .steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px}
+  .st{border:1px solid var(--line);border-radius:8px;padding:7px 11px;background:#fbfcfe}
+  .st.hl{border-color:var(--brand);background:var(--brand-bg);color:var(--brand);font-weight:700}
+  .fa{color:var(--brand);font-weight:700}
+
+  .notes{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .notes h3{margin:0 0 12px;font-size:16px}
+  .notes ol{margin:0;padding-left:22px}
+  .notes li{font-size:13px;margin:7px 0;color:#445064}
+  .notes code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:11px}
+  .callout{margin-top:14px;background:var(--brand-bg);border-left:3px solid var(--brand);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#274a8a}
+  .nav{margin-top:20px;font-size:13px}.nav a{color:var(--brand);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">方案草图 04 / 06 · P1</div>
+  <h1>服务端 PNG 截图与模板缩略图 API</h1>
+  <p class="lead">渲染服务 README 标题写「PDF / 截图」，但当前只有 <code>POST /render/pdf</code>。本方案补齐 PNG 截图与缩略图接口，复用同一套 Playwright 同构渲染管线，并让 AI 会话里的每次变更都能即时回传可视化结果。</p>
+
+  <div class="board">
+    <div class="panel">
+      <div class="ph">渲染服务 API 控制台 <span style="font-weight:400;color:var(--muted);font-size:11px">services/render</span></div>
+      <div class="pb">
+        <div class="ep post">/render/png</div>
+        <div class="row"><label>templateJson</label><span class="val">{"paperSize":"A4",…}</span></div>
+        <div class="row"><label>printData</label><span class="val">{"orderNo":"SO-2026…"}</span></div>
+        <div class="row"><label>page</label><span class="val">1（支持多页逐页导出）</span></div>
+        <div class="row"><label>scale</label><span class="val">2（Retina 清晰度）</span></div>
+        <div class="row"><label>clip</label><span class="val">full | header | elementId</span></div>
+        <div class="resp">200 OK · image/png
+X-Render-Revision: e5f6a7b8…
+X-Render-Pages: 3
+X-Cache: HIT</div>
+
+        <div class="ep get" style="margin-top:14px">/render/thumbnail?templateId=…&amp;page=1</div>
+        <div class="row"><label>size</label><span class="val">160×226（按 A4 比例）</span></div>
+        <div class="row"><label>cache</label><span class="val">按 revision 缓存，模板变更自动失效</span></div>
+
+        <div class="limit">约束：沿用现有 10MB / 30s / 单批最多 500 份限制；PNG / 缩略图共用 Playwright 浏览器池，与 PDF 互不影响。</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">模板缩略图墙 <span style="font-weight:400;color:var(--muted);font-size:11px">设计器「打开模板」与 AI 结果预览共用</span></div>
+      <div class="pb">
+        <div class="wall">
+          <div class="tpl"><div class="thumb"><div class="mini-paper"><div class="mh"></div><div class="ml"></div><div class="ml"></div><div class="mt"><div class="mtr"></div><div class="mtr"></div><div class="mtr"></div></div></div></div><div class="info"><b>销售单</b><span>3 页 · v1.6.0</span></div></div>
+          <div class="tpl"><div class="thumb"><div class="mini-paper"><div class="mh" style="background:#2e9e5b"></div><div class="ml"></div><div class="ml"></div><div class="ml"></div><div class="mt"><div class="mtr"></div><div class="mtr"></div></div></div></div><div class="info"><b>体检报告</b><span>2 页 · v1.5.9</span></div></div>
+          <div class="tpl"><div class="thumb"><div class="mini-paper"><div class="mh" style="background:#d98a1f"></div><div class="ml"></div><div class="mt"><div class="mtr"></div><div class="mtr"></div><div class="mtr"></div><div class="mtr"></div></div></div></div><div class="info"><b>出库单</b><span>1 页 · v1.5.8</span></div></div>
+          <div class="tpl"><div class="thumb"><div class="mini-paper"><div class="mh" style="background:#7c5cd6"></div><div class="ml"></div><div class="ml"></div><div class="mt"><div class="mtr"></div></div></div></div><div class="info"><b>快递面单</b><span>1 页 · v1.5.7</span></div></div>
+          <div class="tpl"><div class="thumb"><div class="mini-paper"><div class="mh" style="background:#0f9b9b"></div><div class="ml"></div><div class="ml"></div><div class="ml"></div><div class="mt"><div class="mtr"></div><div class="mtr"></div></div></div></div><div class="info"><b>发票模板</b><span>2 页 · v1.5.6</span></div></div>
+          <div class="tpl"><div class="thumb" style="color:#9aa4b2;font-size:11px;flex-direction:column;gap:6px"><div style="font-size:22px">＋</div>由 AI 生成新模板</div><div class="info"><b>新建</b><span>对话式创建</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <h3>AI 结果可视化回传（与功能 01 联动）</h3>
+    <div class="steps">
+      <span class="st">AI 说出修改意图</span><span class="fa">→</span>
+      <span class="st">template.apply 写回</span><span class="fa">→</span>
+      <span class="st hl">新 revision 触发 /render/png</span><span class="fa">→</span>
+      <span class="st">对话内嵌缩略图</span><span class="fa">→</span>
+      <span class="st">用户「查看差异 / 撤销」</span>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>设计要点（与现有代码的衔接）</h3>
+    <ol>
+      <li><b>复用管线</b>：<code>services/render/src/server.ts</code> 现有 <code>POST /render/pdf</code> 已经用 Playwright 打开渲染页并注入 templateJson + printData；PNG 仅在最后一步把 <code>page.pdf()</code> 换成 <code>page.screenshot()</code>，分页与数据绑定逻辑零改动。</li>
+      <li><b>缩放与裁剪</b>：<code>scale</code> 控制设备像素比，<code>clip</code> 支持整页 / 页眉 / 指定元素，既服务缩略图墙也服务 AI 的「只看这一块」审阅。</li>
+      <li><b>缓存</b>：以模板内容 revision 作为缓存键（与 <code>revisionOf()</code> 同口径），模板一变自动失效，避免缩略图墙反复出图。</li>
+      <li><b>流式兼容</b>：缩略图结果可作为 MCP resource <code>preview://page1</code> 暴露（功能 02），AI 会话直接引用。</li>
+      <li><b>契约一致</b>：沿用现有 10MB / 30s / 500 份限制与错误响应格式，Docker 部署与 <code>/health</code> 不变。</li>
+    </ol>
+    <div class="callout">被依赖：功能 01 的「预览结果」按钮与功能 06 的版本差异缩略图都调用本接口；与 PDF 链路平行，不改动三端打印主流程。</div>
+  </div>
+
+  <div class="nav"><a href="03-browser-ai-sdk.html">← 上一个</a> &nbsp;·&nbsp; <a href="index.html">草图导航</a> &nbsp;·&nbsp; <a href="05-export-plugins.html">下一个：导出插件 →</a></div>
+</div>
+</body>
+</html>

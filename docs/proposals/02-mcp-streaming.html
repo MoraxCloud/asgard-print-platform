@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案草图 02 · MCP 流式工具调用与提示词</title>
+<style>
+  :root{--bg:#f4f6f9;--ink:#1b2330;--muted:#6b7688;--line:#e2e7ee;--brand:#2f6df6;--brand-bg:#eef4ff;--green:#2e9e5b;--amber:#d98a1f;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 24px 72px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand)}
+  h1{font-size:26px;margin:8px 0 6px}
+  .lead{color:var(--muted);font-size:14px;max-width:900px;margin:0 0 22px}
+  .board{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 24px rgba(27,35,48,.05);overflow:hidden}
+  .ph{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .ph .sub{font-weight:400;color:var(--muted);font-size:11px}
+  .pb{padding:14px 16px;font-size:12px}
+
+  .req{background:var(--brand);color:#fff;border-radius:10px 10px 2px 10px;padding:8px 12px;display:inline-block;max-width:90%;margin-bottom:14px}
+  .stream{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:#fbfcfe}
+  .stream .txt{color:#3b4758}
+  .cursor{display:inline-block;width:6px;height:12px;background:var(--brand);vertical-align:-2px;animation:b 1s steps(2) infinite}
+  @keyframes b{50%{opacity:0}}
+  .tool{border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:8px;padding:8px 12px;margin:8px 0;background:#fff}
+  .tool .t{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:var(--brand)}
+  .tool .ok{float:right;font-size:10px;color:var(--green);background:#eaf7ef;border-radius:999px;padding:1px 8px}
+  .tool .meta{font-size:10px;color:var(--muted);margin-top:4px}
+  .bar{height:5px;background:#eef1f6;border-radius:99px;margin-top:8px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),#7aa5ff);width:68%;border-radius:99px;animation:grow 1.4s ease-out}
+  @keyframes grow{from{width:0}}
+  .tool.pending{border-left-color:var(--amber)}
+  .tool.pending .t{color:var(--amber)}
+  .notify{margin-top:12px;background:#fffbeb;border:1px solid #fde9b8;border-radius:8px;padding:8px 12px;font-size:11px;color:#8a6416}
+
+  .endpoint{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:11px}
+  .endpoint code{font-family:ui-monospace,monospace;font-weight:700}
+  .badge{font-size:9px;border-radius:999px;padding:2px 7px;font-weight:700;margin-left:auto;white-space:nowrap}
+  .badge.now{background:#eef1f6;color:var(--muted)}
+  .badge.new{background:#eaf7ef;color:var(--green)}
+  .prompt{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:8px;background:#fbfcfe}
+  .prompt b{font-size:12px}
+  .prompt p{margin:4px 0 6px;color:var(--muted);font-size:11px}
+  .prompt .use{font-size:10px;border:1px solid #c9d9f5;color:var(--brand);background:#fff;border-radius:5px;padding:2px 8px}
+  .res{display:flex;justify-content:space-between;font-size:11px;border-bottom:1px dashed var(--line);padding:6px 0}
+  .res:last-child{border:none}
+  .res code{font-family:ui-monospace,monospace;color:var(--brand);font-size:10px}
+
+  .notes{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .notes h3{margin:0 0 12px;font-size:16px}
+  .notes ol{margin:0;padding-left:22px}
+  .notes li{font-size:13px;margin:7px 0;color:#445064}
+  .notes code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:11px}
+  .callout{margin-top:14px;background:var(--brand-bg);border-left:3px solid var(--brand);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#274a8a}
+  .nav{margin-top:20px;font-size:13px}.nav a{color:var(--brand);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">方案草图 02 / 06 · P1</div>
+  <h1>MCP 流式工具调用与 Prompt / Resources 能力</h1>
+  <p class="lead">当前桌面 MCP 是无状态、POST-only 的请求-响应（无 SSE、无跨请求会话、无 prompts / resources）。本方案在保持既有 12 个工具向后兼容的前提下，增加流式事件通道、长任务进度通知，以及可复用的提示词模板与可挂载资源。</p>
+
+  <div class="board">
+    <!-- 左：会话与工具流 -->
+    <div class="panel">
+      <div class="ph">AI 会话 · 工具调用时间线 <span class="sub">流式呈现 + 长任务进度</span></div>
+      <div class="pb">
+        <div class="req">把销售单改成中英双语，并给合计行加表达式校验</div>
+
+        <div class="stream">
+          <div class="txt">我先读取模板与字段树，确认哪些文本节点需要双语处理，再分批写回……<span class="cursor"></span></div>
+        </div>
+
+        <div class="tool">
+          <span class="t">template.get</span><span class="ok">完成 · 42ms</span>
+          <div class="meta">读取 revision a1b2…c3d4，返回 templateJson / fields / printData</div>
+        </div>
+
+        <div class="tool">
+          <span class="t">render.compare</span><span class="ok">完成 · 310ms</span>
+          <div class="meta">比对变更前后的页面尺寸与元素坐标，未发现溢出</div>
+        </div>
+
+        <div class="tool pending">
+          <span class="t">template.apply</span><span class="ok" style="background:#fff4e2;color:var(--amber)">进行中 · 68%</span>
+          <div class="meta">正在写回 24 个元素（分批提交，避免大模板卡顿）</div>
+          <div class="bar"><i></i></div>
+        </div>
+
+        <div class="notify">进度通知：长任务通过 SSE 持续推送 <code>progress</code> 事件；失败时推送 <code>error</code> 并保留已完成批次，用户可「重试剩余步骤」。</div>
+      </div>
+    </div>
+
+    <!-- 右：协议能力面板 -->
+    <div class="panel">
+      <div class="ph">协议能力 <span class="sub">新增端点（与既有 POST /mcp 共存）</span></div>
+      <div class="pb">
+        <div class="endpoint"><code>POST /mcp</code><span>既有 · 12 工具请求-响应</span><span class="badge now">现状</span></div>
+        <div class="endpoint"><code>GET /mcp/events</code><span>SSE 流式事件（progress / delta / done）</span><span class="badge new">新增</span></div>
+        <div class="endpoint"><code>GET /mcp/prompts</code><span>提示词模板列表</span><span class="badge new">新增</span></div>
+        <div class="endpoint"><code>GET /mcp/resources</code><span>可挂载资源列表与读取</span><span class="badge new">新增</span></div>
+      </div>
+
+      <div class="ph" style="border-top:1px solid var(--line)">提示词模板库 <span class="sub">沉淀常用指令</span></div>
+      <div class="pb" style="padding-top:10px">
+        <div class="prompt"><b>生成单据模板</b><p>按字段树生成带表头、明细表与合计的标准单据，可指定纸张与语言。</p><span class="use">插入对话</span></div>
+        <div class="prompt"><b>字段映射建议</b><p>根据打印数据样例，建议字段到元素的最优绑定方式。</p><span class="use">插入对话</span></div>
+        <div class="prompt"><b>表达式修复</b><p>扫描模板中的表达式，指出未知函数并给出替代写法。</p><span class="use">插入对话</span></div>
+      </div>
+
+      <div class="ph" style="border-top:1px solid var(--line)">资源（可挂载到会话上下文）</div>
+      <div class="pb" style="padding-top:8px">
+        <div class="res"><span>当前模板 JSON（只读快照）</span><code>template://current</code></div>
+        <div class="res"><span>字段树与中文释义</span><code>fields://tree</code></div>
+        <div class="res"><span>打印数据样例</span><code>data://sample</code></div>
+        <div class="res"><span>渲染服务缩略图</span><code>preview://page1</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>设计要点（与现有代码的衔接）</h3>
+    <ol>
+      <li><b>现状约束</b>：<code>clients/client/src/main/mcp-host.ts</code> 目前只处理 POST，GET / DELETE 返回 405；新增 SSE 端点须与既有无状态请求共存，不破坏 <code>packages/mcp</code> 的 12 个工具契约。</li>
+      <li><b>流式事件</b>：定义 <code>delta</code>（文本增量）、<code>progress</code>（工具进度）、<code>done</code> / <code>error</code> 四类事件；AI 会话面板按事件更新对话与进度条（对应功能 01 的「正在调整…」状态）。</li>
+      <li><b>长任务分批</b>：大型模板的 apply 拆成多批提交，每批独立做 revision 与封禁校验；任一批失败保留已完成批次并提供重试，避免整单回滚。</li>
+      <li><b>Prompt / Resources</b>：实现标准的 <code>prompts/list|get</code> 与 <code>resources/list|read</code>，把「生成单据模板」等指令与模板/字段/样例数据作为一等公民暴露给宿主 Agent；右下角「插入对话」直接把提示词填入功能 01 的输入框。</li>
+      <li><b>安全</b>：SSE 沿用现有 Bearer pairing token 鉴权；资源读取仍需通过模板会话的 revision 校验，不绕过封禁元素规则。</li>
+    </ol>
+    <div class="callout">被依赖：功能 01 的逐步进度与提示词快捷指令来自本功能；功能 03 的 SDK 需要把 SSE 作为一种可插拔传输。</div>
+  </div>
+
+  <div class="nav"><a href="01-ai-session-panel.html">← 上一个</a> &nbsp;·&nbsp; <a href="index.html">草图导航</a> &nbsp;·&nbsp; <a href="03-browser-ai-sdk.html">下一个：浏览器直连与统一 SDK →</a></div>
+</div>
+</body>
+</html>
