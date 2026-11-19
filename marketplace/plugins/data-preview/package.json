@@ -1,0 +1,43 @@
+{
+  "name": "@worm-print-platform/plugin-data-preview",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "数据源预览插件：字段树父节点加查看数据源按钮，按 JSON 形态解析为多 tab 表单/表格，import 即注册。",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "plugin.json", "README.md"],
+  "wormPrint": {
+    "id": "data-preview",
+    "version": "0.1.0",
+    "entry": "dist/index.js",
+    "kinds": [],
+    "exportFormats": [],
+    "peerDeps": {
+      "@worm-print-platform/core": "^1.5.3",
+      "@worm-print-platform/plugin-kit": "^1.5.3"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@worm-print-platform/core": "^1.5.3",
+    "@worm-print-platform/plugin-kit": "^1.5.3"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.10.6",
+    "typescript": "~5.9.3",
+    "vitest": "^1.6.0"
+  },
+  "keywords": ["print", "data-preview", "plugin", "worm-print-platform"]
+}
