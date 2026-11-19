@@ -8,7 +8,7 @@
 - 纳入目标仓库 demos 统一管理：`dev-all.mjs` / `install-all.mjs` / `index.html` 导航 / 根 `dev:demos:print` 脚本。
 - 依赖改 `file:../../../packages/*` 指向本地包源码，验证平台制品自身即可跑通。
 - 源仓库清理干净：删除 demo、去 workspace/msw 注册、刷新 lockfile、文档改指针，无悬空引用。
-- 搬迁后 `typecheck` / 13 项单测 / `build` / dev server 启动全部通过。
+- 搬迁后 `typecheck` / 28 项单测（7 文件）/ `build` / dev server / 浏览器运行时全部通过。
 
 ## 非目标
 - 不改 demo 的业务逻辑、UI、模板数据、测试用例内容（仅改配置与路径）。

@@ -4,7 +4,7 @@
 
 **Goal:** 将 `web/apps/print-demo` 从 `worm-base-platform` 完整迁入 `worm-print-platform/demos/apps/print-demo`，作为本地依赖、纳入 demos 统一管理的官方业务接入示例，并清理源仓库残留。
 
-**Architecture:** 跨仓库文件搬迁 + 配置适配（package.json / tsconfig / vite / README）+ demos 纳管脚本与文档更新 + 源仓库清理。demo 业务逻辑与 13 项测试随目录原样搬迁，不新写测试；验证以运行既有测试与构建为准。
+**Architecture:** 跨仓库文件搬迁 + 配置适配（package.json / tsconfig / vite / README）+ demos 纳管脚本与文档更新 + 源仓库清理。demo 业务逻辑与 28 项测试（7 文件）随目录原样搬迁，不新写测试；验证以运行既有测试与构建为准。
 
 **Tech Stack:** Vue 3 + Vite 7 + Element Plus + MSW 2.15.0 + vitest；本地 `@worm-print-platform/*@1.5.3` 经 `file:` 依赖。
 
@@ -109,7 +109,7 @@ npm test --prefix demos/apps/print-demo
 npm run build --prefix demos/apps/print-demo
 ```
 
-Expected: 三项均通过；单测 13 项。
+Expected: 三项均通过；单测 28 项（7 个文件）。
 
 - [ ] **Step 3: dev server 启动验证**
 

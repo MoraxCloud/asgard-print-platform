@@ -39,4 +39,4 @@ npm run dev              # http://127.0.0.1:9336
 | `npm run dev` | 本地开发（9336） |
 | `npm run typecheck` | 类型检查 |
 | `npm run build` | 生产构建 |
-| `npm test` | vitest 单测（13 项） |
+| `npm test` | vitest 单测（28 项 / 7 个文件） |
