@@ -22,6 +22,7 @@ export const PREVIEW_STYLES = `
 .dp-jump{padding:2px 8px;border:1px solid var(--pd-accent,#165DFF);border-radius:4px;background:transparent;color:var(--pd-accent,#165DFF);font-size:11px;cursor:pointer;white-space:nowrap}
 .dp-jump:hover{background:var(--pd-accent-soft,rgba(22,93,255,.09))}
 .dp-kind{display:inline-block;padding:1px 6px;border-radius:4px;background:var(--pd-soft-bg,#f0f2f5);color:var(--pd-text-muted,#8b909c);font-size:11px}
+.dp-key{color:var(--pd-text-muted,#909399);font-size:11px;font-weight:400}
 .dp-scalar{padding:12px;border:1px solid var(--pd-border,#e8ebf0);border-radius:6px;background:var(--pd-soft-bg,#fafbfc);word-break:break-all}
 .dp-empty{padding:24px;text-align:center;color:var(--pd-text-muted,#909399)}
 `
@@ -47,10 +48,14 @@ function kindText(kind: string): string {
   return kind === 'array' ? '数组' : kind === 'object' ? '对象' : '标量'
 }
 
-function overviewTable(rows: OverviewRow[]): string {
+function keySuffix(fieldKey: string | undefined, fallback: string): string {
+  return `<span class="dp-key">(${esc(fieldKey ?? fallback)})</span>`
+}
+
+function overviewTable(rows: OverviewRow[], showKey: boolean): string {
   if (!rows.length) return '<p class="dp-empty">该数据源暂无数据</p>'
   const body = rows.map(row => `<tr>
-    <td>${esc(row.label)}</td>
+    <td>${esc(row.label)}${showKey ? ` ${keySuffix(row.fieldKey, row.key)}` : ''}</td>
     <td><span class="dp-kind">${kindText(row.kind)}</span></td>
     <td>${esc(row.summary)}</td>
     <td>${row.hasTab ? `<button type="button" class="dp-jump" data-tab="${esc(row.tabKey ?? row.key)}">查看 →</button>` : ''}</td>
@@ -58,33 +63,37 @@ function overviewTable(rows: OverviewRow[]): string {
   return `<table class="dp-overview-table"><thead><tr><th>属性</th><th>类型</th><th>摘要 / 值</th><th></th></tr></thead><tbody>${body}</tbody></table>`
 }
 
-function dataTable(columns: PreviewTab['columns'], rows: PreviewTab['rows']): string {
+function dataTable(columns: PreviewTab['columns'], rows: PreviewTab['rows'], showKey: boolean): string {
   if (!columns?.length) return '<p class="dp-empty">该数据源暂无数据</p>'
-  const head = columns.map(c => `<th>${esc(c.label)}</th>`).join('')
+  const head = columns.map(c =>
+    `<th>${esc(c.label)}${showKey ? `<br><span class="dp-key">${esc(c.fieldKey ?? c.key)}</span>` : ''}</th>`,
+  ).join('')
   const body = (rows ?? []).map(row => `<tr>${row.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`).join('')
   return `<table class="dp-data-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`
 }
 
-function formTable(rows: FormRow[] | undefined): string {
+function formTable(rows: FormRow[] | undefined, showKey: boolean): string {
   if (!rows?.length) return '<p class="dp-empty">该数据源暂无数据</p>'
-  const body = rows.map(row => `<tr><td>${esc(row.label)}</td><td>${esc(row.value)}</td></tr>`).join('')
+  const body = rows.map(row => `<tr><td>${esc(row.label)}${showKey ? ` ${keySuffix(row.fieldKey, row.key)}` : ''}</td><td>${esc(row.value)}</td></tr>`).join('')
   return `<table class="dp-form-table"><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>${body}</tbody></table>`
 }
 
-function bodyHtml(desc: PreviewDescriptor, active: string): string {
+function bodyHtml(desc: PreviewDescriptor, active: string, showKey: boolean): string {
   if (active !== '__overview') {
     const tab = desc.tabs.find(t => t.key === active)
     if (tab) {
-      return tab.kind === 'array' ? dataTable(tab.columns, tab.rows) : formTable(tab.formRows)
+      return tab.kind === 'array'
+        ? dataTable(tab.columns, tab.rows, showKey)
+        : formTable(tab.formRows, showKey)
     }
   }
-  if (desc.rootKind === 'array') return dataTable(desc.table?.columns, desc.table?.rows)
+  if (desc.rootKind === 'array') return dataTable(desc.table?.columns, desc.table?.rows, showKey)
   if (desc.rootKind === 'scalar') {
     return desc.scalar
-      ? `<div class="dp-scalar"><strong>${esc(desc.scalar.label)}：</strong>${esc(desc.scalar.value)}</div>`
+      ? `<div class="dp-scalar"><strong>${esc(desc.scalar.label)}${showKey ? ` ${keySuffix(desc.scalar.fieldKey, desc.scalar.key)}` : ''}：</strong>${esc(desc.scalar.value)}</div>`
       : '<p class="dp-empty">该数据源暂无数据</p>'
   }
-  return overviewTable(desc.overview)
+  return overviewTable(desc.overview, showKey)
 }
 
 /**
@@ -92,7 +101,7 @@ function bodyHtml(desc: PreviewDescriptor, active: string): string {
  * 返回 dispose（幂等，可多次调用）。
  */
 export function openDataPreview(options: DataPreviewOptions): () => void {
-  const { data, fields, groupKey, title, container } = options
+  const { data, fields, groupKey, title, container, showFieldKey } = options
   const envelope = data?.[0]
   const root = options.root !== undefined
     ? options.root
@@ -126,13 +135,13 @@ export function openDataPreview(options: DataPreviewOptions): () => void {
   let disposed = false
 
   function paint() {
-    const tabs = [{ key: '__overview', label: '总览' }].concat(
-      desc.tabs.map(t => ({ key: t.key, label: t.label })),
+    const tabs = [{ key: '__overview', label: '总览', fieldKey: undefined as string | undefined }].concat(
+      desc.tabs.map(t => ({ key: t.key, label: t.label, fieldKey: t.fieldKey })),
     )
     tabBar.innerHTML = tabs.map(t =>
-      `<button type="button" class="dp-tab${t.key === active ? ' active' : ''}" data-tab="${esc(t.key)}">${esc(t.label)}</button>`,
+      `<button type="button" class="dp-tab${t.key === active ? ' active' : ''}" data-tab="${esc(t.key)}">${esc(t.label)}${showFieldKey && t.fieldKey ? ` <span class="dp-key">(${esc(t.fieldKey)})</span>` : ''}</button>`,
     ).join('')
-    body.innerHTML = bodyHtml(desc, active)
+    body.innerHTML = bodyHtml(desc, active, !!showFieldKey)
   }
 
   function onClick(ev: Event) {

@@ -263,6 +263,10 @@
               <input v-model="dataPreviewEnabled" type="checkbox" />
               <span>启用「数据源预览」入口</span>
             </label>
+            <label class="config-row">
+              <input v-model="showFieldKey" type="checkbox" />
+              <span>中文名旁显示字段 key（表头换行显示）</span>
+            </label>
           </section>
           <section class="config-section">
             <div class="config-label">主题</div>
@@ -342,6 +346,8 @@ const showSave = ref(true)
 const themeMode = ref('auto')
 // 宿主端开关：是否暴露「数据源预览」入口（插件本身只提供触发 API）
 const dataPreviewEnabled = ref(true)
+// 传给插件的入参：中文名旁是否显示字段 key
+const showFieldKey = ref(false)
 
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
@@ -393,6 +399,7 @@ function onOpenDataPreview() {
     fields: fields.value,
     title: currentSample.value?.name ?? '数据源',
     container: document.body,
+    showFieldKey: showFieldKey.value,
   })
 }
 

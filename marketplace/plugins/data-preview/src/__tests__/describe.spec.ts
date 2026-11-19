@@ -103,6 +103,13 @@ describe('describeDataSource 中文释义', () => {
     )
     expect(d.overview.map(r => r.label)).toEqual(['电话', '数量', 'unknownKey'])
   })
+
+  it('输出字段完整 fieldKey 供展示', () => {
+    const d = describeDataSource({ supplier: { name: 'A' } }, cnFields, whole)
+    expect(d.overview[0].fieldKey).toBe('supplier')
+    expect(d.tabs[0].fieldKey).toBe('supplier')
+    expect(d.tabs[0].formRows?.[0].fieldKey).toBe('supplier.name')
+  })
 })
 
 describe('describeDataSource 标量根与空值', () => {

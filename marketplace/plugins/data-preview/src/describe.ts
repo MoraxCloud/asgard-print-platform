@@ -3,7 +3,7 @@
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
 import type { FieldGroupInfo, FormRow, OverviewRow, PreviewColumn, PreviewDescriptor, PreviewTab, ValueKind } from './types.js'
 
-interface LeafMeta { label: string; sortOrder: number }
+interface LeafMeta { label: string; sortOrder: number; fieldKey?: string }
 
 /** 未在 fields 中定义时的常用键中文兜底（fields 的 fieldLabel 始终优先） */
 const COMMON_LABELS: Readonly<Record<string, string>> = {
@@ -42,23 +42,23 @@ function formatValue(v: unknown): string {
 function leafMeta(fields: readonly PrintBusinessField[], groupKey: string): Map<string, LeafMeta> {
   const map = new Map<string, LeafMeta>()
   const prefix = groupKey ? `${groupKey}.` : ''
-  const put = (key: string, label: string, order: number) => {
-    if (key) map.set(key, { label: label || key, sortOrder: order })
+  const put = (key: string, label: string, order: number, fieldKey?: string) => {
+    if (key) map.set(key, { label: label || key, sortOrder: order, fieldKey })
   }
 
   for (const f of fields) {
     const leaf = f.fieldKey.includes('.') ? f.fieldKey.slice(f.fieldKey.lastIndexOf('.') + 1) : f.fieldKey
     const order = f.sortOrder ?? Number.MAX_SAFE_INTEGER
-    if (!map.has(leaf)) put(leaf, f.fieldLabel, order)
+    if (!map.has(leaf)) put(leaf, f.fieldLabel, order, f.fieldKey)
   }
   for (const f of fields) {
     const order = f.sortOrder ?? Number.MAX_SAFE_INTEGER
     if (prefix && f.fieldKey.startsWith(prefix)) {
       const rest = f.fieldKey.slice(prefix.length)
       const leaf = rest.includes('.') ? rest.slice(rest.lastIndexOf('.') + 1) : rest
-      put(leaf, f.fieldLabel, order)
+      put(leaf, f.fieldLabel, order, f.fieldKey)
     } else if (!f.fieldKey.includes('.')) {
-      put(f.fieldKey, f.fieldLabel, order)
+      put(f.fieldKey, f.fieldLabel, order, f.fieldKey)
     }
   }
   return map
@@ -85,7 +85,7 @@ function sortKeys(keys: string[], meta: Map<string, LeafMeta>): string[] {
 
 function makeFormRows(record: Record<string, unknown>, meta: Map<string, LeafMeta>): FormRow[] {
   return sortKeys(Object.keys(record), meta).map(key => ({
-    key, label: labelOf(key, meta), value: formatValue(record[key]),
+    key, label: labelOf(key, meta), value: formatValue(record[key]), fieldKey: meta.get(key)?.fieldKey,
   }))
 }
 
@@ -101,7 +101,9 @@ function makeTable(items: readonly unknown[], meta: Map<string, LeafMeta>): { co
       records.push({ 值: item })
     }
   }
-  const columns = sortKeys([...keys], meta).map(key => ({ key, label: labelOf(key, meta) }))
+  const columns = sortKeys([...keys], meta).map(key => ({
+    key, label: labelOf(key, meta), fieldKey: meta.get(key)?.fieldKey,
+  }))
   const rows = records.map(record => columns.map(col => formatValue(record[col.key])))
   return { columns, rows }
 }
@@ -112,14 +114,15 @@ function makeTab(
   value: unknown,
   meta: Map<string, LeafMeta>,
 ): PreviewTab {
+  const fieldKey = meta.get(key)?.fieldKey
   if (Array.isArray(value)) {
     const { columns, rows } = makeTable(value, meta)
-    return { key, label, kind: 'array', columns, rows }
+    return { key, label, fieldKey, kind: 'array', columns, rows }
   }
   if (isRecord(value)) {
-    return { key, label, kind: 'object', formRows: makeFormRows(value, meta) }
+    return { key, label, fieldKey, kind: 'object', formRows: makeFormRows(value, meta) }
   }
-  return { key, label, kind: 'scalar', formRows: [{ key, label, value: formatValue(value) }] }
+  return { key, label, fieldKey, kind: 'scalar', formRows: [{ key, label, value: formatValue(value), fieldKey }] }
 }
 
 /** 子 tab 用子属性名作为分组前缀重建映射，使 supplier.name 在「供应商信息」tab 下显示「供应商名称」 */
@@ -178,6 +181,7 @@ export function describeDataSource(
       return {
         key,
         label: labelOf(key, meta),
+        fieldKey: meta.get(key)?.fieldKey,
         kind,
         summary: kind === 'array'
           ? `${(value as unknown[]).length} 条`

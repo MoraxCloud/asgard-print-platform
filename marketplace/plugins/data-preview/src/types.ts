@@ -10,13 +10,15 @@ export interface FieldGroupInfo {
 /** JSON 值的三种形态：标量 / 对象 / 数组 */
 export type ValueKind = 'scalar' | 'object' | 'array'
 
-export interface PreviewColumn { key: string; label: string }
-export interface FormRow { key: string; label: string; value: string }
+export interface PreviewColumn { key: string; label: string; fieldKey?: string }
+export interface FormRow { key: string; label: string; value: string; fieldKey?: string }
 
 /** 总览汇总表的一行；对象/数组行带 tabKey 可跳转子标签页 */
 export interface OverviewRow {
   key: string
   label: string
+  /** 字段定义中的完整 fieldKey（如 supplier.name），供展示字段 key 用 */
+  fieldKey?: string
   kind: ValueKind
   summary: string
   hasTab: boolean
@@ -27,6 +29,7 @@ export interface OverviewRow {
 export interface PreviewTab {
   key: string
   label: string
+  fieldKey?: string
   kind: ValueKind
   formRows?: FormRow[]
   columns?: PreviewColumn[]
@@ -59,4 +62,6 @@ export interface DataPreviewOptions {
   root?: unknown
   /** 弹窗挂载容器，缺省 document.body */
   container?: HTMLElement
+  /** 是否在中文名旁显示字段 key：表单/总览为「中文名 (key)」，表格表头换行显示 key。缺省 false */
+  showFieldKey?: boolean
 }

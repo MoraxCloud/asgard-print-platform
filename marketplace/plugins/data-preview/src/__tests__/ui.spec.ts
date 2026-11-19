@@ -69,6 +69,37 @@ describe('openDataPreview 弹窗', () => {
     expect(host.children).toHaveLength(0)
   })
 
+  it('默认不显示字段 key', () => {
+    openDataPreview({ root: { 机构编号: 'H1' }, fields, groupKey: '系统信息', container: host })
+    expect(host.querySelector('.dp-key')).toBeNull()
+  })
+
+  it('showFieldKey=true 时表单与总览显示「中文名 (key)」', () => {
+    openDataPreview({
+      root: { 机构编号: 'H1', 患者: { 姓名: '张三' } },
+      fields, groupKey: '系统信息', container: host, showFieldKey: true,
+    })
+    expect(host.querySelector('.dp-overview-table .dp-key')?.textContent).toBe('(系统信息.机构编号)')
+    host.querySelector<HTMLElement>('.dp-jump')!.click()
+    expect(host.querySelector('.dp-form-table .dp-key')?.textContent).toBe('(姓名)')
+  })
+
+  it('showFieldKey=true 时表格表头换行显示 key', () => {
+    const keyFields: PrintBusinessField[] = [
+      { fieldKey: 'goods', fieldLabel: '商品明细', fieldType: 'list', sortOrder: 1 },
+      { fieldKey: 'goods.name', fieldLabel: '商品名称', fieldType: 'string', sortOrder: 2 },
+      { fieldKey: 'goods.qty', fieldLabel: '数量', fieldType: 'number', sortOrder: 3 },
+    ]
+    openDataPreview({
+      root: [{ name: 'A', qty: 2 }], fields: keyFields,
+      groupKey: 'goods', container: host, showFieldKey: true,
+    })
+    const th = host.querySelector('.dp-data-table thead th')!
+    expect(th.textContent).toContain('商品名称')
+    expect(th.textContent).toContain('goods.name')
+    expect(th.querySelector('br')).toBeTruthy()
+  })
+
   it('样式按 document 幂等注入', () => {
     openDataPreview({ root: {}, container: host })
     openDataPreview({ root: {}, container: host })

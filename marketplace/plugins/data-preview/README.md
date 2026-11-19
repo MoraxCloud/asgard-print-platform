@@ -31,6 +31,7 @@ import 即注册（与图表插件市场入口同口径）。之后设计器字�
 | 标量 | 单行展示 | 无 |
 
 - 字段标签优先取 `fields` 中的 `fieldLabel`：容器中文字段名用于总览行与子 tab，叶子字段按所属分组精确匹配。fields 未定义的常用英文键（如 `name`/`phone`/`qty`）由内置词典映射为中文，未知键保留原文。顺序按 `sortOrder`（无 fields 时保持 JSON 插入顺序）。
+- 传 `showFieldKey: true` 时，在中文名旁显示字段 key：表单/总览/子 tab 为「中文名 (完整 fieldKey)」，表格表头换行显示 key；缺省 `false`。
 - 未注入 `fields` 也能独立解析。
 - 不分页：表格一次渲染全部行。
 
