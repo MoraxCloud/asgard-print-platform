@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// 四个宿主 demo 是彼此独立的 npm 工程，逐个安装（file: 依赖指向本仓库 packages/）。
+// 五个 demo 是彼此独立的 npm 工程，逐个安装（file: 依赖指向本仓库 packages/）。
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, '..')
 const APPS = ['apps/vue3', 'apps/vue2', 'apps/react', 'apps/jquery', 'apps/print-demo']

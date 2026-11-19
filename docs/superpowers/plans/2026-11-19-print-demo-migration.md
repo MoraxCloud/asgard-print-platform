@@ -172,3 +172,11 @@ grep -n "print-demo" demos/scripts/dev-all.mjs demos/scripts/install-all.mjs dem
 ```
 
 Expected: 脚本存在，四处均含 print-demo 条目。
+
+## 执行记录（2026-11-19）
+
+- Task 1–5 全部完成；目标仓库提交 `8267b4a` / `8c5f7fa` / `26aab41`，源仓库提交 `6889e5d`。
+- Ruling: 测试数按实测修正 —— 设计/计划文档原写「13 项」，实测 7 文件 28 项（源 README 过期）—— 统一改为 28 项；成本：仅文档数字，不影响代码。
+- Ruling: 不做 worktree 隔离 —— 任务跨两仓库且目标路径由用户绝对指定，worktree 无法覆盖 —— 直接在两仓库原目录操作；用户已确认方案，成本：无。
+- Ruling: 最终审查发现 Pages 部署遗漏（Important）—— 导航页新增卡片但 workflow 仍只构建四个 demo，且 MSW 原仅 dev 启用，线上会 404 / 空数据 —— 给 print-demo 加 `PAGES_BASE` 支持、MSW 改为默认启用（`VITE_NO_MOCK=true` 可关闭）、workflow 纳入构建与烟雾测试；成本：生产产物含 mock，符合本 demo「不需要后端」定位。
+- Final review: self-review（当前 harness 无子代理工具）；Critical/Important 1 项已修复并 RED→GREEN 验证（PAGES_BASE 产物路径 + MSW 打包断言）。

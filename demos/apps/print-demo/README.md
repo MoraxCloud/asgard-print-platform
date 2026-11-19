@@ -4,7 +4,7 @@
 本工程是 `worm-print-platform` 的官方示例之一，源码由 `worm-base-platform/web/apps/print-demo` 迁入。
 
 - 设计器：`@worm-print-platform/canvas/vue3` 门面，依赖 `file:../../../packages/canvas` 指向本仓源码（版本 1.5.3）
-- 数据：MSW + localStorage 模拟 `/sys/print/*`，不需要后端
+- 数据：MSW + localStorage 模拟 `/sys/print/*`，不需要后端（本地 dev 与 Pages 静态部署均启用；设 `VITE_NO_MOCK=true` 可关闭以对接真实后端）
 - 打印：仅链路 A（浏览器打印）
 - 默认模板：5 类默认值与打印平台 `demos/apps/vue3` 官方示例一致（快递面单 / 称签 / 零售小票 / 付款申请单 / 健康体检报告），本地 TS 数据文件交付；体检报告为多页模板且自带图表。
 - 静默打印配置：独立菜单「静默打印配置」(`/print/silent-config`)，按 5 种模板类型分别配置默认模板、打印机、份数、纸型覆盖、彩色；配置存 `print:cfg:<businessType>`，连接参数存 `print:client`。体检报告点「静默打印」直接用该类型配置一键出纸，不再选模板；未配置时提示并跳转配置页。

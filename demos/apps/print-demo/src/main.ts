@@ -7,8 +7,8 @@ import './styles/index.css'
 import App from './App.vue'
 import router from './router'
 
-// 开发环境启动 MSW，模拟 /sys/print/*；生产构建不引入 mock 代码
-if (import.meta.env.DEV) {
+// 示例始终用 MSW 模拟 /sys/print/*（本地 dev 与 Pages 静态部署均无后端）；设 VITE_NO_MOCK=true 可关闭以对接真实后端
+if (import.meta.env.VITE_NO_MOCK !== 'true') {
   const { worker } = await import('./mocks/browser')
   await worker.start({ onUnhandledRequest: 'bypass' })
 }
