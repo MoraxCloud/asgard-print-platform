@@ -1,5 +1,5 @@
 /*!
- * @worm-print-platform/plugin-echarts v1.0.0
+ * @worm-print-platform/plugin-echarts v1.1.0
  * Copyright (c) 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-FileCopyrightText: 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-License-Identifier: MIT
@@ -23,7 +23,7 @@ var CHART_KIND_DEFINITIONS = [
     icon: "ChartColumn",
     seriesType: "bar",
     orientation: "vertical",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -35,7 +35,7 @@ var CHART_KIND_DEFINITIONS = [
     icon: "ChartBar",
     seriesType: "bar",
     orientation: "horizontal",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -46,7 +46,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u6298\u7EBF\u56FE",
     icon: "ChartLine",
     seriesType: "line",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -57,7 +57,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u9762\u79EF\u56FE",
     icon: "ChartArea",
     seriesType: "line",
-    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack"],
+    fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
@@ -68,7 +68,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u997C\u56FE",
     icon: "ChartPie",
     seriesType: "pie",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -79,7 +79,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u73AF\u5F62\u56FE",
     icon: "Donut",
     seriesType: "pie",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "innerRadius"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "innerRadius", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -90,7 +90,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u6563\u70B9\u56FE",
     icon: "ChartScatter",
     seriesType: "scatter",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "bubble"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "bubble", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 80,
     defaultHeight: 60,
@@ -101,7 +101,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u96F7\u8FBE\u56FE",
     icon: "Radar",
     seriesType: "radar",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "radius"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "radius", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 70,
     defaultHeight: 60,
@@ -112,7 +112,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u6F0F\u6597\u56FE",
     icon: "Funnel",
     seriesType: "funnel",
-    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "padding"],
+    fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "padding", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -123,7 +123,7 @@ var CHART_KIND_DEFINITIONS = [
     label: "\u4EEA\u8868\u76D8",
     icon: "Gauge",
     seriesType: "gauge",
-    fields: ["dataSource", "valueFields", ...STYLE_FIELDS, "gaugeRange"],
+    fields: ["dataSource", "valueFields", ...STYLE_FIELDS, "gaugeRange", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
@@ -134,6 +134,9 @@ var CHART_KINDS = CHART_KIND_DEFINITIONS.map((def) => def.type);
 function getChartKindDefinition(type) {
   return CHART_KIND_DEFINITIONS.find((def) => def.type === type);
 }
+function resolveChartPanelFields(type) {
+  return getChartKindDefinition(type)?.fields ?? [];
+}
 
 // src/bind.ts
 import { evaluateTemplate } from "@worm-print-platform/core";
@@ -141,16 +144,18 @@ function chartNumber(value) {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : 0;
 }
-function evaluateChartOption(node, data) {
+function evaluateChartOption(node, data, keepStrings = false) {
   if (typeof node === "string") {
     if (node.startsWith("$data")) return node;
+    if (keepStrings) return node;
     return node.includes("{") ? evaluateTemplate(node, data) : node;
   }
-  if (Array.isArray(node)) return node.map((item) => evaluateChartOption(item, data));
+  if (Array.isArray(node)) return node.map((item) => evaluateChartOption(item, data, keepStrings));
   if (node && typeof node === "object") {
     const out = {};
     for (const [key, value] of Object.entries(node)) {
-      out[key] = evaluateChartOption(value, data);
+      const childKeep = keepStrings || key === "label" || key === "detail";
+      out[key] = evaluateChartOption(value, data, childKeep);
     }
     return out;
   }
@@ -317,8 +322,17 @@ import { configurePlugin, getPluginConfig } from "@worm-print-platform/core/desi
 
 // src/constants.ts
 var CHART_PLUGIN_ID = "@worm-print-platform/echarts";
+var CHART_PALETTES = [
+  { key: "default", label: "\u9ED8\u8BA4\u84DD", colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"] },
+  { key: "fresh", label: "\u6E05\u65B0\u7EFF", colors: ["#2f9e6e", "#5cc9a7", "#9ad6c1", "#f2c94c", "#4a90e2"] },
+  { key: "warm", label: "\u6696\u6A59\u7EA2", colors: ["#f2704e", "#f7a35c", "#f7d56d", "#c54e3f", "#8f5a4a"] },
+  { key: "purple", label: "\u7D2B\u7070", colors: ["#7b61ff", "#9b8cff", "#c3baff", "#596275", "#8d99ae"] }
+];
+var FALLBACK_SAMPLE_CATEGORIES = ["\u793A\u4F8B\u4E00", "\u793A\u4F8B\u4E8C", "\u793A\u4F8B\u4E09"];
 var FUNNEL_PADDING_DEFAULTS = { top: 6, right: 25, bottom: 6, left: 5 };
 var RADAR_RADIUS_DEFAULT = 75;
+var ECHARTS_RADAR_RADIUS_DEFAULT = 50;
+var ECHARTS_FUNNEL_PADDING_PX = { top: 60, right: 80, bottom: 65, left: 80 };
 
 // src/defaults.ts
 var GRID = { left: "8%", right: "8%", bottom: "12%", top: "18%", containLabel: true };
@@ -395,6 +409,19 @@ function createDefaultChartOption(type) {
 // src/config.ts
 function getChartPluginConfig() {
   return getPluginConfig(CHART_PLUGIN_ID);
+}
+function getChartPalettes() {
+  const overrides = getChartPluginConfig().palettes ?? {};
+  const builtin = CHART_PALETTES.map((palette) => {
+    const custom = overrides[palette.key];
+    return custom ? { key: palette.key, label: custom.label ?? palette.label, colors: custom.colors } : { key: palette.key, label: palette.label, colors: palette.colors };
+  });
+  const extra = Object.entries(overrides).filter(([key]) => !CHART_PALETTES.some((palette) => palette.key === key)).map(([key, value]) => ({ key, label: value.label ?? key, colors: value.colors }));
+  return [...builtin, ...extra];
+}
+function getSampleCategories() {
+  const custom = getChartPluginConfig().sampleCategories;
+  return Array.isArray(custom) && custom.length > 0 ? custom : FALLBACK_SAMPLE_CATEGORIES;
 }
 function chartFactoryDefaults(type, partial) {
   const config = getChartPluginConfig();
@@ -640,32 +667,420 @@ registerChartPlugin();
 
 // src/ui.ts
 import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
-import {
-  asObject,
-  CHART_KINDS as CHART_KINDS2,
-  cloneChartOption,
-  createDefaultChartOption as createDefaultChartOption2,
-  FUNNEL_PADDING_DEFAULTS as FUNNEL_PADDING_DEFAULTS2,
-  getChartKindDefinition as getChartKindDefinition2,
-  getChartPalettes as getChartPalettes2,
-  normalizeChartOption as normalizeChartOption2,
-  previewChartOption,
-  RADAR_RADIUS_DEFAULT as RADAR_RADIUS_DEFAULT2,
-  readFunnelPadding,
-  readPaletteKey,
-  readRadarRadius,
-  renderChartToSvg as renderChartToSvg2,
-  resolveChartPanelFields as resolveChartPanelFields2,
-  syncSeriesCount,
-  writeFunnelPadding,
-  writeRadarRadius
-} from "@worm-print-platform/plugin-echarts/kit";
+import { render } from "@worm-print-platform/plugin-kit/dom";
+import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
+
+// src/option-utils.ts
+var SAMPLE_VALUES = [12, 20, 15];
+function cloneChartOption(value) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return value;
+  }
+}
+function previewChartOption(type, option) {
+  if (!option || typeof option !== "object" || Array.isArray(option)) return {};
+  const next = cloneChartOption(option);
+  const def = getChartKindDefinition(type);
+  const categories = [...getSampleCategories()];
+  const values = [...SAMPLE_VALUES];
+  const series = Array.isArray(next.series) ? next.series : [];
+  const replaceSeriesData = (mapper) => {
+    for (const item of series) {
+      if (Array.isArray(item.data) && item.data.includes("$data")) item.data = mapper(item);
+    }
+  };
+  const replaceAxisData = () => {
+    for (const key of ["xAxis", "yAxis"]) {
+      const axes = Array.isArray(next[key]) ? next[key] : next[key] ? [next[key]] : [];
+      for (const axis of axes) {
+        if (axis && Array.isArray(axis.data) && axis.data.includes("$data")) axis.data = [...categories];
+      }
+    }
+  };
+  switch (def?.seriesType) {
+    case "pie":
+      replaceSeriesData(() => categories.map((name, index) => ({ name, value: values[index] ?? 10 })));
+      break;
+    case "funnel":
+      replaceSeriesData(() => categories.map((name, index) => ({ name, value: values[index] ?? 10 })));
+      break;
+    case "scatter":
+      replaceSeriesData(() => values.map((value) => [value, value + 6]));
+      break;
+    case "radar":
+      next.radar = {
+        ...next.radar ?? {},
+        indicator: categories.map((name) => ({ name, max: 30 }))
+      };
+      replaceSeriesData(() => [{ name: "\u793A\u4F8B", value: values }]);
+      break;
+    case "gauge":
+      replaceSeriesData(() => [{ value: values[0] ?? 40, name: "\u6570\u91CF" }]);
+      break;
+    default:
+      replaceSeriesData(() => [...values]);
+      replaceAxisData();
+      break;
+  }
+  return next;
+}
+function readPaletteKey(option, palettes) {
+  const color = Array.isArray(option?.color) ? (option?.color).map(String) : [];
+  const hit = palettes.find((palette) => palette.colors.every((c, i) => c === color[i]) && color.length === palette.colors.length);
+  return hit?.key ?? "default";
+}
+function asObject(node) {
+  if (Array.isArray(node)) return node[0] && typeof node[0] === "object" ? { ...node[0] } : {};
+  return node && typeof node === "object" ? { ...node } : {};
+}
+function syncSeriesCount(option, count, type) {
+  const next = cloneChartOption(option);
+  const rawSeries = Array.isArray(next.series) ? next.series : [];
+  const def = getChartKindDefinition(type);
+  const template = rawSeries[0] ?? { type: def?.seriesType === "line" ? "line" : "bar", data: ["$data"] };
+  next.series = Array.from({ length: Math.max(count, 1) }, (_, index) => ({
+    ...template,
+    ...rawSeries[index] ?? {},
+    data: ["$data"]
+  }));
+  return next;
+}
+var round1 = (value) => Math.round(value * 10) / 10;
+function pxToPercent(px, totalPx) {
+  return totalPx > 0 ? round1(px / totalPx * 100) : 0;
+}
+function readInsetPercent(value, totalPx, echartsPx) {
+  if (typeof value === "string" && value.trim().endsWith("%")) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return round1(parsed);
+  }
+  if (typeof value === "number" && Number.isFinite(value)) return pxToPercent(value, totalPx);
+  return pxToPercent(echartsPx, totalPx);
+}
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+function percentString(value) {
+  return `${clamp(round1(value), 0, 100)}%`;
+}
+function firstSeries(option) {
+  const series = Array.isArray(option.series) ? option.series : [];
+  const first = series[0];
+  return first && typeof first === "object" ? first : {};
+}
+function readFunnelPadding(option, widthMm, heightMm) {
+  const source = option && typeof option === "object" ? option : {};
+  const series = firstSeries(source);
+  const widthPx = mmToChartPx(widthMm);
+  const heightPx = mmToChartPx(heightMm);
+  return {
+    top: readInsetPercent(series.top, heightPx, ECHARTS_FUNNEL_PADDING_PX.top),
+    right: readInsetPercent(series.right, widthPx, ECHARTS_FUNNEL_PADDING_PX.right),
+    bottom: readInsetPercent(series.bottom, heightPx, ECHARTS_FUNNEL_PADDING_PX.bottom),
+    left: readInsetPercent(series.left, widthPx, ECHARTS_FUNNEL_PADDING_PX.left)
+  };
+}
+function writeFunnelPadding(option, padding) {
+  const next = cloneChartOption(option);
+  const series = Array.isArray(next.series) ? next.series : [];
+  if (series.length === 0) series.push({ type: "funnel", data: ["$data"] });
+  const first = series[0];
+  first.top = percentString(padding.top);
+  first.right = percentString(padding.right);
+  first.bottom = percentString(padding.bottom);
+  first.left = percentString(padding.left);
+  next.series = series;
+  return next;
+}
+function readRadarRadius(option, widthMm, heightMm) {
+  const source = option && typeof option === "object" ? option : {};
+  const raw = asObject(source.radar).radius;
+  const value = Array.isArray(raw) ? raw[raw.length - 1] : raw;
+  const widthPx = mmToChartPx(widthMm);
+  const heightPx = mmToChartPx(heightMm);
+  const viewSize = Math.min(widthPx, heightPx) / 2;
+  if (typeof value === "string" && value.trim().endsWith("%")) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return round1(parsed);
+  }
+  if (typeof value === "number" && Number.isFinite(value)) return pxToPercent(value, viewSize);
+  return ECHARTS_RADAR_RADIUS_DEFAULT;
+}
+function writeRadarRadius(option, percent) {
+  const next = cloneChartOption(option);
+  next.radar = { ...asObject(next.radar), radius: percentString(clamp(percent, 20, 100)) };
+  return next;
+}
+
+// src/label.ts
+var LABEL_PRESETS = [
+  { key: "value", label: "\u6570\u503C", formatter: "{c}" },
+  { key: "name-value", label: "\u540D\u79F0: \u6570\u503C", formatter: "{b}: {c}" },
+  { key: "name", label: "\u540D\u79F0", formatter: "{b}" },
+  { key: "percent", label: "\u767E\u5206\u6BD4", formatter: "{d}%" }
+];
+var LABEL_POSITIONS = {
+  bar: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "inside", label: "\u5185\u90E8" },
+    { value: "insideTop", label: "\u5185\u90E8\u9876\u7AEF" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "insideBottom", label: "\u5185\u90E8\u5E95\u7AEF" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "middle", label: "\u5C45\u4E2D" }
+  ],
+  line: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "inside", label: "\u5185\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" }
+  ],
+  pie: [
+    { value: "outside", label: "\u5916\u4FA7" },
+    { value: "inside", label: "\u5185\u90E8" },
+    { value: "center", label: "\u4E2D\u5FC3" }
+  ],
+  scatter: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "inside", label: "\u5185\u90E8" }
+  ],
+  radar: [
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "inside", label: "\u5185\u90E8" }
+  ],
+  funnel: [
+    { value: "outer", label: "\u5916\u4FA7" },
+    { value: "inner", label: "\u5185\u90E8" },
+    { value: "left", label: "\u5DE6\u4FA7" },
+    { value: "right", label: "\u53F3\u4FA7" },
+    { value: "top", label: "\u9876\u90E8" },
+    { value: "bottom", label: "\u5E95\u90E8" }
+  ],
+  gauge: []
+};
+var NATIVE_SHOW = {
+  bar: false,
+  line: false,
+  pie: true,
+  scatter: false,
+  radar: false,
+  funnel: true,
+  gauge: true
+};
+var ENABLE_DEFAULTS = {
+  bar: { position: "top", fontSize: 12 },
+  line: { position: "top", fontSize: 12 },
+  pie: { position: "outside", overflow: "none", fontSize: 11 },
+  scatter: { position: "top", fontSize: 11 },
+  radar: { position: "top", fontSize: 10 },
+  funnel: { position: "outer", fontSize: 11 },
+  gauge: { fontSize: 14 }
+};
+var TYPE_DEFAULTS = {
+  barHChart: { position: "right", fontSize: 12 }
+};
+var FIELDS_BY_SERIES = {
+  bar: [
+    "formatter",
+    "overflow",
+    "position",
+    "rotate",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding"
+  ],
+  line: [
+    "formatter",
+    "overflow",
+    "position",
+    "rotate",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding"
+  ],
+  pie: [
+    "formatter",
+    "overflow",
+    "position",
+    "distance",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding",
+    "labelLine.show",
+    "labelLine.length",
+    "labelLine.length2",
+    "labelLine.smooth"
+  ],
+  scatter: [
+    "formatter",
+    "overflow",
+    "position",
+    "distance",
+    "rotate",
+    "offsetX",
+    "offsetY",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "backgroundColor",
+    "borderColor",
+    "borderWidth",
+    "borderRadius",
+    "padding"
+  ],
+  radar: ["formatter", "fontSize", "fontWeight", "color"],
+  funnel: [
+    "formatter",
+    "overflow",
+    "position",
+    "distance",
+    "fontSize",
+    "fontWeight",
+    "color",
+    "labelLine.show",
+    "labelLine.length",
+    "labelLine.smooth"
+  ],
+  gauge: ["formatter", "fontSize", "fontWeight", "color", "offsetX", "offsetY"]
+};
+var VALUE_KEYS = [
+  "formatter",
+  "overflow",
+  "position",
+  "distance",
+  "rotate",
+  "offsetX",
+  "offsetY",
+  "fontSize",
+  "fontWeight",
+  "color",
+  "backgroundColor",
+  "borderColor",
+  "borderWidth",
+  "borderRadius",
+  "padding"
+];
+function seriesOf2(option) {
+  const series = option?.series;
+  return Array.isArray(series) ? series : [];
+}
+function asRecord(node) {
+  return node && typeof node === "object" && !Array.isArray(node) ? { ...node } : {};
+}
+function labelTargetOf(type) {
+  return getChartKindDefinition(type)?.seriesType === "gauge" ? "detail" : "label";
+}
+function labelFieldsOf(type) {
+  const def = getChartKindDefinition(type);
+  return def ? FIELDS_BY_SERIES[def.seriesType] : [];
+}
+function readChartLabel(option, type) {
+  const def = getChartKindDefinition(type);
+  const series = seriesOf2(option);
+  const target = asRecord(series[0]?.[labelTargetOf(type)]);
+  const state = {
+    show: typeof target.show === "boolean" ? target.show : def ? NATIVE_SHOW[def.seriesType] : false,
+    // labelLine 在 ECharts 里是 series 顶层键（与 label 平级），不是 label 的子键
+    labelLine: asRecord(series[0]?.labelLine)
+  };
+  for (const key of VALUE_KEYS) {
+    const value = target[key];
+    if (typeof value === "string" || typeof value === "number") state[key] = value;
+  }
+  return state;
+}
+function defaultSetOf(type) {
+  const def = getChartKindDefinition(type);
+  if (!def) return {};
+  return { ...ENABLE_DEFAULTS[def.seriesType], ...TYPE_DEFAULTS[type] };
+}
+function isEmpty(value) {
+  return value === null || value === void 0 || value === "";
+}
+function updateChartLabel(option, type, patch) {
+  const next = cloneChartOption(option ?? {});
+  const series = Array.isArray(next.series) ? next.series : [];
+  const def = getChartKindDefinition(type);
+  if (!def || series.length === 0) return next;
+  const targetKey = labelTargetOf(type);
+  const { enabled, labelLine, ...values } = patch;
+  for (const item of series) {
+    if (!item || typeof item !== "object") continue;
+    const current = asRecord(item[targetKey]);
+    if (enabled === true) {
+      Object.assign(current, { ...defaultSetOf(type), ...current, show: true });
+    } else if (enabled === false) {
+      current.show = false;
+    }
+    for (const [key, value] of Object.entries(values)) {
+      if (isEmpty(value)) delete current[key];
+      else current[key] = value;
+    }
+    if (labelLine) {
+      const line = asRecord(item.labelLine);
+      for (const [key, value] of Object.entries(labelLine)) {
+        if (isEmpty(value)) delete line[key];
+        else line[key] = value;
+      }
+      item.labelLine = line;
+    }
+    item[targetKey] = current;
+  }
+  return next;
+}
+
+// src/ui.ts
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
   ".echarts-field-row{display:flex;gap:6px;align-items:center}",
   ".echarts-field-row>.pd-input{flex:1;min-width:0}",
-  ".echarts-field-row>.pd-button{flex:none}"
+  ".echarts-field-row>.pd-button{flex:none}",
+  ".echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}",
+  ".echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}",
+  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
+  ".echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+  ".echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}",
+  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
+  ".echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}",
+  ".echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+  ".echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}",
+  ".echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}",
+  ".echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}",
+  ".echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}",
+  ".echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}",
+  ".echarts-label-sub{font-size:11px;color:var(--pd-text-secondary,#6b7280);margin:8px 0 4px}"
 ].join("");
 var CHART_OPTION_KEYS = [
   "chartOption",
@@ -693,10 +1108,12 @@ var SEARCH_KEYWORDS = [
   "\u6563\u70B9",
   "\u96F7\u8FBE",
   "\u6F0F\u6597",
-  "\u4EEA\u8868"
+  "\u4EEA\u8868",
+  "\u6570\u636E\u6807\u7B7E",
+  "\u6570\u503C\u6807\u7B7E",
+  "label"
 ];
 var PANEL_HINT = "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002";
-var datalistSeq = 0;
 function escapeHtml2(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -709,7 +1126,7 @@ function rawChartOption(element) {
 }
 function panelOption(element) {
   const raw = rawChartOption(element);
-  return cloneChartOption(raw ?? createDefaultChartOption2(elementType(element)));
+  return cloneChartOption(raw ?? createDefaultChartOption(elementType(element)));
 }
 function chartHasProperties(element) {
   const options = element?.options;
@@ -718,7 +1135,7 @@ function chartHasProperties(element) {
   return CHART_OPTION_KEYS.some((key) => record[key] !== void 0);
 }
 function commitOption(ctx, type, next, patch = {}) {
-  ctx.update({ chartOption: normalizeChartOption2(type, next), ...patch });
+  ctx.update({ chartOption: normalizeChartOption(type, next), ...patch });
 }
 function readValueFields(element) {
   const raw = element.options.chartValueFields;
@@ -745,10 +1162,37 @@ function dataSourceCandidates(data) {
   if (!first) return [];
   return Object.keys(first).filter((key) => Array.isArray(first[key]));
 }
+function dataRowFields(data, dataSource) {
+  const first = data?.[0];
+  if (!first) return [];
+  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find((k) => Array.isArray(first[k]));
+  if (!key) return [];
+  const rows = first[key];
+  return rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null ? Object.keys(rows[0]) : [];
+}
+function fieldLabelMap(fields) {
+  const map = /* @__PURE__ */ new Map();
+  for (const field2 of fields ?? []) {
+    if (field2.fieldKey && field2.fieldLabel) map.set(field2.fieldKey, field2.fieldLabel);
+  }
+  return map;
+}
+function optionLabel(value, labels, fallbackSuffix) {
+  if (!value) return fallbackSuffix ?? "\uFF08\u9ED8\u8BA4\uFF09";
+  const name = labels.get(value);
+  const base = name ? `${name}\uFF08${value}\uFF09` : value;
+  return fallbackSuffix ? `${base}${fallbackSuffix}` : base;
+}
+function dropdownOptions(candidates, current, labels = /* @__PURE__ */ new Map()) {
+  const opts = candidates.map((value) => ({ value, label: optionLabel(value, labels) }));
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, "\uFF08\u5F53\u524D\uFF09") });
+  if (!current) opts.unshift({ value: "", label: "\uFF08\u9ED8\u8BA4\uFF1A\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09" });
+  return opts;
+}
 function seriesList(option) {
   return Array.isArray(option.series) ? option.series : [];
 }
-function clamp(value, min, max) {
+function clamp2(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 function syncValueFields(ctx, type, nextFields) {
@@ -767,14 +1211,14 @@ function renderCanvas(ctx) {
   const widthMm = Number(options.width) || 0;
   const heightMm = Number(options.height) || 0;
   try {
-    const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption2(type));
-    const option = normalizeChartOption2(type, preview);
+    const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption(type));
+    const option = normalizeChartOption(type, preview);
     if (!option || typeof option !== "object" || Array.isArray(option)) throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
     const fontFamily = typeof options.fontFamily === "string" && options.fontFamily ? options.fontFamily : void 0;
-    const svg = renderChartToSvg2({ key: element.id, type, option, widthMm, heightMm, fontFamily });
+    const svg = renderChartToSvg({ key: element.id, type, option, widthMm, heightMm, fontFamily });
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${svg}</div>`;
   } catch {
-    const title = typeof options.title === "string" && options.title.trim() ? options.title : getChartKindDefinition2(type)?.label ?? "\u56FE\u8868";
+    const title = typeof options.title === "string" && options.title.trim() ? options.title : getChartKindDefinition(type)?.label ?? "\u56FE\u8868";
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${escapeHtml2(title)}</div>`;
   }
 }
@@ -811,52 +1255,296 @@ function checkboxField(labelText, checked, onCommit) {
   wrap.appendChild(input);
   return wrap;
 }
+function selectInput(options, value, onCommit) {
+  const select = el("select", "pd-select");
+  for (const item of options) {
+    const optionEl = el("option");
+    optionEl.value = item.value;
+    optionEl.textContent = item.label;
+    select.appendChild(optionEl);
+  }
+  select.value = value;
+  select.addEventListener("change", () => onCommit(select.value));
+  return select;
+}
+var activeDropdown = null;
+function composedPathOf(ev) {
+  const composed = typeof ev.composedPath === "function" ? ev.composedPath() : [];
+  return composed.length ? composed : [ev.target];
+}
+function dropdownSelect(options, value, onCommit) {
+  const current = options.find((item) => item.value === value) ?? { value, label: value || "\uFF08\u9ED8\u8BA4\uFF09" };
+  const trigger = el("button", "echarts-dropdown-trigger");
+  trigger.type = "button";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  const valueEl = el("span", "echarts-dropdown-value", current.label);
+  const arrow = el("span", "echarts-dropdown-arrow", "\u25BE");
+  trigger.appendChild(valueEl);
+  trigger.appendChild(arrow);
+  let panel = null;
+  let off = [];
+  const close = () => {
+    off.forEach((fn) => fn());
+    off = [];
+    panel?.remove();
+    panel = null;
+    trigger.setAttribute("aria-expanded", "false");
+    if (activeDropdown?.close === close) activeDropdown = null;
+  };
+  const open = () => {
+    activeDropdown?.close();
+    const root = trigger.getRootNode();
+    const mount = root instanceof ShadowRoot ? root : document.body;
+    panel = el("div", "echarts-dropdown-panel");
+    panel.setAttribute("role", "listbox");
+    for (const item of options) {
+      const optionEl = el("div", `echarts-dropdown-option${item.value === value ? " is-active" : ""}`, item.label);
+      optionEl.setAttribute("role", "option");
+      optionEl.setAttribute("aria-selected", item.value === value ? "true" : "false");
+      optionEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        close();
+        onCommit(item.value);
+      });
+      panel.appendChild(optionEl);
+    }
+    mount.appendChild(panel);
+    const rect = trigger.getBoundingClientRect();
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.bottom + 4}px`;
+    panel.style.minWidth = `${rect.width}px`;
+    trigger.setAttribute("aria-expanded", "true");
+    activeDropdown = { close };
+    const onPointerDown = (ev) => {
+      const path = composedPathOf(ev);
+      if (path.includes(trigger) || path.includes(panel)) return;
+      close();
+    };
+    const onKeydown = (ev) => {
+      if (ev.key === "Escape") close();
+    };
+    const onScroll = () => close();
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeydown);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    root.addEventListener("scroll", onScroll, true);
+    off.push(
+      () => document.removeEventListener("pointerdown", onPointerDown, true),
+      () => document.removeEventListener("keydown", onKeydown),
+      () => window.removeEventListener("scroll", onScroll, true),
+      () => window.removeEventListener("resize", onScroll),
+      () => root.removeEventListener("scroll", onScroll, true)
+    );
+  };
+  trigger.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    if (panel) close();
+    else open();
+  });
+  return trigger;
+}
+var OVERFLOW_OPTIONS = [
+  { value: "", label: "\u9ED8\u8BA4" },
+  { value: "none", label: "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09" },
+  { value: "truncate", label: "\u622A\u65AD" },
+  { value: "break", label: "\u6362\u884C" }
+];
+var FONT_WEIGHT_OPTIONS = [
+  { value: "", label: "\u9ED8\u8BA4" },
+  { value: "normal", label: "\u5E38\u89C4" },
+  { value: "bold", label: "\u52A0\u7C97" }
+];
+var STYLE_FIELD_LABELS = {
+  distance: "\u8DDD\u79BB",
+  rotate: "\u65CB\u8F6C\uFF08\u5EA6\uFF09",
+  fontSize: "\u5B57\u53F7",
+  fontWeight: "\u5B57\u91CD",
+  color: "\u6587\u5B57\u989C\u8272",
+  backgroundColor: "\u80CC\u666F\u8272",
+  borderColor: "\u8FB9\u6846\u8272",
+  borderWidth: "\u8FB9\u6846\u5BBD\u5EA6",
+  borderRadius: "\u5706\u89D2",
+  padding: "\u5185\u8FB9\u8DDD"
+};
+function renderLabelGroup(ctx, type) {
+  const element = ctx.element;
+  const def = getChartKindDefinition(type);
+  const fields = labelFieldsOf(type);
+  const has = (key) => fields.includes(key);
+  const state = readChartLabel(panelOption(element), type);
+  const commit = (patch) => {
+    commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch));
+  };
+  const commitNumber = (key, raw) => {
+    if (raw.trim() === "") return commit({ [key]: null });
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return;
+    commit({ [key]: value });
+  };
+  const commitLineNumber = (key, raw) => {
+    if (raw.trim() === "") return commit({ labelLine: { [key]: null } });
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return;
+    commit({ labelLine: { [key]: value } });
+  };
+  const numberField = (key, value) => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    wrap.appendChild(
+      textInput({ value: value === void 0 ? "" : String(value), type: "number" }, (raw) => commitNumber(key, raw))
+    );
+    return wrap;
+  };
+  const colorField = (key, value) => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    const holder = el("span");
+    render(colorPicker({
+      value: value ?? "",
+      title: STYLE_FIELD_LABELS[key] ?? key,
+      onChange: (next) => commit({ [key]: next ?? "" })
+    }), holder);
+    wrap.appendChild(holder);
+    return wrap;
+  };
+  const group = el("details", "echarts-label-group");
+  group.open = state.show;
+  const summary = el("summary", "echarts-label-summary");
+  const toggle = checkboxField("\u663E\u793A\u6570\u636E\u6807\u7B7E", state.show, (checked) => commit({ enabled: checked }));
+  toggle.querySelector("input")?.addEventListener("click", (event) => event.stopPropagation());
+  summary.appendChild(toggle);
+  group.appendChild(summary);
+  if (has("formatter") || has("overflow")) {
+    group.appendChild(el("div", "echarts-label-sub", "\u5185\u5BB9"));
+    if (has("formatter")) {
+      const wrap = field("\u6570\u636E\u6807\u7B7E\u5185\u5BB9");
+      wrap.appendChild(
+        selectInput(
+          [{ value: "", label: "\u81EA\u5B9A\u4E49 / \u9ED8\u8BA4" }, ...LABEL_PRESETS.map((preset) => ({ value: preset.formatter, label: preset.label }))],
+          state.formatter ?? "",
+          (value) => commit({ formatter: value })
+        )
+      );
+      wrap.appendChild(
+        textInput({ value: state.formatter ?? "", placeholder: "\u5982 {b}: {c}" }, (value) => commit({ formatter: value }))
+      );
+      group.appendChild(wrap);
+    }
+    if (has("overflow")) {
+      const wrap = field("\u6EA2\u51FA\u5904\u7406");
+      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? "", (value) => commit({ overflow: value })));
+      group.appendChild(wrap);
+    }
+  }
+  if (has("position") || has("distance") || has("rotate") || has("offsetX")) {
+    group.appendChild(el("div", "echarts-label-sub", "\u4F4D\u7F6E"));
+    if (has("position")) {
+      const wrap = field("\u6807\u7B7E\u4F4D\u7F6E");
+      const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : [];
+      wrap.appendChild(
+        selectInput([{ value: "", label: "\u9ED8\u8BA4" }, ...positions], state.position ?? "", (value) => commit({ position: value }))
+      );
+      group.appendChild(wrap);
+    }
+    if (has("distance")) group.appendChild(numberField("distance", state.distance));
+    if (has("rotate")) group.appendChild(numberField("rotate", state.rotate));
+    if (has("offsetX") || has("offsetY")) {
+      const wrap = field("\u504F\u79FB X / Y");
+      const row = el("div", "echarts-field-row");
+      row.appendChild(
+        textInput({ value: state.offsetX === void 0 ? "" : String(state.offsetX), type: "number" }, (raw) => commitNumber("offsetX", raw))
+      );
+      row.appendChild(
+        textInput({ value: state.offsetY === void 0 ? "" : String(state.offsetY), type: "number" }, (raw) => commitNumber("offsetY", raw))
+      );
+      wrap.appendChild(row);
+      group.appendChild(wrap);
+    }
+  }
+  const styleKeys = ["fontSize", "fontWeight", "color", "backgroundColor", "borderColor", "borderWidth", "borderRadius", "padding"];
+  if (styleKeys.some(has)) {
+    group.appendChild(el("div", "echarts-label-sub", "\u6837\u5F0F"));
+    if (has("fontSize")) group.appendChild(numberField("fontSize", state.fontSize));
+    if (has("fontWeight")) {
+      const wrap = field("\u5B57\u91CD");
+      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
+      group.appendChild(wrap);
+    }
+    for (const key of ["color", "backgroundColor", "borderColor"]) {
+      if (has(key)) group.appendChild(colorField(key, state[key]));
+    }
+    for (const key of ["borderWidth", "borderRadius", "padding"]) {
+      if (has(key)) group.appendChild(numberField(key, state[key]));
+    }
+  }
+  if (has("labelLine.show")) {
+    group.appendChild(el("div", "echarts-label-sub", "\u5F15\u5BFC\u7EBF"));
+    group.appendChild(
+      checkboxField("\u663E\u793A\u5F15\u5BFC\u7EBF", state.labelLine.show === true, (checked) => commit({ labelLine: { show: checked } }))
+    );
+    if (has("labelLine.length")) {
+      const wrap = field("\u5F15\u5BFC\u7EBF\u957F\u5EA6");
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length === void 0 ? "" : String(state.labelLine.length), type: "number" },
+          (raw) => commitLineNumber("length", raw)
+        )
+      );
+      group.appendChild(wrap);
+    }
+    if (has("labelLine.length2")) {
+      const wrap = field("\u7B2C\u4E8C\u6BB5\u957F\u5EA6");
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length2 === void 0 ? "" : String(state.labelLine.length2), type: "number" },
+          (raw) => commitLineNumber("length2", raw)
+        )
+      );
+      group.appendChild(wrap);
+    }
+    if (has("labelLine.smooth")) {
+      group.appendChild(
+        checkboxField("\u5E73\u6ED1\u5F15\u5BFC\u7EBF", state.labelLine.smooth === true, (checked) => commit({ labelLine: { smooth: checked } }))
+      );
+    }
+  }
+  return group;
+}
 function renderProperty(ctx) {
   const element = ctx.element;
   const type = elementType(element);
-  const def = getChartKindDefinition2(type);
-  const fields = resolveChartPanelFields2(type);
+  const def = getChartKindDefinition(type);
+  const fields = resolveChartPanelFields(type);
   const has = (key) => fields.includes(key);
   const options = element.options;
   const widthMm = Number(options.width) || 0;
   const heightMm = Number(options.height) || 0;
   const limit = maxValueFields(def);
-  const palettes = getChartPalettes2();
+  const palettes = getChartPalettes();
+  const fieldLabels = fieldLabelMap(ctx.fields);
   const root = el("div", "echarts-property");
   const form = el("form", "pd-form");
   form.addEventListener("submit", (event) => event.preventDefault());
   root.appendChild(form);
   if (has("dataSource")) {
     const wrap = field("\u6570\u636E\u6E90");
-    const candidates = dataSourceCandidates(ctx.data);
-    let datalist;
-    if (candidates.length > 0) {
-      datalist = el("datalist");
-      datalist.id = `echarts-ds-${++datalistSeq}`;
-      for (const key of candidates) {
-        const optionEl = el("option");
-        optionEl.value = key;
-        datalist.appendChild(optionEl);
-      }
-    }
+    const current = String(options.chartDataSource ?? "");
     wrap.appendChild(
-      textInput(
-        {
-          value: String(options.chartDataSource ?? ""),
-          placeholder: "\u6570\u636E\u96C6\u8DEF\u5F84\uFF08\u7559\u7A7A\u53D6\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09",
-          list: datalist?.id
-        },
+      dropdownSelect(
+        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
+        current,
         (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value })
       )
     );
-    if (datalist) wrap.appendChild(datalist);
     form.appendChild(wrap);
   }
   if (has("categoryField")) {
     const wrap = field("\u7C7B\u76EE\u5B57\u6BB5");
+    const current = String(options.chartCategoryField ?? "");
     wrap.appendChild(
-      textInput(
-        { value: String(options.chartCategoryField ?? ""), placeholder: "\u5982 name" },
+      dropdownSelect(
+        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), current, fieldLabels),
+        current,
         (value) => commitOption(ctx, type, panelOption(element), { chartCategoryField: value })
       )
     );
@@ -868,8 +1556,9 @@ function renderProperty(ctx) {
     fieldsNow.forEach((value, index) => {
       const row = el("div", "echarts-field-row");
       row.appendChild(
-        textInput(
-          { value, placeholder: "\u5982 value" },
+        dropdownSelect(
+          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), value, fieldLabels),
+          value,
           (next) => {
             const list = readValueFields(element);
             list[index] = next;
@@ -954,6 +1643,9 @@ function renderProperty(ctx) {
     wrap.appendChild(select);
     form.appendChild(wrap);
   }
+  if (has("label")) {
+    form.appendChild(renderLabelGroup(ctx, type));
+  }
   if (has("stack")) {
     const series = seriesList(panelOption(element));
     const stacked = series.some((item) => item.stack !== void 0 && item.stack !== null && item.stack !== "");
@@ -976,7 +1668,7 @@ function renderProperty(ctx) {
       textInput({ value: String(inner), type: "number", min: 0, max: 90 }, (value) => {
         const next = panelOption(element);
         const series = seriesList(next);
-        if (series[0]) series[0].radius = [`${clamp(Number(value) || 0, 0, 90)}%`, "70%"];
+        if (series[0]) series[0].radius = [`${clamp2(Number(value) || 0, 0, 90)}%`, "70%"];
         commitOption(ctx, type, next);
       })
     );
@@ -996,7 +1688,7 @@ function renderProperty(ctx) {
       row.appendChild(
         textInput({ value: String(padding[side]), type: "number", min: 0, max: 60, title }, (value) => {
           const raw = Number(value);
-          const next = Number.isFinite(raw) ? clamp(raw, 0, 60) : FUNNEL_PADDING_DEFAULTS2[side];
+          const next = Number.isFinite(raw) ? clamp2(raw, 0, 60) : FUNNEL_PADDING_DEFAULTS[side];
           const option = panelOption(element);
           const current = readFunnelPadding(option, widthMm, heightMm);
           commitOption(ctx, type, writeFunnelPadding(option, { ...current, [side]: next }));
@@ -1013,7 +1705,7 @@ function renderProperty(ctx) {
         { value: String(readRadarRadius(panelOption(element), widthMm, heightMm)), type: "number", min: 20, max: 100 },
         (value) => {
           const raw = Number(value);
-          const next = Number.isFinite(raw) ? clamp(raw, 20, 100) : RADAR_RADIUS_DEFAULT2;
+          const next = Number.isFinite(raw) ? clamp2(raw, 20, 100) : RADAR_RADIUS_DEFAULT;
           commitOption(ctx, type, writeRadarRadius(panelOption(element), next));
         }
       )
@@ -1047,7 +1739,7 @@ function renderProperty(ctx) {
   return root;
 }
 var CHART_ELEMENT_UI = defineElementUI({
-  types: CHART_KINDS2,
+  types: CHART_KINDS,
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,

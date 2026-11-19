@@ -93,4 +93,19 @@ describe('图表数据绑定', () => {
     expect(bindChartData('barChart', { chartOption: createDefaultChartOption('barChart'), chartDataSource: 'none', chartValueFields: ['sales'] }, data)._chartOption).toBeTruthy()
     expect(bindChartData('barChart', { chartOption: 'bad' }, data)).toEqual({})
   })
+
+  it('label 与 detail 的 formatter 不被数据表达式求值', () => {
+    const options = {
+      chartOption: {
+        title: { text: '{value} 元' },
+        series: [{ type: 'bar', data: ['$data'], label: { show: true, formatter: '{value} 元' } }],
+      },
+      chartValueFields: ['value'],
+      chartCategoryField: 'name',
+    }
+    const patch = bindChartData('barChart', options, { name: '华东', value: 12 })
+    const option = patch._chartOption as Record<string, any>
+    expect(option.series[0].label.formatter).toBe('{value} 元')
+    expect(option.title.text).toBe('12 元')
+  })
 })

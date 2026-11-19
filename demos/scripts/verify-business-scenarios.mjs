@@ -118,6 +118,12 @@ async function previewOnce(timeout = 30000) {
       chartImages: [...doc.querySelectorAll('img[src^="data:image/svg"]')]
         .filter(img => img.getAttribute('src').includes('preserveAspectRatio')).length,
       svgImages: doc.querySelectorAll('img[src^="data:image/svg"]').length,
+      chartSvgText: [...doc.querySelectorAll('img[src^="data:image/svg"]')].map(img => {
+        const src = img.getAttribute('src') || ''
+        const m = /^data:image\/svg\+xml([^,]*),(.*)$/.exec(src)
+        if (!m) return ''
+        try { return m[1].includes('base64') ? atob(m[2]) : decodeURIComponent(m[2]) } catch { return '' }
+      }).join(''),
       spans: /rowspan|colspan/.test(doc.body.innerHTML) ? 1 : 0,
       subtitle: document.querySelector('.preview-subtitle')?.textContent.trim() ?? '',
     }
@@ -215,6 +221,17 @@ try {
   await page.locator('.demo-batch-switch input').uncheck()
 } catch (e) {
   check('体检报告：深度场景执行', false, String(e).slice(0, 200))
+}
+
+// ── 2b. 图表数据标签：柱状图与饼图的标签文本 ──
+try {
+  const label = await applySample('数据标签示例')
+  check('数据标签示例：模板加载成功', label.validation === 'ok', `校验=${label.validation}`)
+  const lpv = await previewOnce()
+  check('数据标签示例：柱状图标签文本落到 SVG', lpv.chartSvgText.includes('华东: 12'), '')
+  check('数据标签示例：饼图标签文本落到 SVG', lpv.chartSvgText.includes('12 件'), '')
+} catch (e) {
+  check('数据标签示例：场景执行', false, String(e).slice(0, 200))
 }
 
 // ── 3. 旁路 API 与事件：保存导出前的设计器契约 ──

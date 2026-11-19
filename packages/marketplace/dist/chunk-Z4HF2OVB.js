@@ -358,7 +358,7 @@ var BUNDLED_CATALOG = {
       "id": "echarts",
       "name": "\u767E\u5EA6\u56FE\u8868\u5143\u7D20",
       "description": "\u57FA\u4E8E ECharts \u7684\u5341\u7C7B\u6253\u5370\u56FE\u8868\u5143\u7D20\uFF0C\u6D4F\u89C8\u5668\u4E0E\u670D\u52A1\u7AEF\u540C\u6784\u51FA\u56FE\u3002\u56FE\u8868\u5E93\u5305 @worm-print-platform/echarts \u72EC\u7ACB\u53D1\u5E03\uFF0C\u672C\u63D2\u4EF6\u4EC5\u505A\u526F\u4F5C\u7528\u6CE8\u518C\u3002",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "npmName": "@worm-print-platform/plugin-echarts",
       "path": "plugins/echarts",
       "entry": "dist/marketplace.js",

@@ -51,6 +51,18 @@ describe('SVG 渲染器', () => {
   it('非法 option 抛错（由调用方降级）', () => {
     expect(() => renderChartToSvg({ key: 'k', type: 'barChart', option: [] as any, widthMm: 10, heightMm: 10 })).toThrow()
   })
+
+  it('饼图开启标签后 SSR 产出文本节点', () => {
+    const svg = renderChartToSvg({
+      key: 'label-pie',
+      type: 'pieChart',
+      option: { series: [{ type: 'pie', data: [{ name: '甲', value: 3 }], label: { show: true, overflow: 'none' } }] },
+      widthMm: 60,
+      heightMm: 60,
+    })
+    expect(svg).toContain('<text')
+    expect(svg).toContain('甲')
+  })
 })
 
 describe('通用渲染分派入口', () => {

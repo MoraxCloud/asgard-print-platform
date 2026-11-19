@@ -8,16 +8,19 @@ function chartNumber(value: unknown): number {
 }
 
 /** 递归求值 `{字段}` 表达式；只保留 `$data` 占位（不能被求值抹平） */
-function evaluateChartOption(node: unknown, data: Record<string, unknown>): unknown {
+function evaluateChartOption(node: unknown, data: Record<string, unknown>, keepStrings = false): unknown {
   if (typeof node === 'string') {
     if (node.startsWith('$data')) return node
+    // label / detail 子树是 ECharts 模板语法（{b}/{c}/{d}），不是业务字段表达式，整棵子树不求值
+    if (keepStrings) return node
     return node.includes('{') ? evaluateTemplate(node, data) : node
   }
-  if (Array.isArray(node)) return node.map(item => evaluateChartOption(item, data))
+  if (Array.isArray(node)) return node.map(item => evaluateChartOption(item, data, keepStrings))
   if (node && typeof node === 'object') {
     const out: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
-      out[key] = evaluateChartOption(value, data)
+      const childKeep = keepStrings || key === 'label' || key === 'detail'
+      out[key] = evaluateChartOption(value, data, childKeep)
     }
     return out
   }

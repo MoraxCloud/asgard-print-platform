@@ -6,6 +6,8 @@
 // 用 input 会让输入框在每次按键后重建、丢焦点。
 import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
 import { defineElementUI, registerElementUI } from '@worm-print-platform/plugin-kit'
+import { render } from '@worm-print-platform/plugin-kit/dom'
+import { colorPicker } from '@worm-print-platform/plugin-kit/controls'
 import type {
   ElementUI,
   ElementUICanvasContext,
@@ -20,19 +22,31 @@ import {
   FUNNEL_PADDING_DEFAULTS,
   getChartKindDefinition,
   getChartPalettes,
+  LABEL_POSITIONS,
+  LABEL_PRESETS,
+  labelFieldsOf,
   normalizeChartOption,
   previewChartOption,
   RADAR_RADIUS_DEFAULT,
+  readChartLabel,
   readFunnelPadding,
   readPaletteKey,
   readRadarRadius,
   renderChartToSvg,
   resolveChartPanelFields,
   syncSeriesCount,
+  updateChartLabel,
   writeFunnelPadding,
   writeRadarRadius,
-} from '@worm-print-platform/plugin-echarts/kit'
-import type { ChartFieldKey, ChartKindDefinition, FunnelPadding } from '@worm-print-platform/plugin-echarts/kit'
+} from './kit.js'
+import type {
+  ChartFieldKey,
+  ChartKindDefinition,
+  ChartLabelPatch,
+  ChartLabelState,
+  FunnelPadding,
+  LabelFieldKey,
+} from './kit.js'
 
 /** 画布容器与 Vue 侧 ChartElement.vue 同形：铺满元素框且不吃指针事件 */
 const CANVAS_STYLE = 'width:100%;height:100%;min-width:0;min-height:0;pointer-events:none'
@@ -42,6 +56,20 @@ const STYLES = [
   '.echarts-field-row{display:flex;gap:6px;align-items:center}',
   '.echarts-field-row>.pd-input{flex:1;min-width:0}',
   '.echarts-field-row>.pd-button{flex:none}',
+  '.echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}',
+  '.echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}',
+  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
+  '.echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+  '.echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}',
+  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
+  '.echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}',
+  '.echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}',
+  '.echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}',
+  '.echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}',
+  '.echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}',
+  '.echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}',
+  '.echarts-label-sub{font-size:11px;color:var(--pd-text-secondary,#6b7280);margin:8px 0 4px}',
 ].join('')
 
 /** 与 Vue 设计器轨道 ChartPropertyGroup 同口径的 hasProperties / searchKeywords 同口径 */
@@ -51,12 +79,10 @@ const CHART_OPTION_KEYS = [
 
 const SEARCH_KEYWORDS = [
   '图表', 'echarts', 'option', '配置', '数据源', '类目', '数值', '系列', '柱状', '条形',
-  '折线', '面积', '饼', '环形', '散点', '雷达', '漏斗', '仪表',
+  '折线', '面积', '饼', '环形', '散点', '雷达', '漏斗', '仪表', '数据标签', '数值标签', 'label',
 ] as const
 
 const PANEL_HINT = '数据由模板绑定阶段注入：series/xAxis 的 data 保留 `$data` 占位即可；复杂样式可在模板 JSON 中手写 chartOption。'
-
-let datalistSeq = 0
 
 function escapeHtml(value: string): string {
   return value
@@ -129,6 +155,48 @@ function dataSourceCandidates(data?: readonly Record<string, unknown>[]): string
   const first = data?.[0]
   if (!first) return []
   return Object.keys(first).filter(key => Array.isArray(first[key]))
+}
+
+/** 行字段候选：取指定数据源数组首行的键，供类目/数值字段下拉；无数据源时取顶层第一个数组 */
+function dataRowFields(data: readonly Record<string, unknown>[] | undefined, dataSource: string): string[] {
+  const first = data?.[0]
+  if (!first) return []
+  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find(k => Array.isArray(first[k]))
+  if (!key) return []
+  const rows = first[key] as Record<string, unknown>[]
+  return rows.length > 0 && typeof rows[0] === 'object' && rows[0] !== null
+    ? Object.keys(rows[0])
+    : []
+}
+
+/** 字段键→中文名映射；业务字段清单 ctx.fields 里声明过的键可显示「中文名 (键)」 */
+type FieldLabelMap = ReadonlyMap<string, string>
+function fieldLabelMap(fields: readonly { fieldKey: string; fieldLabel?: string }[] | undefined): FieldLabelMap {
+  const map = new Map<string, string>()
+  for (const field of fields ?? []) {
+    if (field.fieldKey && field.fieldLabel) map.set(field.fieldKey, field.fieldLabel)
+  }
+  return map
+}
+
+/** 选项展示文案：有中文名则「中文名（键）」，否则仅键 */
+function optionLabel(value: string, labels: FieldLabelMap, fallbackSuffix?: string): string {
+  if (!value) return fallbackSuffix ?? '（默认）'
+  const name = labels.get(value)
+  const base = name ? `${name}（${value}）` : value
+  return fallbackSuffix ? `${base}${fallbackSuffix}` : base
+}
+
+/** 构造下拉选项：候选 + 当前值（若不在候选里，动态补一项以保留已有模板的值） */
+function dropdownOptions(
+  candidates: readonly string[],
+  current: string,
+  labels: FieldLabelMap = new Map(),
+): { value: string; label: string }[] {
+  const opts = candidates.map(value => ({ value, label: optionLabel(value, labels) }))
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, '（当前）') })
+  if (!current) opts.unshift({ value: '', label: '（默认：顶层第一个数组）' })
+  return opts
 }
 
 function seriesList(option: Record<string, any>): Record<string, any>[] {
@@ -223,6 +291,299 @@ function checkboxField(labelText: string, checked: boolean, onCommit: (checked: 
   return wrap
 }
 
+function selectInput(
+  options: readonly { value: string; label: string }[],
+  value: string,
+  onCommit: (value: string) => void,
+): HTMLSelectElement {
+  const select = el('select', 'pd-select')
+  for (const item of options) {
+    const optionEl = el('option')
+    optionEl.value = item.value
+    optionEl.textContent = item.label
+    select.appendChild(optionEl)
+  }
+  select.value = value
+  select.addEventListener('change', () => onCommit(select.value))
+  return select
+}
+
+// 当前打开的自定义下拉（同一时刻只开一个，切换字段自动收起上一个）
+let activeDropdown: { close: () => void } | null = null
+
+function composedPathOf(ev: Event): EventTarget[] {
+  const composed = typeof (ev as { composedPath?: () => EventTarget[] }).composedPath === 'function'
+    ? (ev as { composedPath: () => EventTarget[] }).composedPath()
+    : []
+  return composed.length ? composed : [ev.target as EventTarget]
+}
+
+/**
+ * 自定义下拉：原生 <select> 的弹窗方向由浏览器按可用空间决定，属性面板里会向上弹、遮挡上方字段。
+ * 这里用「触发钮 + fixed 面板」保证选项固定在选择框正下方展开；面板挂在触发钮所在 root（shadow 或 body），
+ * 与颜色选择器同一手法，避开 .pd-form 的 overflow 裁剪。外点 / Esc / 滚动 / resize 均收起。
+ */
+function dropdownSelect(
+  options: readonly { value: string; label: string }[],
+  value: string,
+  onCommit: (value: string) => void,
+): HTMLElement {
+  const current = options.find(item => item.value === value) ?? { value, label: value || '（默认）' }
+  const trigger = el('button', 'echarts-dropdown-trigger')
+  trigger.type = 'button'
+  trigger.setAttribute('aria-haspopup', 'listbox')
+  trigger.setAttribute('aria-expanded', 'false')
+  const valueEl = el('span', 'echarts-dropdown-value', current.label)
+  const arrow = el('span', 'echarts-dropdown-arrow', '▾')
+  trigger.appendChild(valueEl)
+  trigger.appendChild(arrow)
+
+  let panel: HTMLElement | null = null
+  let off: Array<() => void> = []
+
+  const close = () => {
+    off.forEach(fn => fn())
+    off = []
+    panel?.remove()
+    panel = null
+    trigger.setAttribute('aria-expanded', 'false')
+    if (activeDropdown?.close === close) activeDropdown = null
+  }
+
+  const open = () => {
+    activeDropdown?.close()
+    const root = trigger.getRootNode() as ShadowRoot | Document
+    const mount: Element | ShadowRoot = root instanceof ShadowRoot ? root : document.body
+    panel = el('div', 'echarts-dropdown-panel')
+    panel.setAttribute('role', 'listbox')
+    for (const item of options) {
+      const optionEl = el('div', `echarts-dropdown-option${item.value === value ? ' is-active' : ''}`, item.label)
+      optionEl.setAttribute('role', 'option')
+      optionEl.setAttribute('aria-selected', item.value === value ? 'true' : 'false')
+      optionEl.addEventListener('click', ev => {
+        ev.stopPropagation()
+        close()
+        onCommit(item.value)
+      })
+      panel.appendChild(optionEl)
+    }
+    mount.appendChild(panel)
+    // 定位在触发钮正下方：fixed 相对视口，shadow 内亦如此（祖先无 transform）
+    const rect = trigger.getBoundingClientRect()
+    panel.style.left = `${rect.left}px`
+    panel.style.top = `${rect.bottom + 4}px`
+    panel.style.minWidth = `${rect.width}px`
+    trigger.setAttribute('aria-expanded', 'true')
+    activeDropdown = { close }
+
+    const onPointerDown = (ev: Event) => {
+      const path = composedPathOf(ev)
+      if (path.includes(trigger) || path.includes(panel!)) return
+      close()
+    }
+    const onKeydown = (ev: Event) => { if ((ev as KeyboardEvent).key === 'Escape') close() }
+    const onScroll = () => close()
+    document.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('keydown', onKeydown)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
+    root.addEventListener('scroll', onScroll, true)
+    off.push(
+      () => document.removeEventListener('pointerdown', onPointerDown, true),
+      () => document.removeEventListener('keydown', onKeydown),
+      () => window.removeEventListener('scroll', onScroll, true),
+      () => window.removeEventListener('resize', onScroll),
+      () => root.removeEventListener('scroll', onScroll, true),
+    )
+  }
+
+  trigger.addEventListener('click', ev => {
+    ev.stopPropagation()
+    if (panel) close()
+    else open()
+  })
+  return trigger
+}
+
+const OVERFLOW_OPTIONS = [
+  { value: '', label: '默认' },
+  { value: 'none', label: '不处理（显示完整）' },
+  { value: 'truncate', label: '截断' },
+  { value: 'break', label: '换行' },
+] as const
+
+const FONT_WEIGHT_OPTIONS = [
+  { value: '', label: '默认' },
+  { value: 'normal', label: '常规' },
+  { value: 'bold', label: '加粗' },
+] as const
+
+const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
+  distance: '距离',
+  rotate: '旋转（度）',
+  fontSize: '字号',
+  fontWeight: '字重',
+  color: '文字颜色',
+  backgroundColor: '背景色',
+  borderColor: '边框色',
+  borderWidth: '边框宽度',
+  borderRadius: '圆角',
+  padding: '内边距',
+}
+
+/** 数据标签分组：一个可折叠 details，内部按「内容 / 位置 / 样式 / 引导线」分块 */
+function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDetailsElement {
+  const element = ctx.element
+  const def = getChartKindDefinition(type)
+  const fields = labelFieldsOf(type)
+  const has = (key: LabelFieldKey): boolean => fields.includes(key)
+  const state = readChartLabel(panelOption(element), type)
+
+  const commit = (patch: ChartLabelPatch): void => {
+    commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch))
+  }
+  const commitNumber = (key: LabelFieldKey, raw: string): void => {
+    if (raw.trim() === '') return commit({ [key]: null } as ChartLabelPatch)
+    const value = Number(raw)
+    if (!Number.isFinite(value)) return
+    commit({ [key]: value } as ChartLabelPatch)
+  }
+  const commitLineNumber = (key: 'length' | 'length2', raw: string): void => {
+    if (raw.trim() === '') return commit({ labelLine: { [key]: null } })
+    const value = Number(raw)
+    if (!Number.isFinite(value)) return
+    commit({ labelLine: { [key]: value } })
+  }
+  const numberField = (key: LabelFieldKey, value: number | undefined): HTMLDivElement => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    wrap.appendChild(
+      textInput({ value: value === undefined ? '' : String(value), type: 'number' }, raw => commitNumber(key, raw)),
+    )
+    return wrap
+  }
+  const colorField = (key: LabelFieldKey, value: string | undefined): HTMLDivElement => {
+    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    const holder = el('span')
+    render(colorPicker({
+      value: value ?? '',
+      title: STYLE_FIELD_LABELS[key] ?? key,
+      onChange: next => commit({ [key]: next ?? '' } as ChartLabelPatch),
+    }), holder)
+    wrap.appendChild(holder)
+    return wrap
+  }
+
+  const group = el('details', 'echarts-label-group') as HTMLDetailsElement
+  group.open = state.show
+  // 总开关必须放在 summary 里：关闭标签时 details 折叠，若开关在内容区用户就再也点不到它
+  const summary = el('summary', 'echarts-label-summary')
+  const toggle = checkboxField('显示数据标签', state.show, checked => commit({ enabled: checked }))
+  // 点击开关本身不应连带折叠 details
+  toggle.querySelector('input')?.addEventListener('click', event => event.stopPropagation())
+  summary.appendChild(toggle)
+  group.appendChild(summary)
+
+  if (has('formatter') || has('overflow')) {
+    group.appendChild(el('div', 'echarts-label-sub', '内容'))
+    if (has('formatter')) {
+      const wrap = field('数据标签内容')
+      wrap.appendChild(
+        selectInput(
+          [{ value: '', label: '自定义 / 默认' }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: preset.label }))],
+          state.formatter ?? '',
+          value => commit({ formatter: value }),
+        ),
+      )
+      wrap.appendChild(
+        textInput({ value: state.formatter ?? '', placeholder: '如 {b}: {c}' }, value => commit({ formatter: value })),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('overflow')) {
+      const wrap = field('溢出处理')
+      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? '', value => commit({ overflow: value })))
+      group.appendChild(wrap)
+    }
+  }
+
+  if (has('position') || has('distance') || has('rotate') || has('offsetX')) {
+    group.appendChild(el('div', 'echarts-label-sub', '位置'))
+    if (has('position')) {
+      const wrap = field('标签位置')
+      const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : []
+      wrap.appendChild(
+        selectInput([{ value: '', label: '默认' }, ...positions], state.position ?? '', value => commit({ position: value })),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('distance')) group.appendChild(numberField('distance', state.distance))
+    if (has('rotate')) group.appendChild(numberField('rotate', state.rotate))
+    if (has('offsetX') || has('offsetY')) {
+      const wrap = field('偏移 X / Y')
+      const row = el('div', 'echarts-field-row')
+      row.appendChild(
+        textInput({ value: state.offsetX === undefined ? '' : String(state.offsetX), type: 'number' }, raw => commitNumber('offsetX', raw)),
+      )
+      row.appendChild(
+        textInput({ value: state.offsetY === undefined ? '' : String(state.offsetY), type: 'number' }, raw => commitNumber('offsetY', raw)),
+      )
+      wrap.appendChild(row)
+      group.appendChild(wrap)
+    }
+  }
+
+  const styleKeys: LabelFieldKey[] = ['fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding']
+  if (styleKeys.some(has)) {
+    group.appendChild(el('div', 'echarts-label-sub', '样式'))
+    if (has('fontSize')) group.appendChild(numberField('fontSize', state.fontSize))
+    if (has('fontWeight')) {
+      const wrap = field('字重')
+      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? '', value => commit({ fontWeight: value })))
+      group.appendChild(wrap)
+    }
+    for (const key of ['color', 'backgroundColor', 'borderColor'] as const) {
+      if (has(key)) group.appendChild(colorField(key, state[key]))
+    }
+    for (const key of ['borderWidth', 'borderRadius', 'padding'] as const) {
+      if (has(key)) group.appendChild(numberField(key, state[key]))
+    }
+  }
+
+  if (has('labelLine.show')) {
+    group.appendChild(el('div', 'echarts-label-sub', '引导线'))
+    group.appendChild(
+      checkboxField('显示引导线', state.labelLine.show === true, checked => commit({ labelLine: { show: checked } })),
+    )
+    if (has('labelLine.length')) {
+      const wrap = field('引导线长度')
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length === undefined ? '' : String(state.labelLine.length), type: 'number' },
+          raw => commitLineNumber('length', raw),
+        ),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('labelLine.length2')) {
+      const wrap = field('第二段长度')
+      wrap.appendChild(
+        textInput(
+          { value: state.labelLine.length2 === undefined ? '' : String(state.labelLine.length2), type: 'number' },
+          raw => commitLineNumber('length2', raw),
+        ),
+      )
+      group.appendChild(wrap)
+    }
+    if (has('labelLine.smooth')) {
+      group.appendChild(
+        checkboxField('平滑引导线', state.labelLine.smooth === true, checked => commit({ labelLine: { smooth: checked } })),
+      )
+    }
+  }
+
+  return group
+}
+
 function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   const element = ctx.element
   const type = elementType(element)
@@ -234,6 +595,8 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   const heightMm = Number(options.height) || 0
   const limit = maxValueFields(def)
   const palettes = getChartPalettes()
+  // 业务字段清单：fieldKey → fieldLabel，用于下拉展示「中文名（键）」
+  const fieldLabels = fieldLabelMap(ctx.fields)
 
   const root = el('div', 'echarts-property')
   const form = el('form', 'pd-form')
@@ -242,36 +605,24 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
 
   if (has('dataSource')) {
     const wrap = field('数据源')
-    const candidates = dataSourceCandidates(ctx.data)
-    let datalist: HTMLDataListElement | undefined
-    if (candidates.length > 0) {
-      datalist = el('datalist')
-      datalist.id = `echarts-ds-${++datalistSeq}`
-      for (const key of candidates) {
-        const optionEl = el('option')
-        optionEl.value = key
-        datalist.appendChild(optionEl)
-      }
-    }
+    const current = String(options.chartDataSource ?? '')
     wrap.appendChild(
-      textInput(
-        {
-          value: String(options.chartDataSource ?? ''),
-          placeholder: '数据集路径（留空取顶层第一个数组）',
-          list: datalist?.id,
-        },
+      dropdownSelect(
+        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
+        current,
         value => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
       ),
     )
-    if (datalist) wrap.appendChild(datalist)
     form.appendChild(wrap)
   }
 
   if (has('categoryField')) {
     const wrap = field('类目字段')
+    const current = String(options.chartCategoryField ?? '')
     wrap.appendChild(
-      textInput(
-        { value: String(options.chartCategoryField ?? ''), placeholder: '如 name' },
+      dropdownSelect(
+        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? '')), current, fieldLabels),
+        current,
         value => commitOption(ctx, type, panelOption(element), { chartCategoryField: value }),
       ),
     )
@@ -284,8 +635,9 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     fieldsNow.forEach((value, index) => {
       const row = el('div', 'echarts-field-row')
       row.appendChild(
-        textInput(
-          { value, placeholder: '如 value' },
+        dropdownSelect(
+          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? '')), value, fieldLabels),
+          value,
           next => {
             const list = readValueFields(element)
             list[index] = next
@@ -374,6 +726,10 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     })
     wrap.appendChild(select)
     form.appendChild(wrap)
+  }
+
+  if (has('label')) {
+    form.appendChild(renderLabelGroup(ctx, type))
   }
 
   if (has('stack')) {
