@@ -5,6 +5,18 @@ import type { FieldGroupInfo, FormRow, OverviewRow, PreviewColumn, PreviewDescri
 
 interface LeafMeta { label: string; sortOrder: number }
 
+/** 未在 fields 中定义时的常用键中文兜底（fields 的 fieldLabel 始终优先） */
+const COMMON_LABELS: Readonly<Record<string, string>> = {
+  id: '编号', no: '编号', code: '编码', name: '名称', title: '标题', type: '类型',
+  date: '日期', time: '时间', year: '年份', phone: '电话', mobile: '手机',
+  address: '地址', org: '机构', company: '公司', dept: '科室', user: '用户',
+  doctor: '医生', sex: '性别', age: '年龄', item: '项目', result: '结果',
+  unit: '单位', ref: '参考区间', flag: '异常标记', seq: '序号', desc: '说明',
+  advice: '建议', remark: '备注', spec: '规格', qty: '数量', price: '单价',
+  amount: '金额', total: '合计', value: '值', status: '状态', url: '链接',
+  logo: '标志图', image: '图片',
+}
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v)
 }
@@ -21,24 +33,39 @@ function formatValue(v: unknown): string {
   return String(v)
 }
 
-/** 取分组前缀下的叶子字段元数据（fieldLabel 与 sortOrder） */
+/**
+ * 构建字段标签映射。三条来源按优先级叠加：
+ * 1. 所有字段的「最后一段」（如 supplier.name → name），作为兜底；
+ * 2. 当前分组前缀下的精确叶子（groupKey='supplier' 时 name → 供应商名称）；
+ * 3. 容器字段原样 key（supplier → 供应商信息），供总览行与子 tab 使用。
+ */
 function leafMeta(fields: readonly PrintBusinessField[], groupKey: string): Map<string, LeafMeta> {
-  const prefix = `${groupKey}.`
   const map = new Map<string, LeafMeta>()
+  const prefix = groupKey ? `${groupKey}.` : ''
+  const put = (key: string, label: string, order: number) => {
+    if (key) map.set(key, { label: label || key, sortOrder: order })
+  }
+
   for (const f of fields) {
-    if (!f.fieldKey.startsWith(prefix)) continue
-    const leaf = f.fieldKey.slice(prefix.length)
-    if (!leaf || leaf.includes('.')) continue
-    map.set(leaf, {
-      label: f.fieldLabel || leaf,
-      sortOrder: f.sortOrder ?? Number.MAX_SAFE_INTEGER,
-    })
+    const leaf = f.fieldKey.includes('.') ? f.fieldKey.slice(f.fieldKey.lastIndexOf('.') + 1) : f.fieldKey
+    const order = f.sortOrder ?? Number.MAX_SAFE_INTEGER
+    if (!map.has(leaf)) put(leaf, f.fieldLabel, order)
+  }
+  for (const f of fields) {
+    const order = f.sortOrder ?? Number.MAX_SAFE_INTEGER
+    if (prefix && f.fieldKey.startsWith(prefix)) {
+      const rest = f.fieldKey.slice(prefix.length)
+      const leaf = rest.includes('.') ? rest.slice(rest.lastIndexOf('.') + 1) : rest
+      put(leaf, f.fieldLabel, order)
+    } else if (!f.fieldKey.includes('.')) {
+      put(f.fieldKey, f.fieldLabel, order)
+    }
   }
   return map
 }
 
 function labelOf(key: string, meta: Map<string, LeafMeta>): string {
-  return meta.get(key)?.label ?? key
+  return meta.get(key)?.label ?? COMMON_LABELS[key] ?? key
 }
 
 function orderOf(key: string, meta: Map<string, LeafMeta>): number {
@@ -79,7 +106,12 @@ function makeTable(items: readonly unknown[], meta: Map<string, LeafMeta>): { co
   return { columns, rows }
 }
 
-function makeTab(key: string, label: string, value: unknown, meta: Map<string, LeafMeta>): PreviewTab {
+function makeTab(
+  key: string,
+  label: string,
+  value: unknown,
+  meta: Map<string, LeafMeta>,
+): PreviewTab {
   if (Array.isArray(value)) {
     const { columns, rows } = makeTable(value, meta)
     return { key, label, kind: 'array', columns, rows }
@@ -90,13 +122,26 @@ function makeTab(key: string, label: string, value: unknown, meta: Map<string, L
   return { key, label, kind: 'scalar', formRows: [{ key, label, value: formatValue(value) }] }
 }
 
-function tabsFromObject(record: Record<string, unknown>, meta: Map<string, LeafMeta>): PreviewTab[] {
-  return sortKeys(Object.keys(record), meta)
-    .filter(key => kindOf(record[key]) !== 'scalar')
-    .map(key => makeTab(key, labelOf(key, meta), record[key], meta))
+/** 子 tab 用子属性名作为分组前缀重建映射，使 supplier.name 在「供应商信息」tab 下显示「供应商名称」 */
+function childMeta(fields: readonly PrintBusinessField[], key: string): Map<string, LeafMeta> {
+  return leafMeta(fields, key)
 }
 
-function tabsFromArray(items: readonly unknown[], meta: Map<string, LeafMeta>): PreviewTab[] {
+function tabsFromObject(
+  record: Record<string, unknown>,
+  meta: Map<string, LeafMeta>,
+  fields: readonly PrintBusinessField[],
+): PreviewTab[] {
+  return sortKeys(Object.keys(record), meta)
+    .filter(key => kindOf(record[key]) !== 'scalar')
+    .map(key => makeTab(key, labelOf(key, meta), record[key], childMeta(fields, key)))
+}
+
+function tabsFromArray(
+  items: readonly unknown[],
+  meta: Map<string, LeafMeta>,
+  fields: readonly PrintBusinessField[],
+): PreviewTab[] {
   const keys = new Set<string>()
   for (const item of items) if (isRecord(item)) Object.keys(item).forEach(k => keys.add(k))
   return sortKeys([...keys], meta)
@@ -107,17 +152,18 @@ function tabsFromArray(items: readonly unknown[], meta: Map<string, LeafMeta>): 
         const v = item[key]
         return Array.isArray(v) ? v : [v]
       })
-      return makeTab(key, labelOf(key, meta), values, meta)
+      return makeTab(key, labelOf(key, meta), values, childMeta(fields, key))
     })
 }
 
-/** 把分组数据解析为预览描述。fields 可缺省，此时以 JSON 键作为标签。 */
+/** 把分组数据解析为预览描述。fields 可缺省，此时以 JSON 键与常用键词典推断标签。 */
 export function describeDataSource(
   root: unknown,
   fields: readonly PrintBusinessField[] | undefined,
   group: FieldGroupInfo,
 ): PreviewDescriptor {
-  const meta = leafMeta(fields ?? [], group.key)
+  const list = fields ?? []
+  const meta = leafMeta(list, group.key)
   const rootKind = kindOf(root)
   const result: PreviewDescriptor = {
     title: group.label, group, rootKind, overview: [], tabs: [],
@@ -144,10 +190,10 @@ export function describeDataSource(
       }
     })
     result.overview = overview
-    result.tabs = tabsFromObject(record, meta)
+    result.tabs = tabsFromObject(record, meta, list)
   } else if (rootKind === 'array') {
     result.table = makeTable(root as unknown[], meta)
-    result.tabs = tabsFromArray(root as unknown[], meta)
+    result.tabs = tabsFromArray(root as unknown[], meta, list)
   } else {
     result.scalar = { key: group.key, label: group.label, value: formatValue(root) }
   }

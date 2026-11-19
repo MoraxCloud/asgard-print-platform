@@ -75,6 +75,36 @@ describe('describeDataSource 数组根', () => {
   })
 })
 
+describe('describeDataSource 中文释义', () => {
+  const cnFields: PrintBusinessField[] = [
+    { fieldKey: 'supplier', fieldLabel: '供应商信息', fieldType: 'string', sortOrder: 1 },
+    { fieldKey: 'supplier.name', fieldLabel: '供应商名称', fieldType: 'string', sortOrder: 2 },
+    { fieldKey: 'receiver', fieldLabel: '收货信息', fieldType: 'string', sortOrder: 3 },
+    { fieldKey: 'receiver.name', fieldLabel: '收货人', fieldType: 'string', sortOrder: 4 },
+  ]
+  const root = { supplier: { name: 'A' }, receiver: { name: 'B' } }
+  const whole = { key: '', label: '全部数据', isList: false }
+
+  it('容器字段用 fieldLabel 作为总览行与子 tab 标签', () => {
+    const d = describeDataSource(root, cnFields, whole)
+    expect(d.overview.map(r => r.label)).toEqual(['供应商信息', '收货信息'])
+    expect(d.tabs.map(t => t.label)).toEqual(['供应商信息', '收货信息'])
+  })
+
+  it('子 tab 内字段用对应分组的精确 fieldLabel', () => {
+    const d = describeDataSource(root, cnFields, whole)
+    expect(d.tabs.find(t => t.key === 'supplier')?.formRows?.[0].label).toBe('供应商名称')
+    expect(d.tabs.find(t => t.key === 'receiver')?.formRows?.[0].label).toBe('收货人')
+  })
+
+  it('fields 未定义的英文键用常用中文词典兜底，未知键保留原文', () => {
+    const d = describeDataSource(
+      { phone: '123', qty: 2, unknownKey: 'x' }, [], whole,
+    )
+    expect(d.overview.map(r => r.label)).toEqual(['电话', '数量', 'unknownKey'])
+  })
+})
+
 describe('describeDataSource 标量根与空值', () => {
   it('标量根产出单行', () => {
     const d = describeDataSource('H20190101', fields, group)
