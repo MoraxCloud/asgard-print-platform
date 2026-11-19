@@ -1,4 +1,4 @@
-// @worm-print-platform/echarts 入口：ECharts 图表元素可选包
+// @worm-print-platform/plugin-echarts 入口：ECharts 图表元素插件（市场唯一源码真源）
 // core / common 主包不引入 echarts；仅本包依赖图表库（依赖: core、plugin-kit、echarts）。
 // 本入口为框架无关主入口：import 即把「十 kind」插件描述符注册到 core 通用注册表。
 // Web Components / plugin-kit 设计器 UI（画布 + 属性台）走 ./ui 子路径，按需引入。

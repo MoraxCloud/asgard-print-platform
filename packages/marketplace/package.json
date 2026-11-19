@@ -1,0 +1,39 @@
+{
+  "name": "@worm-print-platform/marketplace",
+  "version": "1.5.3",
+  "type": "module",
+  "description": "worm-print-platform 插件市场安装器：从 npm / GitHub / Gitee 安装单个插件，默认取最新稳定版。",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "bin": {
+    "worm-print-marketplace": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node scripts/gen-catalog.mjs && tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run typecheck",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^1.6.0"
+  },
+  "keywords": ["print", "plugin", "marketplace", "cli", "worm-print-platform"]
+}

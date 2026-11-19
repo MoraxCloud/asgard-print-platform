@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.5.2-384BFF" alt="npm version">
+  <img src="https://img.shields.io/badge/npm-v1.5.3-384BFF" alt="npm version">
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
@@ -108,7 +108,10 @@ plugin-kit（插件 UI 契约与注册表）
 canvas（Web Components 设计器权威实现 ← core + plugin-kit）
   └─ /vue3  ──  Vue 3 兼容门面（可选 peer）
 
-echarts（可选：图表元素包 ← core + plugin-kit）
+plugin-echarts（marketplace/plugins/echarts：图表插件唯一源码真源）
+  └─ 同一源码构建 echarts 兼容镜像 + 市场安装产物（README 统一市场口径）
+
+echarts（兼容镜像包 ← 同一源码；保留原包名与子路径，存量依赖零改动）
   ├─ /kit  ──  框架无关纯 TS 能力
   ├─ /ui   ──  设计器 UI（import 即注册）
   └─ /node ──  服务端执行器
@@ -117,6 +120,7 @@ render（Playwright PDF 微服务，私有 Docker 部署）
 client（Electron 静默打印桌面客户端，私有分发）
 contract / mcp（私有：契约校验 + MCP 工具库，随 client 打包）
 skills（npm 发布：命令行技能安装器）
+marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 
 宿主应用 ← Vue 3 / Vue 2 / React / jQuery / 原生 JS
 ```
@@ -136,8 +140,10 @@ skills（npm 发布：命令行技能安装器）
 | `packages/core` | `@worm-print-platform/core` | ✅ npm | 表达式引擎 + 同构渲染管线 + 框架无关设计器内核 |
 | `packages/plugin-kit` | `@worm-print-platform/plugin-kit` | ✅ npm | 插件设计器 UI 契约与注册表（纯 TS/DOM） |
 | `packages/canvas` | `@worm-print-platform/canvas` | ✅ npm | 设计器权威实现（Custom Elements + Shadow DOM） |
-| `packages/echarts` | `@worm-print-platform/echarts` | ✅ npm | ECharts 图表元素可选包（十类 kind） |
+| `marketplace/plugins/echarts` | `@worm-print-platform/plugin-echarts` | ✅ npm | 百度图表插件唯一源码真源（市场主口径） |
+| `packages/echarts` | `@worm-print-platform/echarts` | ✅ npm | 同一源码生成的兼容镜像包（十类 kind，存量依赖零改动） |
 | `packages/skills` | `@worm-print-platform/skills` | ✅ npm | 命令行技能安装器（bin：`worm-print-skills`） |
+| `packages/marketplace` | `@worm-print-platform/marketplace` | ✅ npm | 插件市场 CLI（bin：`worm-print-marketplace`，三源安装） |
 | `packages/contract` | `@worm-print-platform/contract` | ❌ 私有 | 模板 JSON 契约校验（随 client 打包） |
 | `packages/mcp` | `@worm-print-platform/mcp` | ❌ 私有 | MCP 协议实现（随 client 打包） |
 | `services/render` | `@worm-print-platform/render` | ❌ 私有 | Playwright PDF 渲染微服务（Docker 部署） |
@@ -159,7 +165,7 @@ skills（npm 发布：命令行技能安装器）
 
 ## 插件化自定义元素
 
-设计器只保留通用机制，具体元素由插件包提供。官方参考实现 `@worm-print-platform/echarts` 用一个插件注册十类图表。插件分两层契约（按元素 `type` 对齐）：
+设计器只保留通用机制，具体元素由插件包提供。官方参考实现 `@worm-print-platform/plugin-echarts` 用一个插件注册十类图表，源码位于插件市场 `marketplace/plugins/echarts/`。插件分两层契约（按元素 `type` 对齐）：
 
 | 层 | 入口 | 负责 |
 | --- | --- | --- |
@@ -167,11 +173,19 @@ skills（npm 发布：命令行技能安装器）
 | 设计器 UI | `plugin-kit` 的 `defineElementUI` | 画布与属性台的 DOM 渲染，一份 UI 零框架消费 |
 
 ```ts
-// 宿主侧：一次副作用 import 完成注册
-import '@worm-print-platform/echarts/ui'
+// 市场口径：一次副作用 import 完成插件描述符 + 设计器 UI 注册
+import '@worm-print-platform/plugin-echarts'
+// 按子路径按需引入
+import '@worm-print-platform/plugin-echarts/kit'
+import '@worm-print-platform/plugin-echarts/ui'
 ```
 
 自定义插件写法见 [packages/plugin-kit/README](./packages/plugin-kit/README.md)。
+
+插件市场（索引与插件源码常驻本仓 `marketplace/`，三源安装、缺省最新稳定版）见
+[docs/plugin-marketplace.md](./docs/plugin-marketplace.md)。百度图表插件源码真源在
+`marketplace/plugins/echarts/`，同一源码发布 `@worm-print-platform/plugin-echarts`（市场主口径）与
+`@worm-print-platform/echarts`（兼容镜像，存量依赖零改动），两者 README 统一为市场口径。
 
 ## 桌面客户端（静默打印）
 

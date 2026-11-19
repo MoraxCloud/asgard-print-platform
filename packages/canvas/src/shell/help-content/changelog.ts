@@ -4,7 +4,7 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
-<h2>V1.5.3<small>(待发布)</small></h2>
+<h2>V1.5.3<small>(2026-11-18)</small></h2>
 
 <h3>新增</h3>
 <ul>

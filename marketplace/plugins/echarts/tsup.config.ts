@@ -54,7 +54,24 @@ export default defineConfig([
     dts: false,
     clean: false,
     shims: true,
-    external: [/^@worm-print-platform\/echarts(\/.*)?$/, /^@worm-print-platform\/core(\/.*)?$/, /^@worm-print-platform\/plugin-kit(\/.*)?$/],
+    external: [/^@worm-print-platform\/plugin-echarts(\/.*)?$/, /^@worm-print-platform\/core(\/.*)?$/, /^@worm-print-platform\/plugin-kit(\/.*)?$/],
+    banner: { js: banner },
+  },
+  {
+    // 市场安装入口：插件描述符 + 设计器 UI 一次 import 注册完成
+    entry: { marketplace: 'src/marketplace.ts' },
+    format: ['esm'],
+    platform: 'browser',
+    target: 'es2020',
+    dts: false,
+    clean: false,
+    shims: true,
+    external: [
+      /^echarts(\/.*)?$/,
+      /^@worm-print-platform\/core(\/.*)?$/,
+      /^@worm-print-platform\/plugin-kit(\/.*)?$/,
+      /^@worm-print-platform\/plugin-echarts(\/.*)?$/,
+    ],
     banner: { js: banner },
   },
 ])

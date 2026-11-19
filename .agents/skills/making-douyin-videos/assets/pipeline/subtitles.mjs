@@ -43,8 +43,17 @@ export function splitSubtitle(text, options = {}) {
   const captions = []
   for (const unit of units) {
     const last = captions.at(-1)
-    if (last && [...(last + unit)].length <= capacity) captions[captions.length - 1] += unit
-    else captions.push(unit)
+    if (last && [...(last + unit)].length <= capacity) {
+      const merged = last + unit
+      // 两个短句合并后必须仍能排进 maxLines 行、每行不超 lineWidth。
+      // 否则长英文词（如 jQuery）卡在可切区时 wrapSubtitle 会放弃换行，产出超宽单行。
+      const wrapped = wrapSubtitle(merged, lineWidth)
+      if (wrapped.split('\n').every((line) => [...line].length <= lineWidth)) {
+        captions[captions.length - 1] = merged
+        continue
+      }
+    }
+    captions.push(unit)
   }
   return captions.map((caption) => wrapSubtitle(caption, lineWidth))
 }

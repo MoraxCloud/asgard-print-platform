@@ -1,4 +1,4 @@
-// @worm-print-platform/echarts/kit —— 框架无关纯 TS 子路径。
+// @worm-print-platform/plugin-echarts/kit —— 框架无关纯 TS 子路径。
 //
 // 与包入口的区别：本文件不 import 任何 .vue 组件，也不读磁盘，供零框架宿主（common）
 // 或自定义宿主构建自己的设计器 UI。import 即注册十 kind 到 core 插件注册表；

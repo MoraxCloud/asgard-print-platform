@@ -1,119 +1,65 @@
-<p align="center">
-  <strong>@worm-print-platform/echarts</strong><br>
-  <em>打印模板 ECharts 图表元素可选包</em>
-</p>
+# 百度图表插件（@worm-print-platform/plugin-echarts）
 
-<p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.5.2-384BFF" alt="npm">
-  <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
-</p>
+worm-print-platform 插件市场的百度图表插件：**十类 ECharts 图表元素 + 设计器 UI，import 即注册**。
 
-> monorepo 根：[worm-print-platform](https://github.com/worm-longliu/worm-print-platform)
+本目录 `marketplace/plugins/echarts/` 是图表插件的**唯一源码真源**。同一份源码构建出两个 npm 包：
 
-一个插件注册十个图表元素：提供 ECharts SSR SVG 渲染器、页面执行器、设计器画布 / 图形化属性面板与共享数据契约。主包 `@worm-print-platform/core` 与 `@worm-print-platform/canvas` **不依赖任何图表库**，只有本包引入 `echarts`（Apache-2.0）。
+| 包名 | 定位 | 根入口行为 |
+| --- | --- | --- |
+| `@worm-print-platform/plugin-echarts` | 插件市场主口径（推荐） | 注册插件描述符 + 设计器 UI |
+| `@worm-print-platform/echarts` | 兼容镜像，供存量依赖方零改动使用 | 仅注册插件描述符（原行为） |
 
-**「import 即注册」**：宿主不需要写任何注册代码，也不需要手写渲染器传参。
-
-## 安装
+## 安装（插件市场口径，推荐）
 
 ```bash
-npm i @worm-print-platform/echarts
+npx @worm-print-platform/marketplace install echarts
 ```
 
-依赖：`echarts`（^6.1.0）、`@worm-print-platform/core`、`@worm-print-platform/plugin-kit`
+宿主按清单加载插件入口（import 即注册，无需额外调用）：
 
-## 十个元素
-
-| type | 元素 | 默认尺寸 | 数据映射要点 |
-| --- | --- | --- | --- |
-| `barChart` | 柱状图 | 100×60mm | 类目 + 多数值字段（多值多系列） |
-| `barHChart` | 条形图（横向） | 100×60mm | 类目写 yAxis，xAxis 为数值 |
-| `lineChart` | 折线图 | 100×60mm | 同柱状图，series 为 line |
-| `areaChart` | 面积图 | 100×60mm | 折线 + areaStyle |
-| `pieChart` | 饼图 | 60×60mm | 类目 + 首数值 → `{ name, value }` |
-| `doughnutChart` | 环形图 | 60×60mm | 饼图 + 可配内径 |
-| `scatterChart` | 散点图 | 80×60mm | 类目作 x、首数值作 y；`chartBubble` 开启时第二数值作点大小 |
-| `radarChart` | 雷达图 | 70×60mm | 数值字段 = 维度，每行一个系列 |
-| `funnelChart` | 漏斗图 | 60×60mm | 类目 + 首数值，按数值降序 |
-| `gaugeChart` | 仪表盘 | 60×60mm | 取首行首值；min/max 面板可配 |
-
-所有元素共用同一份数据契约：`chartOption` + `chartDataSource` / `chartCategoryField` / `chartValueFields` / `chartSeriesField`。模板只存 option 模板与字段映射，真实数据由 core 绑定阶段注入。
-
-## 用法
-
-### 设计器 / 浏览器宿主
-
-```ts
-// 一行副作用 import：素材卡、画布、属性面板、校验、绑定、出图全部生效
-import '@worm-print-platform/echarts'
+```js
+import '../.worm-print/plugins/echarts/dist/marketplace.js'
 ```
 
-### 服务端 PDF / Electron 主进程
+插件安装后，素材台出现「图表」分组的十张卡片：柱状图、条形图、折线图、面积图、饼图、环形图、
+散点图、雷达图、漏斗图、仪表盘。
 
-```ts
-// ① 部署白名单：显式 import 才允许该插件进入注册表
-import '@worm-print-platform/echarts/node'
-
-// ② runtime 装配：执行器由注册表自动收集，新增插件无需改这行
-import { collectExecutorBundles, createDomHostRuntime } from '@worm-print-platform/core'
-createDomHostRuntime(factory, loadExecutorBundle(), collectExecutorBundles())
-```
-
-### 零框架宿主 / 自建设计器 UI（`/kit`）
-
-`/kit` 是**框架无关的纯 TS 出口**：不包含任何 `.vue` 组件、不读磁盘，import 即把十个 kind 注册到 core 插件注册表，但**不**注册设计器组件与执行器产物。
-
-```ts
-import {
-  CHART_KIND_DEFINITIONS, createDefaultChartOption, normalizeChartOption,
-  previewChartOption, renderChartToSvg,
-} from '@worm-print-platform/echarts/kit'
-```
-
-## 配置
-
-```ts
-import { configureChartPlugin } from '@worm-print-platform/echarts'
-
-configureChartPlugin({
-  defaultWidth: 120,           // 新建图表元素的全局默认尺寸
-  defaultHeight: 70,
-  palettes: {
-    default: { label: '企业蓝', colors: ['#165DFF', '#36B37E'] },
-    brand: { label: '品牌色', colors: ['#F2704E', '#F7A35C'] },
-  },
-  sampleCategories: ['一季度', '二季度', '三季度'],
-  components: [GaugeChart],    // 追加 echarts.use 的图表/组件构造器
-})
-```
-
-配置是**惰性**的：可在注册前调用、按键合并，不需要注销重注册。
-
-## 导出
-
-| 子路径 | 内容 |
-| --- | --- |
-| `.` | `CHART_PLUGIN` / `CHART_KIND_DEFINITIONS` / `createDefaultChartOption` / `renderChartToSvg` / `configureChartPlugin` 等（注册副作用 + 纯 TS 能力） |
-| `/kit` | 框架无关纯 TS 出口（无 Vue、无 `node:fs`） |
-| `/node` | 注册副作用 + `render.executorBundle()`（惰性读取 IIFE 产物，服务端装配用） |
-| `/ui` | plugin-kit 设计器 UI（静态 SVG 画布 + 原生 DOM 属性面板） |
-| `/browser` | UMD bundle（`dist/echarts.js`） |
-
-`type-augmentation.ts` 用声明合并把十个图表类型与 `chartOption` 等专属字段注入 core 的类型扩展点。
-
-## 开发
+## 作为 npm 包使用
 
 ```bash
-npm run build   # vite + tsc + tsup
-npm test        # vitest
+npm install @worm-print-platform/plugin-echarts
 ```
 
-## 相关链接
+```js
+// 主入口：插件描述符 + 设计器 UI 一次注册完成
+import '@worm-print-platform/plugin-echarts'
 
-- [根 README](https://github.com/worm-longliu/worm-print-platform/blob/main/README.md)
-- [插件化自定义元素章节](https://github.com/worm-longliu/worm-print-platform/blob/main/README.md#插件化自定义元素)
-- [plugin-kit 契约](../plugin-kit/README.md)
+// 按需子路径
+import '@worm-print-platform/plugin-echarts/kit'  // 仅框架无关插件描述符（无 UI）
+import '@worm-print-platform/plugin-echarts/ui'   // 仅设计器 UI
+```
 
-## License
+服务端 PDF / Electron 静默打印使用 `@worm-print-platform/plugin-echarts/node` 与
+`/browser/executor.iife`（页面执行器），浏览器直挂使用 `/browser` UMD 产物。
 
-[MIT](../../LICENSE)
+存量项目若仍依赖 `@worm-print-platform/echarts`，无需改动：兼容镜像保留全部原有子路径
+（`.`、`/kit`、`/ui`、`/node`、`/browser`、`/browser/executor.iife`）与行为。
+
+## 独立发布
+
+两个包均可单独 `npm publish`，且从同一源码生成：
+
+```bash
+cd marketplace/plugins/echarts
+npm run build          # vite + tsc + tsup + UMD + 兼容镜像同步
+npm publish --registry=https://registry.npmjs.org --access public
+# 根目录：npm publish -w @worm-print-platform/echarts（兼容镜像）
+```
+
+发版时同步 `marketplace.json`、`plugin.json`、本 `package.json` 的 `wormPrint.version`；市场 CLI
+通过本仓 tag `plugins/echarts/vX.Y.Z` 解析稳定版本。完整收录与版本规则见
+[docs/plugin-marketplace.md](../../../docs/plugin-marketplace.md)。
+
+## 信任边界
+
+市场不做沙箱。插件代码在宿主进程内运行，等同于普通 npm 依赖；信任来自 PR 审核与版本锁定。

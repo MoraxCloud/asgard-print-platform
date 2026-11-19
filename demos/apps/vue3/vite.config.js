@@ -11,6 +11,10 @@ const base = process.env.PAGES_BASE || '/'
 
 export default defineConfig({
   base,
+  // 插件包与宿主各带一份 core/plugin-kit 时，符号注册表虽能兜底去重，构建期 dedupe 更稳
+  resolve: {
+    dedupe: ['@worm-print-platform/core', '@worm-print-platform/plugin-kit'],
+  },
   plugins: [
     vue({
       template: {

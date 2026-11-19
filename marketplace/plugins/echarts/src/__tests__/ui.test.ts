@@ -6,7 +6,7 @@ import {
   CHART_KINDS,
   CHART_KIND_DEFINITIONS,
   createDefaultChartOption,
-} from '@worm-print-platform/echarts/kit'
+} from '@worm-print-platform/plugin-echarts/kit'
 import { describe, expect, it } from 'vitest'
 import { installChartCommonUI, uninstallChartCommonUI } from '../ui.js'
 

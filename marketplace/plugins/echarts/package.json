@@ -1,0 +1,76 @@
+{
+  "name": "@worm-print-platform/plugin-echarts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "百度图表插件（worm-print-platform 插件市场主口径）：十类 ECharts 图表元素 + 设计器 UI，import 即注册；源码唯一真源位于本目录，可单独发布 npm，也可由市场 CLI 安装。",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "main": "./dist/marketplace.js",
+  "module": "./dist/marketplace.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/marketplace.js",
+      "default": "./dist/marketplace.js"
+    },
+    "./kit": {
+      "types": "./dist/kit.d.ts",
+      "import": "./dist/kit.js",
+      "require": "./dist/kit.cjs"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js",
+      "require": "./dist/ui.cjs"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "require": "./dist/node.cjs"
+    },
+    "./browser": {
+      "types": "./dist/browser-bundle.d.ts",
+      "default": "./dist/echarts.js"
+    },
+    "./browser/executor.iife": {
+      "types": "./dist/executor.iife.global.d.ts",
+      "default": "./dist/executor.iife.global.js"
+    }
+  },
+  "files": ["dist", "plugin.json", "README.md", "LICENSE"],
+  "wormPrint": {
+    "id": "echarts",
+    "version": "1.0.0",
+    "entry": "dist/marketplace.js",
+    "kinds": ["barChart", "barHChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "scatterChart", "radarChart", "funnelChart", "gaugeChart"],
+    "exportFormats": [],
+    "peerDeps": {
+      "@worm-print-platform/core": "^1.5.3",
+      "@worm-print-platform/plugin-kit": "^1.5.3"
+    }
+  },
+  "dependencies": {
+    "@worm-print-platform/core": "^1.5.3",
+    "@worm-print-platform/plugin-kit": "^1.5.3",
+    "echarts": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "happy-dom": "^20.10.6",
+    "tsup": "^8.0.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.9"
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "vite build && tsc -p tsconfig.build.json && tsup && vite build -c vite.bundle.config.ts && node ../../../scripts/inject-license-banner.mjs dist && node scripts/sync-compat.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["print", "echarts", "chart", "plugin", "worm-print-platform"]
+}
