@@ -114,3 +114,11 @@ npx @worm-print-platform/skills worm-print-platform-integration --repo https://g
 - **C 桌面客户端静默打印**：本机 Electron 客户端（`127.0.0.1:17521`）+ `PrintClient.printHtml()`，无对话框直接出纸。
 
 细节见 integration 技能的 `references/server-render.md` 与 `references/silent-print.md`。
+
+## 通用开发技能（非平台专用，可转发）
+
+上面两个是打印平台自带的接入 / MCP 技能；下面这份整理的是**通用**的 AI 开发技能，面向协作同学与正在学习 AI 开发的读者，可直接转发：
+
+| 文档 | 内容 | 在线可转发页面 |
+| --- | --- | --- |
+| [development-skills.md](./development-skills.md) | `@ajoslin/grill-me` 方案压测 / `obra/superpowers` 工程流程 / `@anthropics/frontend-design` 视觉设计，含原始链接 | print demo「开发技能」页：本地 `:9336/print/dev-skills`，Pages `/canvas/print-demo/print/dev-skills` |

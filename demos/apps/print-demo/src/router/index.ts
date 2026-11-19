@@ -4,6 +4,7 @@ import TemplateDesignerView from '@/views/print/template/designer.vue'
 import HealthReportListView from '@/views/print/health-report/index.vue'
 import SilentConfigView from '@/views/print/silent-config/index.vue'
 import PluginIntroView from '@/views/print/plugin-intro/index.vue'
+import DevSkillsView from '@/views/print/dev-skills/index.vue'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/print/template' },
@@ -37,6 +38,12 @@ const routes: RouteRecordRaw[] = [
     name: 'PluginIntro',
     component: PluginIntroView,
     meta: { title: '插件介绍' },
+  },
+  {
+    path: '/print/dev-skills',
+    name: 'DevSkills',
+    component: DevSkillsView,
+    meta: { title: '开发技能' },
   },
 ]
 
