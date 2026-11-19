@@ -94,10 +94,21 @@ export interface ExpressionEditorTarget {
   binding?: string
 }
 
+/** 字段行显示模式：中文名 / key / 两者（默认 both，保持既有行为） */
+export type FieldDisplayMode = 'label' | 'key' | 'both'
+
+/** 归一化宿主传入的显示模式：trim + 小写；非法值静默回退 both */
+export function normalizeFieldDisplay(v: unknown): FieldDisplayMode {
+  const s = typeof v === 'string' ? v.trim().toLowerCase() : ''
+  return s === 'label' || s === 'key' || s === 'both' ? s : 'both'
+}
+
 export interface ExpressionEditorOptions {
   fields: PrintBusinessField[]
   /** 求值预览用的样例行数据 */
   demoData?: Record<string, any>
+  /** 字段行显示模式；缺省 / 非法值按 both（中文名 + key） */
+  fieldDisplay?: FieldDisplayMode
   /** 关闭弹窗 */
   onClose: () => void
   /** 点确定：把最终表达式回写 */
@@ -210,8 +221,14 @@ function pureFieldBinding(expr: string, fields: PrintBusinessField[]): PrintBusi
   return fields.find(f => f.fieldKey === key) ?? null
 }
 
-/** 列表项两行信息（标签 + key/模板），三个页签共用同一结构 */
-function itemInfo(label: string, key: string): El {
+/** 列表项两行信息（标签 + key/模板），三个页签共用同一结构；字段页签可按宿主配置隐藏其中一行 */
+function itemInfo(label: string, key: string, display: FieldDisplayMode = 'both'): El {
+  if (display === 'label') return h('div', { class: 'ee-field-info' }, [
+    h('span', { class: 'ee-item-label', text: label }),
+  ])
+  if (display === 'key') return h('div', { class: 'ee-field-info' }, [
+    h('span', { class: 'ee-item-key is-primary', text: key }),
+  ])
   return h('div', { class: 'ee-field-info' }, [
     h('span', { class: 'ee-item-label', text: label }),
     h('span', { class: 'ee-item-key', text: key }),
@@ -275,6 +292,7 @@ function helpSection(): El {
 
 /** 渲染表达式编辑器弹窗的 DOM 描述（内部已含遮罩层，render 进 shadow 根下即可） */
 export function renderExpressionEditor(opts: ExpressionEditorOptions, target: ExpressionEditorTarget): El {
+  const fieldDisplay = normalizeFieldDisplay(opts.fieldDisplay)
   const state = {
     activeTab: 'field' as TabKey,
     searchText: '',
@@ -358,7 +376,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
               hasChineseKey(field.fieldKey) ? chineseKeyHint(field.fieldKey) : '')
           },
         }, [
-          itemInfo(field.fieldLabel, field.fieldKey),
+          itemInfo(field.fieldLabel || field.fieldKey, field.fieldKey, fieldDisplay),
           // 字段右侧复制按钮：复制字段中文名（对齐 canvas ExpressionEditor 的 .ee-copy-btn）
           h('button', {
             type: 'button',
