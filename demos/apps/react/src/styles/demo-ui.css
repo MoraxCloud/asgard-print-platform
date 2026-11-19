@@ -380,10 +380,6 @@ body,
   flex-direction: column;
   gap: 4px;
 }
-.demo-more-label {
-  font-size: 11px;
-  color: #8b909c;
-}
 .demo-more-slot {
   display: flex;
   align-items: center;

@@ -647,15 +647,15 @@ export default {
         </button>
         <span class="demo-more-panel" hidden>
           <p class="demo-more-note">仅在横向空间不足时，顶部操作才会折叠到这里</p>
-          <div class="demo-more-item" data-unit="biz"><span class="demo-more-label">业务类型</span><span class="demo-more-slot" data-overflow-slot="biz"></span></div>
-          <div class="demo-more-item" data-unit="host-switch"><span class="demo-more-label">宿主示例</span><span class="demo-more-slot" data-overflow-slot="host-switch"></span></div>
-          <div class="demo-more-item" data-unit="host-badge"><span class="demo-more-label">宿主标识</span><span class="demo-more-slot" data-overflow-slot="host-badge"></span></div>
-          <div class="demo-more-item" data-unit="clear"><span class="demo-more-label">清空</span><span class="demo-more-slot" data-overflow-slot="clear"></span></div>
-          <div class="demo-more-item" data-unit="import"><span class="demo-more-label">导入模板</span><span class="demo-more-slot" data-overflow-slot="import"></span></div>
-          <div class="demo-more-item" data-unit="export"><span class="demo-more-label">导出模板</span><span class="demo-more-slot" data-overflow-slot="export"></span></div>
-          <div class="demo-more-item" data-unit="custom"><span class="demo-more-label">自定义字段与数据</span><span class="demo-more-slot" data-overflow-slot="custom"></span></div>
-          <div class="demo-more-item" data-unit="batch"><span class="demo-more-label">批量打印</span><span class="demo-more-slot" data-overflow-slot="batch"></span></div>
-          <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
+          <div class="demo-more-item" data-unit="biz"><span class="demo-more-slot" data-overflow-slot="biz"></span></div>
+          <div class="demo-more-item" data-unit="host-switch"><span class="demo-more-slot" data-overflow-slot="host-switch"></span></div>
+          <div class="demo-more-item" data-unit="host-badge"><span class="demo-more-slot" data-overflow-slot="host-badge"></span></div>
+          <div class="demo-more-item" data-unit="clear"><span class="demo-more-slot" data-overflow-slot="clear"></span></div>
+          <div class="demo-more-item" data-unit="import"><span class="demo-more-slot" data-overflow-slot="import"></span></div>
+          <div class="demo-more-item" data-unit="export"><span class="demo-more-slot" data-overflow-slot="export"></span></div>
+          <div class="demo-more-item" data-unit="custom"><span class="demo-more-slot" data-overflow-slot="custom"></span></div>
+          <div class="demo-more-item" data-unit="batch"><span class="demo-more-slot" data-overflow-slot="batch"></span></div>
+          <div class="demo-more-item" data-unit="gallery"><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
       <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
