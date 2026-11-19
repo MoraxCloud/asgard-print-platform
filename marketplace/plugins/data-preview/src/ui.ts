@@ -5,7 +5,7 @@ import type { DataPreviewOptions, FieldGroupInfo, FormRow, OverviewRow, PreviewD
 
 export const PREVIEW_STYLES = `
 .dp-preview-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(15,18,26,.45);pointer-events:auto;font-family:inherit}
-.dp-dialog{width:min(880px,94vw);max-height:84vh;display:flex;flex-direction:column;background:var(--pd-panel-bg,#fff);border:1px solid var(--pd-border,#d9dde6);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.26);overflow:hidden;color:var(--pd-text,#303133)}
+.dp-dialog{width:min(880px,94vw);height:min(620px,82vh);display:flex;flex-direction:column;background:var(--pd-panel-bg,#fff);border:1px solid var(--pd-border,#d9dde6);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.26);overflow:hidden;color:var(--pd-text,#303133)}
 .dp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--pd-border,#e8ebf0);font-size:14px;font-weight:600}
 .dp-close{flex:none;width:24px;height:24px;padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--pd-text-muted,#909399);font-size:15px;line-height:1;cursor:pointer}
 .dp-close:hover{border-color:var(--pd-border,#d9dde6);color:var(--pd-text,#303133);background:var(--pd-soft-bg,#f5f7fa)}
