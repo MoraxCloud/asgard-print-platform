@@ -30,12 +30,14 @@ const HOST_LINKS = _isLocalhost
       { key: 'vue2',   label: 'Vue2 宿主',                   href: 'http://localhost:9332/' },
       { key: 'react',  label: 'React 宿主',                  href: 'http://localhost:9335/' },
       { key: 'jquery', label: 'jQuery 宿主',                 href: 'http://localhost:9334/' },
+      { key: 'print-demo', label: '业务接入示例',            href: 'http://localhost:9336/' },
     ]
   : [
       { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/canvas/vue3/` },
       { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/canvas/vue2/` },
       { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/canvas/react/` },
       { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/canvas/jquery/` },
+      { key: 'print-demo', label: '业务接入示例',            href: `${_hostBase}/canvas/print-demo/` },
     ]
 const CURRENT_HOST = 'vue2'
 

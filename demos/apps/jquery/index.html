@@ -20,6 +20,7 @@
         vue2:   { port: 9332, path: '/canvas/vue2/' },
         react:  { port: 9335, path: '/canvas/react/' },
         jquery: { port: 9334, path: '/canvas/jquery/' },
+        'print-demo': { port: 9336, path: '/canvas/print-demo/' },
       };
       var isLocal = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.host);
       var base = isLocal ? '' : '/worm-print-platform';
@@ -52,6 +53,7 @@
             <a class="host-link" data-host="vue2">Vue2 宿主</a>
             <a class="host-link" data-host="react">React 宿主</a>
             <a class="host-link on" data-host="jquery" data-current="true" title="当前页面">jQuery 宿主</a>
+            <a class="host-link" data-host="print-demo">业务接入示例</a>
           </nav>
         </details></span>
         <span class="demo-ou" data-overflow-unit="biz"><span class="demo-badge">业务类型：<span id="badge-biz">空白模板</span></span></span>
