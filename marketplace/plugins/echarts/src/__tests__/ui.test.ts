@@ -240,6 +240,22 @@ describe('数据标签分组', () => {
     expect((updates[0]!.chartOption as any).series[0].label.formatter).toBe('{b}: {c}')
   })
 
+  it('偏移 X / Y 两个输入框整对写回 offset: [x, y]', () => {
+    const { root, updates } = renderProperty('barChart', { chartOption: createDefaultChartOption('barChart') })
+    const wrap = [...root.querySelectorAll('.pd-field')].find(
+      item => item.querySelector('.pd-label')?.textContent?.trim() === '偏移 X / Y',
+    )!
+    const inputs = [...wrap.querySelectorAll('input[type="number"]')] as HTMLInputElement[]
+    expect(inputs).toHaveLength(2)
+    inputs[0]!.value = '18'
+    inputs[0]!.dispatchEvent(new Event('change'))
+    expect((updates[0]!.chartOption as any).series[0].label.offset).toEqual([18, 0])
+    // 第二个输入框取的是实时 DOM 值，不依赖上一次提交后的重绘
+    inputs[1]!.value = '-6'
+    inputs[1]!.dispatchEvent(new Event('change'))
+    expect((updates[1]!.chartOption as any).series[0].label.offset).toEqual([18, -6])
+  })
+
   it('颜色留空删除该键', () => {
     const option = createDefaultChartOption('barChart')
     ;(option.series as any[])[0].label = { show: true, color: '#ff0000' }

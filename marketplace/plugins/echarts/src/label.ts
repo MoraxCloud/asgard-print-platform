@@ -6,7 +6,7 @@ import { cloneChartOption } from './option-utils.js'
 
 export type LabelFieldKey =
   | 'formatter' | 'overflow' | 'position' | 'distance' | 'rotate'
-  | 'offsetX' | 'offsetY' | 'fontSize' | 'fontWeight' | 'color'
+  | 'offset' | 'fontSize' | 'fontWeight' | 'color'
   | 'backgroundColor' | 'borderColor' | 'borderWidth' | 'borderRadius' | 'padding'
   | 'labelLine.show' | 'labelLine.length' | 'labelLine.length2' | 'labelLine.smooth'
 
@@ -17,8 +17,8 @@ export interface ChartLabelState {
   position?: string
   distance?: number
   rotate?: number
-  offsetX?: number
-  offsetY?: number
+  /** ECharts 原生标签偏移 [x, y]；旧模板的 offsetX / offsetY 在读取时迁移至此 */
+  offset?: [number, number]
   fontSize?: number
   fontWeight?: string
   color?: string
@@ -122,20 +122,20 @@ const TYPE_DEFAULTS: Record<string, Partial<ChartLabelState>> = {
 
 const FIELDS_BY_SERIES: Record<ChartSeriesType, readonly LabelFieldKey[]> = {
   bar: [
-    'formatter', 'overflow', 'position', 'rotate', 'offsetX', 'offsetY',
+    'formatter', 'overflow', 'position', 'rotate', 'offset',
     'fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding',
   ],
   line: [
-    'formatter', 'overflow', 'position', 'rotate', 'offsetX', 'offsetY',
+    'formatter', 'overflow', 'position', 'rotate', 'offset',
     'fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding',
   ],
   pie: [
-    'formatter', 'overflow', 'position', 'distance', 'offsetX', 'offsetY',
+    'formatter', 'overflow', 'position', 'distance', 'offset',
     'fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding',
     'labelLine.show', 'labelLine.length', 'labelLine.length2', 'labelLine.smooth',
   ],
   scatter: [
-    'formatter', 'overflow', 'position', 'distance', 'rotate', 'offsetX', 'offsetY',
+    'formatter', 'overflow', 'position', 'distance', 'rotate', 'offset',
     'fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding',
   ],
   radar: ['formatter', 'fontSize', 'fontWeight', 'color'],
@@ -144,12 +144,12 @@ const FIELDS_BY_SERIES: Record<ChartSeriesType, readonly LabelFieldKey[]> = {
     'fontSize', 'fontWeight', 'color',
     'labelLine.show', 'labelLine.length', 'labelLine.smooth',
   ],
-  gauge: ['formatter', 'fontSize', 'fontWeight', 'color', 'offsetX', 'offsetY'],
+  gauge: ['formatter', 'fontSize', 'fontWeight', 'color', 'offset'],
 }
 
 /** 值字段（不含 show / labelLine），用于读取与写回 */
 const VALUE_KEYS = [
-  'formatter', 'overflow', 'position', 'distance', 'rotate', 'offsetX', 'offsetY',
+  'formatter', 'overflow', 'position', 'distance', 'rotate', 'offset',
   'fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding',
 ] as const
 
@@ -160,6 +160,22 @@ function seriesOf(option: Record<string, unknown> | undefined): Record<string, a
 
 function asRecord(node: unknown): Record<string, any> {
   return node && typeof node === 'object' && !Array.isArray(node) ? { ...(node as Record<string, any>) } : {}
+}
+
+/**
+ * 把单个 label / detail 上的旧 offsetX / offsetY 迁成 ECharts 原生 offset: [x, y]（原地修改）。
+ * 旧键来自早期面板误写，ECharts 不识别，必须在读取、写入与出图归一三处统一迁移。
+ */
+export function normalizeLabelOffsetInPlace(target: Record<string, any>): void {
+  if (typeof target.offsetX !== 'number' && typeof target.offsetY !== 'number') return
+  if (!Array.isArray(target.offset)) {
+    target.offset = [
+      typeof target.offsetX === 'number' ? target.offsetX : 0,
+      typeof target.offsetY === 'number' ? target.offsetY : 0,
+    ]
+  }
+  delete target.offsetX
+  delete target.offsetY
 }
 
 /** 仪表盘的数值文本走 series[].detail，其余走 series[].label */
@@ -176,6 +192,7 @@ export function readChartLabel(option: Record<string, unknown> | undefined, type
   const def = getChartKindDefinition(type)
   const series = seriesOf(option)
   const target = asRecord(series[0]?.[labelTargetOf(type)])
+  normalizeLabelOffsetInPlace(target)
   const state: ChartLabelState = {
     show: typeof target.show === 'boolean' ? target.show : def ? NATIVE_SHOW[def.seriesType] : false,
     // labelLine 在 ECharts 里是 series 顶层键（与 label 平级），不是 label 的子键
@@ -183,7 +200,12 @@ export function readChartLabel(option: Record<string, unknown> | undefined, type
   }
   for (const key of VALUE_KEYS) {
     const value = target[key]
+    if (key === 'offset') continue
     if (typeof value === 'string' || typeof value === 'number') (state as unknown as Record<string, unknown>)[key] = value
+  }
+  const offset = target.offset
+  if (Array.isArray(offset) && typeof offset[0] === 'number' && typeof offset[1] === 'number') {
+    state.offset = [offset[0], offset[1]]
   }
   return state
 }
@@ -215,6 +237,7 @@ export function updateChartLabel(
   for (const item of series) {
     if (!item || typeof item !== 'object') continue
     const current = asRecord(item[targetKey])
+    normalizeLabelOffsetInPlace(current)
     if (enabled === true) {
       // 默认集只补缺失键：已有 formatter / 颜色 / 字号优先
       Object.assign(current, { ...defaultSetOf(type), ...current, show: true })

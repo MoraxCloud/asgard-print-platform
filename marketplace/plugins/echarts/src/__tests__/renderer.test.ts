@@ -63,6 +63,38 @@ describe('SVG 渲染器', () => {
     expect(svg).toContain('<text')
     expect(svg).toContain('甲')
   })
+
+  it('标签 offset 真实改变 SSR 文本坐标，旧 offsetX/Y 迁移后等价', () => {
+    const base = {
+      series: [{ type: 'bar', data: [10, 20, 30], label: { show: true, position: 'top', formatter: '{c}' } }],
+      xAxis: { type: 'category', data: ['a', 'b', 'c'] },
+      yAxis: { type: 'value' },
+    }
+    const render = (label: Record<string, unknown>): string => renderChartToSvg({
+      key: 'offset-label',
+      type: 'barChart',
+      option: { ...base, series: [{ ...base.series[0], label: { ...base.series[0].label, ...label } }] },
+      widthMm: 100,
+      heightMm: 60,
+    })
+    const transforms = (svg: string): string[] =>
+      [...svg.matchAll(/<text\b[^>]*transform="translate\(([^)]*)\)"[^>]*>([^<]*)<\/text>/g)]
+        .filter(match => /^\d+$/.test(match[2].trim()))
+        .map(match => match[1])
+
+    const plain = transforms(render({}))
+    const shifted = transforms(render({ offset: [30, 20] }))
+    const legacy = transforms(render({ offsetX: 30, offsetY: 20 }))
+    expect(plain.length).toBeGreaterThan(0)
+    expect(legacy).toEqual(shifted)
+    // 数据标签的 x/y 各偏移 30/20，坐标轴刻度不动
+    const moved = shifted.filter((value, index) => {
+      const [x, y] = value.split(' ').map(Number)
+      const [px, py] = plain[index].split(' ').map(Number)
+      return x - px === 30 && y - py === 20
+    })
+    expect(moved.length).toBeGreaterThan(0)
+  })
 })
 
 describe('通用渲染分派入口', () => {
