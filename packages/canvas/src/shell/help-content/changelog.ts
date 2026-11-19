@@ -4,6 +4,13 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
+<h2>待发布</h2>
+
+<h3>新增</h3>
+<ul>
+  <li><strong>字段显示可由宿主配置</strong>：新增 <code>field-display</code> 参数（属性名 <code>fieldDisplay</code>），可选「只显示中文名」「只显示字段 key」「两者都显示」，默认两者都显示。只显示 key 时，key 的字号、颜色与字族与中文名一致；字段分组名始终显示，搜索、复制与插入语义不变。</li>
+</ul>
+
 <h2>V1.5.3<small>(2026-11-18)</small></h2>
 
 <h3>新增</h3>
