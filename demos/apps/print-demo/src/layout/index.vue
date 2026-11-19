@@ -3,6 +3,7 @@
     <aside class="demo-layout__sidebar">
       <div class="demo-layout__brand">打印模板管理</div>
       <div class="demo-layout__menu">
+        <RouterLink to="/print/plugin-intro">插件介绍</RouterLink>
         <RouterLink to="/print/template">模板管理</RouterLink>
         <RouterLink to="/print/health-report">体检报告</RouterLink>
         <RouterLink to="/print/silent-config">静默打印配置</RouterLink>
