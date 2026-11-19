@@ -6,6 +6,8 @@
 // 用 input 会让输入框在每次按键后重建、丢焦点。
 import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
 import { defineElementUI, registerElementUI } from '@worm-print-platform/plugin-kit'
+import { render } from '@worm-print-platform/plugin-kit/dom'
+import { colorPicker } from '@worm-print-platform/plugin-kit/controls'
 import type {
   ElementUI,
   ElementUICanvasContext,
@@ -54,6 +56,16 @@ const STYLES = [
   '.echarts-field-row{display:flex;gap:6px;align-items:center}',
   '.echarts-field-row>.pd-input{flex:1;min-width:0}',
   '.echarts-field-row>.pd-button{flex:none}',
+  '.echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}',
+  '.echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}',
+  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
+  '.echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+  '.echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}',
+  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
+  '.echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}',
+  '.echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}',
+  '.echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}',
   '.echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}',
   '.echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}',
   '.echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}',
@@ -71,8 +83,6 @@ const SEARCH_KEYWORDS = [
 ] as const
 
 const PANEL_HINT = '数据由模板绑定阶段注入：series/xAxis 的 data 保留 `$data` 占位即可；复杂样式可在模板 JSON 中手写 chartOption。'
-
-let datalistSeq = 0
 
 function escapeHtml(value: string): string {
   return value
@@ -145,6 +155,48 @@ function dataSourceCandidates(data?: readonly Record<string, unknown>[]): string
   const first = data?.[0]
   if (!first) return []
   return Object.keys(first).filter(key => Array.isArray(first[key]))
+}
+
+/** 行字段候选：取指定数据源数组首行的键，供类目/数值字段下拉；无数据源时取顶层第一个数组 */
+function dataRowFields(data: readonly Record<string, unknown>[] | undefined, dataSource: string): string[] {
+  const first = data?.[0]
+  if (!first) return []
+  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find(k => Array.isArray(first[k]))
+  if (!key) return []
+  const rows = first[key] as Record<string, unknown>[]
+  return rows.length > 0 && typeof rows[0] === 'object' && rows[0] !== null
+    ? Object.keys(rows[0])
+    : []
+}
+
+/** 字段键→中文名映射；业务字段清单 ctx.fields 里声明过的键可显示「中文名 (键)」 */
+type FieldLabelMap = ReadonlyMap<string, string>
+function fieldLabelMap(fields: readonly { fieldKey: string; fieldLabel?: string }[] | undefined): FieldLabelMap {
+  const map = new Map<string, string>()
+  for (const field of fields ?? []) {
+    if (field.fieldKey && field.fieldLabel) map.set(field.fieldKey, field.fieldLabel)
+  }
+  return map
+}
+
+/** 选项展示文案：有中文名则「中文名（键）」，否则仅键 */
+function optionLabel(value: string, labels: FieldLabelMap, fallbackSuffix?: string): string {
+  if (!value) return fallbackSuffix ?? '（默认）'
+  const name = labels.get(value)
+  const base = name ? `${name}（${value}）` : value
+  return fallbackSuffix ? `${base}${fallbackSuffix}` : base
+}
+
+/** 构造下拉选项：候选 + 当前值（若不在候选里，动态补一项以保留已有模板的值） */
+function dropdownOptions(
+  candidates: readonly string[],
+  current: string,
+  labels: FieldLabelMap = new Map(),
+): { value: string; label: string }[] {
+  const opts = candidates.map(value => ({ value, label: optionLabel(value, labels) }))
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, '（当前）') })
+  if (!current) opts.unshift({ value: '', label: '（默认：顶层第一个数组）' })
+  return opts
 }
 
 function seriesList(option: Record<string, any>): Record<string, any>[] {
@@ -256,6 +308,103 @@ function selectInput(
   return select
 }
 
+// 当前打开的自定义下拉（同一时刻只开一个，切换字段自动收起上一个）
+let activeDropdown: { close: () => void } | null = null
+
+function composedPathOf(ev: Event): EventTarget[] {
+  const composed = typeof (ev as { composedPath?: () => EventTarget[] }).composedPath === 'function'
+    ? (ev as { composedPath: () => EventTarget[] }).composedPath()
+    : []
+  return composed.length ? composed : [ev.target as EventTarget]
+}
+
+/**
+ * 自定义下拉：原生 <select> 的弹窗方向由浏览器按可用空间决定，属性面板里会向上弹、遮挡上方字段。
+ * 这里用「触发钮 + fixed 面板」保证选项固定在选择框正下方展开；面板挂在触发钮所在 root（shadow 或 body），
+ * 与颜色选择器同一手法，避开 .pd-form 的 overflow 裁剪。外点 / Esc / 滚动 / resize 均收起。
+ */
+function dropdownSelect(
+  options: readonly { value: string; label: string }[],
+  value: string,
+  onCommit: (value: string) => void,
+): HTMLElement {
+  const current = options.find(item => item.value === value) ?? { value, label: value || '（默认）' }
+  const trigger = el('button', 'echarts-dropdown-trigger')
+  trigger.type = 'button'
+  trigger.setAttribute('aria-haspopup', 'listbox')
+  trigger.setAttribute('aria-expanded', 'false')
+  const valueEl = el('span', 'echarts-dropdown-value', current.label)
+  const arrow = el('span', 'echarts-dropdown-arrow', '▾')
+  trigger.appendChild(valueEl)
+  trigger.appendChild(arrow)
+
+  let panel: HTMLElement | null = null
+  let off: Array<() => void> = []
+
+  const close = () => {
+    off.forEach(fn => fn())
+    off = []
+    panel?.remove()
+    panel = null
+    trigger.setAttribute('aria-expanded', 'false')
+    if (activeDropdown?.close === close) activeDropdown = null
+  }
+
+  const open = () => {
+    activeDropdown?.close()
+    const root = trigger.getRootNode() as ShadowRoot | Document
+    const mount: Element | ShadowRoot = root instanceof ShadowRoot ? root : document.body
+    panel = el('div', 'echarts-dropdown-panel')
+    panel.setAttribute('role', 'listbox')
+    for (const item of options) {
+      const optionEl = el('div', `echarts-dropdown-option${item.value === value ? ' is-active' : ''}`, item.label)
+      optionEl.setAttribute('role', 'option')
+      optionEl.setAttribute('aria-selected', item.value === value ? 'true' : 'false')
+      optionEl.addEventListener('click', ev => {
+        ev.stopPropagation()
+        close()
+        onCommit(item.value)
+      })
+      panel.appendChild(optionEl)
+    }
+    mount.appendChild(panel)
+    // 定位在触发钮正下方：fixed 相对视口，shadow 内亦如此（祖先无 transform）
+    const rect = trigger.getBoundingClientRect()
+    panel.style.left = `${rect.left}px`
+    panel.style.top = `${rect.bottom + 4}px`
+    panel.style.minWidth = `${rect.width}px`
+    trigger.setAttribute('aria-expanded', 'true')
+    activeDropdown = { close }
+
+    const onPointerDown = (ev: Event) => {
+      const path = composedPathOf(ev)
+      if (path.includes(trigger) || path.includes(panel!)) return
+      close()
+    }
+    const onKeydown = (ev: Event) => { if ((ev as KeyboardEvent).key === 'Escape') close() }
+    const onScroll = () => close()
+    document.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('keydown', onKeydown)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
+    root.addEventListener('scroll', onScroll, true)
+    off.push(
+      () => document.removeEventListener('pointerdown', onPointerDown, true),
+      () => document.removeEventListener('keydown', onKeydown),
+      () => window.removeEventListener('scroll', onScroll, true),
+      () => window.removeEventListener('resize', onScroll),
+      () => root.removeEventListener('scroll', onScroll, true),
+    )
+  }
+
+  trigger.addEventListener('click', ev => {
+    ev.stopPropagation()
+    if (panel) close()
+    else open()
+  })
+  return trigger
+}
+
 const OVERFLOW_OPTIONS = [
   { value: '', label: '默认' },
   { value: 'none', label: '不处理（显示完整）' },
@@ -314,9 +463,13 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   }
   const colorField = (key: LabelFieldKey, value: string | undefined): HTMLDivElement => {
     const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
-    wrap.appendChild(
-      textInput({ value: value ?? '', placeholder: '#333333，留空不设置' }, raw => commit({ [key]: raw } as ChartLabelPatch)),
-    )
+    const holder = el('span')
+    render(colorPicker({
+      value: value ?? '',
+      title: STYLE_FIELD_LABELS[key] ?? key,
+      onChange: next => commit({ [key]: next ?? '' } as ChartLabelPatch),
+    }), holder)
+    wrap.appendChild(holder)
     return wrap
   }
 
@@ -442,6 +595,8 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   const heightMm = Number(options.height) || 0
   const limit = maxValueFields(def)
   const palettes = getChartPalettes()
+  // 业务字段清单：fieldKey → fieldLabel，用于下拉展示「中文名（键）」
+  const fieldLabels = fieldLabelMap(ctx.fields)
 
   const root = el('div', 'echarts-property')
   const form = el('form', 'pd-form')
@@ -450,36 +605,24 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
 
   if (has('dataSource')) {
     const wrap = field('数据源')
-    const candidates = dataSourceCandidates(ctx.data)
-    let datalist: HTMLDataListElement | undefined
-    if (candidates.length > 0) {
-      datalist = el('datalist')
-      datalist.id = `echarts-ds-${++datalistSeq}`
-      for (const key of candidates) {
-        const optionEl = el('option')
-        optionEl.value = key
-        datalist.appendChild(optionEl)
-      }
-    }
+    const current = String(options.chartDataSource ?? '')
     wrap.appendChild(
-      textInput(
-        {
-          value: String(options.chartDataSource ?? ''),
-          placeholder: '数据集路径（留空取顶层第一个数组）',
-          list: datalist?.id,
-        },
+      dropdownSelect(
+        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
+        current,
         value => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
       ),
     )
-    if (datalist) wrap.appendChild(datalist)
     form.appendChild(wrap)
   }
 
   if (has('categoryField')) {
     const wrap = field('类目字段')
+    const current = String(options.chartCategoryField ?? '')
     wrap.appendChild(
-      textInput(
-        { value: String(options.chartCategoryField ?? ''), placeholder: '如 name' },
+      dropdownSelect(
+        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? '')), current, fieldLabels),
+        current,
         value => commitOption(ctx, type, panelOption(element), { chartCategoryField: value }),
       ),
     )
@@ -492,8 +635,9 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     fieldsNow.forEach((value, index) => {
       const row = el('div', 'echarts-field-row')
       row.appendChild(
-        textInput(
-          { value, placeholder: '如 value' },
+        dropdownSelect(
+          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? '')), value, fieldLabels),
+          value,
           next => {
             const list = readValueFields(element)
             list[index] = next

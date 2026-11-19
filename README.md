@@ -8,8 +8,11 @@
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
-  <a href="https://github.com/worm-longliu/worm-print-platform/actions/workflows/ci.yml">
-    <img src="https://github.com/worm-longliu/worm-print-platform/actions/workflows/ci.yml/badge.svg" alt="CI">
+  <a href="https://gitee.com/liulong_oschina/worm-print-platform">
+    <img src="https://img.shields.io/badge/Gitee-worm--print--platform-C71D23?logo=gitee&logoColor=white" alt="Gitee">
+  </a>
+  <a href="https://github.com/worm-longliu/worm-print-platform">
+    <img src="https://img.shields.io/badge/GitHub-worm--print--platform-181717?logo=github&logoColor=white" alt="GitHub">
   </a>
   <a href="https://worm-longliu.github.io/worm-print-platform/">
     <img src="https://img.shields.io/badge/demo-live-FF6B35" alt="demo">
@@ -305,6 +308,18 @@ CI 发布走 `.github/workflows/publish-npm.yml`，认证优先 Trusted Publishi
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="./docs/images/alipay.jpg" width="150" alt="支付宝赞赏码" />
 </p>
+
+### 贡献者名单
+
+感谢以下朋友的支持（登记方式见上文）：
+
+| 来源 | 昵称 | 贡献方式 |
+| :---: | --- | --- |
+| <img src="./docs/images/wechat.svg" width="18" alt="微信" /> | 青\*\*\*\* 侠 | 赞赏 |
+| <img src="./docs/images/douyin.svg" width="18" alt="抖音" /> | Z\*\*\*\*D | 赞赏 |
+| <img src="./docs/images/douyin.svg" width="18" alt="抖音" /> | 程\*\*\*\*已 | 赞赏 |
+| <img src="./docs/images/douyin.svg" width="18" alt="抖音" /> | 天\*\*\*\*夜 | 赞赏 |
+| <img src="./docs/images/github.svg" width="18" alt="GitHub" /> | C\*\*\*\*g | 代码贡献（特别鸣谢：多次提交 PR） |
 
 ## License
 

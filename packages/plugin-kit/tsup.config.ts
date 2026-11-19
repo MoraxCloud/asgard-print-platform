@@ -1,7 +1,12 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: {
+    index: 'src/index.ts',
+    dom: 'src/dom.ts',
+    controls: 'src/color-picker.ts',
+    'expression-editor': 'src/expression-editor.ts',
+  },
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,

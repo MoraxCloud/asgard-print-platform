@@ -33,25 +33,24 @@ function labelsOf(root: HTMLElement): string[] {
   return [...root.querySelectorAll('.pd-label')].map(node => node.textContent?.trim() ?? '')
 }
 
-function fieldInput(root: HTMLElement, label: string): HTMLInputElement | undefined {
-  const wrap = [...root.querySelectorAll('.pd-field')].find(
-    item => item.querySelector('.pd-label')?.textContent?.trim() === label,
-  )
-  return wrap?.querySelector('input') ?? undefined
-}
-
 interface PropertyFixture {
   root: HTMLElement
   updates: Partial<ElementOptions>[]
 }
 
-function renderProperty(type: string, options: Record<string, unknown> = {}): PropertyFixture {
+function renderProperty(
+  type: string,
+  options: Record<string, unknown> = {},
+  data: readonly Record<string, unknown>[] = [{ name: '华东', value: 12, region: 'A' }],
+  fields: readonly { fieldKey: string; fieldLabel: string; fieldType?: string; sortOrder?: number }[] = [],
+): PropertyFixture {
   const ui = getElementUI(type)
   expect(ui?.renderProperty).toBeTypeOf('function')
   const updates: Partial<ElementOptions>[] = []
   const result = ui!.renderProperty!({
     element: makeElement(type, options),
-    data: [{ name: '华东', value: 12, region: 'A' }],
+    data,
+    fields,
     update: partial => { updates.push(partial) },
     repaint: () => {},
   })
@@ -146,10 +145,11 @@ describe('renderProperty 写回', () => {
       // 与 barChart 语义不符的 series.type，用于验证写回前按 kind 归一
       series: [{ type: 'line', data: ['$data'], name: '旧名' }],
     }
-    const { root, updates } = renderProperty('barChart', { chartOption })
-    const input = fieldInput(root, '类目字段')!
-    input.value = 'region'
-    input.dispatchEvent(new Event('change'))
+    const { root, updates } = renderProperty('barChart', { chartOption }, [{ trend: [{ name: '一月', region: '东' }] }])
+    const catWrap = [...root.querySelectorAll('.pd-field')].find(f => f.querySelector('.pd-label')?.textContent?.trim() === '类目字段')!
+    ;(catWrap.querySelector('.echarts-dropdown-trigger') as HTMLButtonElement).click()
+    const region = [...document.querySelectorAll('.echarts-dropdown-option')].find(o => o.textContent === 'region') as HTMLElement
+    region.click()
 
     expect(updates).toHaveLength(1)
     const patch = updates[0]!
@@ -244,10 +244,84 @@ describe('数据标签分组', () => {
     const option = createDefaultChartOption('barChart')
     ;(option.series as any[])[0].label = { show: true, color: '#ff0000' }
     const { root, updates } = renderProperty('barChart', { chartOption: option })
-    const input = fieldInput(root, '文字颜色')!
-    input.value = ''
-    input.dispatchEvent(new Event('change'))
+    // 颜色字段现用共享 colorPicker：点触发钮开面板 → 点「清除」按钮 → onChange(undefined) → 写回 '' → 归一化删键
+    const trigger = root.querySelector('button.preset-color-trigger') as HTMLButtonElement
+    expect(trigger).toBeTruthy()
+    trigger.click()
+    const clear = document.querySelector('.picker-clear') as HTMLButtonElement
+    expect(clear).toBeTruthy()
+    clear.click()
     expect((updates[0]!.chartOption as any).series[0].label.color).toBeUndefined()
+  })
+})
+
+describe('数据源/字段下拉选择', () => {
+  const option = () => {
+    const o = createDefaultChartOption('barChart')
+    return o
+  }
+  const chartData = [{ trend: [{ name: '一月', sales: 120, region: '东' }] }]
+  const render = () => renderProperty('barChart', {
+    chartOption: option(),
+    chartDataSource: 'trend',
+    chartCategoryField: 'name',
+    chartValueFields: ['sales'],
+  }, chartData)
+
+  const fieldTrigger = (root: HTMLElement, label: string) => {
+    const wrap = [...root.querySelectorAll('.pd-field')].find(f => f.querySelector('.pd-label')?.textContent?.trim() === label)!
+    return wrap.querySelector('.echarts-dropdown-trigger') as HTMLButtonElement
+  }
+  const openOptions = (trigger: HTMLButtonElement): string[] => {
+    trigger.click()
+    const panel = document.querySelector('.echarts-dropdown-panel') as HTMLElement
+    expect(panel).toBeTruthy()
+    // fixed 定位在触发钮下方（top 大于按钮 bottom）
+    expect(Number.parseFloat(panel.style.top)).toBeGreaterThanOrEqual(trigger.getBoundingClientRect().bottom)
+    return [...panel.querySelectorAll('.echarts-dropdown-option')].map(o => (o as HTMLElement).textContent ?? '')
+  }
+
+  it('数据源是下拉，候选来自示例数据的数组键', () => {
+    const { root } = render()
+    const trigger = fieldTrigger(root, '数据源')
+    expect(trigger).toBeTruthy()
+    expect(openOptions(trigger)).toContain('trend')
+  })
+
+  it('类目/数值字段是下拉，候选来自数据源数组的行字段', () => {
+    const { root } = render()
+    expect(openOptions(fieldTrigger(root, '类目字段'))).toEqual(expect.arrayContaining(['name', 'sales', 'region']))
+    const valWrap = [...root.querySelectorAll('.pd-field')].find(f => f.querySelector('.pd-label')?.textContent?.trim()?.includes('数值字段'))!
+    expect(valWrap.querySelector('.echarts-dropdown-trigger')).toBeTruthy()
+  })
+
+  it('不在候选里的已有值保留为选项，不丢失', () => {
+    const { root } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'legacySource', chartCategoryField: 'legacyField',
+    }, chartData)
+    expect(openOptions(fieldTrigger(root, '数据源')).some(label => label.includes('legacySource'))).toBe(true)
+  })
+
+  it('业务字段有中文名时，选项展示「中文名（键）」；行内字段无中文名则只显示键', () => {
+    const { root } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'trend', chartCategoryField: 'name', chartValueFields: ['sales'],
+    }, chartData, [
+      { fieldKey: 'trend', fieldLabel: '趋势数据', fieldType: 'list', sortOrder: 1 },
+    ])
+    expect(openOptions(fieldTrigger(root, '数据源'))).toContain('趋势数据（trend）')
+    // name 是行内字段，fields 里没有其中文名，回退显示键
+    expect(openOptions(fieldTrigger(root, '类目字段'))).toContain('name')
+  })
+
+  it('选中选项后写回并把面板收起', () => {
+    const { root, updates } = render()
+    const trigger = fieldTrigger(root, '数据源')
+    trigger.click()
+    const option = [...document.querySelectorAll('.echarts-dropdown-option')].find(o => o.textContent === 'trend') as HTMLElement
+    // 当前值就是 trend，点它仍会写回；用一个非当前值更直观，但候选里有 trend，这里断言写回发生
+    option.click()
+    expect(updates.length).toBeGreaterThan(0)
+    expect(document.querySelector('.echarts-dropdown-panel')).toBeNull()
   })
 })
 

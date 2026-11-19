@@ -667,6 +667,8 @@ registerChartPlugin();
 
 // src/ui.ts
 import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
+import { render } from "@worm-print-platform/plugin-kit/dom";
+import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
 
 // src/option-utils.ts
 var SAMPLE_VALUES = [12, 20, 15];
@@ -1065,8 +1067,19 @@ var STYLES = [
   ".echarts-field-row{display:flex;gap:6px;align-items:center}",
   ".echarts-field-row>.pd-input{flex:1;min-width:0}",
   ".echarts-field-row>.pd-button{flex:none}",
+  ".echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}",
+  ".echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}",
+  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
+  ".echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+  ".echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}",
+  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
+  ".echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}",
+  ".echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+  ".echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}",
+  ".echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}",
   ".echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}",
-  ".echarts-label-group>summary{cursor:pointer;font-weight:600;font-size:12px;list-style:none}",
+  ".echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}",
+  ".echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}",
   ".echarts-label-sub{font-size:11px;color:var(--pd-text-secondary,#6b7280);margin:8px 0 4px}"
 ].join("");
 var CHART_OPTION_KEYS = [
@@ -1101,7 +1114,6 @@ var SEARCH_KEYWORDS = [
   "label"
 ];
 var PANEL_HINT = "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002";
-var datalistSeq = 0;
 function escapeHtml2(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -1149,6 +1161,33 @@ function dataSourceCandidates(data) {
   const first = data?.[0];
   if (!first) return [];
   return Object.keys(first).filter((key) => Array.isArray(first[key]));
+}
+function dataRowFields(data, dataSource) {
+  const first = data?.[0];
+  if (!first) return [];
+  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find((k) => Array.isArray(first[k]));
+  if (!key) return [];
+  const rows = first[key];
+  return rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null ? Object.keys(rows[0]) : [];
+}
+function fieldLabelMap(fields) {
+  const map = /* @__PURE__ */ new Map();
+  for (const field2 of fields ?? []) {
+    if (field2.fieldKey && field2.fieldLabel) map.set(field2.fieldKey, field2.fieldLabel);
+  }
+  return map;
+}
+function optionLabel(value, labels, fallbackSuffix) {
+  if (!value) return fallbackSuffix ?? "\uFF08\u9ED8\u8BA4\uFF09";
+  const name = labels.get(value);
+  const base = name ? `${name}\uFF08${value}\uFF09` : value;
+  return fallbackSuffix ? `${base}${fallbackSuffix}` : base;
+}
+function dropdownOptions(candidates, current, labels = /* @__PURE__ */ new Map()) {
+  const opts = candidates.map((value) => ({ value, label: optionLabel(value, labels) }));
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, "\uFF08\u5F53\u524D\uFF09") });
+  if (!current) opts.unshift({ value: "", label: "\uFF08\u9ED8\u8BA4\uFF1A\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09" });
+  return opts;
 }
 function seriesList(option) {
   return Array.isArray(option.series) ? option.series : [];
@@ -1228,6 +1267,84 @@ function selectInput(options, value, onCommit) {
   select.addEventListener("change", () => onCommit(select.value));
   return select;
 }
+var activeDropdown = null;
+function composedPathOf(ev) {
+  const composed = typeof ev.composedPath === "function" ? ev.composedPath() : [];
+  return composed.length ? composed : [ev.target];
+}
+function dropdownSelect(options, value, onCommit) {
+  const current = options.find((item) => item.value === value) ?? { value, label: value || "\uFF08\u9ED8\u8BA4\uFF09" };
+  const trigger = el("button", "echarts-dropdown-trigger");
+  trigger.type = "button";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  const valueEl = el("span", "echarts-dropdown-value", current.label);
+  const arrow = el("span", "echarts-dropdown-arrow", "\u25BE");
+  trigger.appendChild(valueEl);
+  trigger.appendChild(arrow);
+  let panel = null;
+  let off = [];
+  const close = () => {
+    off.forEach((fn) => fn());
+    off = [];
+    panel?.remove();
+    panel = null;
+    trigger.setAttribute("aria-expanded", "false");
+    if (activeDropdown?.close === close) activeDropdown = null;
+  };
+  const open = () => {
+    activeDropdown?.close();
+    const root = trigger.getRootNode();
+    const mount = root instanceof ShadowRoot ? root : document.body;
+    panel = el("div", "echarts-dropdown-panel");
+    panel.setAttribute("role", "listbox");
+    for (const item of options) {
+      const optionEl = el("div", `echarts-dropdown-option${item.value === value ? " is-active" : ""}`, item.label);
+      optionEl.setAttribute("role", "option");
+      optionEl.setAttribute("aria-selected", item.value === value ? "true" : "false");
+      optionEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        close();
+        onCommit(item.value);
+      });
+      panel.appendChild(optionEl);
+    }
+    mount.appendChild(panel);
+    const rect = trigger.getBoundingClientRect();
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.bottom + 4}px`;
+    panel.style.minWidth = `${rect.width}px`;
+    trigger.setAttribute("aria-expanded", "true");
+    activeDropdown = { close };
+    const onPointerDown = (ev) => {
+      const path = composedPathOf(ev);
+      if (path.includes(trigger) || path.includes(panel)) return;
+      close();
+    };
+    const onKeydown = (ev) => {
+      if (ev.key === "Escape") close();
+    };
+    const onScroll = () => close();
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeydown);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    root.addEventListener("scroll", onScroll, true);
+    off.push(
+      () => document.removeEventListener("pointerdown", onPointerDown, true),
+      () => document.removeEventListener("keydown", onKeydown),
+      () => window.removeEventListener("scroll", onScroll, true),
+      () => window.removeEventListener("resize", onScroll),
+      () => root.removeEventListener("scroll", onScroll, true)
+    );
+  };
+  trigger.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    if (panel) close();
+    else open();
+  });
+  return trigger;
+}
 var OVERFLOW_OPTIONS = [
   { value: "", label: "\u9ED8\u8BA4" },
   { value: "none", label: "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09" },
@@ -1281,15 +1398,22 @@ function renderLabelGroup(ctx, type) {
   };
   const colorField = (key, value) => {
     const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
-    wrap.appendChild(
-      textInput({ value: value ?? "", placeholder: "#333333\uFF0C\u7559\u7A7A\u4E0D\u8BBE\u7F6E" }, (raw) => commit({ [key]: raw }))
-    );
+    const holder = el("span");
+    render(colorPicker({
+      value: value ?? "",
+      title: STYLE_FIELD_LABELS[key] ?? key,
+      onChange: (next) => commit({ [key]: next ?? "" })
+    }), holder);
+    wrap.appendChild(holder);
     return wrap;
   };
   const group = el("details", "echarts-label-group");
   group.open = state.show;
-  group.appendChild(el("summary", void 0, "\u6570\u636E\u6807\u7B7E"));
-  group.appendChild(checkboxField("\u663E\u793A\u6570\u636E\u6807\u7B7E", state.show, (checked) => commit({ enabled: checked })));
+  const summary = el("summary", "echarts-label-summary");
+  const toggle = checkboxField("\u663E\u793A\u6570\u636E\u6807\u7B7E", state.show, (checked) => commit({ enabled: checked }));
+  toggle.querySelector("input")?.addEventListener("click", (event) => event.stopPropagation());
+  summary.appendChild(toggle);
+  group.appendChild(summary);
   if (has("formatter") || has("overflow")) {
     group.appendChild(el("div", "echarts-label-sub", "\u5185\u5BB9"));
     if (has("formatter")) {
@@ -1397,41 +1521,30 @@ function renderProperty(ctx) {
   const heightMm = Number(options.height) || 0;
   const limit = maxValueFields(def);
   const palettes = getChartPalettes();
+  const fieldLabels = fieldLabelMap(ctx.fields);
   const root = el("div", "echarts-property");
   const form = el("form", "pd-form");
   form.addEventListener("submit", (event) => event.preventDefault());
   root.appendChild(form);
   if (has("dataSource")) {
     const wrap = field("\u6570\u636E\u6E90");
-    const candidates = dataSourceCandidates(ctx.data);
-    let datalist;
-    if (candidates.length > 0) {
-      datalist = el("datalist");
-      datalist.id = `echarts-ds-${++datalistSeq}`;
-      for (const key of candidates) {
-        const optionEl = el("option");
-        optionEl.value = key;
-        datalist.appendChild(optionEl);
-      }
-    }
+    const current = String(options.chartDataSource ?? "");
     wrap.appendChild(
-      textInput(
-        {
-          value: String(options.chartDataSource ?? ""),
-          placeholder: "\u6570\u636E\u96C6\u8DEF\u5F84\uFF08\u7559\u7A7A\u53D6\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09",
-          list: datalist?.id
-        },
+      dropdownSelect(
+        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
+        current,
         (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value })
       )
     );
-    if (datalist) wrap.appendChild(datalist);
     form.appendChild(wrap);
   }
   if (has("categoryField")) {
     const wrap = field("\u7C7B\u76EE\u5B57\u6BB5");
+    const current = String(options.chartCategoryField ?? "");
     wrap.appendChild(
-      textInput(
-        { value: String(options.chartCategoryField ?? ""), placeholder: "\u5982 name" },
+      dropdownSelect(
+        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), current, fieldLabels),
+        current,
         (value) => commitOption(ctx, type, panelOption(element), { chartCategoryField: value })
       )
     );
@@ -1443,8 +1556,9 @@ function renderProperty(ctx) {
     fieldsNow.forEach((value, index) => {
       const row = el("div", "echarts-field-row");
       row.appendChild(
-        textInput(
-          { value, placeholder: "\u5982 value" },
+        dropdownSelect(
+          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), value, fieldLabels),
+          value,
           (next) => {
             const list = readValueFields(element);
             list[index] = next;

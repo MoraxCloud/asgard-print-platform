@@ -33,3 +33,6 @@ vibe_images/
 .superpowers/
 .qoder/
 .workbuddy/
+
+# 本地待办清单，不入库
+todo.md
