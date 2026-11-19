@@ -513,3 +513,43 @@ textarea.pd-input {
   content: none;
 }
 
+/* 字段树插件动作按钮与 overlay 宿主（数据预览插件等挂载点） */
+.field-group-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.field-action-btn {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--pd-text-muted, #909399);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .14s ease, border-color .14s ease, background .14s ease;
+}
+.field-action-btn:hover,
+.field-action-btn:focus-visible {
+  color: var(--pd-accent, #165DFF);
+  border-color: var(--pd-accent, #165DFF);
+  background: var(--pd-accent-soft, rgba(22, 93, 255, .09));
+}
+.pd-field-action-host {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  pointer-events: none;
+}
+.pd-field-action-host > * {
+  pointer-events: auto;
+}
+

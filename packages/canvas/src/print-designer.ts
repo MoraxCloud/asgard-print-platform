@@ -7,7 +7,9 @@ import {
 } from '@worm-print-platform/core/designer'
 import { buildFontFaceCss, normalizeTemplate, validateTiling, collectPrintWarnings } from '@worm-print-platform/core'
 import { fitTextNode } from '@worm-print-platform/core/browser'
-import { getElementUIEntries, subscribeElementUIRegistry } from '@worm-print-platform/plugin-kit'
+import {
+  getElementUIEntries, subscribeElementUIRegistry, getFieldActionUIs, subscribeFieldActionRegistry,
+} from '@worm-print-platform/plugin-kit'
 import type { AlignLine, ElementType, MultiPageTemplateData, ResizePoint, RuntimeElement, TemplateData, UploadDesignBackgroundFn, UploadImageFn } from '@worm-print-platform/core/designer'
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
 import { clear, h, render } from './core/h'
@@ -222,6 +224,11 @@ export class PrintDesignerElement extends HTMLElement {
   /** 字体声明的 @font-face 样式节点（挂在 shadow root 内，设计期所见即出图所得） */
   private fontFaceStyle: HTMLStyleElement | null = null
   private docFontFaceStyle: HTMLStyleElement | null = null
+  /** 字段树动作（插件）弹窗 overlay 宿主，与 .designer-container 同级常驻 */
+  private fieldActionHost?: HTMLElement
+  /** 插件 onActivate 返回的释放回调（卸载时回放） */
+  private fieldActionDisposers: Array<() => void> = []
+  private unsubFieldActions: (() => void) | null = null
 
   constructor() {
     super()
@@ -229,6 +236,10 @@ export class PrintDesignerElement extends HTMLElement {
     const style = document.createElement('style')
     style.textContent = designerCss
     this.root.appendChild(style)
+    const fieldActionHost = document.createElement('div')
+    fieldActionHost.className = 'pd-field-action-host'
+    this.root.appendChild(fieldActionHost)
+    this.fieldActionHost = fieldActionHost
     render(h('div', {
       class: 'designer-container', dataset: { test: 'designer-container' },
       // ::part 让宿主有限定制外壳；容器常驻，只需打一次
@@ -424,6 +435,13 @@ export class PrintDesignerElement extends HTMLElement {
     this.unsub = null
     this.unsubPluginUI?.()
     this.unsubPluginUI = null
+    this.unsubFieldActions?.()
+    this.unsubFieldActions = null
+    for (const dispose of this.fieldActionDisposers) {
+      try { dispose() } catch { /* 插件自身清理失败不阻断卸载 */ }
+    }
+    this.fieldActionDisposers = []
+    this.fieldActionHost?.replaceChildren()
     this.unsubDefinitions?.()
     this.unsubDefinitions = null
     // 插件 UI 的资源（图表实例/监听）在整树重建或卸载前释放
@@ -482,6 +500,9 @@ export class PrintDesignerElement extends HTMLElement {
     if (!this.unsubPluginUI) {
       this.unsubPluginUI = subscribeElementUIRegistry(() => this.repaint())
     }
+    if (!this.unsubFieldActions) {
+      this.unsubFieldActions = subscribeFieldActionRegistry(() => this.repaint())
+    }
     if (!this.unsubDefinitions) {
       this.unsubDefinitions = subscribeElementDefinitions(() => this.repaint())
     }
@@ -495,6 +516,9 @@ export class PrintDesignerElement extends HTMLElement {
     const wanted = new Map<string, string>()
     for (const { type, ui } of getElementUIEntries()) {
       if (ui.styles) wanted.set(type, ui.styles)
+    }
+    for (const action of getFieldActionUIs()) {
+      if (action.styles) wanted.set(`action:${action.id}`, action.styles)
     }
     for (const [type, node] of [...this.pluginStyleEls]) {
       if (wanted.has(type)) continue
@@ -714,6 +738,7 @@ export class PrintDesignerElement extends HTMLElement {
         designData: this.designData,
         fields: this.store.fields,
       },
+      fieldActionHost: this.fieldActionHost!,
     }
   }
 

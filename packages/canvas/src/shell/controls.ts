@@ -62,6 +62,8 @@ export interface ShellCtx {
     /** 宿主业务字段清单；插件属性台据此生成数据源/字段映射下拉 */
     fields?: readonly PrintBusinessField[]
   }
+  /** 字段树动作（插件）弹窗的 overlay 宿主（shadow root 内，与 .designer-container 同级） */
+  fieldActionHost?: HTMLElement
 }
 
 /** 带图标的工具栏按钮（对应 Vue 3 轨 的 .tb-btn.tb-icon） */
