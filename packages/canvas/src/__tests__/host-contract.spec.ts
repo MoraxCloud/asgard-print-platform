@@ -25,10 +25,14 @@ function create(): PrintDesignerElement {
 
 describe('宿主契约：声明面', () => {
   it('版本与标签固定，契约快照字段齐全', () => {
-    expect(PRINT_DESIGNER_CONTRACT_VERSION).toBe('1.2.0')
+    expect(PRINT_DESIGNER_CONTRACT_VERSION).toBe('1.3.0')
     expect(PRINT_DESIGNER_TAG).toBe('print-designer')
     const c = getHostContract()
     expect(c.version).toBe(PRINT_DESIGNER_CONTRACT_VERSION)
+    expect(PRINT_DESIGNER_ATTRIBUTES).toContain('field-display')
+    expect(PRINT_DESIGNER_PROPERTY_NAMES).toContain('fieldDisplay')
+    expect(c.attributes).toContain('field-display')
+    expect(c.properties).toContain('fieldDisplay')
     expect(c.attributes).toEqual(PRINT_DESIGNER_ATTRIBUTES)
     expect(c.methods).toEqual(PRINT_DESIGNER_METHODS)
     expect(c.events).toEqual(PRINT_DESIGNER_EVENTS)
@@ -59,6 +63,21 @@ describe('宿主契约：运行时对拍', () => {
     expect(PrintDesignerElement.observedAttributes).toEqual([...PRINT_DESIGNER_ATTRIBUTES])
     expect(PrintDesignerElement.contractVersion).toBe(PRINT_DESIGNER_CONTRACT_VERSION)
     expect(PrintDesignerElement.getHostContract()).toEqual(getHostContract())
+  })
+
+  it('field-display / fieldDisplay 双向同步，非法值与移除均回退 both', () => {
+    const el = create()
+    try {
+      ;(el as unknown as { fieldDisplay: unknown }).fieldDisplay = ' KEY '
+      expect(el.fieldDisplay).toBe('key')
+      expect(el.getAttribute('field-display')).toBe('key')
+      el.setAttribute('field-display', 'bogus')
+      expect(el.fieldDisplay).toBe('both')
+      el.removeAttribute('field-display')
+      expect(el.fieldDisplay).toBe('both')
+    } finally {
+      el.remove()
+    }
   })
 
   it('所有声明的方法与 property 在实例上真实存在', () => {

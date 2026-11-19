@@ -12,16 +12,17 @@
 //   PATCH：文档/注释、不改变可观察行为。
 import type { MultiPageTemplateData, PrintBusinessField, TemplateData } from '@worm-print-platform/core/designer'
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
+import type { FieldDisplayMode } from '@worm-print-platform/plugin-kit/expression-editor'
 
 /** 宿主契约版本；每次改动可观察面必须同步升号 */
-export const PRINT_DESIGNER_CONTRACT_VERSION = '1.2.0'
+export const PRINT_DESIGNER_CONTRACT_VERSION = '1.3.0'
 
 /** 自定义元素标签名 */
 export const PRINT_DESIGNER_TAG = 'print-designer' as const
 
 /** 会触发 attributeChangedCallback 的声明式 attribute（字符串形态） */
 export const PRINT_DESIGNER_ATTRIBUTES = [
-  'template', 'fields', 'name', 'fonts', 'design-data', 'theme', 'theme-config',
+  'template', 'fields', 'name', 'fonts', 'design-data', 'theme', 'theme-config', 'field-display',
 ] as const
 export type PrintDesignerAttribute = typeof PRINT_DESIGNER_ATTRIBUTES[number]
 
@@ -58,6 +59,11 @@ export interface PrintDesignerProperties {
   uploadImage?: (file: File) => Promise<string> | string
   /** 宿主提供的设计背景上传回调 */
   uploadDesignBackground?: (file: File) => Promise<string> | string
+  /**
+   * 素材台字段行与表达式弹窗「字段」页签的显示模式：'label' 只显中文名 / 'key' 只显 key / 'both' 两者（默认）。
+   * 分组名、搜索、复制、插入与拖拽语义不受影响；非法值静默回退 both。
+   */
+  fieldDisplay: FieldDisplayMode
 }
 
 /** 方法的返回类型契约 */
@@ -171,7 +177,7 @@ export const PRINT_DESIGNER_METHODS: readonly (keyof PrintDesignerMethods)[] = [
 
 export const PRINT_DESIGNER_PROPERTY_NAMES: readonly (keyof PrintDesignerProperties)[] = [
   'template', 'fields', 'fonts', 'designData', 'isEdit', 'showHelp', 'showPreview', 'showSave',
-  'theme', 'themeConfig', 'uploadImage', 'uploadDesignBackground',
+  'theme', 'themeConfig', 'uploadImage', 'uploadDesignBackground', 'fieldDisplay',
 ]
 
 /** 事件名的具名常量：实现侧派发事件时引用这里，避免契约表与运行时字符串漂移 */

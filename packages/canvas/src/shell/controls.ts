@@ -6,6 +6,7 @@ import { iconSvg } from '../core/icons'
 import { colorPicker } from './color-picker'
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
+import type { FieldDisplayMode } from '@worm-print-platform/plugin-kit/expression-editor'
 import type { DesignerStore } from '../core/store'
 
 /** 外壳局部 UI 状态（不落模板数据，仅影响渲染） */
@@ -24,6 +25,8 @@ export interface ShellState {
   openMore?: boolean
   /** 字段搜索关键字（仅影响左栏字段树） */
   fieldSearch?: string
+  /** 宿主注入的字段行显示模式（field-display attribute / property），缺省 both */
+  fieldDisplay?: FieldDisplayMode
   /** 折叠的字段分组 key */
   collapsedGroups: Set<string>
   /** 最近一次复制成功的字段 key：素材台行内「已复制」提示，1.2s 后清空重绘（对齐 canvas） */

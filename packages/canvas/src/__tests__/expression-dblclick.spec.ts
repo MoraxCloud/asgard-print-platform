@@ -34,11 +34,12 @@ function frame() {
   return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 }
 
-async function mountDesigner() {
+async function mountDesigner(attrs: Record<string, string> = {}) {
   definePrintDesigner()
   const host = document.createElement('div')
   document.body.replaceChildren(host)
   const el = document.createElement('print-designer') as PrintDesignerElement
+  for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value)
   host.appendChild(el)
   const store = (el as unknown as { store: DesignerStore }).store
   const events: { type: string; detail: unknown }[] = []
@@ -91,6 +92,18 @@ function setTextarea(root: ShadowRoot, value: string) {
 beforeEach(() => stubStorage())
 
 describe('画布双击元素 → 表达式编辑器', () => {
+  it('宿主 field-display=key 透传到弹窗字段行（不显示中文名，key 为 is-primary）', async () => {
+    const { root, store } = await mountDesigner({ 'field-display': 'key' })
+    store.fields = [{ id: 'f1', fieldKey: 'amount', fieldLabel: '金额', fieldType: 'string', sortOrder: 1 }]
+    const text = store.addElement('text', { left: 10, top: 10, width: 40, height: 10 })
+    await frame()
+    await dblClick(root, `[data-el-id="${text.id}"]`)
+    await frame()
+    const row = root.querySelector('.ee-field-item')!
+    expect(row.querySelector('.ee-item-label')).toBeNull()
+    expect(row.querySelector('.ee-item-key.is-primary')?.textContent).toBe('amount')
+  })
+
   it('双击白名单 text 元素：弹窗打开、文本域预填 formatter、派发 dblclick-element（detail 为 id 字符串）', async () => {
     const { root, store, events } = await mountDesigner()
     store.addElement('text', { left: 10, top: 10, width: 40, height: 10 })
