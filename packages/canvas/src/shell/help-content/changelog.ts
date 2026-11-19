@@ -4,11 +4,16 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
-<h2>待发布</h2>
+<h2>V1.6.0<small>(2026-11-19)</small></h2>
 
 <h3>新增</h3>
 <ul>
   <li><strong>字段显示可由宿主配置</strong>：新增 <code>field-display</code> 参数（属性名 <code>fieldDisplay</code>），可选「只显示中文名」「只显示字段 key」「两者都显示」，默认两者都显示。只显示 key 时，key 的字号、颜色与字族与中文名一致；字段分组名始终显示，搜索、复制与插入语义不变。</li>
+</ul>
+
+<h3>修复</h3>
+<ul>
+  <li><strong>图表数据标签偏移</strong>：面板写入 ECharts 原生 <code>offset: [x, y]</code>，旧模板的 <code>offsetX</code> / <code>offsetY</code> 在读取、写回与出图前统一迁移，数据标签偏移现在真正生效。</li>
 </ul>
 
 <h2>V1.5.3<small>(2026-11-18)</small></h2>
