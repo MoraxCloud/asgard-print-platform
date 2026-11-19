@@ -1,5 +1,7 @@
 # 数据源预览插件 Implementation Plan
 
+> **注记**：本文记录的是最初方案（plugin-kit `FieldActionUI` 贡献点 + canvas 字段树按钮）。最终实现改为「插件只提供 `openDataPreview()` API、宿主配置入口与开关」，原贡献点已彻底移除。以 `marketplace/plugins/data-preview` 源码与 README 为准。
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (native, this session) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** 以插件方式实现字段父节点“查看数据源”预览：弹窗多 tab（总览 + 子标签页，可从汇总表跳转），内容按 JSON 形态解析为表单/表格，第一版不分页。

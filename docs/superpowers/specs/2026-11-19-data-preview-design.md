@@ -1,6 +1,7 @@
 # 数据源预览插件（字段父节点查看数据源）设计方案
 
-> 日期：2026-11-19　状态：待评审
+> 日期：2026-11-19　状态：已实现（方案演进见下）
+> **最终实现注记**：改为「插件只导出 `openDataPreview(options)` 触发 API，宿主自行配置入口与开关」，未采用本文 §5.1 的 `FieldActionUI` 贡献点与 canvas 字段树按钮方案；该贡献点及 canvas 挂载点已全部移除。
 > 对应 Gitee issue：[IKWC7W「设计器细节优化」](https://gitee.com/liulong_oschina/worm-print-platform/issues/IKWC7W) 第 2 点——“字段父节点加一个预览按钮可以查看数据源”。
 > 本版按评审意见调整：**多 tab（总览 + 子标签页，汇总表可跳转）、第一版不分页、以插件方式实现**。
 

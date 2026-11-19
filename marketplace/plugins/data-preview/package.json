@@ -21,8 +21,7 @@
     "kinds": [],
     "exportFormats": [],
     "peerDeps": {
-      "@worm-print-platform/core": "^1.5.3",
-      "@worm-print-platform/plugin-kit": "^1.5.3"
+      "@worm-print-platform/core": "^1.5.3"
     }
   },
   "scripts": {
@@ -31,8 +30,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@worm-print-platform/core": "^1.5.3",
-    "@worm-print-platform/plugin-kit": "^1.5.3"
+    "@worm-print-platform/core": "^1.5.3"
   },
   "devDependencies": {
     "happy-dom": "^20.10.6",

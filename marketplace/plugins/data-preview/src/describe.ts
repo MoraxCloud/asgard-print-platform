@@ -1,8 +1,7 @@
 // 数据预览的纯解析层：把某个字段分组对应的 JSON 值解析为「总览 + 子标签页」描述。
 // 无 UI 依赖、无 DOM，渲染层（ui.ts）只消费这里的描述。
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
-import type { FieldGroupInfo } from '@worm-print-platform/plugin-kit'
-import type { FormRow, OverviewRow, PreviewColumn, PreviewDescriptor, PreviewTab, ValueKind } from './types.js'
+import type { FieldGroupInfo, FormRow, OverviewRow, PreviewColumn, PreviewDescriptor, PreviewTab, ValueKind } from './types.js'
 
 interface LeafMeta { label: string; sortOrder: number }
 

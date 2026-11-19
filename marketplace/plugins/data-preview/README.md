@@ -36,4 +36,4 @@ import 即注册（与图表插件市场入口同口径）。之后设计器字�
 
 ## 兼容性
 
-依赖 `@worm-print-platform/core` 与 `@worm-print-platform/plugin-kit` ≥ 1.5.3，通过 plugin-kit 的 `FieldActionUI` 贡献点与 canvas 挂载点协作，不修改宿主业务代码。
+仅依赖 `@worm-print-platform/core` ≥ 1.5.3。插件不注册任何设计器贡献点，不修改宿主业务代码；宿主按需调用 `openDataPreview()` 并用自己的开关控制入口显隐。

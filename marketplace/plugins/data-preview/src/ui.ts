@@ -1,8 +1,7 @@
 // 数据预览弹窗：插件只提供触发 API，由宿主决定何时/在哪里调用。
 // 样式与 DOM 生命周期全部由插件自管理，不依赖设计器注入。
-import type { FieldGroupInfo } from '@worm-print-platform/plugin-kit'
 import { describeDataSource } from './describe.js'
-import type { DataPreviewOptions, FormRow, OverviewRow, PreviewDescriptor, PreviewTab } from './types.js'
+import type { DataPreviewOptions, FieldGroupInfo, FormRow, OverviewRow, PreviewDescriptor, PreviewTab } from './types.js'
 
 export const PREVIEW_STYLES = `
 .dp-preview-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(15,18,26,.45);pointer-events:auto;font-family:inherit}

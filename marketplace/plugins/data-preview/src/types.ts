@@ -1,5 +1,11 @@
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
-import type { FieldGroupInfo } from '@worm-print-platform/plugin-kit'
+
+/** 分组信息（插件自持，不依赖设计器侧的字段树贡献点） */
+export interface FieldGroupInfo {
+  key: string
+  label: string
+  isList: boolean
+}
 
 /** JSON 值的三种形态：标量 / 对象 / 数组 */
 export type ValueKind = 'scalar' | 'object' | 'array'

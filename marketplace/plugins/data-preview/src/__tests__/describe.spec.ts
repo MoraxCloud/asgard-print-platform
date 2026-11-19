@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
-import type { FieldGroupInfo } from '@worm-print-platform/plugin-kit'
+import type { FieldGroupInfo } from '../types'
 import { describeDataSource } from '../describe'
 
 const group: FieldGroupInfo = { key: '系统信息', label: '系统信息', isList: false }
