@@ -46,6 +46,7 @@
           <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
+      <button v-if="dataPreviewEnabled" type="button" class="demo-print-btn" @click="onOpenDataPreview">数据源预览</button>
       <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
       <button type="button" class="demo-print-btn" @click="printDialogVisible = true">打印输出</button>
       <input ref="fileInputRef" type="file" accept="application/json,.json" class="demo-file-input" @change="onImportTemplate($event)" />
@@ -258,6 +259,10 @@
               <input v-model="showSave" type="checkbox" />
               <span>显示「保存」按钮</span>
             </label>
+            <label class="config-row">
+              <input v-model="dataPreviewEnabled" type="checkbox" />
+              <span>启用「数据源预览」入口</span>
+            </label>
           </section>
           <section class="config-section">
             <div class="config-label">主题</div>
@@ -289,6 +294,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { initTopbarOverflow } from './topbar-overflow.js'
 import { createDefaultTemplate } from '@worm-print-platform/canvas'
+import { openDataPreview } from '@worm-print-platform/plugin-data-preview'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
 import { SAMPLES } from './templates'
 import { CHART_SAMPLES } from './templates-chart'
@@ -334,6 +340,8 @@ const configVisible = ref(false)
 const showPreview = ref(true)
 const showSave = ref(true)
 const themeMode = ref('auto')
+// 宿主端开关：是否暴露「数据源预览」入口（插件本身只提供触发 API）
+const dataPreviewEnabled = ref(true)
 
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
@@ -375,6 +383,17 @@ function fontsOf(tpl) {
   const list = pages ? pages.flatMap(p => (p && p.fonts) || []) : ((tpl && tpl.fonts) || [])
   const seen = new Set()
   return list.filter(f => f && f.family && !seen.has(f.family) && seen.add(f.family))
+}
+
+/** 宿主自己的入口：调用插件 API 打开数据预览；开关关闭时入口不渲染 */
+function onOpenDataPreview() {
+  if (!dataPreviewEnabled.value) return
+  openDataPreview({
+    data: [activeData.value],
+    fields: fields.value,
+    title: currentSample.value?.name ?? '数据源',
+    container: document.body,
+  })
 }
 
 function syncDesigner() {

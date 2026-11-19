@@ -1,7 +1,6 @@
 // 左栏素材台 / 页签栏 / 状态栏：DOM 类名对齐 Vue 3 轨的
 // LeftPanel.vue、FieldTreePanel.vue、LayerPanel.vue、PageTabs.vue、StatusBar.vue。
 import { PAPER_PRESETS, copyTextToClipboard, getPaperDimensions, groupFields, isWideMaterialLabel } from '@worm-print-platform/core/designer'
-import { getFieldActionUIs } from '@worm-print-platform/plugin-kit'
 import type { ElementType, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
 import { iconSvg } from '../core/icons'
@@ -135,20 +134,6 @@ function fieldsPane(ctx: ShellCtx) {
         h('span', { class: 'expand-icon', text: collapsed ? '▶' : '▼' }),
         h('span', { class: 'node-icon', text: group.isList ? '📋' : '📁' }),
         h('span', { class: 'group-label', text: group.label, 'data-tip': group.label }),
-        ...getFieldActionUIs().map(action => h('button', {
-          class: 'field-action-btn', type: 'button',
-          'data-tip': action.label,
-          html: action.icon ?? '👁',
-          onClick: (ev: Event) => {
-            ev.stopPropagation()
-            action.onActivate({
-              group: { key: group.key, label: group.label, isList: group.isList },
-              data: ctx.host.designData,
-              fields: ctx.host.fields,
-              container: ctx.fieldActionHost ?? document.createElement('div'),
-            })
-          },
-        })),
       ]) : ''
       const rows = collapsed ? [] : group.fields.map(field => h('div', {
         class: 'field-row',

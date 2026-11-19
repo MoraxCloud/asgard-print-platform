@@ -1,3 +1,4 @@
+import type { PrintBusinessField } from '@worm-print-platform/core/designer'
 import type { FieldGroupInfo } from '@worm-print-platform/plugin-kit'
 
 /** JSON 值的三种形态：标量 / 对象 / 数组 */
@@ -36,4 +37,20 @@ export interface PreviewDescriptor {
   table?: { columns: PreviewColumn[]; rows: string[][] }
   /** 根为标量时的单行 */
   scalar?: FormRow
+}
+
+/** 宿主调用预览的入参：插件只提供触发 API，不决定入口位置 */
+export interface DataPreviewOptions {
+  /** designData 数组信封，data[0] 即数据根 */
+  data?: readonly Record<string, unknown>[]
+  /** 业务字段清单，用于列/标签中文名 */
+  fields?: readonly PrintBusinessField[]
+  /** 从 data[0] 取值的分组 key；不传则预览 data[0] 整体 */
+  groupKey?: string
+  /** 弹窗标题，缺省取 groupKey 或「数据源」 */
+  title?: string
+  /** 直接指定数据根，优先于 data + groupKey */
+  root?: unknown
+  /** 弹窗挂载容器，缺省 document.body */
+  container?: HTMLElement
 }

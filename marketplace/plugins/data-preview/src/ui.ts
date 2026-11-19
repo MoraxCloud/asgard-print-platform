@@ -1,11 +1,11 @@
-// 数据预览弹窗：局部 DOM 渲染，不触发设计器整树重绘。
-// 避让宿主 shadow DOM：弹窗挂在宿主提供的 overlay 容器里，样式随 FieldActionUI.styles 注入。
-import type { FieldActionContext } from '@worm-print-platform/plugin-kit'
+// 数据预览弹窗：插件只提供触发 API，由宿主决定何时/在哪里调用。
+// 样式与 DOM 生命周期全部由插件自管理，不依赖设计器注入。
+import type { FieldGroupInfo } from '@worm-print-platform/plugin-kit'
 import { describeDataSource } from './describe.js'
-import type { FormRow, OverviewRow, PreviewDescriptor, PreviewTab } from './types.js'
+import type { DataPreviewOptions, FormRow, OverviewRow, PreviewDescriptor, PreviewTab } from './types.js'
 
 export const PREVIEW_STYLES = `
-.dp-overlay{position:absolute;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(15,18,26,.45);pointer-events:auto;font-family:inherit}
+.dp-preview-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(15,18,26,.45);pointer-events:auto;font-family:inherit}
 .dp-dialog{width:min(880px,94vw);max-height:84vh;display:flex;flex-direction:column;background:var(--pd-panel-bg,#fff);border:1px solid var(--pd-border,#d9dde6);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.26);overflow:hidden;color:var(--pd-text,#303133)}
 .dp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--pd-border,#e8ebf0);font-size:14px;font-weight:600}
 .dp-close{flex:none;width:24px;height:24px;padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--pd-text-muted,#909399);font-size:15px;line-height:1;cursor:pointer}
@@ -26,6 +26,17 @@ export const PREVIEW_STYLES = `
 .dp-scalar{padding:12px;border:1px solid var(--pd-border,#e8ebf0);border-radius:6px;background:var(--pd-soft-bg,#fafbfc);word-break:break-all}
 .dp-empty{padding:24px;text-align:center;color:var(--pd-text-muted,#909399)}
 `
+
+const STYLE_ATTR = 'data-plugin-data-preview'
+
+/** 样式按 document 幂等注入，避免多次打开弹窗重复追加 */
+function ensureStyles(doc: Document): void {
+  if (doc.querySelector(`style[${STYLE_ATTR}]`)) return
+  const style = doc.createElement('style')
+  style.setAttribute(STYLE_ATTR, '')
+  style.textContent = PREVIEW_STYLES
+  doc.head.appendChild(style)
+}
 
 function esc(value: string): string {
   return value.replace(/[&<>"']/g, ch => ({
@@ -70,21 +81,36 @@ function bodyHtml(desc: PreviewDescriptor, active: string): string {
   }
   if (desc.rootKind === 'array') return dataTable(desc.table?.columns, desc.table?.rows)
   if (desc.rootKind === 'scalar') {
-    return desc.scalar ? `<div class="dp-scalar"><strong>${esc(desc.scalar.label)}：</strong>${esc(desc.scalar.value)}</div>` : '<p class="dp-empty">该数据源暂无数据</p>'
+    return desc.scalar
+      ? `<div class="dp-scalar"><strong>${esc(desc.scalar.label)}：</strong>${esc(desc.scalar.value)}</div>`
+      : '<p class="dp-empty">该数据源暂无数据</p>'
   }
   return overviewTable(desc.overview)
 }
 
-/** 挂载预览弹窗；返回 dispose（幂等，可多次调用） */
-export function mountPreview(ctx: FieldActionContext): () => void {
-  const envelope = ctx.data?.[0]
-  const root = envelope && typeof envelope === 'object' && !Array.isArray(envelope)
-    ? (envelope as Record<string, unknown>)[ctx.group.key]
-    : undefined
-  const desc = describeDataSource(root, ctx.fields, ctx.group)
+/**
+ * 打开数据预览弹窗。宿主决定入口位置与开关，插件只提供这一个触发 API。
+ * 返回 dispose（幂等，可多次调用）。
+ */
+export function openDataPreview(options: DataPreviewOptions): () => void {
+  const { data, fields, groupKey, title, container } = options
+  const envelope = data?.[0]
+  const root = options.root !== undefined
+    ? options.root
+    : groupKey && envelope && typeof envelope === 'object' && !Array.isArray(envelope)
+      ? (envelope as Record<string, unknown>)[groupKey]
+      : envelope
+  const group: FieldGroupInfo = {
+    key: groupKey ?? '',
+    label: title ?? groupKey ?? '数据源',
+    isList: Array.isArray(root),
+  }
+  const desc = describeDataSource(root, fields, group)
+  const host = container ?? document.body
+  ensureStyles(host.ownerDocument ?? document)
 
   const overlay = document.createElement('div')
-  overlay.className = 'dp-overlay'
+  overlay.className = 'dp-preview-overlay'
   overlay.innerHTML = `
     <div class="dp-dialog" role="dialog" aria-label="数据源预览">
       <div class="dp-head">
@@ -112,7 +138,7 @@ export function mountPreview(ctx: FieldActionContext): () => void {
 
   function onClick(ev: Event) {
     const target = ev.target as HTMLElement
-    if (target.classList.contains('dp-overlay')) { cleanup(); return }
+    if (target.classList.contains('dp-preview-overlay')) { cleanup(); return }
     if (target.closest('.dp-close')) { cleanup(); return }
     const trigger = target.closest<HTMLElement>('.dp-tab, .dp-jump')
     const key = trigger?.dataset.tab
@@ -128,12 +154,12 @@ export function mountPreview(ctx: FieldActionContext): () => void {
     disposed = true
     overlay.removeEventListener('click', onClick)
     document.removeEventListener('keydown', onKey)
-    ctx.container.replaceChildren()
+    overlay.remove()
   }
 
   paint()
   overlay.addEventListener('click', onClick)
   document.addEventListener('keydown', onKey)
-  ctx.container.appendChild(overlay)
+  host.appendChild(overlay)
   return cleanup
 }
