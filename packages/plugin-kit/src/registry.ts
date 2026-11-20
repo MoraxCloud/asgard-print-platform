@@ -1,5 +1,6 @@
 // 插件设计器 UI 注册表：挂在 globalThis 固定 Symbol 上，避免 monorepo / 多打包副本
 // 导致「注册在这份、查询在那份」的漂移（与 core 元素插件注册表同一条约定）。
+import { registerPluginMessages } from '@worm-print-platform/core/i18n'
 import type { ElementUI, ElementUIEntry } from './types.js'
 
 const REGISTRY_KEY = Symbol.for('worm-print-platform.element-ui-registry.v1')
@@ -55,6 +56,22 @@ function assertElementUI(ui: ElementUI): void {
   if (ui.renderProperty !== undefined && typeof ui.renderProperty !== 'function') {
     throw new Error(`registerElementUI: ${ui.types.join(',')} 的 renderProperty 必须是函数`)
   }
+  if (ui.locales !== undefined) {
+    if (typeof ui.locales !== 'object' || ui.locales === null) {
+      throw new Error('registerElementUI: locales 必须是对象')
+    }
+    const prefix = `${ui.i18nId ?? ui.types[0]}.`
+    for (const messages of Object.values(ui.locales)) {
+      if (typeof messages !== 'object' || messages === null) {
+        throw new Error('registerElementUI: locales 的每个语言包必须是对象')
+      }
+      for (const key of Object.keys(messages)) {
+        if (!key.startsWith(prefix)) {
+          throw new Error(`registerElementUI: 语言包键必须以 "${prefix}" 开头，收到 "${key}"`)
+        }
+      }
+    }
+  }
 }
 
 /** 描述符恒等函数：给插件作者提供类型检查与可读性，不做隐式注册 */
@@ -71,9 +88,14 @@ export function registerElementUI(ui: ElementUI): () => void {
   assertElementUI(ui)
   const s = state()
   const seq = s.nextSeq++
+  const pluginId = ui.i18nId ?? ui.types[0]!
+  const disposeLocales = ui.locales
+    ? Object.entries(ui.locales).map(([locale, messages]) => registerPluginMessages(locale, pluginId, messages))
+    : []
   for (const type of ui.types) s.entries.set(type, { ui, seq })
   notify()
   return () => {
+    for (const dispose of disposeLocales) dispose()
     let removed = false
     for (const type of ui.types) {
       const current = s.entries.get(type)

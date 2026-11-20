@@ -5,6 +5,7 @@
 // - 渲染结果是「HTML 字符串或 DOM 节点」，由宿主决定放进 Shadow DOM（common）还是 Vue 组件容器（canvas）。
 // - 宿主通过 update(partial) 写回 element.options，历史记录与画布重绘由宿主负责，插件不直接碰 store。
 import type { ElementOptions, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
+import type { Translate } from '@worm-print-platform/core/i18n'
 
 /** 插件产出的可视内容：HTML 字符串或真实 DOM 节点 */
 export type ElementUINode = string | Node
@@ -24,6 +25,8 @@ export interface ElementUICanvasContext {
   data?: readonly Record<string, unknown>[]
   /** 设计态为 true；宿主未来做只读预览时可传 false */
   designMode?: boolean
+  /** 当前 locale 的翻译函数；缺省用全局 t */
+  t?: Translate
 }
 
 /**
@@ -44,6 +47,8 @@ export interface ElementUIPropertyContext {
   update(partial: Partial<ElementOptions>): void
   /** 仅请求宿主重绘，不写数据、不记历史（面板内部态变化用） */
   repaint(): void
+  /** 当前 locale 的翻译函数；缺省用全局 t */
+  t?: Translate
 }
 
 /**
@@ -65,6 +70,10 @@ export interface ElementUI {
   readonly searchKeywords?: readonly string[]
   /** 宿主注入到自身样式作用域：common 注入 Shadow DOM，canvas 注入 document.head */
   readonly styles?: string
+  /** 语言包键前缀（插件 id）；缺省取 types[0] */
+  readonly i18nId?: string
+  /** 按 locale 提供的语言包；注册时合并进 core 引擎的插件层 */
+  readonly locales?: Record<string, Record<string, string>>
 }
 
 /** 类型→UI 的解析视图（供宿主遍历注册态） */

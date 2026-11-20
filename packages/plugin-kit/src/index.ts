@@ -4,6 +4,8 @@
 // 宿主：canvas（Vue 3）自动生成桥接组件，common（零框架）直接挂载 DOM 节点。
 export { defineElementUI, registerElementUI, getElementUI, getElementUIEntries, getElementUIs, getElementUITypes, subscribeElementUIRegistry, clearElementUIs } from './registry.js'
 export { TOOLBAR_OVERFLOW_KEY } from './toolbar-overflow-key.js'
+export { getMissingKeys } from '@worm-print-platform/core/i18n'
+export type { Translate } from '@worm-print-platform/core/i18n'
 export type {
   ElementUI,
   ElementUIEntry,
