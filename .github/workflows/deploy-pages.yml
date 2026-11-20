@@ -61,6 +61,9 @@ jobs:
           cp -r demos/apps/vue2/dist site/canvas/vue2
           cp -r demos/apps/react/dist site/canvas/react
           cp -r demos/apps/print-demo/dist site/canvas/print-demo
+          # Pages 对 SPA 子路径返回 404：站点根 404.html 指向 print-demo 入口，
+          # 浏览器地址栏保留原路径，vue-router 据此渲染对应页面，刷新不再落到 404 页
+          cp demos/apps/print-demo/dist/index.html site/404.html
           ls -R site | head -40
 
       - name: 烟雾测试（导航页与五个示例入口可达）

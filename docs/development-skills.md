@@ -4,18 +4,21 @@
 
 ---
 
-## @ajoslin/grill-me
+## mattpocock/grill-me
 
 **定位**：一个“反过来拷问你”的方案压力测试技能。它本身不写代码，也不直接产出最终方案，而是扮演一个**无情的访谈者**，围绕你的计划、架构或决策，沿着设计树的每一个分支逐层追问，直到双方对方案达成真正的共识。
 
 **核心玩法**：一次只问一个问题，按依赖顺序推进；每个问题都会附带 AI 的推荐答案或当前假设，你只需要接受、否定或修正。如果问题可以通过代码库或文档查证，它会先去查，而不是把可查的问题丢回给你。
 
+**安装方式**：运行 `npx skills@latest add mattpocock/skills -a opencode`（其他代理把 `opencode` 换成 `cursor` / `devin` / `windsurf` / `amp` / `pi`，省略 `-a` 可交互选择）。当安装器询问要装哪些技能时，**必须同时勾选 `grill-me` 和 `grilling`**：`grill-me` 只负责接收你的显式调用，真正的访谈逻辑在 `grilling`，只装其中一个将无法工作。
+
 **适用场景**：产品方案、架构设计、计划决策的早期阶段，尤其是你“有一个模糊想法，但还没想清楚哪里会出问题”的时候。也可以泛化到日常决策（如学习路线、设备选型等）。
 
 **原始链接**：
 
-- ModelScope：`https://www.modelscope.cn/skills/@ajoslin/grill-me`
-- GitHub：`https://github.com/ajoslin/dot/tree/main/config/opencode/skills/grill-me`
+- grill-me SKILL.md：`https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md`
+- grilling SKILL.md（grill-me 引用的技能）：`https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md`
+- skills.sh：`https://skills.sh/mattpocock/skills`
 
 ## obra/superpowers
 

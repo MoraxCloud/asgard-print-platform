@@ -35,7 +35,7 @@ packages/mcp/src/version.ts   →  export const version = 'NEW'
 ### 文档
 
 ```
-README.md                     →  npm badge vOLD→vNEW；客户端下载链接保留历史版本
+README.md                     →  npm badge vOLD→vNEW；客户端下载链接仅在"不改"条款所述条件下才同步替换
 CHANGELOG.md                  →  顶部新增 "## VNEW(日期)" 条目
 docs/commands.md              →  示例命令 tag=vOLD→vNEW（客户端上传命令块保留历史版本）
 packages/{core,plugin-kit,canvas,echarts,skills}/README.md  →  npm badge
@@ -46,6 +46,7 @@ skills/worm-print-platform-integration/{SKILL.md,references/*.md}  →  版本�
 
 - `services/render/package.json` 自身版本恒为 `1.0.0`，只抬内部依赖
 - 客户端安装包下载链接（`WormPrintClient-OLD-*.dmg` 等）与 `gh release upload` 示例——指向真实存在的旧版 release 资产，改了会 404
+- **README 客户端下载链接的更新条件**：只有本轮真的重新打包并上传了新版客户端安装包（release 里对应资产 `state=uploaded`）时，才把 README 表格里的直链和 `vOLD` 换成新版本；纯设计器 / npm 发版、没有新客户端包时，保留历史版本链接不改。README 表格旁有 HTML 注释提醒这一规则。
 - CHANGELOG 历史条目、`.workbuddy/`、`.video-skill/` 中的历史版本记录
 - 第三方依赖版本（npm CLI `11.5.1`、Node `22.14.0` 等数字恰好含旧版本号的文本）
 

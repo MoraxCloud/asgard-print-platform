@@ -101,6 +101,23 @@ export const MODULES: PromptModule[] = [
 - 客户端单任务串行，并发返回 BUSY，由宿主端排队重试；业务打印配置由宿主维护，客户端不持久化。`,
   },
   {
+    id: 'business-example',
+    label: '业务接入示例',
+    prompt: `用一段提示词生成完整业务接入示例（Vue 3 宿主，浏览器打印链路）：
+- 先按「技能接入」「安装核心包」装好规范与依赖；图表类场景再装 echarts。
+- 复用宿主现有请求封装与 UI 组件库，不引额外 UI 依赖。
+- 建两张表：sys_print_template（elements 存设计器 JSON 字符串，不拆表）、
+  sys_print_business_field；同一业务类型仅一个默认模板，删默认时提升同类型另一条。
+- 建注册表：每种模板类型维护 fields（PrintBusinessField[]）、sampleData、
+  createTemplate()（深拷贝，含字段绑定与示例数据）。
+- 生成四个页面：① 模板管理列表页（名称/类型查询 + 表格 + 分页 + 新建/编辑/删除/默认）；
+  ② 设计器页（PrintDesigner 接 fields/design-data，save 提交 elements，preview 打开预览）；
+  ③ 业务打印入口（按类型选模板 → 取 {templateJson, printData, baseUrl}）；
+  ④ 预览弹窗（PrintHtmlPreview 渲染 + 打印按钮调 print()）。
+- 后端按宿主风格实现 page/save/update/remove/get/listTypes/listFields 与设计器聚合初始化。
+- 验收：类型检查/构建通过；保存 → 列表回填 → 再打开设计器能加载 → 预览渲染出真实数据 → 浏览器打印。`,
+  },
+  {
     id: 'install-fallback',
     label: '安装与离线回退',
     prompt: `安装与离线回退：

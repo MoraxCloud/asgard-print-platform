@@ -3,7 +3,7 @@
   "version": "1.6.0",
   "private": true,
   "type": "module",
-  "description": "跨框架可视化打印模板设计器（Web Components）+ 表达式引擎 + 同构渲染管线 + 渲染微服务 + 静默打印客户端（开源 monorepo）",
+  "description": "MIT 开源 · 零框架 Custom Elements 设计器 · 插件化元素扩展 · 同构渲染与三条打印链路（monorepo：core / plugin-kit / canvas / echarts / render / client）",
   "license": "MIT",
   "workspaces": [
     "packages/*",

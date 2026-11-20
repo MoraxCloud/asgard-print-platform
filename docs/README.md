@@ -121,4 +121,4 @@ npx @worm-print-platform/skills worm-print-platform-integration --repo https://g
 
 | 文档 | 内容 | 在线可转发页面 |
 | --- | --- | --- |
-| [development-skills.md](./development-skills.md) | `@ajoslin/grill-me` 方案压测 / `obra/superpowers` 工程流程 / `@anthropics/frontend-design` 视觉设计，含原始链接 | print demo「开发技能」页：本地 `:9336/print/dev-skills`，Pages `/canvas/print-demo/print/dev-skills` |
+| [development-skills.md](./development-skills.md) | `mattpocock/grill-me` 方案压测（需同时安装 `grill-me` 与 `grilling`）/ `obra/superpowers` 工程流程 / `@anthropics/frontend-design` 视觉设计，含安装方式与原始链接 | print demo「开发技能」页：本地 `:9336/print/dev-skills`，Pages `/canvas/print-demo/print/dev-skills` |
