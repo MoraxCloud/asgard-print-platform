@@ -97,6 +97,11 @@ export const enUS: Partial<LocaleMessages> = {
   'save.geometryWarningConfirm': 'Print warning: some content extends beyond the paper and will be clipped.\nAccept clipping and continue saving?\nClick OK to save, Cancel to go back and edit.\n\n{warnings}',
   'store.tilingSinglePage': 'Tiling allows only one design page',
 
+  'service.printData.emptyArray': 'Batch print data must be a non-empty array of objects',
+  'service.printData.tooMany': 'Batch printing supports at most {max} copies, got {count}',
+  'service.printData.itemNotObject': 'Batch print data item {index} must be an object',
+  'service.printData.notObjectOrArray': 'printData must be an object or array',
+
   // canvas shell 英文（首版机翻草稿，未覆盖键默认中文回退）
   ...shellEn,
 }

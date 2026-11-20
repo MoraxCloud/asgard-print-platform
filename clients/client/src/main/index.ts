@@ -2,6 +2,10 @@
 import { app, Menu } from 'electron'
 import { join } from 'node:path'
 import { APP_ID } from '@worm-print-platform/core/client'
+import { normalizeLocale, setLocale } from '@worm-print-platform/core/i18n'
+
+// 桌面客户端诊断语言跟随系统 locale（en-* 走英文，其余中文）
+setLocale(normalizeLocale(app.getLocale()))
 import { ConfigStore, generatePairingToken } from './config.js'
 import { Logger } from './logger.js'
 import { JobHistoryStore } from './job-history.js'

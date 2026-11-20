@@ -106,6 +106,12 @@ export const zhCN = {
   'save.geometryWarningConfirm': '出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n{warnings}',
   'store.tilingSinglePage': '开启拼版后只能有一个设计页面',
 
+  // 打印数据校验（core / render / client 共用）
+  'service.printData.emptyArray': '批量打印数据必须是非空对象数组',
+  'service.printData.tooMany': '批量打印最多支持 {max} 份，当前 {count} 份',
+  'service.printData.itemNotObject': '批量打印数据第 {index} 项必须是对象',
+  'service.printData.notObjectOrArray': 'printData 必须是对象或数组',
+
   // canvas shell UI 文案（由 Task 7 语义化脚本派生）
   ...shellZh,
 }
