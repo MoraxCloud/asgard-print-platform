@@ -39,8 +39,8 @@ export const DEV_SKILLS: DevSkill[] = [
       },
     ],
     links: [
-      { label: 'grill-me 源码', url: 'https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me' },
-      { label: 'grilling 源码', url: 'https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling' },
+      { label: 'grill-me SKILL.md', url: 'https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md' },
+      { label: 'grilling SKILL.md（被引用的技能）', url: 'https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md' },
       { label: 'skills.sh', url: 'https://skills.sh/mattpocock/skills' },
     ],
   },

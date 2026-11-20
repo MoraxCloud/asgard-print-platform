@@ -16,8 +16,8 @@
 
 **原始链接**：
 
-- GitHub（grill-me）：`https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me`
-- GitHub（grilling）：`https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling`
+- grill-me SKILL.md：`https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md`
+- grilling SKILL.md（grill-me 引用的技能）：`https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md`
 - skills.sh：`https://skills.sh/mattpocock/skills`
 
 ## obra/superpowers
