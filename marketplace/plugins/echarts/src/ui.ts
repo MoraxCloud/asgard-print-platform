@@ -4,6 +4,9 @@
 //
 // 事件统一用 change（失焦/回车提交）：common 每次 store 变更都会整树重绘，
 // 用 input 会让输入框在每次按键后重建、丢焦点。
+import { t } from '@worm-print-platform/core/i18n'
+import { echartsZhCN } from './i18n/zh-CN.js'
+import { echartsEnUS } from './i18n/en-US.js'
 import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
 import { defineElementUI, registerElementUI } from '@worm-print-platform/plugin-kit'
 import { render } from '@worm-print-platform/plugin-kit/dom'
@@ -82,7 +85,7 @@ const SEARCH_KEYWORDS = [
   '折线', '面积', '饼', '环形', '散点', '雷达', '漏斗', '仪表', '数据标签', '数值标签', 'label',
 ] as const
 
-const PANEL_HINT = '数据由模板绑定阶段注入：series/xAxis 的 data 保留 `$data` 占位即可；复杂样式可在模板 JSON 中手写 chartOption。'
+const PANEL_HINT = t('echarts.ui.k19')
 
 function escapeHtml(value: string): string {
   return value
@@ -146,8 +149,8 @@ function maxValueFields(def: ChartKindDefinition | undefined): number {
 }
 
 function valueFieldsLabel(def: ChartKindDefinition | undefined, limit: number): string {
-  if (def?.seriesType === 'radar') return '维度字段（每个字段一个维度）'
-  return limit === 1 ? '数值字段' : '数值字段（多值多系列）'
+  if (def?.seriesType === 'radar') return t('echarts.ui.k20')
+  return limit === 1 ? t('echarts.ui.k21') : t('echarts.ui.k22')
 }
 
 /** 数据源候选：设计态示例数据里取「数组值」的顶层键 */
@@ -181,7 +184,7 @@ function fieldLabelMap(fields: readonly { fieldKey: string; fieldLabel?: string 
 
 /** 选项展示文案：有中文名则「中文名（键）」，否则仅键 */
 function optionLabel(value: string, labels: FieldLabelMap, fallbackSuffix?: string): string {
-  if (!value) return fallbackSuffix ?? '（默认）'
+  if (!value) return fallbackSuffix ?? t('echarts.ui.k23')
   const name = labels.get(value)
   const base = name ? `${name}（${value}）` : value
   return fallbackSuffix ? `${base}${fallbackSuffix}` : base
@@ -194,8 +197,8 @@ function dropdownOptions(
   labels: FieldLabelMap = new Map(),
 ): { value: string; label: string }[] {
   const opts = candidates.map(value => ({ value, label: optionLabel(value, labels) }))
-  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, '（当前）') })
-  if (!current) opts.unshift({ value: '', label: '（默认：顶层第一个数组）' })
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t('echarts.ui.k24')) })
+  if (!current) opts.unshift({ value: '', label: t('echarts.ui.k25') })
   return opts
 }
 
@@ -228,14 +231,14 @@ function renderCanvas(ctx: ElementUICanvasContext): ElementUIRenderResult {
     // 预览按 kind 生成合法示例形态再归一，避免雷达/散点等没有绑定数据时空白
     const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption(type))
     const option = normalizeChartOption(type, preview)
-    if (!option || typeof option !== 'object' || Array.isArray(option)) throw new Error('图表 option 非法：需要对象')
+    if (!option || typeof option !== 'object' || Array.isArray(option)) throw new Error(t('echarts.ui.k26'))
     const fontFamily = typeof options.fontFamily === 'string' && options.fontFamily ? options.fontFamily : undefined
     const svg = renderChartToSvg({ key: element.id, type, option, widthMm, heightMm, fontFamily })
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${svg}</div>`
   } catch {
     const title = typeof options.title === 'string' && options.title.trim()
       ? options.title
-      : getChartKindDefinition(type)?.label ?? '图表'
+      : getChartKindDefinition(type)?.label ?? t('echarts.ui.k27')
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${escapeHtml(title)}</div>`
   }
 }
@@ -328,7 +331,7 @@ function dropdownSelect(
   value: string,
   onCommit: (value: string) => void,
 ): HTMLElement {
-  const current = options.find(item => item.value === value) ?? { value, label: value || '（默认）' }
+  const current = options.find(item => item.value === value) ?? { value, label: value || t('echarts.ui.k28') }
   const trigger = el('button', 'echarts-dropdown-trigger')
   trigger.type = 'button'
   trigger.setAttribute('aria-haspopup', 'listbox')
@@ -406,29 +409,29 @@ function dropdownSelect(
 }
 
 const OVERFLOW_OPTIONS = [
-  { value: '', label: '默认' },
-  { value: 'none', label: '不处理（显示完整）' },
-  { value: 'truncate', label: '截断' },
-  { value: 'break', label: '换行' },
+  { value: '', label: t('echarts.ui.k29') },
+  { value: 'none', label: t('echarts.ui.k30') },
+  { value: 'truncate', label: t('echarts.ui.k31') },
+  { value: 'break', label: t('echarts.ui.k32') },
 ] as const
 
 const FONT_WEIGHT_OPTIONS = [
-  { value: '', label: '默认' },
-  { value: 'normal', label: '常规' },
-  { value: 'bold', label: '加粗' },
+  { value: '', label: t('echarts.ui.k33') },
+  { value: 'normal', label: t('echarts.ui.k34') },
+  { value: 'bold', label: t('echarts.ui.k35') },
 ] as const
 
 const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
-  distance: '距离',
-  rotate: '旋转（度）',
-  fontSize: '字号',
-  fontWeight: '字重',
-  color: '文字颜色',
-  backgroundColor: '背景色',
-  borderColor: '边框色',
-  borderWidth: '边框宽度',
-  borderRadius: '圆角',
-  padding: '内边距',
+  distance: t('echarts.ui.k36'),
+  rotate: t('echarts.ui.k37'),
+  fontSize: t('echarts.ui.k38'),
+  fontWeight: t('echarts.ui.k39'),
+  color: t('echarts.ui.k40'),
+  backgroundColor: t('echarts.ui.k41'),
+  borderColor: t('echarts.ui.k42'),
+  borderWidth: t('echarts.ui.k43'),
+  borderRadius: t('echarts.ui.k44'),
+  padding: t('echarts.ui.k45'),
 }
 
 /** 数据标签分组：一个可折叠 details，内部按「内容 / 位置 / 样式 / 引导线」分块 */
@@ -477,49 +480,49 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   group.open = state.show
   // 总开关必须放在 summary 里：关闭标签时 details 折叠，若开关在内容区用户就再也点不到它
   const summary = el('summary', 'echarts-label-summary')
-  const toggle = checkboxField('显示数据标签', state.show, checked => commit({ enabled: checked }))
+  const toggle = checkboxField(t('echarts.ui.k46'), state.show, checked => commit({ enabled: checked }))
   // 点击开关本身不应连带折叠 details
   toggle.querySelector('input')?.addEventListener('click', event => event.stopPropagation())
   summary.appendChild(toggle)
   group.appendChild(summary)
 
   if (has('formatter') || has('overflow')) {
-    group.appendChild(el('div', 'echarts-label-sub', '内容'))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k47')))
     if (has('formatter')) {
-      const wrap = field('数据标签内容')
+      const wrap = field(t('echarts.ui.k48'))
       wrap.appendChild(
         selectInput(
-          [{ value: '', label: '自定义 / 默认' }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: preset.label }))],
+          [{ value: '', label: t('echarts.ui.k49') }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: preset.label }))],
           state.formatter ?? '',
           value => commit({ formatter: value }),
         ),
       )
       wrap.appendChild(
-        textInput({ value: state.formatter ?? '', placeholder: '如 {b}: {c}' }, value => commit({ formatter: value })),
+        textInput({ value: state.formatter ?? '', placeholder: t('echarts.ui.k50') }, value => commit({ formatter: value })),
       )
       group.appendChild(wrap)
     }
     if (has('overflow')) {
-      const wrap = field('溢出处理')
+      const wrap = field(t('echarts.ui.k51'))
       wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? '', value => commit({ overflow: value })))
       group.appendChild(wrap)
     }
   }
 
   if (has('position') || has('distance') || has('rotate') || has('offset')) {
-    group.appendChild(el('div', 'echarts-label-sub', '位置'))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k52')))
     if (has('position')) {
-      const wrap = field('标签位置')
+      const wrap = field(t('echarts.ui.k53'))
       const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : []
       wrap.appendChild(
-        selectInput([{ value: '', label: '默认' }, ...positions], state.position ?? '', value => commit({ position: value })),
+        selectInput([{ value: '', label: t('echarts.ui.k54') }, ...positions], state.position ?? '', value => commit({ position: value })),
       )
       group.appendChild(wrap)
     }
     if (has('distance')) group.appendChild(numberField('distance', state.distance))
     if (has('rotate')) group.appendChild(numberField('rotate', state.rotate))
     if (has('offset')) {
-      const wrap = field('偏移 X / Y')
+      const wrap = field(t('echarts.ui.k55'))
       const row = el('div', 'echarts-field-row')
       const current: [number, number] = state.offset ?? [0, 0]
       // ECharts 只认 offset: [x, y]；从两个输入框实时取值整对写回，空输入按 0 处理
@@ -543,10 +546,10 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
 
   const styleKeys: LabelFieldKey[] = ['fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding']
   if (styleKeys.some(has)) {
-    group.appendChild(el('div', 'echarts-label-sub', '样式'))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k56')))
     if (has('fontSize')) group.appendChild(numberField('fontSize', state.fontSize))
     if (has('fontWeight')) {
-      const wrap = field('字重')
+      const wrap = field(t('echarts.ui.k57'))
       wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? '', value => commit({ fontWeight: value })))
       group.appendChild(wrap)
     }
@@ -559,12 +562,12 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   }
 
   if (has('labelLine.show')) {
-    group.appendChild(el('div', 'echarts-label-sub', '引导线'))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k58')))
     group.appendChild(
-      checkboxField('显示引导线', state.labelLine.show === true, checked => commit({ labelLine: { show: checked } })),
+      checkboxField(t('echarts.ui.k59'), state.labelLine.show === true, checked => commit({ labelLine: { show: checked } })),
     )
     if (has('labelLine.length')) {
-      const wrap = field('引导线长度')
+      const wrap = field(t('echarts.ui.k60'))
       wrap.appendChild(
         textInput(
           { value: state.labelLine.length === undefined ? '' : String(state.labelLine.length), type: 'number' },
@@ -574,7 +577,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
       group.appendChild(wrap)
     }
     if (has('labelLine.length2')) {
-      const wrap = field('第二段长度')
+      const wrap = field(t('echarts.ui.k61'))
       wrap.appendChild(
         textInput(
           { value: state.labelLine.length2 === undefined ? '' : String(state.labelLine.length2), type: 'number' },
@@ -585,7 +588,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     }
     if (has('labelLine.smooth')) {
       group.appendChild(
-        checkboxField('平滑引导线', state.labelLine.smooth === true, checked => commit({ labelLine: { smooth: checked } })),
+        checkboxField(t('echarts.ui.k62'), state.labelLine.smooth === true, checked => commit({ labelLine: { smooth: checked } })),
       )
     }
   }
@@ -613,7 +616,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   root.appendChild(form)
 
   if (has('dataSource')) {
-    const wrap = field('数据源')
+    const wrap = field(t('echarts.ui.k63'))
     const current = String(options.chartDataSource ?? '')
     wrap.appendChild(
       dropdownSelect(
@@ -626,7 +629,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('categoryField')) {
-    const wrap = field('类目字段')
+    const wrap = field(t('echarts.ui.k64'))
     const current = String(options.chartCategoryField ?? '')
     wrap.appendChild(
       dropdownSelect(
@@ -657,14 +660,14 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
       if (fieldsNow.length > 1) {
         const remove = el('button', 'pd-button small', '−')
         remove.type = 'button'
-        remove.title = '删除该字段'
+        remove.title = t('echarts.ui.k65')
         remove.addEventListener('click', () => syncValueFields(ctx, type, readValueFields(element).filter((_, i) => i !== index)))
         row.appendChild(remove)
       }
       wrap.appendChild(row)
     })
     if (fieldsNow.length < limit) {
-      const add = el('button', 'pd-button small', '+ 添加字段')
+      const add = el('button', 'pd-button small', t('echarts.ui.k66'))
       add.type = 'button'
       add.addEventListener('click', () => syncValueFields(ctx, type, [...readValueFields(element), '']))
       wrap.appendChild(add)
@@ -673,10 +676,10 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('seriesField')) {
-    const wrap = field('系列拆分字段')
+    const wrap = field(t('echarts.ui.k67'))
     wrap.appendChild(
       textInput(
-        { value: String(options.chartSeriesField ?? ''), placeholder: '可选，如 region（按值拆成多系列）' },
+        { value: String(options.chartSeriesField ?? ''), placeholder: t('echarts.ui.k68') },
         value => commitOption(ctx, type, panelOption(element), { chartSeriesField: value }),
       ),
     )
@@ -685,17 +688,17 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
 
   if (has('bubble')) {
     form.appendChild(
-      checkboxField('气泡大小', options.chartBubble === true, checked => {
+      checkboxField(t('echarts.ui.k69'), options.chartBubble === true, checked => {
         commitOption(ctx, type, panelOption(element), { chartBubble: checked })
       }),
     )
   }
 
   if (has('title')) {
-    const wrap = field('图表标题')
+    const wrap = field(t('echarts.ui.k70'))
     wrap.appendChild(
       textInput(
-        { value: String(asObject(panelOption(element).title).text ?? ''), placeholder: '留空不显示标题' },
+        { value: String(asObject(panelOption(element).title).text ?? ''), placeholder: t('echarts.ui.k71') },
         value => {
           const next = panelOption(element)
           next.title = { ...asObject(next.title), text: value }
@@ -709,7 +712,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   if (has('legend')) {
     const show = asObject(panelOption(element).legend).show !== false
     form.appendChild(
-      checkboxField('显示图例', show, checked => {
+      checkboxField(t('echarts.ui.k72'), show, checked => {
         const next = panelOption(element)
         next.legend = { ...asObject(next.legend), show: checked }
         commitOption(ctx, type, next)
@@ -718,7 +721,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('palette')) {
-    const wrap = field('配色')
+    const wrap = field(t('echarts.ui.k73'))
     const select = el('select', 'pd-select')
     for (const palette of palettes) {
       const optionEl = el('option')
@@ -745,7 +748,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     const series = seriesList(panelOption(element))
     const stacked = series.some(item => item.stack !== undefined && item.stack !== null && item.stack !== '')
     form.appendChild(
-      checkboxField('堆叠显示', stacked, checked => {
+      checkboxField(t('echarts.ui.k74'), stacked, checked => {
         const next = panelOption(element)
         for (const item of seriesList(next)) {
           if (checked) item.stack = 'total'
@@ -757,7 +760,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('innerRadius')) {
-    const wrap = field('内径（%）')
+    const wrap = field(t('echarts.ui.k75'))
     const radius = seriesList(panelOption(element))[0]?.radius
     const inner = Array.isArray(radius) ? Number(String(radius[0] ?? '40%').replace('%', '')) || 40 : 40
     wrap.appendChild(
@@ -772,14 +775,14 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('padding')) {
-    const wrap = field('内边距 上/右/下/左 (%)')
+    const wrap = field(t('echarts.ui.k76'))
     const padding = readFunnelPadding(panelOption(element), widthMm, heightMm)
     const row = el('div', 'echarts-field-row')
     const sides: { side: keyof FunnelPadding; title: string }[] = [
-      { side: 'top', title: '上边距' },
-      { side: 'right', title: '右边距（留外置标签）' },
-      { side: 'bottom', title: '下边距' },
-      { side: 'left', title: '左边距' },
+      { side: 'top', title: t('echarts.ui.k77') },
+      { side: 'right', title: t('echarts.ui.k78') },
+      { side: 'bottom', title: t('echarts.ui.k79') },
+      { side: 'left', title: t('echarts.ui.k80') },
     ]
     for (const { side, title } of sides) {
       row.appendChild(
@@ -797,7 +800,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('radius')) {
-    const wrap = field('半径（%）')
+    const wrap = field(t('echarts.ui.k81'))
     wrap.appendChild(
       textInput(
         { value: String(readRadarRadius(panelOption(element), widthMm, heightMm)), type: 'number', min: 20, max: 100 },
@@ -812,7 +815,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('gaugeRange')) {
-    const wrap = field('最小 / 最大值')
+    const wrap = field(t('echarts.ui.k82'))
     const series = seriesList(panelOption(element))
     const row = el('div', 'echarts-field-row')
     row.appendChild(
@@ -844,9 +847,11 @@ export const CHART_ELEMENT_UI: ElementUI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: '图表',
+  group: t('echarts.ui.k83'),
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
+  i18nId: 'echarts',
+  locales: { 'zh-CN': echartsZhCN, 'en-US': echartsEnUS },
 })
 
 let disposeHandle: (() => void) | undefined

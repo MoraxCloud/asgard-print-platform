@@ -1,5 +1,6 @@
 // 数据标签读写：面板与手写 chartOption 编辑同一份 series[].label（仪表盘为 series[].detail）。
 // 只做纯数据变换，不碰 DOM；UI 层负责控件与提交。
+import { t } from '@worm-print-platform/core/i18n'
 import { getChartKindDefinition } from './kinds.js'
 import type { ChartSeriesType } from './kinds.js'
 import { cloneChartOption } from './option-utils.js'
@@ -38,57 +39,57 @@ export interface ChartLabelPatch extends Partial<Omit<ChartLabelState, 'labelLin
 
 /** formatter 预设：底层仍是 ECharts 字符串模板，选中即写入 formatter */
 export const LABEL_PRESETS: readonly { key: string; label: string; formatter: string }[] = [
-  { key: 'value', label: '数值', formatter: '{c}' },
-  { key: 'name-value', label: '名称: 数值', formatter: '{b}: {c}' },
-  { key: 'name', label: '名称', formatter: '{b}' },
-  { key: 'percent', label: '百分比', formatter: '{d}%' },
+  { key: 'value', label: "数值", formatter: '{c}' },
+  { key: 'name-value', label: "名称: 数值", formatter: '{b}: {c}' },
+  { key: 'name', label: "名称", formatter: '{b}' },
+  { key: 'percent', label: "百分比", formatter: '{d}%' },
 ]
 
 /** 标签位置候选：按 seriesType 给，ECharts 对不适用项会忽略，面板只做引导 */
 export const LABEL_POSITIONS: Readonly<Record<ChartSeriesType, readonly { value: string; label: string }[]>> = {
   bar: [
-    { value: 'top', label: '顶部' },
-    { value: 'inside', label: '内部' },
-    { value: 'insideTop', label: '内部顶端' },
-    { value: 'bottom', label: '底部' },
-    { value: 'insideBottom', label: '内部底端' },
-    { value: 'right', label: '右侧' },
-    { value: 'left', label: '左侧' },
-    { value: 'middle', label: '居中' },
+    { value: 'top', label: "顶部" },
+    { value: 'inside', label: "内部" },
+    { value: 'insideTop', label: "内部顶端" },
+    { value: 'bottom', label: "底部" },
+    { value: 'insideBottom', label: "内部底端" },
+    { value: 'right', label: "右侧" },
+    { value: 'left', label: "左侧" },
+    { value: 'middle', label: "居中" },
   ],
   line: [
-    { value: 'top', label: '顶部' },
-    { value: 'bottom', label: '底部' },
-    { value: 'inside', label: '内部' },
-    { value: 'left', label: '左侧' },
-    { value: 'right', label: '右侧' },
+    { value: 'top', label: "顶部" },
+    { value: 'bottom', label: "底部" },
+    { value: 'inside', label: "内部" },
+    { value: 'left', label: "左侧" },
+    { value: 'right', label: "右侧" },
   ],
   pie: [
-    { value: 'outside', label: '外侧' },
-    { value: 'inside', label: '内部' },
-    { value: 'center', label: '中心' },
+    { value: 'outside', label: "外侧" },
+    { value: 'inside', label: "内部" },
+    { value: 'center', label: "中心" },
   ],
   scatter: [
-    { value: 'top', label: '顶部' },
-    { value: 'bottom', label: '底部' },
-    { value: 'left', label: '左侧' },
-    { value: 'right', label: '右侧' },
-    { value: 'inside', label: '内部' },
+    { value: 'top', label: "顶部" },
+    { value: 'bottom', label: "底部" },
+    { value: 'left', label: "左侧" },
+    { value: 'right', label: "右侧" },
+    { value: 'inside', label: "内部" },
   ],
   radar: [
-    { value: 'top', label: '顶部' },
-    { value: 'bottom', label: '底部' },
-    { value: 'left', label: '左侧' },
-    { value: 'right', label: '右侧' },
-    { value: 'inside', label: '内部' },
+    { value: 'top', label: "顶部" },
+    { value: 'bottom', label: "底部" },
+    { value: 'left', label: "左侧" },
+    { value: 'right', label: "右侧" },
+    { value: 'inside', label: "内部" },
   ],
   funnel: [
-    { value: 'outer', label: '外侧' },
-    { value: 'inner', label: '内部' },
-    { value: 'left', label: '左侧' },
-    { value: 'right', label: '右侧' },
-    { value: 'top', label: '顶部' },
-    { value: 'bottom', label: '底部' },
+    { value: 'outer', label: "外侧" },
+    { value: 'inner', label: "内部" },
+    { value: 'left', label: "左侧" },
+    { value: 'right', label: "右侧" },
+    { value: 'top', label: "顶部" },
+    { value: 'bottom', label: "底部" },
   ],
   gauge: [],
 }
