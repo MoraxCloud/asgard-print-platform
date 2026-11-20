@@ -341,15 +341,17 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(true)
   const [showSave, setShowSave] = useState(true)
   const [themeMode, setThemeMode] = useState('auto')
+  const [langMode, setLangMode] = useState('auto')
 
-  // 按钮显隐与主题预设写回设计器：统一走 property，避免属性字符串化
+  // 按钮显隐、主题与语言写回设计器：统一走 property，避免属性字符串化
   useEffect(() => {
     const el = designerRef.current
     if (!el) return
     el.showPreview = showPreview
     el.showSave = showSave
     el.theme = themeMode
-  }, [showPreview, showSave, themeMode])
+    el.lang = langMode === 'auto' ? undefined : langMode
+  }, [showPreview, showSave, themeMode, langMode])
 
   // 应用自定义字段与数据：即时生效并覆盖当前字段树
   function onApplyCustom(nextFields, nextData) {
@@ -531,6 +533,8 @@ export default function App() {
         setShowSave={setShowSave}
         themeMode={themeMode}
         setThemeMode={setThemeMode}
+        langMode={langMode}
+        setLangMode={setLangMode}
       />
     </div>
   )

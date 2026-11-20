@@ -3,6 +3,7 @@ export default function ConfigDialog({
   visible, onClose,
   showPreview, setShowPreview, showSave, setShowSave,
   themeMode, setThemeMode,
+  langMode, setLangMode,
 }) {
   if (!visible) return null
 
@@ -38,6 +39,21 @@ export default function ConfigDialog({
             <label className="config-row">
               <input type="radio" name="config-theme" value="auto" checked={themeMode === 'auto'} onChange={() => setThemeMode('auto')} />
               <span>跟随系统</span>
+            </label>
+          </section>
+          <section className="config-section">
+            <div className="config-label">语言</div>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="auto" checked={langMode === 'auto'} onChange={() => setLangMode('auto')} />
+              <span>跟随系统</span>
+            </label>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="zh-CN" checked={langMode === 'zh-CN'} onChange={() => setLangMode('zh-CN')} />
+              <span>简体中文</span>
+            </label>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="en-US" checked={langMode === 'en-US'} onChange={() => setLangMode('en-US')} />
+              <span>English</span>
             </label>
           </section>
         </div>
