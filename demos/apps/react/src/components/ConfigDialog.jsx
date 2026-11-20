@@ -1,4 +1,4 @@
-// 显示配置弹窗：预览/保存按钮显隐 + 主题预设。只作用于设计器外壳与工具栏，不影响出图业务。
+// 显示配置弹窗：预览/保存按钮显隐 + 主题预设 + 设计器界面语言。只作用于设计器外壳与工具栏，不影响出图业务。
 export default function ConfigDialog({
   visible, onClose,
   showPreview, setShowPreview, showSave, setShowSave,

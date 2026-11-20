@@ -39,7 +39,7 @@
 2. **vue2** `demos/apps/vue2/src/App.vue`：`data()` 加 `langMode: 'auto'`；弹窗加同名 radio 段；`applyDisplayConfig()` 加同样的 `el.lang` 赋值；watch 加 `'langMode': 'applyDisplayConfig'`；`mounted` 已调用。
 3. **react** `demos/apps/react/src/components/ConfigDialog.jsx`：增加 `langMode/setLangMode` props 与「语言」radio 段；`App.jsx` 增加 `useState('auto')`、传给 ConfigDialog、`useEffect` 依赖与写回加 `el.lang`。
 4. **jquery** `demos/apps/jquery/index.html`：弹窗加 radio 段（`name="config-lang"`，auto 默认 checked）；`app.js` 的 `state` 加 `langMode: 'auto'`，新增 change 绑定写 `state.langMode` 并调用 `applyDisplayConfig()`，后者加 `el.lang = state.langMode === 'auto' ? undefined : state.langMode`。
-5. **验证脚本** `demos/scripts/verify-config-dialog.mjs`：增加语言切换断言——打开弹窗、点选「English」radio、断言 `el.lang === 'en-US'` 且设计器 shadow DOM 里某个按钮文案变英文（如「保存」→「Save」）、点选「跟随系统」断言 `el.lang === ''`（getter 返回空表示未显式设置）、零页面错误。顺带修正该脚本现有的 checkbox 数量断言（Vue3 实际 4 个，脚本写死 2 个）——这是与本次改动直接相关的存量错误。
+5. **验证脚本** `demos/scripts/verify-config-dialog.mjs`：增加语言切换断言——打开弹窗、点选「English」radio、断言 `el.lang === 'en-US'` 且设计器 shadow DOM 里某个按钮文案变英文（如「保存」→「Save」）、点选「跟随系统」断言 lang attribute 被清除（`getAttribute('lang') === null`）且 `el.lang` getter 回退到 `navigator.language` 探测值（中文 locale 环境为 `zh-CN`）、界面文案回中文、零页面错误。顺带修正该脚本现有的 checkbox 数量断言（Vue3 实际 4 个，脚本写死 2 个）——这是与本次改动直接相关的存量错误。
 
 ## 规格来源
 
