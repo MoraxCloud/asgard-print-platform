@@ -15,7 +15,8 @@
 ## 三、约束(项目既有事实)
 
 - **出纸统一竖向**:全片打印预览的纸张都是竖向 A4(210×297mm)。横版设计稿用 `outputRotation: 90` 整页旋转填入竖向纸;竖版设计稿用 `0°` 直接竖向出纸。依据 `packages/core/src/render/css-builder.test.ts:164-188`(90°:外层竖向纸、转子为横版 297×210、旋转矩阵 `translate(210mm,0) rotate(90deg)`)、`packages/core/src/render/rotation.ts`、`html-generator.ts:285`。
-- **画面混合**:竖屏 1080×1920 卡片为主;横版设计稿与竖向出纸的对比在卡片 HTML 内以**静态图/绘制**呈现(复刻体检报告重制的分栏 mixed 打法)。竖屏流水线是静态卡片渲染(`portrait/cards.mjs` 出 PNG、`compose.mjs` 静帧配音),**不支持插入真实录屏片段**,故不改流水线、不做画中画视频。
+- **画面混合**:竖屏 1080×1920 卡片为主;横版设计稿与竖向出纸的对比在卡片 HTML 内呈现(复刻体检报告重制的分栏 mixed 打法)。竖屏流水线是静态卡片渲染(`portrait/cards.mjs` 出 PNG、`compose.mjs` 静帧配音),**不支持插入真实录屏片段**,故不改流水线、不做画中画视频。
+- **真实设计稿缩略图**:卡片中的设计稿缩略图**取自 demo gallery 的真实样本**,由 `portrait/capture-thumbs.mjs` 用 Playwright 截取 `.thumb-page`(`SampleThumb` 按模板 JSON 真实元素坐标绘制)。顺序为「竖向稿(销售出库单 A5 纵向)→ 横向稿(综合示例模板 A4 横向,旁注旋转90°)→ 竖向稿(健康体检报告 A4 纵向)」,三份稿打印出纸全部竖向。缩略图反映真实稿的横/竖版式,但 `SampleThumb` 不渲染 `outputRotation`,旋转 90° 以旁注 + 出纸竖向结论表达,不伪造缩略图旋转。缩略图落产物目录 `thumbs/`,随成片整目录交付。
 - 版本口径 v1.6.0(package.json、CHANGELOG 2026-11-19);demo 有 A4 横向模板(`demos/apps/vue3/src/templates.js:4893` 示例7)。
 - 流水线冻结在 `.agents/skills/making-douyin-videos/assets/pipeline/`,产物写 `.video-skill/`;封面只改 `cover*` 字段;恰 5 标题(≤30 字)、5 不重复标签;片尾统一 CTA;多音字人工听审;不上传。
 
