@@ -196,11 +196,78 @@ import '@worm-print-platform/plugin-echarts/ui'
 
 👉 [v1.5.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.5.1)（客户端源码自 v1.5.1 起无变更，可继续使用；新版本仅涉及设计器与示例）
 
-| 平台 | 架构 | 安装包 |
-| --- | --- | --- |
-| macOS | x64 / arm64 | `.dmg`（Intel + Apple Silicon） |
-| Windows | x64 | `.exe`（NSIS） |
-| Linux | x64 | `.deb` / `.rpm` / `.AppImage` |
+<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方 v1.5.1 直链与版本号；纯设计器发版请保留历史链接。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
+
+| 平台 | 架构 | 安装包 | 下载链接 |
+| --- | --- | --- | --- |
+| macOS | x64 (Intel) | `WormPrintClient-1.5.1-mac-x64.dmg` | [📋 复制下载链接](#client-mac-x64) |
+| macOS | arm64 (Apple Silicon) | `WormPrintClient-1.5.1-mac-arm64.dmg` | [📋 复制下载链接](#client-mac-arm64) |
+| Windows | x64 | `WormPrintClient-1.5.1-win-x64.exe` | [📋 复制下载链接](#client-win-x64) |
+| Linux | x64 (deb) | `WormPrintClient-1.5.1-linux-amd64.deb` | [📋 复制下载链接](#client-linux-deb) |
+| Linux | x64 (rpm) | `WormPrintClient-1.5.1-linux-x86_64.rpm` | [📋 复制下载链接](#client-linux-rpm) |
+| Linux | x64 (AppImage) | `WormPrintClient-1.5.1-linux-x86_64.AppImage` | [📋 复制下载链接](#client-linux-appimage) |
+
+国内直连下载较慢，可展开对应平台的「复制下载链接」并复制地址，粘贴到迅雷新建任务下载（无需登录）。
+
+##### client-mac-x64
+
+<details><summary>macOS x64 · 📋 复制下载链接</summary>
+
+```text
+https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-mac-x64.dmg
+```
+
+</details>
+
+##### client-mac-arm64
+
+<details><summary>macOS arm64 · 📋 复制下载链接</summary>
+
+```text
+https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-mac-arm64.dmg
+```
+
+</details>
+
+##### client-win-x64
+
+<details><summary>Windows x64 · 📋 复制下载链接</summary>
+
+```text
+https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-win-x64.exe
+```
+
+</details>
+
+##### client-linux-deb
+
+<details><summary>Linux deb · 📋 复制下载链接</summary>
+
+```text
+https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-amd64.deb
+```
+
+</details>
+
+##### client-linux-rpm
+
+<details><summary>Linux rpm · 📋 复制下载链接</summary>
+
+```text
+https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-x86_64.rpm
+```
+
+</details>
+
+##### client-linux-appimage
+
+<details><summary>Linux AppImage · 📋 复制下载链接</summary>
+
+```text
+https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-x86_64.AppImage
+```
+
+</details>
 
 客户端本地 WebSocket 默认监听 `127.0.0.1:17521`，宿主用 `@worm-print-platform/core/client` 的 `PrintClient.printHtml()` 静默出纸，无对话框。
 
