@@ -1,6 +1,7 @@
+<h1 align="center">worm-print-platform</h1>
+
 <p align="center">
-  <strong>worm-print-platform</strong><br>
-  <em>跨框架可视化打印模板设计器 · 同构渲染管线 · 三条打印链路</em>
+  <em>MIT 开源 · 零框架 Custom Elements 设计器 · 插件系统扩展</em>
 </p>
 
 <p align="center">
@@ -24,9 +25,9 @@
 
 ## 特性
 
-- 🎨 **跨框架设计器** — 原生 Custom Elements + Shadow DOM 实现，零 Vue/React 依赖，Vue 3 / Vue 2 / React / jQuery / 原生 JS 任意宿主接入
+- 🎨 **零框架 Custom Elements** — 原生 Custom Elements + Shadow DOM 实现，零 Vue/React 依赖，Vue 3 / Vue 2 / React / jQuery / 原生 JS 共用同一套设计器
+- 🧩 **插件系统** — 内置 11 类元素 + 第三方插件走同一张注册表、同权扩展；import 即注册，配套插件市场 CLI
 - 🔗 **同构渲染管线** — 同一份模板与数据，浏览器预览、服务端 PDF、桌面客户端静默打印三条链路产出完全一致
-- 🧩 **插件化元素** — 内置 11 类元素 + 第三方插件走同一张注册表、同权扩展；import 即注册
 - ⚡ **表达式引擎** — 自研词法/语法/安全求值器，支持 `formatMoney` / `sum` / `concat` 等内置函数
 - 🧾 **专业版式能力** — 表格分页、重复表头、小计/汇总、合并单元格、连续纸、拼版（多标签铺满 A4）、水印
 - 📊 **可选 ECharts** — SVG SSR 图表元素包，十类图表设计态可配置
