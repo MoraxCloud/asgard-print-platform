@@ -33,6 +33,11 @@
       "import": "./dist/client/index.js",
       "require": "./dist/client/index.cjs"
     },
+    "./i18n": {
+      "types": "./dist/i18n/index.d.ts",
+      "import": "./dist/i18n/index.js",
+      "require": "./dist/i18n/index.cjs"
+    },
     "./styles/designer.css": "./dist/styles/designer.css",
     "./styles/theme.css": "./dist/styles/theme.css",
     "./styles/icon-manifest.json": "./dist/styles/icon-manifest.json"
