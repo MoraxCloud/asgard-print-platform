@@ -2,6 +2,7 @@
  * 裁剪锚点（图片剪裁）的结构化读写与逐轴可挪余量判定。
  * Vue 3 轨与本包两套宿主共用，避免两端各写一遍判据而漂移。
  */
+import { t as tr } from '../../i18n/index.js'
 import { evaluateTemplate } from './expression-eval.js'
 import { DEFAULT_DEMO_DATA } from './demo-data.js'
 import { cropScalePct, CROP_SCALE_MIN } from '../../render/crop-style.js'
@@ -211,6 +212,11 @@ export const CROP_SAMPLE_IMAGE =
 /** 示意图来自内置示例图时必须说破，否则用户会把演示图当成自己的业务图来判断取位（两端共用这一串） */
 export const CROP_SAMPLE_NOTE = '图片还没设置，上面按内置示例图演示取位；换上真图后档位与可挪量按真图重算'
 
+/** 跟随 locale 的取位示例提示；原常量保留作 zh 别名 */
+export function cropSampleNote(): string {
+  return tr('crop.sampleNote')
+}
+
 /**
  * 属性台的示意图该画哪张图：传入已求值的业务图片地址，取不到即回落示例图。
  * 未求值的表达式（`{image}` 这类字段在设计态没有 demo 值）也算取不到——直接当 src 用会渲染成破图，
@@ -225,21 +231,22 @@ export function resolveCropPreview(resolvedSrc?: string): { src: string; isSampl
 
 /** 可动轴数字框的行标签 */
 export function cropAxisLabel(axis: 'horizontal' | 'vertical'): string {
-  return axis === 'vertical' ? '垂直位置 (%)' : '水平位置 (%)'
+  return axis === 'vertical' ? tr('crop.verticalPosition') : tr('crop.horizontalPosition')
 }
 
 /** 「放大比例」行标签：区间与归一判据取 core `crop-style`（CROP_SCALE_MIN/MAX），两端不再各写一遍 */
 export const CROP_SCALE_LABEL = '放大比例 (%)'
+export const cropScaleLabel = () => tr('crop.scaleLabel')
 
 /** 一句话逐轴报数：两轴都能挪就把两个数都写出来；挪不动的那一轴直说，不含糊。keepRaw 表示模板里存的是表达不了的写法 */
 export function cropAxisNote(travel: CropTravel, keepRaw = false): string {
-  if (keepRaw) return '已保留模板里的原值；改动下面任一项就整体替换成新的取位'
+  if (keepRaw) return tr('crop.originalValue')
   const { x, y } = travel
   if (x === null || y === null) return ''
-  if (x > 0 && y > 0) return `水平可挪 ${x}mm、垂直可挪 ${y}mm：0 贴左／贴顶，100 贴右／贴底`
-  if (x > 0) return `水平可挪 ${x}mm；垂直这一轴已贴满，挪不动`
-  if (y > 0) return `垂直可挪 ${y}mm；水平这一轴已贴满，挪不动`
-  return '这个缩放下图与框正好一样大，两轴都没有可挪的余量'
+  if (x > 0 && y > 0) return tr('crop.movableBoth', { x, y })
+  if (x > 0) return tr('crop.movableX', { x })
+  if (y > 0) return tr('crop.movableY', { y })
+  return tr('crop.noRoom')
 }
 
 /** 数字框行：两轴常驻（各带本轴余量，未知给 null），宿主只管渲染两行 */

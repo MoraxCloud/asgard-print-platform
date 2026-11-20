@@ -4,6 +4,10 @@
 // 注意：本子路径的 TemplateData/PaperSize 等是「设计器完整模型」，
 // 与主入口 render 管线的简化同名类型有意分离，故不从主入口转出。
 
+// ─── 国际化（诊断与属性台文案） ───
+export { t, createTranslator, formatNumber, formatDate, getLocale } from '../i18n/index.js'
+export type { Translate } from '../i18n/index.js'
+
 // ─── 模板模型与宿主能力契约类型 ───
 export * from './types.js'
 

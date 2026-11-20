@@ -1,4 +1,5 @@
 // packages/print-core/src/evaluator.ts
+import { t as tr } from './i18n/index.js'
 import type { ASTNode, ExprFunction } from './types.js'
 import {
   decimalAdd,
@@ -65,7 +66,7 @@ function evalIdent(name: string, context: Record<string, any>, functions: Record
   if (Object.prototype.hasOwnProperty.call(SAFE_GLOBALS, name)) {
     return SAFE_GLOBALS[name]
   }
-  throw new Error(`未定义的标识符: ${name}`)
+  throw new Error(tr('diagnostic.evaluator.undefinedIdentifier', { name }))
 }
 
 function evalBinary(node: { op: string; left: ASTNode; right: ASTNode }, context: Record<string, any>, functions: Record<string, ExprFunction>): any {
@@ -91,7 +92,7 @@ function evalBinary(node: { op: string; left: ASTNode; right: ASTNode }, context
     case '&&': return left && right
     case '||': return left || right
     default:
-      throw new Error(`未知运算符: ${node.op}`)
+      throw new Error(tr('diagnostic.evaluator.unknownOperator', { op: node.op }))
   }
 }
 
@@ -102,7 +103,7 @@ function evalUnary(node: { op: string; arg: ASTNode }, context: Record<string, a
     case '+': return toNumber(arg)
     case '!': return !arg
     default:
-      throw new Error(`未知一元运算符: ${node.op}`)
+      throw new Error(tr('diagnostic.evaluator.unknownUnaryOperator', { op: node.op }))
   }
 }
 
@@ -132,10 +133,10 @@ function operandKind(value: unknown): 'num' | 'neutral' | 'other' {
 function evalMember(node: { object: ASTNode; property: string; computed: boolean }, context: Record<string, any>, functions: Record<string, ExprFunction>): any {
   const obj = evaluate(node.object, context, functions)
   if (obj == null) {
-    throw new Error('无法访问空值的属性')
+    throw new Error(tr('diagnostic.evaluator.nullProperty'))
   }
   if (DANGEROUS_PROPS.has(node.property)) {
-    throw new Error(`禁止访问属性: ${node.property}`)
+    throw new Error(tr('diagnostic.evaluator.forbiddenProperty', { property: node.property }))
   }
   return (obj as any)[node.property]
 }
@@ -152,7 +153,7 @@ function evalCall(node: { callee: ASTNode; args: ASTNode[] }, context: Record<st
   if (node.callee.type === 'member' && node.callee.object.type === 'ident' && node.callee.object.name === 'Math') {
     const method = (Math as any)[node.callee.property]
     if (typeof method !== 'function') {
-      throw new Error(`Math.${node.callee.property} 不是方法`)
+      throw new Error(tr('diagnostic.evaluator.mathNotMethod', { name: node.callee.property }))
     }
     const args = node.args.map(a => evaluate(a, context, functions))
     return method(...args)
@@ -164,7 +165,7 @@ function evalCall(node: { callee: ASTNode; args: ASTNode[] }, context: Record<st
     fnName = node.callee.name
   } else if (node.callee.type === 'member') {
     // obj.method() 形式暂不支持，只支持顶级函数
-    throw new Error('不支持方法调用，请使用顶级函数')
+    throw new Error(tr('diagnostic.evaluator.noMethodCall'))
   }
 
   if (fnName && functions[fnName]) {
@@ -174,8 +175,8 @@ function evalCall(node: { callee: ASTNode; args: ASTNode[] }, context: Record<st
 
   // 如果标识符在上下文中但不是函数
   if (fnName && Object.prototype.hasOwnProperty.call(context, fnName)) {
-    throw new Error(`${fnName} 不是函数`)
+    throw new Error(tr('diagnostic.evaluator.notFunction', { name: fnName }))
   }
 
-  throw new Error(`不允许调用: ${fnName ?? '表达式'}`)
+  throw new Error(tr('diagnostic.evaluator.forbiddenCall', { name: fnName ?? '表达式' }))
 }

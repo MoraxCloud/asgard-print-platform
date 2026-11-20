@@ -29,6 +29,15 @@ export class TemplateEngine {
   }
 }
 
+// 国际化（无框架微型引擎，完整 API 见 ./i18n 子路径）
+export {
+  t, translate, createTranslator, getLocale, setLocale, resetLocale, normalizeLocale,
+  subscribe, registerLocale, mergeLocale, registerPluginMessages, formatNumber, formatDate,
+} from './i18n/index.js'
+export type {
+  Locale, Translate, LocaleMessages, CustomLocaleMessages, PluginLocaleMessages,
+} from './i18n/index.js'
+
 // 导出类型
 export type { ASTNode, ExprFunction, EngineOptions, TemplateAST } from './types.js'
 

@@ -1,4 +1,5 @@
 // packages/print-core/src/template-parser.ts
+import { t as tr } from './i18n/index.js'
 import type { TemplateAST, TemplatePart, ExprFunction } from './types.js'
 import { tokenize } from './lexer.js'
 import { parse } from './parser.js'
@@ -26,12 +27,12 @@ export function parseTemplate(template: string): TemplateAST {
         j++
       }
       if (depth !== 0) {
-        throw new Error(`位置 ${i}: 花括号未闭合`)
+        throw new Error(tr('diagnostic.template.unclosedBrace', { pos: i }))
       }
       // 提取表达式内容 (去掉外层 {})
       const exprStr = template.slice(i + 1, j - 1)
       if (exprStr.trim() === '') {
-        throw new Error(`位置 ${i}: 空表达式`)
+        throw new Error(tr('diagnostic.template.emptyExpression', { pos: i }))
       }
       // 解析表达式为 AST
       const tokens = tokenize(exprStr)

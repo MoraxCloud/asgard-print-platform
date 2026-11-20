@@ -1,6 +1,7 @@
 // web/src/components/print/utils/table-matrix.ts
 // Excel 风格表格矩阵结构操作纯函数库。
 // 约定：函数原地修改传入的 rows/colWidths；返回 string 的函数以非空字符串为拒绝原因。
+import { t as tr } from '../../i18n/index.js'
 import type {
   TableRow, TableRowType, TableCell, TableCellBorder, TableCellBorders, TableCellType, ElementOptions,
 } from '../types.js'
@@ -60,7 +61,7 @@ export function createDefaultTable(): { rows: TableRow[]; colWidths: number[] } 
     cells: colWidths.map(() => createCell()),
   })
   const header = mk('header', true)
-  header.cells.forEach((c, i) => { c.formatter = `列${i + 1}`; c.align = 'center'; c.fontWeight = 'bold' })
+  header.cells.forEach((c, i) => { c.formatter = tr('table.defaultHeader', { index: i + 1 }); c.align = 'center'; c.fontWeight = 'bold' })
   return { rows: [header, mk('data'), mk('subtotal'), mk('summary')], colWidths }
 }
 
@@ -120,19 +121,19 @@ export function normalizeSelection(
 /** 合并合法性校验，返回拒绝原因或 null */
 export function canMergeReason(rows: TableRow[], rect: CellRect): string | null {
   const cellCount = (rect.r2 - rect.r1 + 1) * (rect.c2 - rect.c1 + 1)
-  if (cellCount < 2) { return '至少选择 2 个单元格' }
+  if (cellCount < 2) { return tr('table.atLeastTwoCells') }
   const types = new Set<TableRowType>()
   for (let r = rect.r1; r <= rect.r2; r++) { types.add(rows[r]!.type) }
-  if (types.size > 1) { return '合并区域不能跨越不同类型的行' }
+  if (types.size > 1) { return tr('table.crossRowTypes') }
   // 数据行按列表逐项展开，模板静态纵向 span 复制到每个数据行会错位：
   // 跨行合并一律拒绝（横向单行合并不受限），纵向同值归并用单元格属性「按值合并」表达
   if (rect.r2 > rect.r1 && types.has('data')) {
-    return '数据行将按列表展开，纵向合并请使用单元格属性「按值合并」'
+    return tr('table.dataVerticalMerge')
   }
   // 与已有合并区部分重叠：normalize 后矩形应与选区一致
   const norm = normalizeSelection(rows, { r: rect.r1, c: rect.c1 }, { r: rect.r2, c: rect.c2 })
   if (norm.r1 !== rect.r1 || norm.c1 !== rect.c1 || norm.r2 !== rect.r2 || norm.c2 !== rect.c2) {
-    return '选区与已有合并区域部分重叠'
+    return tr('table.partialOverlap')
   }
   return null
 }
@@ -228,7 +229,7 @@ export function insertRow(rows: TableRow[], index: number, position: 'above' | '
 
 /** 删除行；主格在被删行时移交下一行 */
 export function deleteRow(rows: TableRow[], index: number): string | null {
-  if (rows.length <= 1) { return '不能删除最后一行' }
+  if (rows.length <= 1) { return tr('table.lastRow') }
   const row = rows[index]!
   const colCount = row.cells.length
   for (let c = 0; c < colCount; c++) {
@@ -276,7 +277,7 @@ export function insertCol(
 
 /** 删除列；主格在被删列时移交右侧列 */
 export function deleteCol(rows: TableRow[], colWidths: number[], index: number): string | null {
-  if (colWidths.length <= 1) { return '不能删除最后一列' }
+  if (colWidths.length <= 1) { return tr('table.lastColumn') }
   for (let r = 0; r < rows.length; r++) {
     const cell = rows[r]!.cells[index]!
     if (!cell.merged && (cell.colspan ?? 1) > 1) {
@@ -303,34 +304,34 @@ export function setRowType(
 ): string | null {
   if (type === 'data') {
     const existing = rows.findIndex((r, i) => r.type === 'data' && i !== index)
-    if (existing >= 0) { return `数据行已存在（第 ${existing + 1} 行），全表最多一行` }
+    if (existing >= 0) { return tr('table.dataRowExists', { row: existing + 1 }) }
   }
   if (type === 'header') {
     // 设置后 header 行必须从第 0 行起连续
     for (let i = 0; i < index; i++) {
-      if (rows[i]!.type !== 'header') { return '标题行必须从表格顶部连续设置' }
+      if (rows[i]!.type !== 'header') { return tr('table.headerContinuous') }
     }
   }
   if (type === 'subtotal' || type === 'summary') {
     const dataIdx = rows.findIndex(r => r.type === 'data')
-    if (dataIdx < 0) { return '请先设置数据行，小计/汇总行必须位于数据行之后' }
-    if (index < dataIdx) { return '小计/汇总行必须位于数据行之后' }
+    if (dataIdx < 0) { return tr('table.subtotalAfterData') }
+    if (index < dataIdx) { return tr('table.subtotalBeforeData') }
   }
   if (type === 'subtotal') {
     // 目标状态：本行设为小计后，其上方（index 之前）不得存在汇总行（小计必须位于汇总行之前）
     if (rows.slice(0, index).some(r => r.type === 'summary')) {
-      return '小计行必须位于汇总行之前'
+      return tr('table.subtotalBeforeSummary')
     }
   }
   if (type === 'summary') {
     if (rows.slice(index + 1).some(r => r.type === 'subtotal')) {
-      return '汇总行必须位于小计行之后'
+      return tr('table.summaryAfterSubtotal')
     }
   }
   // 取消 header 时校验剩余 header 仍连续（中间行取消会断开）
   if (rows[index]!.type === 'header' && type !== 'header') {
     for (let i = index + 1; i < rows.length; i++) {
-      if (rows[i]!.type === 'header') { return '取消该标题行会导致标题行不连续，请先调整后续标题行' }
+      if (rows[i]!.type === 'header') { return tr('table.headerBreak') }
     }
   }
   rows[index]!.type = type

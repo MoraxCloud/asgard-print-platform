@@ -1,5 +1,6 @@
 // print-core/src/print/tiling.ts
 // 标签多行多列拼版：类型、校验、布局纯函数（无 DOM / 无 IO）
+import { t as tr } from '../i18n/index.js'
 import {
   PAPER_DIMENSIONS,
   getOutputPaperDimensions,
@@ -107,7 +108,7 @@ export function roundMm(value: number): number {
 function rotationNote(t: TilingTemplateInput, tile: { width: number; height: number }): string {
   const angle = t.outputRotation
   return angle === 90 || angle === 270
-    ? `（内容旋转 ${angle}°，每格 ${tile.width}×${tile.height}mm）`
+    ? tr('diagnostic.tiling.rotationNote', { angle, width: tile.width, height: tile.height })
     : ''
 }
 
@@ -233,21 +234,21 @@ export function validateTiling(t: TilingTemplateInput, opts?: TilingResolveOptio
   if (isContinuousPaper(t)) {
     issues.push({
       code: 'CONTINUOUS_UNSUPPORTED',
-      message: '连续纸不支持拼版打印，请将模板纸张改为固定纸张或关闭拼版',
+      message: tr('diagnostic.tiling.continuousUnsupported'),
     })
   }
   // 类型上已排除连续纸，但存量模板 / 手写 JSON 仍可能传入，运行时必须拦住
   const sheetPaperSize = cfg.sheetPaperSize as string | undefined
   const sheetContinuous = isContinuousPaperSize(sheetPaperSize ?? '')
   if (sheetContinuous) {
-    issues.push({ code: 'SHEET_CONTINUOUS', message: '拼版目标纸张不能是连续纸' })
+    issues.push({ code: 'SHEET_CONTINUOUS', message: tr('diagnostic.tiling.sheetContinuous') })
   }
   const customSizeInvalid = cfg.sheetPaperSize === 'CUSTOM'
     && !((cfg.sheetCustomWidth ?? 0) > 0 && (cfg.sheetCustomHeight ?? 0) > 0)
   if (customSizeInvalid) {
     issues.push({
       code: 'SHEET_SIZE_INVALID',
-      message: '拼版自定义纸张宽高必须是大于 0 的数值（mm）',
+      message: tr('diagnostic.tiling.sheetSizeInvalid'),
     })
   }
   // 只有「目标纸尺寸不可用」才中断几何校验：CUSTOM 宽高非法时纸面未定，
@@ -264,7 +265,7 @@ export function validateTiling(t: TilingTemplateInput, opts?: TilingResolveOptio
 
   // ── 列数类 ──
   if (!Number.isInteger(cfg.columns) || cfg.columns < 1) {
-    issues.push({ code: 'COLUMNS_INVALID', message: '拼版列数必须是大于 0 的整数' })
+    issues.push({ code: 'COLUMNS_INVALID', message: tr('diagnostic.tiling.columnsInvalid') })
     return issues
   }
   const maxColumns = calcMaxColumns(avail.w, label.width, cfg.gapX)
@@ -272,10 +273,16 @@ export function validateTiling(t: TilingTemplateInput, opts?: TilingResolveOptio
     const needW = roundMm(cfg.columns * label.width + (cfg.columns - 1) * cfg.gapX)
     issues.push({
       code: 'COLUMNS_OVERFLOW',
-      message: '拼版列数 ' + cfg.columns + ' 超出纸面可用宽度：'
-        + roundMm(sheet.width) + 'mm − 左右留白 ' + marginLR + 'mm = ' + roundMm(avail.w) + 'mm，'
-        + '最多可放 ' + maxColumns + ' 列；当前 ' + cfg.columns + ' 列 '
-        + label.width + 'mm 标签含间距需要 ' + needW + 'mm' + rotationNote(t, label),
+      message: tr('diagnostic.tiling.columnsExceedWidth', {
+        columns: cfg.columns,
+        sheet: roundMm(sheet.width),
+        margin: marginLR,
+        avail: roundMm(avail.w),
+        max: maxColumns,
+        label: label.width,
+        need: needW,
+        rotation: rotationNote(t, label),
+      }),
     })
   }
 
@@ -283,8 +290,11 @@ export function validateTiling(t: TilingTemplateInput, opts?: TilingResolveOptio
   if (Math.floor((avail.h + cfg.gapY) / (label.height + cfg.gapY)) < 1) {
     issues.push({
       code: 'LABEL_TOO_TALL',
-      message: '标签高度 ' + label.height + 'mm 超出纸面可用高度 ' + roundMm(avail.h)
-        + 'mm，拼版每张 0 行；请缩小标签高度或改用横向纸' + rotationNote(t, label),
+      message: tr('diagnostic.tiling.labelHeightExceed', {
+        height: label.height,
+        avail: roundMm(avail.h),
+        rotation: rotationNote(t, label),
+      }),
     })
   }
   return issues

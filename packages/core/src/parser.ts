@@ -1,4 +1,5 @@
 // packages/print-core/src/parser.ts
+import { t as tr } from './i18n/index.js'
 import type { Token, ASTNode } from './types.js'
 
 export function parse(tokens: Token[]): ASTNode {
@@ -17,7 +18,7 @@ class Parser {
   parse(): ASTNode {
     const node = this.parseTernary()
     if (this.pos < this.tokens.length) {
-      throw new Error(`表达式存在多余内容: ${this.tokens[this.pos].value}`)
+      throw new Error(tr('diagnostic.parser.trailingContent', { value: this.tokens[this.pos].value }))
     }
     return node
   }
@@ -28,7 +29,7 @@ class Parser {
 
   private next(): Token {
     const t = this.tokens[this.pos++]
-    if (!t) throw new Error('表达式意外结束')
+    if (!t) throw new Error(tr('diagnostic.expressionUnexpectedEnd'))
     return t
   }
 
@@ -44,7 +45,7 @@ class Parser {
   private expectPunc(value: string) {
     if (!this.eatPunc(value)) {
       const pos = this.peek()?.position ?? 0
-      throw new Error(`位置 ${pos}: 期望 "${value}"`)
+      throw new Error(tr('diagnostic.parser.expected', { pos, value }))
     }
   }
 
@@ -158,7 +159,7 @@ class Parser {
       if (this.eatPunc('.')) {
         const prop = this.next()
         if (prop.type !== 'ident') {
-          throw new Error(`位置 ${prop.position}: 成员访问需要属性名`)
+          throw new Error(tr('diagnostic.parser.memberName', { pos: prop.position }))
         }
         node = {
           type: 'member',
@@ -211,7 +212,7 @@ class Parser {
 
     if (t.type === 'num') {
       const v = Number(t.value)
-      if (isNaN(v)) throw new Error(`非法数字: ${t.value}`)
+      if (isNaN(v)) throw new Error(tr('diagnostic.parser.invalidNumber', { value: t.value }))
       return { type: 'num', value: v }
     }
 
@@ -251,7 +252,7 @@ class Parser {
         for (;;) {
           const keyToken = this.next()
           if (keyToken.type !== 'ident' && keyToken.type !== 'str') {
-            throw new Error(`位置 ${keyToken.position}: 对象键必须是标识符或字符串`)
+            throw new Error(tr('diagnostic.parser.objectKey', { pos: keyToken.position }))
           }
           this.expectPunc(':')
           properties.push({ key: keyToken.value, value: this.parseTernary() })
@@ -262,6 +263,6 @@ class Parser {
       return { type: 'object', properties }
     }
 
-    throw new Error(`位置 ${t.position}: 意外的符号: ${t.value}`)
+    throw new Error(tr('diagnostic.parser.unexpectedToken', { pos: t.position, value: t.value }))
   }
 }
