@@ -1,6 +1,7 @@
 // 出图前按 kind 做「最小形态归一」：只动形态相关键（series.type / 轴方向 / areaStyle /
 // 饼环半径 / 漏斗排序 / 雷达与仪表盘 type），颜色、标题、手写样式与 data 一律保留。
 import { getChartKindDefinition } from './kinds.js'
+import { labelTargetOf, normalizeLabelOffsetInPlace } from './label.js'
 
 function asArray(value: unknown): Record<string, unknown>[] {
   if (Array.isArray(value)) return value.map(item => ({ ...(item as Record<string, unknown>) }))
@@ -35,6 +36,17 @@ export function normalizeChartOption(type: string, option: Record<string, unknow
   const next = structuredClone(option) as Record<string, any>
   const series = asArray(next.series)
   if (series.length === 0) return next
+
+  // 存量模板的 offsetX / offsetY 是 ECharts 不识别的旧键，出图前统一迁成 offset: [x, y]
+  const labelKey = labelTargetOf(type)
+  for (const item of series) {
+    const label = item[labelKey]
+    if (label && typeof label === 'object' && !Array.isArray(label)) {
+      const nextLabel = { ...(label as Record<string, unknown>) }
+      normalizeLabelOffsetInPlace(nextLabel)
+      item[labelKey] = nextLabel
+    }
+  }
 
   if (def.seriesType === 'pie') {
     next.series = series.map(item => ({

@@ -2,7 +2,7 @@ name: Publish npm
 
 # 仅手动触发：推 tag 不会自动发布。
 # 触发：Actions → Publish npm → Run workflow，或
-#   gh workflow run publish-npm.yml -f tag=v1.5.3 -f dry_run=true
+#   gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true
 # 首次验证用 dry_run=true；确认无误后再用 dry_run=false 真正上传。
 # 四个代码包（core / plugin-kit / canvas / echarts）按依赖顺序同批发布，
 # echarts 内含 Web Components 适配层（./ui 子路径）。
@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: '要发布的版本标签（如 v1.5.3，需已推送到远端）'
+        description: '要发布的版本标签（如 v1.6.0，需已推送到远端）'
         required: true
         type: string
       dry_run:

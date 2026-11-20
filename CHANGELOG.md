@@ -4,6 +4,14 @@
 `core` / `plugin-kit` / `canvas` / `echarts` / `skills` 等正式包同号同批发版；
 `contract` / `mcp` 随桌面客户端打包，不单独发布到 npm。
 
+## V1.6.0(2026-11-19)
+
+- **宿主契约新增 `field-display`**：宿主可配置素材台与表达式弹窗的字段显示模式（中文名 / 字段 key / 两者，默认两者）；只显示 key 时样式与中文名一致，分组名始终显示。plugin-kit 表达式编辑器字段行同步支持，canvas 侧提供属性名 `fieldDisplay`，并补齐文档与回归测试。
+- **图表数据标签偏移修复**：设计面板改为写入 ECharts 原生 `offset: [x, y]`，读取、写回与出图归一三处统一迁移旧模板的 `offsetX` / `offsetY`，十类图表与 SSR 坐标均有断言覆盖。市场插件 `@worm-print-platform/plugin-echarts` 升至 `1.1.0`，兼容镜像 `@worm-print-platform/echarts` 升至 `1.6.0`。
+- **print demo 纳入 GitHub Pages**：站点新增 `/canvas/print-demo/` 入口与四宿主互跳导航，修复 MSW 在 Pages 子路径下的定位与路由，`deploy-pages.yml` 的安装 / 构建 / 拷贝 / 烟雾测试全链路均包含 print-demo；新增开发技能文档与 print demo 介绍页。
+- **四个宿主 demo 体验修复**：「更多」面板样式统一真源，修复窄屏布局异常并清理重复条目标签；`dev-all` 前置构建纳入 `plugin-data-preview`，避免 Vue3 示例解析失败。
+- **版本载体对齐至 `1.6.0`**：各工作区包、demos、MCP 版本常量、文档示例与徽章同步；`core` / `plugin-kit` / `canvas` / `echarts` 四个 npm 包同号同批发布。
+
 ## V1.5.3(2026-11-18)
 
 - **体检报告示例接入百度图表插件**：健康体检报告的柱状图与折线图由 `image` 改为插件 `barChart` / `lineChart` 真实元素，声明 `@worm-print-platform/echarts` 插件并按 `chartDataSource` 绑字段；四个宿主 demo 同源同步。

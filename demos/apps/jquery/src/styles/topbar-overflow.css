@@ -1,6 +1,7 @@
 /* 顶部操作区自适应收纳（issue #4 拆解项 T-10）。
-   宿主视觉样式 demo-ui.css 由 npm run styles:demos 从 vue3 同源同步、禁止手改，
-   故这里只补收纳机制自身需要的布局约束，不改任何一个既有像素值。 */
+   视觉样式（含「更多」面板、条目、槽位、图标与箭头）唯一真源是 demo-ui.css，
+   四宿主同源、由 npm run styles:demos 同步；本文件只保留收纳机制自身需要的布局约束，
+   不重复定义任何视觉属性，避免后加载的覆盖值造成面板布局漂移。 */
 .demo-topbar {
   flex-wrap: nowrap;
 }
@@ -24,75 +25,17 @@
 .demo-topbar .demo-more-trigger {
   white-space: nowrap;
 }
-.demo-more-group {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-.demo-more-group[hidden] {
-  display: none;
-}
-.demo-more-icon {
-  width: 15px;
-  height: 15px;
-  flex: none;
-}
-.demo-more-caret {
-  width: 7px;
-  height: 7px;
-  margin-left: 2px;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg) translate(-2px, -2px);
-}
-.demo-more-trigger[aria-expanded="true"] .demo-more-caret {
-  transform: rotate(-135deg) translate(-2px, -2px);
-}
-.demo-more-panel {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 6px);
-  right: 0;
-  /* 面板内的下拉子面板实测 218px 宽（含 17px 左边距），244px 才容得下（T-07a 同源结论） */
-  min-width: 244px;
-  max-height: min(70vh, 520px);
-  padding: 6px 0;
-  overflow: auto;
-  background: #fff;
-  border: 1px solid #d9dde6;
-  border-radius: 8px;
-  box-shadow: 0 12px 32px rgba(23, 32, 60, .14);
-}
+/* 收纳态下用 hidden 属性切换整组与面板的显隐（demo-ui.css 不定义这些状态） */
+.demo-more-group[hidden],
 .demo-more-panel[hidden] {
   display: none;
 }
-.demo-more-note {
-  margin: 0 0 6px;
-  padding: 4px 10px 6px;
-  color: #8b909c;
-  font-size: 11px;
-  line-height: 1.5;
+/* 面板高度只给收纳兜底，视觉尺寸与间距全部沿用 demo-ui.css */
+.demo-more-panel {
+  max-height: min(70vh, 520px);
+  overflow: auto;
 }
-.demo-more-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 4px 10px;
-}
+/* 空槽不占位，避免面板里出现整行空白 */
 .demo-more-item:empty {
   display: none;
 }
-.demo-more-label {
-  color: #2a2e37;
-  font-size: 12px;
-  white-space: nowrap;
-}
-.demo-more-slot {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-/* 宿主示例下拉的闭合态隐藏已并入同源产物 demo-ui.css（npm run styles:demos 同步）。 */

@@ -1,12 +1,13 @@
-# demos · 四个宿主的打印设计器集成示例
+# demos · 五个示例工程的打印设计器集成
 
 > 演示对象 `@worm-print-platform/canvas` 已作为设计器权威实现正式发布（1.5.x 主线），是本仓后续维护迭代的**稳定主版本**，可用于生产环境。旧仓 `@worm-vue3-print/canvas`（见 [worm-vue3-print](https://github.com/worm-longliu/worm-vue3-print)）进入维护状态，Vue 3 老项目可经 `/vue3` 兼容门面零业务改动迁移。
 
-`@worm-print-platform/canvas`（`<print-designer>`）在 **Vue 3 / Vue 2.7 / React 18 / jQuery** 四种宿主里的接入示例。
-每个 `apps/<宿主>` 都是一个独立 npm 工程，把自己宿主的集成代码全部写在自家文件里，
+`@worm-print-platform/canvas`（`<print-designer>`）在 **Vue 3 / Vue 2.7 / React 18 / jQuery** 四种宿主里的接入示例，
+外加 `print-demo` —— 业务侧完整接入示例（模板管理 + 设计器 + 体检报告 + 静默打印配置，MSW 模拟 `/sys/print/*`）。
+每个 `apps/<宿主>` 都是一个独立 npm 工程，把自己的集成代码全部写在自家文件里，
 **没有任何共用壳层**——想接哪个宿主，就把那个工程整份抄进你的项目改数据源。
 
-四个工程的**界面版式完全一致**：同一份顶栏动作、同一个全屏打印预览层、
+四个宿主工程的**界面版式完全一致**：同一份顶栏动作、同一个全屏打印预览层、
 同一套「打印输出 / 加载示例 / 自定义字段与数据」弹窗，以及顶部「配置」弹窗
 （两个开关控制设计器工具栏「预览 / 保存」按钮显隐；换肤不在此暴露，通过给
 `<print-designer>` 传 `theme` / `themeConfig` 参数实现，见 integration 技能接入 API）。
@@ -14,14 +15,14 @@
 示例库在各自 `apps/<宿主>/src/templates.js`（同样以 vue3 的为唯一源）。
 
 > 这里刻意不做逻辑抽象：demo 的价值在于读者能在一个文件里看完「注册元素 → 注入模板与字段 → 听事件 → 出纸」，
-> 而不是跳到某个 shared 包里去看封装。四个工程的重复是有意为之；样式与示例库是两份同源产物，
+> 而不是跳到某个 shared 包里去看封装。四个宿主工程的重复是有意为之；样式与示例库是两份同源产物，
 > 改动 vue3 的这两份文件后分别运行 `npm run styles:demos` / `npm run samples:demos` 同步到其余三宿主。
 
 `demos/shared/template-session.ts` 是**桌面客户端「AI 助手」通道**（template.attach / template.get / template.apply）
 的参考实现：页面侧接入 MCP 的完整会话生命周期（重试、revision 冲突拒绝、封禁元素拒绝、写回校验），
 客户端集成测试也复用同一份源码。
 
-**四个 demo 均已接入该通道**：每个工程自带 `src/mcp-session.js`（vue3 / vue2 / react 为完整读写，
+**四个宿主 demo 均已接入该通道**：每个工程自带 `src/mcp-session.js`（vue3 / vue2 / react 为完整读写，
 jquery 直挂为只读，见下），页面加载即连接桌面客户端并 `template.attach` 签到；顶栏
 `.demo-ai-status` 徽标显示「未连接 / 待配对 / 已连接」。会话用独立 `PrintClient`，与打印输出
 弹窗里的打印 client 互不干扰。
@@ -43,8 +44,9 @@ jquery 直挂为只读，见下），页面加载即连接桌面客户端并 `te
 | `apps/vue2` | 9332 | NPM 包 + SFC（`@vitejs/plugin-vue2`，runtime-only 构建，Options API） | 同上（`src/App.vue` + `src/SampleThumb.vue` + `src/mcp-session.js`；入口 `src/main.js` 只做注册与挂载） |
 | `apps/react` | 9335 | NPM 包 + hooks | `src/App.jsx` + `src/components/*.jsx`（三个弹窗）+ `src/SampleThumb.jsx` + `src/mcp-session.js` |
 | `apps/jquery` | 9334 | **JS + CSS 直挂**（无打包器、不 import 插件） | `index.html`（版式骨架，弹层用 `hidden` 切换）+ `src/{app,gallery,thumb,print-dialog,ui,mcp-session}.js` |
+| `apps/print-demo` | 9336 | NPM 包 + SFC（业务接入示例，MSW 模拟后端） | `src/views/print/**`（模板管理 / 设计器 / 体检报告 / 静默打印配置）+ `src/print/registry.ts` |
 
-`index.html` 是这四个示例工程的静态导航页；
+`index.html` 是这五个示例工程的静态导航页（`print-demo` 卡片指向 :9336）；
 `node scripts/serve-nav.mjs`（或根目录 `npm run dev:demos:nav`）把它挂在 **:9300**，`dev-all.mjs` 会顺带起它。
 四个页面的顶栏都有同一个「宿主示例」下拉（`.demo-host-switch`，无 JS 的 `<details>`，菜单项用 `<a>` 不占按钮位），
 收起时只显示当前宿主名，展开即可跳到其余三个。
@@ -52,8 +54,8 @@ jquery 直挂为只读，见下），页面加载即连接桌面客户端并 `te
 ## 跑起来
 
 ```bash
-node scripts/install-all.mjs   # 四个工程各自 npm install（file: 依赖指向本仓库 packages/，缺 dist 会先按依赖序构建）
-node scripts/dev-all.mjs       # 一次起四个 dev server + :9300 总览页
+node scripts/install-all.mjs   # 五个工程各自 npm install（file: 依赖指向本仓库 packages/，缺 dist 会先按依赖序构建）
+node scripts/dev-all.mjs       # 一次起五个 dev server + :9300 总览页
 ```
 
 示例字体（OFL，三款）统一收在 `assets/fonts/`，跑 demo 前拷进宿主 `public/fonts/`（详见 `assets/fonts/README.md`）。

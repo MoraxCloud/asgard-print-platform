@@ -168,7 +168,7 @@
 
 ## 八、与 canvas 的有意行为差异
 
-以下 15 条是**功能等价但实现口径不同**的点，验收时按此判定，不算回归：
+以下 16 条是**功能等价但实现口径不同**的点，验收时按此判定，不算回归：
 
 1. **快捷键的实例接管**：canvas 的 `useKeyboard` 绑在 `document`（页面任意处 Ctrl+Z 都生效）。本包也绑 `document`，但额外加一层「最后交互的实例」仲裁：宿主内 `pointerdown`/`focusin` 即接管，未有人接管时由最先连接的实例兜底，因此同页挂多个设计器不会互相抢键，而**焦点掉回 `body` 时快捷键仍然有效**（早期绑在宿主元素上，点过工具栏按钮后 Ctrl+Z/Ctrl+1 会整体失效 —— 由 ops 脚本揭穿）。判定「是否在为输入」用 `composedPath()[0]` 取 shadow 内真实 target（document 上拿到的 target 已被重定向成宿主）。
 2. **文本输入的提交时机**：canvas 用 `@input` 实时提交；Common 的属性台文本框统一用 `change`（失焦或回车提交）。原因：无框架版每次 store 变更会整体重绘属性台，边打边提交会把光标顶回开头，无法连续输入。
@@ -185,3 +185,4 @@
 13. **拖拽中同组成员即时跟随**：canvas 的 `BaseElement` 拖拽期间只给自己加 `transform`，同组兄弟在 mouseup 才一次性跳到新坐标；本包的 live 层让同组成员即时跟随。落点结果与历史记录完全一致（ops 逐步对拍通过），仅拖拽过程中的中间帧不同（本包无 150ms 过渡动画，见第 10 条）。
 14. **插件设计器 UI 的消费通道**：canvas 把 core 插件注册表映射成 Vue 组件（素材卡 / 画布组件 / 属性台「自定义属性」页签）；本包零框架 shell 通过 `@worm-print-platform/plugin-kit` 的框架无关 `ElementUI` 契约直接挂 DOM —— 素材卡按 core kind 追加（分组读 `designer.materialCard.group`），画布调用 `renderCanvas`，属性台首位「自定义属性」页签调用 `renderProperty`（`update` 经本包 `store.updateElement` 写模板并记历史），`styles` 注入 Shadow DOM。**已支持**：插件同时注册 core kind 与 plugin-kit UI 后，素材台自动出现、选中默认进「自定义属性」；未注册 UI 的插件仍不显示素材卡，模板里已有的该类元素在设计态按类型名占位（`shell/elements.ts` 兜底分支）。出纸/预览路径不变，仍取决于宿主装配的 core 注册表（`renderHtmlPages` 按注册态分派）。
 15. **插件 UI 的设计态示例数据可注入**：本包新增 `el.designData`（单对象 / 对象数组 / `design-data` attribute 的 JSON 串），画布与属性台把归一后的数组信封作为 `data` 交给插件，未注入回落 core 的 `DEFAULT_DEMO_DATA`；属性台还把 `el.fields` 作为 `fields` 传给 `renderProperty`，让图表类插件的数据源下拉能列真实业务字段。canvas 侧画布组件本来就有宿主的 `printData`，属性台则固定用 `[DEFAULT_DEMO_DATA]`（只透传 `fields`）。两侧 `fields` 一致、`data` 口径不同，属「本包多做一步」，不影响既有模板与出纸。
+16. **字段行显示模式为本包独有**：本包新增宿主配置 `field-display` / `fieldDisplay`（`label` / `key` / `both`，默认 `both`），只控制素材台字段行与表达式弹窗「字段」页签的可见文本；Vue 3 轨本轮有意不实现。默认 `both` 保持存量行为不变，故不构成 parity 回归；只显示 key 时本包让 key 套用中文名样式（字号/颜色/字族），分组名、搜索、复制、插入与拖拽语义两侧仍一致。

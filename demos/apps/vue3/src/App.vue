@@ -35,17 +35,18 @@
         </button>
         <span class="demo-more-panel" hidden>
           <p class="demo-more-note">仅在横向空间不足时，顶部操作才会折叠到这里</p>
-          <div class="demo-more-item" data-unit="biz"><span class="demo-more-label">业务类型</span><span class="demo-more-slot" data-overflow-slot="biz"></span></div>
-          <div class="demo-more-item" data-unit="host-switch"><span class="demo-more-label">宿主示例</span><span class="demo-more-slot" data-overflow-slot="host-switch"></span></div>
-          <div class="demo-more-item" data-unit="host-badge"><span class="demo-more-label">宿主标识</span><span class="demo-more-slot" data-overflow-slot="host-badge"></span></div>
-          <div class="demo-more-item" data-unit="clear"><span class="demo-more-label">清空</span><span class="demo-more-slot" data-overflow-slot="clear"></span></div>
-          <div class="demo-more-item" data-unit="import"><span class="demo-more-label">导入模板</span><span class="demo-more-slot" data-overflow-slot="import"></span></div>
-          <div class="demo-more-item" data-unit="export"><span class="demo-more-label">导出模板</span><span class="demo-more-slot" data-overflow-slot="export"></span></div>
-          <div class="demo-more-item" data-unit="custom"><span class="demo-more-label">自定义字段与数据</span><span class="demo-more-slot" data-overflow-slot="custom"></span></div>
-          <div class="demo-more-item" data-unit="batch"><span class="demo-more-label">批量打印</span><span class="demo-more-slot" data-overflow-slot="batch"></span></div>
-          <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
+          <div class="demo-more-item" data-unit="biz"><span class="demo-more-slot" data-overflow-slot="biz"></span></div>
+          <div class="demo-more-item" data-unit="host-switch"><span class="demo-more-slot" data-overflow-slot="host-switch"></span></div>
+          <div class="demo-more-item" data-unit="host-badge"><span class="demo-more-slot" data-overflow-slot="host-badge"></span></div>
+          <div class="demo-more-item" data-unit="clear"><span class="demo-more-slot" data-overflow-slot="clear"></span></div>
+          <div class="demo-more-item" data-unit="import"><span class="demo-more-slot" data-overflow-slot="import"></span></div>
+          <div class="demo-more-item" data-unit="export"><span class="demo-more-slot" data-overflow-slot="export"></span></div>
+          <div class="demo-more-item" data-unit="custom"><span class="demo-more-slot" data-overflow-slot="custom"></span></div>
+          <div class="demo-more-item" data-unit="batch"><span class="demo-more-slot" data-overflow-slot="batch"></span></div>
+          <div class="demo-more-item" data-unit="gallery"><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
         </span>
       </span>
+      <button v-if="dataPreviewEnabled" type="button" class="demo-print-btn" @click="onOpenDataPreview">数据源预览</button>
       <button type="button" class="demo-print-btn" @click="configVisible = true">配置</button>
       <button type="button" class="demo-print-btn" @click="printDialogVisible = true">打印输出</button>
       <input ref="fileInputRef" type="file" accept="application/json,.json" class="demo-file-input" @change="onImportTemplate($event)" />
@@ -258,6 +259,30 @@
               <input v-model="showSave" type="checkbox" />
               <span>显示「保存」按钮</span>
             </label>
+            <label class="config-row">
+              <input v-model="dataPreviewEnabled" type="checkbox" />
+              <span>启用「数据源预览」入口</span>
+            </label>
+            <label class="config-row">
+              <input v-model="showFieldKey" type="checkbox" />
+              <span>数据源预览：中文名旁显示字段 key（表头换行显示）</span>
+            </label>
+          </section>
+          <section class="config-section">
+            <div class="config-label">字段显示</div>
+            <span class="section-hint">控制素材台字段行与表达式编辑器「字段」页签的显示；分组名始终显示，搜索、复制、双击插入与拖拽不受影响；只显示 key 时套用中文名样式。</span>
+            <label class="config-row">
+              <input v-model="fieldDisplay" type="radio" name="config-field-display" value="both" />
+              <span>两者都显示（默认）</span>
+            </label>
+            <label class="config-row">
+              <input v-model="fieldDisplay" type="radio" name="config-field-display" value="label" />
+              <span>只显示中文名</span>
+            </label>
+            <label class="config-row">
+              <input v-model="fieldDisplay" type="radio" name="config-field-display" value="key" />
+              <span>只显示字段 key</span>
+            </label>
           </section>
           <section class="config-section">
             <div class="config-label">主题</div>
@@ -289,6 +314,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { initTopbarOverflow } from './topbar-overflow.js'
 import { createDefaultTemplate } from '@worm-print-platform/canvas'
+import { openDataPreview } from '@worm-print-platform/plugin-data-preview'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
 import { SAMPLES } from './templates'
 import { CHART_SAMPLES } from './templates-chart'
@@ -318,12 +344,14 @@ const HOST_LINKS = _isLocalhost
       { key: 'vue2',   label: 'Vue2 宿主',                   href: 'http://localhost:9332/' },
       { key: 'react',  label: 'React 宿主',                  href: 'http://localhost:9335/' },
       { key: 'jquery', label: 'jQuery 宿主',                 href: 'http://localhost:9334/' },
+      { key: 'print-demo', label: '业务接入示例',            href: 'http://localhost:9336/' },
     ]
   : [
       { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/canvas/vue3/` },
       { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/canvas/vue2/` },
       { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/canvas/react/` },
       { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/canvas/jquery/` },
+      { key: 'print-demo', label: '业务接入示例',            href: `${_hostBase}/canvas/print-demo/` },
     ]
 const CURRENT_HOST = 'vue3'
 
@@ -334,6 +362,12 @@ const configVisible = ref(false)
 const showPreview = ref(true)
 const showSave = ref(true)
 const themeMode = ref('auto')
+// 宿主端开关：是否暴露「数据源预览」入口（插件本身只提供触发 API）
+const dataPreviewEnabled = ref(true)
+// 数据源预览插件的入参：中文名旁是否显示字段 key（与设计器字段显示配置无关）
+const showFieldKey = ref(false)
+// 宿主注入设计器的字段行显示模式：both（默认）/ label / key，走 property 写回
+const fieldDisplay = ref('both')
 
 const fields = ref([])
 const templateData = ref(createDefaultTemplate())
@@ -375,6 +409,18 @@ function fontsOf(tpl) {
   const list = pages ? pages.flatMap(p => (p && p.fonts) || []) : ((tpl && tpl.fonts) || [])
   const seen = new Set()
   return list.filter(f => f && f.family && !seen.has(f.family) && seen.add(f.family))
+}
+
+/** 宿主自己的入口：调用插件 API 打开数据预览；开关关闭时入口不渲染 */
+function onOpenDataPreview() {
+  if (!dataPreviewEnabled.value) return
+  openDataPreview({
+    data: [activeData.value],
+    fields: fields.value,
+    title: currentSample.value?.name ?? '数据源',
+    container: document.body,
+    showFieldKey: showFieldKey.value,
+  })
 }
 
 function syncDesigner() {
@@ -886,16 +932,17 @@ const aiSession = createTemplateSession({
   onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
 })
 
-/** 把按钮显隐与主题预设写回设计器：全部走 property，避免自定义元素属性字符串化 */
+/** 把按钮显隐、字段显示与主题预设写回设计器：全部走 property，避免自定义元素属性字符串化 */
 function applyDisplayConfig() {
   const el = designerRef.value
   if (!el) return
   el.showPreview = showPreview.value
   el.showSave = showSave.value
+  el.fieldDisplay = fieldDisplay.value
   el.theme = themeMode.value
 }
 
-watch([showPreview, showSave, themeMode], applyDisplayConfig)
+watch([showPreview, showSave, fieldDisplay, themeMode], applyDisplayConfig)
 
 onMounted(() => {
   initTopbarOverflow()

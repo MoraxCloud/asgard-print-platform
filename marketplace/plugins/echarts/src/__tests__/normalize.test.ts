@@ -45,4 +45,25 @@ describe('形态归一', () => {
     normalizeChartOption('lineChart', input)
     expect(input.series[0].type).toBe('bar')
   })
+
+  it('存量 offsetX/offsetY 迁成 ECharts 原生 offset: [x, y]', () => {
+    const input = { series: [{ type: 'bar', data: ['$data'], label: { show: true, offsetX: 8, offsetY: -4 } }] }
+    const out = normalizeChartOption('barChart', input) as Record<string, any>
+    expect(out.series[0].label.offset).toEqual([8, -4])
+    expect(out.series[0].label.offsetX).toBeUndefined()
+    expect(out.series[0].label.offsetY).toBeUndefined()
+    expect(input.series[0].label.offsetX).toBe(8)
+  })
+
+  it('已有 offset 不被旧键覆盖，仪表盘 detail 同样迁移', () => {
+    const out = normalizeChartOption('barChart', {
+      series: [{ type: 'bar', data: ['$data'], label: { offset: [1, 2], offsetX: 9 } }],
+    }) as Record<string, any>
+    expect(out.series[0].label.offset).toEqual([1, 2])
+    expect(out.series[0].label.offsetX).toBeUndefined()
+    const gauge = normalizeChartOption('gaugeChart', {
+      series: [{ type: 'gauge', detail: { show: true, offsetY: 6 } }],
+    }) as Record<string, any>
+    expect(gauge.series[0].detail.offset).toEqual([0, 6])
+  })
 })

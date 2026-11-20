@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案草图 06 · 模板版本历史与可视化差异审阅</title>
+<style>
+  :root{--bg:#f4f6f9;--ink:#1b2330;--muted:#6b7688;--line:#e2e7ee;--brand:#2f6df6;--brand-bg:#eef4ff;--green:#2e9e5b;--amber:#d98a1f;--red:#e5484d;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 24px 72px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand)}
+  h1{font-size:26px;margin:8px 0 6px}
+  .lead{color:var(--muted);font-size:14px;max-width:900px;margin:0 0 22px}
+  .board{display:grid;grid-template-columns:0.9fr 1.1fr;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 24px rgba(27,35,48,.05);overflow:hidden}
+  .ph{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .ph .sub{font-weight:400;font-size:11px;color:var(--muted)}
+  .pb{padding:14px 16px;font-size:12px}
+
+  .ver{position:relative;padding-left:22px;margin-bottom:4px}
+  .ver::before{content:"";position:absolute;left:5px;top:16px;bottom:-10px;width:2px;background:var(--line)}
+  .ver:last-child::before{display:none}
+  .dot{position:absolute;left:0;top:9px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--brand)}
+  .dot.cur{background:var(--brand)}
+  .vc{border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-bottom:8px;background:#fff}
+  .vc.sel{border-color:var(--brand);background:var(--brand-bg);box-shadow:0 3px 10px rgba(47,109,246,.08)}
+  .vc .r{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)}
+  .vc .t{font-size:12px;font-weight:700;margin:3px 0 5px}
+  .vc .m{font-size:10px;color:var(--muted)}
+  .src{font-size:9px;border-radius:999px;padding:1px 7px;font-weight:700;margin-right:6px}
+  .src.ai{background:#f0eaff;color:#7c5cd6}
+  .src.manual{background:#eaf7ef;color:var(--green)}
+  .src.import{background:#eef1f6;color:var(--muted)}
+  .vc .mini-link{font-size:10px;color:var(--brand);margin-left:6px}
+
+  .dhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:11px}
+  .dhead .rev{font-family:ui-monospace,monospace;background:#eef1f6;border-radius:5px;padding:2px 7px}
+  .dhead .fa{color:var(--brand);font-weight:700}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .side{border:1px solid var(--line);border-radius:9px;padding:8px;background:#fbfcfe}
+  .side .lbl{font-size:10px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+  .sp{height:116px;background:#fff;border:1px solid var(--line);display:flex;align-items:flex-start;justify-content:center;padding:6px;position:relative}
+  .spaper{width:70px;height:98px;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.1);padding:5px}
+  .sh{height:7px;background:#2f6df6;border-radius:2px;margin-bottom:4px}
+  .sl{height:3px;background:#e2e8f0;border-radius:2px;margin-bottom:3px}
+  .stot{height:9px;margin-top:8px;border-radius:2px}
+  .stot.old{background:#f1f5f9;border:1px dashed #94a3b8}
+  .stot.new{background:#d7e0ec;border:1px solid var(--brand);box-shadow:0 0 0 2px rgba(47,109,246,.15)}
+  .tag-add{position:absolute;bottom:6px;right:6px;font-size:9px;background:var(--brand);color:#fff;border-radius:4px;padding:1px 5px}
+
+  .diffs{margin-top:12px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .diff-row{display:grid;grid-template-columns:1.1fr 1fr 1fr;font-size:11px;border-bottom:1px solid var(--line)}
+  .diff-row:last-child{border:none}
+  .diff-row>div{padding:6px 9px}
+  .diff-row.head{background:#f6f8fb;color:var(--muted);font-size:10px;font-weight:700}
+  .diff-row .old{color:var(--red);text-decoration:line-through}
+  .diff-row .new{color:var(--green);font-weight:700}
+  .diff-row .key{font-family:ui-monospace,monospace;color:#475569}
+  .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:5px 11px;background:#fff;color:var(--ink)}
+  .btn.pri{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+  .btn.danger{color:var(--red);border-color:#f3c7c9}
+
+  .notes{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .notes h3{margin:0 0 12px;font-size:16px}
+  .notes ol{margin:0;padding-left:22px}
+  .notes li{font-size:13px;margin:7px 0;color:#445064}
+  .notes code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:11px}
+  .callout{margin-top:14px;background:var(--brand-bg);border-left:3px solid var(--brand);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#274a8a}
+  .nav{margin-top:20px;font-size:13px}.nav a{color:var(--brand);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">方案草图 06 / 06 · P2</div>
+  <h1>模板版本历史与可视化差异审阅</h1>
+  <p class="lead">当前设计器没有版本时间线、差异对比与回滚能力，AI 变更与手动编辑混在一起无从追溯。本方案以内容 revision 为版本指纹保存快照，标注变更来源（手动 / AI / 导入），提供逐版本差异审阅与安全回滚。</p>
+
+  <div class="board">
+    <div class="panel">
+      <div class="ph">版本时间线 <span class="sub">销售单模板 · 共 5 个快照</span></div>
+      <div class="pb">
+        <div class="ver">
+          <div class="dot cur"></div>
+          <div class="vc">
+            <div class="r">rev e5f6a7b8… · 当前</div>
+            <div class="t">v1.6.0 已保存</div>
+            <div class="m"><span class="src manual">手动</span>11-19 14:32 · 保存</div>
+          </div>
+        </div>
+        <div class="ver">
+          <div class="dot"></div>
+          <div class="vc sel">
+            <div class="r">rev e5f6a7b8…</div>
+            <div class="t">合计行背景改浅灰、字号 14</div>
+            <div class="m"><span class="src ai">AI</span>11-19 14:30 <span class="mini-link">查看差异 →</span></div>
+          </div>
+        </div>
+        <div class="ver">
+          <div class="dot"></div>
+          <div class="vc">
+            <div class="r">rev a1b2c3d4…</div>
+            <div class="t">调整明细表列宽、增加二维码</div>
+            <div class="m"><span class="src manual">手动</span>11-19 11:05 <span class="mini-link">查看差异 →</span></div>
+          </div>
+        </div>
+        <div class="ver">
+          <div class="dot"></div>
+          <div class="vc">
+            <div class="r">rev 9c8b7a6d…</div>
+            <div class="t">生成销售单模板</div>
+            <div class="m"><span class="src ai">AI</span>11-18 17:40 <span class="mini-link">查看差异 →</span></div>
+          </div>
+        </div>
+        <div class="ver">
+          <div class="dot"></div>
+          <div class="vc">
+            <div class="r">rev 1000abcd…</div>
+            <div class="t">从 Excel 导入初始结构</div>
+            <div class="m"><span class="src import">导入</span>11-18 16:20</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">差异审阅 <span class="sub">选中版本 vs 上一版本</span></div>
+      <div class="pb">
+        <div class="dhead">
+          <span class="rev">rev a1b2…</span><span class="fa">→</span><span class="rev">rev e5f6…</span>
+          <span class="src ai">AI 修改</span><span>11-19 14:30</span>
+        </div>
+        <div class="cmp">
+          <div class="side">
+            <div class="lbl"><span>变更前</span><span>rev a1b2…</span></div>
+            <div class="sp"><div class="spaper"><div class="sh"></div><div class="sl"></div><div class="sl"></div><div class="stot old"></div></div></div>
+          </div>
+          <div class="side">
+            <div class="lbl"><span>变更后</span><span style="color:var(--brand)">rev e5f6…</span></div>
+            <div class="sp"><div class="spaper"><div class="sh"></div><div class="sl"></div><div class="sl"></div><div class="stot new"></div></div><span class="tag-add">2 处样式变化</span></div>
+          </div>
+        </div>
+        <div class="diffs">
+          <div class="diff-row head"><div>元素 · 属性</div><div>变更前</div><div>变更后</div></div>
+          <div class="diff-row"><div class="key">合计行.background</div><div class="old">transparent</div><div class="new">#f1f5f9</div></div>
+          <div class="diff-row"><div class="key">合计行.fontSize</div><div class="old">12pt</div><div class="new">14pt</div></div>
+          <div class="diff-row"><div class="key">合计行.fontWeight</div><div class="old">normal</div><div class="new">bold</div></div>
+        </div>
+        <div class="acts">
+          <span class="btn">预览该版本（出图）</span>
+          <span class="btn pri">回滚到此版本</span>
+          <span class="btn">命名为里程碑</span>
+          <span class="btn danger">删除此快照</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>设计要点（与现有代码的衔接）</h3>
+    <ol>
+      <li><b>版本指纹</b>：直接复用 <code>revisionOf()</code>（键排序 + SHA-256）作为快照 ID；每次保存 / AI apply 后由画布重读新 revision，天然去重，内容相同不产生新版本。</li>
+      <li><b>来源标注</b>：AI 变更来自 <code>onApplyResult('success', …, revision)</code>，手动保存来自设计器保存动作，导入来自模板导入流程；时间线用不同徽标区分。</li>
+      <li><b>差异计算</b>：对相邻快照的元素树做递归对比，输出新增 / 删除 / 修改三类属性 diff；缩略图差异调用功能 04 的 <code>/render/png</code> 按 revision 出图。</li>
+      <li><b>安全回滚</b>：回滚不是直接覆盖画布，而是把目标快照作为 <code>template.apply</code> 请求走同一通道——依旧先做 revision 一致性、封禁元素与结构校验，保证回滚也不会写入非法模板。</li>
+      <li><b>联动</b>：AI 会话的每次变更自动进入时间线（功能 01），MCP 可暴露 <code>history://list</code> / <code>history://get</code> 资源供 Agent 查询（功能 02）。</li>
+    </ol>
+    <div class="callout">独立价值 + 强联动：版本历史让 AI 变更可追溯，同时为所有模板操作提供安全网；建议与功能 01 同期规划数据结构，晚一步落地 UI。</div>
+  </div>
+
+  <div class="nav"><a href="05-export-plugins.html">← 上一个</a> &nbsp;·&nbsp; <a href="index.html">草图导航</a> &nbsp;·&nbsp; <a href="README.md">功能清单说明</a></div>
+</div>
+</body>
+</html>

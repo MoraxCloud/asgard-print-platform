@@ -1,8 +1,8 @@
 name: Deploy Pages
 
-# 四个宿主 demo 的 GitHub Pages 静态演示：
+# 五个示例 demo 的 GitHub Pages 静态演示：
 #   /                      ← demos/index.html 导航页
-#   /canvas/{vue3,vue2,react,jquery}/ ← 各宿主（vite demo 用 PAGES_BASE 构建注入子路径）
+#   /canvas/{vue3,vue2,react,jquery,print-demo}/ ← 各示例（vite 工程用 PAGES_BASE 构建注入子路径）
 # 服务端 PDF 与桌面客户端静默打印在访客机器上不可达，demo 自带降级提示，不影响静态演示。
 # 仅手动触发：push 到 master 不再自动部署，只在需要时手动 Run workflow。
 on:
@@ -31,18 +31,19 @@ jobs:
       - name: 构建 workspace 包
         run: npm ci && npm run build
 
-      - name: 安装四个 demo 依赖
+      - name: 安装五个 demo 依赖
         run: |
-          for app in vue3 vue2 react jquery; do
+          for app in vue3 vue2 react jquery print-demo; do
             npm ci --prefix demos/apps/$app
           done
 
       # base 必须带尾斜杠；与各宿主 App 内写死的互跳路径 /canvas/<host>/ 保持一致
-      - name: 构建三个 vite 宿主
+      - name: 构建四个 vite 示例
         run: |
           PAGES_BASE=/worm-print-platform/canvas/vue3/ npm run build --prefix demos/apps/vue3
           PAGES_BASE=/worm-print-platform/canvas/vue2/ npm run build --prefix demos/apps/vue2
           PAGES_BASE=/worm-print-platform/canvas/react/ npm run build --prefix demos/apps/react
+          PAGES_BASE=/worm-print-platform/canvas/print-demo/ npm run build --prefix demos/apps/print-demo
 
       - name: 组装 jQuery 直挂宿主
         run: |
@@ -59,14 +60,15 @@ jobs:
           cp -r demos/apps/vue3/dist site/canvas/vue3
           cp -r demos/apps/vue2/dist site/canvas/vue2
           cp -r demos/apps/react/dist site/canvas/react
+          cp -r demos/apps/print-demo/dist site/canvas/print-demo
           ls -R site | head -40
 
-      - name: 烟雾测试（导航页与四个宿主入口可达）
+      - name: 烟雾测试（导航页与五个示例入口可达）
         run: |
           cd site
           python3 -m http.server 8123 --bind 127.0.0.1 &
           sleep 1
-          for path in "" canvas/vue3/ canvas/vue2/ canvas/react/ canvas/jquery/; do
+          for path in "" canvas/vue3/ canvas/vue2/ canvas/react/ canvas/jquery/ canvas/print-demo/; do
             code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8123/$path")
             echo "/$path → $code"
             test "$code" = "200" || exit 1

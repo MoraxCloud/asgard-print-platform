@@ -49,13 +49,13 @@
     "kinds": ["barChart", "barHChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "scatterChart", "radarChart", "funnelChart", "gaugeChart"],
     "exportFormats": [],
     "peerDeps": {
-      "@worm-print-platform/core": "^1.5.3",
-      "@worm-print-platform/plugin-kit": "^1.5.3"
+      "@worm-print-platform/core": "^1.6.0",
+      "@worm-print-platform/plugin-kit": "^1.6.0"
     }
   },
   "dependencies": {
-    "@worm-print-platform/core": "^1.5.3",
-    "@worm-print-platform/plugin-kit": "^1.5.3",
+    "@worm-print-platform/core": "^1.6.0",
+    "@worm-print-platform/plugin-kit": "^1.6.0",
     "echarts": "^6.1.0"
   },
   "devDependencies": {

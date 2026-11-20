@@ -107,6 +107,7 @@ function elementsPane(): unknown[] {
 
 function fieldsPane(ctx: ShellCtx) {
   const st = ctx.state
+  const mode = st.fieldDisplay ?? 'both'
   const groups = groupFields(ctx.store.fields as PrintBusinessField[])
   const keyword = (st.fieldSearch ?? '').trim().toLowerCase()
   const matched = keyword
@@ -162,9 +163,12 @@ function fieldsPane(ctx: ShellCtx) {
       }, [
         h('span', { class: 'node-icon', text: '📄' }),
         h('span', { class: 'node-meta' }, [
-          h('span', { class: 'node-label', text: field.fieldLabel }),
-          h('span', { class: 'node-key', text: `(${field.fieldKey})` }),
-        ]),
+          mode !== 'key' ? h('span', { class: 'node-label', text: field.fieldLabel || field.fieldKey }) : '',
+          mode !== 'label' ? h('span', {
+            class: `node-key${mode === 'key' ? ' is-primary' : ''}`,
+            text: mode === 'key' ? field.fieldKey : `(${field.fieldKey})`,
+          }) : '',
+        ].filter(Boolean) as never),
         st.copiedFieldKey === field.fieldKey ? h('span', { class: 'copy-hint', text: '已复制' }) : '',
       ].filter(Boolean)))
       return [header, h('div', {}, rows.filter(Boolean))].filter(Boolean)

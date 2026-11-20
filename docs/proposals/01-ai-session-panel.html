@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案草图 01 · 内置 AI 会话面板</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --ink:#1b2330; --muted:#6b7688; --line:#e2e7ee;
+    --brand:#2f6df6; --brand-bg:#eef4ff; --green:#2e9e5b; --amber:#d98a1f;
+    --panel:#fff; --canvas-bg:#e9edf3; --bubble:#f1f4f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{max-width:1280px;margin:0 auto;padding:36px 24px 72px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand)}
+  h1{font-size:26px;margin:8px 0 6px}
+  .lead{color:var(--muted);font-size:14px;max-width:880px;margin:0 0 22px}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .legend span{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--muted)}
+
+  /* 浏览器外壳 */
+  .browser{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px rgba(27,35,48,.10);overflow:hidden}
+  .titlebar{height:40px;background:#f7f9fc;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:0 14px}
+  .dot{width:10px;height:10px;border-radius:50%;background:#d9dfe7}
+  .dot.r{background:#ff6059}.dot.y{background:#ffbd2e}.dot.g{background:#28c840}
+  .url{margin-left:14px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 14px;font-size:11px;color:var(--muted);flex:1;text-align:center}
+  .app{display:flex;flex-direction:column;height:700px}
+
+  /* 顶栏 */
+  .topbar{height:46px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:12px;flex-shrink:0}
+  .logo{font-weight:800;color:var(--brand);font-size:14px}
+  .tname{font-size:13px;color:var(--muted);border-left:1px solid var(--line);padding-left:12px}
+  .topbar .spacer{flex:1}
+  .ai-badge{font-size:11px;color:var(--green);background:#eaf7ef;border:1px solid #c9ecd6;border-radius:999px;padding:4px 10px;display:flex;align-items:center;gap:6px}
+  .ai-badge i{width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block}
+  .btn{font-size:12px;border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 12px;color:var(--ink)}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+  /* 工作区三列 */
+  .work{flex:1;display:grid;grid-template-columns:184px 1fr 390px;min-height:0}
+  .left{border-right:1px solid var(--line);padding:12px;font-size:12px;overflow:hidden}
+  .sec{font-weight:700;color:var(--muted);font-size:11px;letter-spacing:.05em;margin:10px 0 8px}
+  .leaf{border:1px solid var(--line);border-radius:6px;padding:6px 9px;margin-bottom:6px;background:#fbfcfe}
+  .leaf.on{border-color:var(--brand);background:var(--brand-bg);color:var(--brand)}
+  .canvas-area{background:var(--canvas-bg);display:flex;align-items:flex-start;justify-content:center;padding:22px;overflow:hidden}
+  .paper{width:300px;min-height:420px;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.12);padding:18px 16px;font-size:10px;color:#374151}
+  .p-head{height:22px;background:#2f6df6;border-radius:3px;margin-bottom:10px;display:flex;align-items:center;padding-left:8px;color:#fff;font-weight:700;font-size:9px}
+  .p-row{display:flex;gap:6px;margin-bottom:6px}
+  .p-cell{flex:1;height:12px;background:#eef1f5;border-radius:2px}
+  .p-table{border:1px solid #cbd5e1;margin-top:10px}
+  .p-tr{display:flex;border-bottom:1px solid #e2e8f0;height:18px}
+  .p-tr:last-child{border-bottom:none}
+  .p-th{background:#f1f5f9;font-weight:700}
+  .p-td{flex:1;border-right:1px solid #e2e8f0;padding:3px 5px}
+  .p-td:last-child{border-right:none}
+  .p-total{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;font-weight:700}
+  .p-qr{width:42px;height:42px;border:1px dashed #94a3b8;margin:14px 0 0 auto;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:8px}
+  .zoom{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:11px;color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+  /* 右侧 AI 面板（重点） */
+  .right{border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#fff}
+  .tabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0}
+  .tab{flex:1;text-align:center;font-size:12px;padding:10px 0;color:var(--muted);border-bottom:2px solid transparent}
+  .tab.on{color:var(--brand);font-weight:700;border-bottom-color:var(--brand);background:var(--brand-bg)}
+  .status{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#f8fafc;border-bottom:1px solid var(--line);font-size:10px;flex-shrink:0;white-space:nowrap}
+  .status .rev{font-family:ui-monospace,monospace;color:var(--muted);background:#eef1f5;padding:2px 6px;border-radius:4px}
+  .status select{margin-left:auto;font-size:11px;border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:#fff;color:var(--ink)}
+  .chat{flex:1;overflow:hidden;padding:12px;background:#fbfcfe;display:flex;flex-direction:column;gap:10px}
+  .msg{font-size:12px;max-width:96%}
+  .msg.user{align-self:flex-end;background:var(--brand);color:#fff;border-radius:12px 12px 2px 12px;padding:8px 12px}
+  .msg.ai{align-self:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px 12px 12px 2px;padding:10px 12px;width:94%}
+  .steps{margin:8px 0 0;padding:0;list-style:none}
+  .steps li{display:flex;align-items:center;gap:7px;padding:3px 0;color:#465366}
+  .steps .ic{width:15px;height:15px;border-radius:50%;background:#eaf7ef;color:var(--green);font-size:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .steps .tm{margin-left:auto;color:#9aa4b2;font-family:ui-monospace,monospace;font-size:10px}
+  .diff-card{border:1px solid #d9e3f5;background:var(--brand-bg);border-radius:8px;padding:8px 10px;margin-top:8px}
+  .diff-card .r{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)}
+  .diff-card .s{display:flex;gap:10px;font-size:11px;margin:6px 0}
+  .diff-card .s b{color:var(--brand)}
+  .diff-card .acts{display:flex;gap:6px;margin-top:6px}
+  .mini{font-size:10px;border:1px solid #c9d9f5;background:#fff;border-radius:5px;padding:3px 8px;color:var(--brand)}
+  .typing .cursor{display:inline-block;width:6px;height:12px;background:var(--brand);vertical-align:-2px;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 8px;flex-shrink:0}
+  .chip{font-size:10px;border:1px dashed #c4d2e8;color:var(--brand);background:#f7faff;border-radius:999px;padding:3px 8px;white-space:nowrap}
+  .composer{border-top:1px solid var(--line);padding:10px;display:flex;gap:8px;flex-shrink:0}
+  .composer textarea{flex:1;resize:none;height:50px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12px;font-family:inherit;color:var(--ink)}
+  .send{width:38px;border:none;background:var(--brand);color:#fff;border-radius:8px;font-size:16px;cursor:pointer}
+  .safety{margin:0;padding:8px 12px;background:#fffbeb;border-top:1px solid #fde9b8;font-size:10px;color:#8a6416;flex-shrink:0}
+
+  .notes{margin-top:26px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .notes h3{margin:0 0 12px;font-size:16px}
+  .notes ol{margin:0;padding-left:22px}
+  .notes li{font-size:13px;margin:7px 0;color:#445064}
+  .notes code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:11px}
+  .callout{margin-top:14px;background:var(--brand-bg);border-left:3px solid var(--brand);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#274a8a}
+  .nav{margin-top:20px;font-size:13px}.nav a{color:var(--brand);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">方案草图 01 / 06 · P0</div>
+  <h1>内置 AI 会话面板（AI 模板助手）</h1>
+  <p class="lead">把当前「用户自行配置外部 Agent + MCP」的重前置链路，变成设计器右侧开箱即用的对话面板：用自然语言生成或修改模板，每次变更经过与现有模板会话一致的 revision / 封禁校验后才写回画布，并支持逐次撤销。</p>
+  <div class="legend">
+    <span>① 右侧新增「AI 助手」页签</span>
+    <span>② 复用 template.apply 写回通道</span>
+    <span>③ 变更摘要可审阅</span>
+    <span>④ 一键撤销 AI 变更</span>
+  </div>
+
+  <div class="browser">
+    <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">localhost:5173 / 销售单模板设计器</span></div>
+    <div class="app">
+      <div class="topbar">
+        <span class="logo">◧ 打印设计器</span>
+        <span class="tname">销售单模板 · v1.6.0</span>
+        <span class="spacer"></span>
+        <span class="ai-badge"><i></i> MCP 已连接 · demo设计器</span>
+        <span class="btn">预览</span><span class="btn">保存</span><span class="btn primary">打印</span>
+      </div>
+
+      <div class="work">
+        <!-- 左侧：元素与字段 -->
+        <div class="left">
+          <div class="sec">元素</div>
+          <div class="leaf">文本</div><div class="leaf">表格</div><div class="leaf">二维码</div>
+          <div class="sec">字段树</div>
+          <div class="leaf on">订单信息</div>
+          <div class="leaf">&nbsp;&nbsp;订单号</div>
+          <div class="leaf">&nbsp;&nbsp;客户名称</div>
+          <div class="leaf">明细行</div>
+          <div class="leaf">&nbsp;&nbsp;品名 / 数量 / 单价</div>
+          <div class="sec">素材</div>
+          <div class="leaf">图表插件 · 2</div>
+        </div>
+
+        <!-- 中间：A4 画布 -->
+        <div class="canvas-area" style="position:relative">
+          <div class="paper">
+            <div class="p-head">销售单据 · SALES ORDER</div>
+            <div class="p-row"><div class="p-cell"></div><div class="p-cell"></div></div>
+            <div class="p-row"><div class="p-cell"></div><div class="p-cell"></div></div>
+            <div class="p-table">
+              <div class="p-tr p-th"><div class="p-td">品名</div><div class="p-td">数量</div><div class="p-td">单价</div><div class="p-td">金额</div></div>
+              <div class="p-tr"><div class="p-td">—</div><div class="p-td">—</div><div class="p-td">—</div><div class="p-td">—</div></div>
+              <div class="p-tr"><div class="p-td">—</div><div class="p-td">—</div><div class="p-td">—</div><div class="p-td">—</div></div>
+            </div>
+            <div class="p-total">合计：￥0.00</div>
+            <div class="p-qr">二维码</div>
+          </div>
+          <div class="zoom">− &nbsp; 75% &nbsp; +</div>
+        </div>
+
+        <!-- 右侧：AI 助手面板 -->
+        <div class="right">
+          <div class="tabs">
+            <div class="tab">字段</div><div class="tab">素材</div><div class="tab">属性</div><div class="tab on">AI 助手</div>
+          </div>
+          <div class="status">
+            <span style="color:var(--green)">●</span> 会话已附着
+            <span class="rev">rev a1b2…c3d4</span>
+            <select><option>宿主配置模型</option><option>Claude / GPT / 本地模型</option></select>
+          </div>
+          <div class="chat">
+            <div class="msg user">生成一张 A4 销售单，表头蓝色，含明细表和合计，右下角放二维码</div>
+            <div class="msg ai">
+              <div>好的，我先读取当前模板和字段树，然后生成元素树。</div>
+              <ul class="steps">
+                <li><span class="ic">✓</span> template.get 读取画布快照 <span class="tm">42ms</span></li>
+                <li><span class="ic">✓</span> 分析字段树（订单信息 / 明细行） <span class="tm">—</span></li>
+                <li><span class="ic">✓</span> 生成 12 个文本 + 1 个表格 + 1 个二维码 <span class="tm">—</span></li>
+                <li><span class="ic">✓</span> template.apply 写回画布 <span class="tm">68ms</span></li>
+              </ul>
+              <div class="diff-card">
+                <div class="r">revision&nbsp; a1b2c3d4 → e5f6a7b8</div>
+                <div class="s"><span>新增 <b>14</b> 元素</span><span>修改 <b>3</b> 元素</span><span>删除 <b>0</b> 元素</span></div>
+                <div class="acts"><span class="mini">查看差异</span><span class="mini">预览结果</span><span class="mini">撤销此次变更</span></div>
+              </div>
+            </div>
+            <div class="msg user">把合计行的背景改成浅灰，字号加大到 14</div>
+            <div class="msg ai typing">正在调整「合计行」样式：背景 #f1f5f9、字号 14pt<span class="cursor"></span></div>
+          </div>
+          <div class="chips">
+            <span class="chip">+ 生成单据模板</span><span class="chip">+ 绑定字段</span><span class="chip">+ 修复表达式</span><span class="chip">+ 转成多页</span>
+          </div>
+          <div class="composer">
+            <textarea placeholder="描述你要修改的内容，例如：在页脚加公司电话和统一社会信用代码…"></textarea>
+            <button class="send">↑</button>
+          </div>
+          <div class="safety">安全链路：AI 不直接写画布。所有变更走 template.apply → revision 冲突拒绝 → 封禁元素校验 → 结构校验 → 写回，与桌面 MCP 完全同口径。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>设计要点（与现有代码的衔接）</h3>
+    <ol>
+      <li><b>UI 落点</b>：在 <code>packages/canvas</code> 右侧属性面板增加第四个页签「AI 助手」，不改动中间画布与左侧字段树的既有交互。</li>
+      <li><b>连接层</b>：复用 <code>demos/shared/template-session.ts</code> 已验证的状态机（unreachable / idle / attached）与 <code>revisionOf()</code> 内容指纹；会话状态和 revision 短码直接显示在面板状态条。</li>
+      <li><b>写回链路</b>：模型输出的模板 JSON 不直接落到画布，而是作为 <code>template.apply</code> 请求进入现有 handler：先校验 baseRevision 一致性（冲突拒绝），再走 <code>findBlockedElementPaths</code> 封禁元素校验与结构校验，最后 <code>structuredClone</code> 写回并由画布重读新 revision。</li>
+      <li><b>可审阅 / 可撤销</b>：每次 apply 返回新旧 revision 与元素级 diff 统计，渲染为对话内的「变更摘要卡」；撤销按钮复用设计器既有撤销栈（<code>onApplyResult('success')</code> 已提示可撤销）。</li>
+      <li><b>模型归属</b>：遵循现有技能约定——面板不持有模型密钥，通过宿主注入的模型适配器调用（对应功能 03 的可插拔传输）。</li>
+    </ol>
+    <div class="callout">依赖：功能 03（统一会话 SDK）提供连接层，功能 02（MCP 流式）提供逐步进度与提示词；本功能本身是面向用户的表现层。</div>
+  </div>
+
+  <div class="nav"><a href="index.html">← 返回草图导航</a> &nbsp;·&nbsp; <a href="02-mcp-streaming.html">下一个：MCP 流式与提示词 →</a></div>
+</div>
+</body>
+</html>

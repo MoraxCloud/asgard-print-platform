@@ -29,12 +29,14 @@ const HOST_LINKS = _isLocalhost
       { key: 'vue2',   label: 'Vue2 宿主',                   href: 'http://localhost:9332/' },
       { key: 'react',  label: 'React 宿主',                  href: 'http://localhost:9335/' },
       { key: 'jquery', label: 'jQuery 宿主',                 href: 'http://localhost:9334/' },
+      { key: 'print-demo', label: '业务接入示例',            href: 'http://localhost:9336/' },
     ]
   : [
       { key: 'vue3',   label: 'Vue3 宿主',                   href: `${_hostBase}/canvas/vue3/` },
       { key: 'vue2',   label: 'Vue2 宿主',                   href: `${_hostBase}/canvas/vue2/` },
       { key: 'react',  label: 'React 宿主',                  href: `${_hostBase}/canvas/react/` },
       { key: 'jquery', label: 'jQuery 宿主',                 href: `${_hostBase}/canvas/jquery/` },
+      { key: 'print-demo', label: '业务接入示例',            href: `${_hostBase}/canvas/print-demo/` },
     ]
 const CURRENT_HOST = 'react'
 
@@ -438,15 +440,15 @@ export default function App() {
           </button>
           <span className="demo-more-panel" hidden>
             <p className="demo-more-note">仅在横向空间不足时，顶部操作才会折叠到这里</p>
-          <div className="demo-more-item" data-unit="biz"><span className="demo-more-label">业务类型</span><span className="demo-more-slot" data-overflow-slot="biz"></span></div>
-          <div className="demo-more-item" data-unit="host-switch"><span className="demo-more-label">宿主示例</span><span className="demo-more-slot" data-overflow-slot="host-switch"></span></div>
-          <div className="demo-more-item" data-unit="host-badge"><span className="demo-more-label">宿主标识</span><span className="demo-more-slot" data-overflow-slot="host-badge"></span></div>
-          <div className="demo-more-item" data-unit="clear"><span className="demo-more-label">清空</span><span className="demo-more-slot" data-overflow-slot="clear"></span></div>
-          <div className="demo-more-item" data-unit="import"><span className="demo-more-label">导入模板</span><span className="demo-more-slot" data-overflow-slot="import"></span></div>
-          <div className="demo-more-item" data-unit="export"><span className="demo-more-label">导出模板</span><span className="demo-more-slot" data-overflow-slot="export"></span></div>
-          <div className="demo-more-item" data-unit="custom"><span className="demo-more-label">自定义字段与数据</span><span className="demo-more-slot" data-overflow-slot="custom"></span></div>
-          <div className="demo-more-item" data-unit="batch"><span className="demo-more-label">批量打印</span><span className="demo-more-slot" data-overflow-slot="batch"></span></div>
-          <div className="demo-more-item" data-unit="gallery"><span className="demo-more-label">加载示例</span><span className="demo-more-slot" data-overflow-slot="gallery"></span></div>
+          <div className="demo-more-item" data-unit="biz"><span className="demo-more-slot" data-overflow-slot="biz"></span></div>
+          <div className="demo-more-item" data-unit="host-switch"><span className="demo-more-slot" data-overflow-slot="host-switch"></span></div>
+          <div className="demo-more-item" data-unit="host-badge"><span className="demo-more-slot" data-overflow-slot="host-badge"></span></div>
+          <div className="demo-more-item" data-unit="clear"><span className="demo-more-slot" data-overflow-slot="clear"></span></div>
+          <div className="demo-more-item" data-unit="import"><span className="demo-more-slot" data-overflow-slot="import"></span></div>
+          <div className="demo-more-item" data-unit="export"><span className="demo-more-slot" data-overflow-slot="export"></span></div>
+          <div className="demo-more-item" data-unit="custom"><span className="demo-more-slot" data-overflow-slot="custom"></span></div>
+          <div className="demo-more-item" data-unit="batch"><span className="demo-more-slot" data-overflow-slot="batch"></span></div>
+          <div className="demo-more-item" data-unit="gallery"><span className="demo-more-slot" data-overflow-slot="gallery"></span></div>
           </span>
         </span>
         <button type="button" className="demo-print-btn" onClick={() => setConfigVisible(true)}>配置</button>

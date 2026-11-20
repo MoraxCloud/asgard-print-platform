@@ -1,6 +1,6 @@
 {
   "name": "@worm-print-platform/demo-vue3",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "description": "Vue 3 宿主集成 @worm-print-platform/canvas 的独立示例：设计器挂载、事件、浏览器预览打印、服务端 PDF、客户端静默打印",
@@ -14,6 +14,7 @@
     "@worm-print-platform/core": "file:../../../packages/core",
     "@worm-print-platform/echarts": "file:../../../packages/echarts",
     "@worm-print-platform/plugin-kit": "file:../../../packages/plugin-kit",
+    "@worm-print-platform/plugin-data-preview": "file:../../../marketplace/plugins/data-preview",
     "vue": "^3.5.13"
   },
   "devDependencies": {

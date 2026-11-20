@@ -3,12 +3,12 @@ name: Create Gitee Release
 # 手动在 Gitee 为指定标签创建 release（不含客户端 assets）。
 # 正文取自 GitHub 同名 release；Gitee 会自动附带源码 zip/tar.gz，非客户端安装包。
 # 触发：Actions → Create Gitee Release → Run workflow，填写 tag，或
-#   gh workflow run create-gitee-release.yml -f tag=v1.5.3
+#   gh workflow run create-gitee-release.yml -f tag=v1.6.0
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: '要创建 release 的标签（如 v1.5.3，需已存在于 Gitee）'
+        description: '要创建 release 的标签（如 v1.6.0，需已存在于 Gitee）'
         required: true
         type: string
 

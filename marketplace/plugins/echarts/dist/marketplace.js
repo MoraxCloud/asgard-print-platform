@@ -474,201 +474,12 @@ function applyExtraComponents() {
   for (const item of fresh) appliedComponents.add(item);
 }
 
-// src/normalize.ts
-function asArray(value) {
-  if (Array.isArray(value)) return value.map((item) => ({ ...item }));
-  return [];
-}
-function normalizeCategoryAxis(axis, horizontal) {
-  const next = { ...axis, type: horizontal ? "value" : "category" };
-  if (horizontal) delete next.data;
-  else if (!Array.isArray(next.data)) next.data = ["$data"];
-  return next;
-}
-function normalizeValueAxis(axis, horizontal) {
-  const next = { ...axis, type: horizontal ? "category" : "value" };
-  if (horizontal && !Array.isArray(next.data)) next.data = ["$data"];
-  if (!horizontal) delete next.data;
-  return next;
-}
-function mapAxes(value, fn) {
-  if (Array.isArray(value)) return value.map((item) => fn({ ...item }));
-  if (value && typeof value === "object") return fn({ ...value });
-  return fn({});
-}
-function normalizeChartOption(type, option) {
-  const def = getChartKindDefinition(type);
-  if (!def) return option;
-  const next = structuredClone(option);
-  const series = asArray(next.series);
-  if (series.length === 0) return next;
-  if (def.seriesType === "pie") {
-    next.series = series.map((item) => ({
-      ...item,
-      type: "pie",
-      ...type === "doughnutChart" ? { radius: item.radius ?? ["40%", "70%"] } : {}
-    }));
-    delete next.xAxis;
-    delete next.yAxis;
-    return next;
-  }
-  if (def.seriesType === "scatter") {
-    next.series = series.map((item) => ({ ...item, type: "scatter" }));
-    next.xAxis = mapAxes(next.xAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
-    next.yAxis = mapAxes(next.yAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
-    return next;
-  }
-  if (def.seriesType === "radar") {
-    next.series = series.map((item) => ({ ...item, type: "radar" }));
-    return next;
-  }
-  if (def.seriesType === "funnel") {
-    next.series = series.map((item) => ({ ...item, type: "funnel", sort: "descending" }));
-    return next;
-  }
-  if (def.seriesType === "gauge") {
-    next.series = series.map((item) => ({ ...item, type: "gauge" }));
-    return next;
-  }
-  const horizontal = def.orientation === "horizontal";
-  const seriesType = def.seriesType === "line" ? "line" : "bar";
-  next.xAxis = mapAxes(next.xAxis, (axis) => normalizeCategoryAxis(axis, horizontal));
-  next.yAxis = mapAxes(next.yAxis, (axis) => normalizeValueAxis(axis, horizontal));
-  next.series = series.map((item) => {
-    const shape = { ...item, type: seriesType };
-    if (type === "areaChart") shape.areaStyle = item.areaStyle ?? {};
-    else delete shape.areaStyle;
-    return shape;
-  });
-  return next;
-}
-
 // src/units.ts
 var PX_PER_MM = 96 / 25.4;
 function mmToChartPx(mm) {
   const value = Number.isFinite(mm) ? mm : 0;
   return Math.max(1, Math.round(value * PX_PER_MM));
 }
-
-// src/renderer.ts
-function fitSvgRoot(svg, widthPx, heightPx) {
-  const match = /<svg\b[^>]*>/i.exec(svg);
-  if (!match) return svg;
-  const rootTag = match[0];
-  const rawAttrs = rootTag.slice("<svg".length, -1);
-  const styleMatch = /\sstyle\s*=\s*"([^"]*)"/i.exec(rawAttrs);
-  const keptStyle = (styleMatch?.[1] ?? "").split(";").map((decl) => decl.trim()).filter((decl) => decl && !/^(width|height|display)\s*:/i.test(decl)).join(";");
-  const attrs = rawAttrs.replace(/\s(width|height|style|viewBox)\s*=\s*"[^"]*"/gi, "").trimEnd();
-  const style = ["display:block", "width:100%", "height:100%", keptStyle].filter(Boolean).join(";");
-  const nextTag = `<svg${attrs} width="100%" height="100%" viewBox="0 0 ${widthPx} ${heightPx}" style="${style}">`;
-  return svg.slice(0, match.index) + nextTag + svg.slice(match.index + rootTag.length);
-}
-function renderChartToSvg(spec) {
-  applyExtraComponents();
-  const option = normalizeChartOption(spec.type, spec.option);
-  if (!option || typeof option !== "object" || Array.isArray(option)) {
-    throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
-  }
-  const width = mmToChartPx(spec.widthMm);
-  const height = mmToChartPx(spec.heightMm);
-  const chart = echarts.init(null, null, { renderer: "svg", ssr: true, width, height });
-  try {
-    const userTextStyle = option.textStyle && typeof option.textStyle === "object" && !Array.isArray(option.textStyle) ? option.textStyle : void 0;
-    const textStyle = {
-      ...spec.fontFamily ? { fontFamily: spec.fontFamily } : {},
-      ...userTextStyle ?? {}
-    };
-    chart.setOption({
-      animation: false,
-      ...option,
-      ...Object.keys(textStyle).length > 0 ? { textStyle } : {}
-    });
-    return fitSvgRoot(chart.renderToSVGString(), width, height);
-  } finally {
-    chart.dispose();
-  }
-}
-function escapeHtml(value) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-function renderChartElement(spec) {
-  const option = spec._chartOption ?? spec.chartOption;
-  const placeholder = `<span>${escapeHtml(String(spec.title ?? "\u56FE\u8868"))}</span>`;
-  if (!option || typeof option !== "object" || Array.isArray(option)) return placeholder;
-  try {
-    return renderChartToSvg({
-      key: String(spec.key ?? ""),
-      type: String(spec.type ?? ""),
-      option,
-      widthMm: Number(spec.widthMm ?? 0),
-      heightMm: Number(spec.heightMm ?? 0),
-      fontFamily: typeof spec.fontFamily === "string" ? spec.fontFamily : void 0
-    });
-  } catch {
-    return placeholder;
-  }
-}
-
-// src/version.ts
-var CHART_EXECUTOR_VERSION = "2";
-
-// src/plugin.ts
-var CHART_OPTION_META = {
-  chartOption: { kind: "object", label: "\u56FE\u8868 option" },
-  chartDataSource: { kind: "text", label: "\u6570\u636E\u6E90" },
-  chartCategoryField: { kind: "text", label: "\u7C7B\u76EE\u5B57\u6BB5" },
-  chartValueFields: { kind: "object", label: "\u6570\u503C\u5B57\u6BB5" },
-  chartSeriesField: { kind: "text", label: "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5" }
-};
-var SCATTER_OPTION_META = {
-  ...CHART_OPTION_META,
-  chartBubble: { kind: "bool", label: "\u6C14\u6CE1\u5927\u5C0F" }
-};
-var CHART_PLUGIN = defineElementPlugin({
-  id: CHART_PLUGIN_ID,
-  version: CHART_EXECUTOR_VERSION,
-  kinds: CHART_KIND_DEFINITIONS.map((def) => ({
-    type: def.type,
-    label: def.label,
-    icon: def.icon,
-    fixedHeight: true,
-    requiredOptionKeys: def.requiredOptionKeys,
-    notes: def.notes,
-    optionMeta: def.type === "scatterChart" ? SCATTER_OPTION_META : CHART_OPTION_META,
-    defaultOptions: (partial) => chartFactoryDefaults(def.type, partial),
-    binding: { bind: (options, data) => bindChartData(def.type, options, data) }
-  })),
-  render: {
-    html: renderChartElement,
-    createRenderer: () => ({ render: renderChartElement })
-  }
-});
-var disposeHandle;
-function registerChartPlugin(designer, extraRender) {
-  const current = getElementPluginById(CHART_PLUGIN_ID);
-  if (!designer && !extraRender) {
-    const dispose2 = registerElementPlugin(CHART_PLUGIN);
-    disposeHandle = dispose2;
-    return dispose2;
-  }
-  const merged = {
-    ...CHART_PLUGIN,
-    designer: designer ?? current?.designer ?? CHART_PLUGIN.designer,
-    render: { ...CHART_PLUGIN.render, ...current?.render, ...extraRender }
-  };
-  const dispose = registerElementPlugin(merged);
-  disposeHandle = dispose;
-  return dispose;
-}
-registerChartPlugin();
-
-// src/index.ts
-registerChartPlugin();
-
-// src/ui.ts
-import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
-import { render } from "@worm-print-platform/plugin-kit/dom";
-import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
 
 // src/option-utils.ts
 var SAMPLE_VALUES = [12, 20, 15];
@@ -895,8 +706,7 @@ var FIELDS_BY_SERIES = {
     "overflow",
     "position",
     "rotate",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -911,8 +721,7 @@ var FIELDS_BY_SERIES = {
     "overflow",
     "position",
     "rotate",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -927,8 +736,7 @@ var FIELDS_BY_SERIES = {
     "overflow",
     "position",
     "distance",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -948,8 +756,7 @@ var FIELDS_BY_SERIES = {
     "position",
     "distance",
     "rotate",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -972,7 +779,7 @@ var FIELDS_BY_SERIES = {
     "labelLine.length",
     "labelLine.smooth"
   ],
-  gauge: ["formatter", "fontSize", "fontWeight", "color", "offsetX", "offsetY"]
+  gauge: ["formatter", "fontSize", "fontWeight", "color", "offset"]
 };
 var VALUE_KEYS = [
   "formatter",
@@ -980,8 +787,7 @@ var VALUE_KEYS = [
   "position",
   "distance",
   "rotate",
-  "offsetX",
-  "offsetY",
+  "offset",
   "fontSize",
   "fontWeight",
   "color",
@@ -998,6 +804,17 @@ function seriesOf2(option) {
 function asRecord(node) {
   return node && typeof node === "object" && !Array.isArray(node) ? { ...node } : {};
 }
+function normalizeLabelOffsetInPlace(target) {
+  if (typeof target.offsetX !== "number" && typeof target.offsetY !== "number") return;
+  if (!Array.isArray(target.offset)) {
+    target.offset = [
+      typeof target.offsetX === "number" ? target.offsetX : 0,
+      typeof target.offsetY === "number" ? target.offsetY : 0
+    ];
+  }
+  delete target.offsetX;
+  delete target.offsetY;
+}
 function labelTargetOf(type) {
   return getChartKindDefinition(type)?.seriesType === "gauge" ? "detail" : "label";
 }
@@ -1009,6 +826,7 @@ function readChartLabel(option, type) {
   const def = getChartKindDefinition(type);
   const series = seriesOf2(option);
   const target = asRecord(series[0]?.[labelTargetOf(type)]);
+  normalizeLabelOffsetInPlace(target);
   const state = {
     show: typeof target.show === "boolean" ? target.show : def ? NATIVE_SHOW[def.seriesType] : false,
     // labelLine 在 ECharts 里是 series 顶层键（与 label 平级），不是 label 的子键
@@ -1016,7 +834,12 @@ function readChartLabel(option, type) {
   };
   for (const key of VALUE_KEYS) {
     const value = target[key];
+    if (key === "offset") continue;
     if (typeof value === "string" || typeof value === "number") state[key] = value;
+  }
+  const offset = target.offset;
+  if (Array.isArray(offset) && typeof offset[0] === "number" && typeof offset[1] === "number") {
+    state.offset = [offset[0], offset[1]];
   }
   return state;
 }
@@ -1038,6 +861,7 @@ function updateChartLabel(option, type, patch) {
   for (const item of series) {
     if (!item || typeof item !== "object") continue;
     const current = asRecord(item[targetKey]);
+    normalizeLabelOffsetInPlace(current);
     if (enabled === true) {
       Object.assign(current, { ...defaultSetOf(type), ...current, show: true });
     } else if (enabled === false) {
@@ -1060,7 +884,203 @@ function updateChartLabel(option, type, patch) {
   return next;
 }
 
+// src/normalize.ts
+function asArray(value) {
+  if (Array.isArray(value)) return value.map((item) => ({ ...item }));
+  return [];
+}
+function normalizeCategoryAxis(axis, horizontal) {
+  const next = { ...axis, type: horizontal ? "value" : "category" };
+  if (horizontal) delete next.data;
+  else if (!Array.isArray(next.data)) next.data = ["$data"];
+  return next;
+}
+function normalizeValueAxis(axis, horizontal) {
+  const next = { ...axis, type: horizontal ? "category" : "value" };
+  if (horizontal && !Array.isArray(next.data)) next.data = ["$data"];
+  if (!horizontal) delete next.data;
+  return next;
+}
+function mapAxes(value, fn) {
+  if (Array.isArray(value)) return value.map((item) => fn({ ...item }));
+  if (value && typeof value === "object") return fn({ ...value });
+  return fn({});
+}
+function normalizeChartOption(type, option) {
+  const def = getChartKindDefinition(type);
+  if (!def) return option;
+  const next = structuredClone(option);
+  const series = asArray(next.series);
+  if (series.length === 0) return next;
+  const labelKey = labelTargetOf(type);
+  for (const item of series) {
+    const label = item[labelKey];
+    if (label && typeof label === "object" && !Array.isArray(label)) {
+      const nextLabel = { ...label };
+      normalizeLabelOffsetInPlace(nextLabel);
+      item[labelKey] = nextLabel;
+    }
+  }
+  if (def.seriesType === "pie") {
+    next.series = series.map((item) => ({
+      ...item,
+      type: "pie",
+      ...type === "doughnutChart" ? { radius: item.radius ?? ["40%", "70%"] } : {}
+    }));
+    delete next.xAxis;
+    delete next.yAxis;
+    return next;
+  }
+  if (def.seriesType === "scatter") {
+    next.series = series.map((item) => ({ ...item, type: "scatter" }));
+    next.xAxis = mapAxes(next.xAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
+    next.yAxis = mapAxes(next.yAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
+    return next;
+  }
+  if (def.seriesType === "radar") {
+    next.series = series.map((item) => ({ ...item, type: "radar" }));
+    return next;
+  }
+  if (def.seriesType === "funnel") {
+    next.series = series.map((item) => ({ ...item, type: "funnel", sort: "descending" }));
+    return next;
+  }
+  if (def.seriesType === "gauge") {
+    next.series = series.map((item) => ({ ...item, type: "gauge" }));
+    return next;
+  }
+  const horizontal = def.orientation === "horizontal";
+  const seriesType = def.seriesType === "line" ? "line" : "bar";
+  next.xAxis = mapAxes(next.xAxis, (axis) => normalizeCategoryAxis(axis, horizontal));
+  next.yAxis = mapAxes(next.yAxis, (axis) => normalizeValueAxis(axis, horizontal));
+  next.series = series.map((item) => {
+    const shape = { ...item, type: seriesType };
+    if (type === "areaChart") shape.areaStyle = item.areaStyle ?? {};
+    else delete shape.areaStyle;
+    return shape;
+  });
+  return next;
+}
+
+// src/renderer.ts
+function fitSvgRoot(svg, widthPx, heightPx) {
+  const match = /<svg\b[^>]*>/i.exec(svg);
+  if (!match) return svg;
+  const rootTag = match[0];
+  const rawAttrs = rootTag.slice("<svg".length, -1);
+  const styleMatch = /\sstyle\s*=\s*"([^"]*)"/i.exec(rawAttrs);
+  const keptStyle = (styleMatch?.[1] ?? "").split(";").map((decl) => decl.trim()).filter((decl) => decl && !/^(width|height|display)\s*:/i.test(decl)).join(";");
+  const attrs = rawAttrs.replace(/\s(width|height|style|viewBox)\s*=\s*"[^"]*"/gi, "").trimEnd();
+  const style = ["display:block", "width:100%", "height:100%", keptStyle].filter(Boolean).join(";");
+  const nextTag = `<svg${attrs} width="100%" height="100%" viewBox="0 0 ${widthPx} ${heightPx}" style="${style}">`;
+  return svg.slice(0, match.index) + nextTag + svg.slice(match.index + rootTag.length);
+}
+function renderChartToSvg(spec) {
+  applyExtraComponents();
+  const option = normalizeChartOption(spec.type, spec.option);
+  if (!option || typeof option !== "object" || Array.isArray(option)) {
+    throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
+  }
+  const width = mmToChartPx(spec.widthMm);
+  const height = mmToChartPx(spec.heightMm);
+  const chart = echarts.init(null, null, { renderer: "svg", ssr: true, width, height });
+  try {
+    const userTextStyle = option.textStyle && typeof option.textStyle === "object" && !Array.isArray(option.textStyle) ? option.textStyle : void 0;
+    const textStyle = {
+      ...spec.fontFamily ? { fontFamily: spec.fontFamily } : {},
+      ...userTextStyle ?? {}
+    };
+    chart.setOption({
+      animation: false,
+      ...option,
+      ...Object.keys(textStyle).length > 0 ? { textStyle } : {}
+    });
+    return fitSvgRoot(chart.renderToSVGString(), width, height);
+  } finally {
+    chart.dispose();
+  }
+}
+function escapeHtml(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function renderChartElement(spec) {
+  const option = spec._chartOption ?? spec.chartOption;
+  const placeholder = `<span>${escapeHtml(String(spec.title ?? "\u56FE\u8868"))}</span>`;
+  if (!option || typeof option !== "object" || Array.isArray(option)) return placeholder;
+  try {
+    return renderChartToSvg({
+      key: String(spec.key ?? ""),
+      type: String(spec.type ?? ""),
+      option,
+      widthMm: Number(spec.widthMm ?? 0),
+      heightMm: Number(spec.heightMm ?? 0),
+      fontFamily: typeof spec.fontFamily === "string" ? spec.fontFamily : void 0
+    });
+  } catch {
+    return placeholder;
+  }
+}
+
+// src/version.ts
+var CHART_EXECUTOR_VERSION = "2";
+
+// src/plugin.ts
+var CHART_OPTION_META = {
+  chartOption: { kind: "object", label: "\u56FE\u8868 option" },
+  chartDataSource: { kind: "text", label: "\u6570\u636E\u6E90" },
+  chartCategoryField: { kind: "text", label: "\u7C7B\u76EE\u5B57\u6BB5" },
+  chartValueFields: { kind: "object", label: "\u6570\u503C\u5B57\u6BB5" },
+  chartSeriesField: { kind: "text", label: "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5" }
+};
+var SCATTER_OPTION_META = {
+  ...CHART_OPTION_META,
+  chartBubble: { kind: "bool", label: "\u6C14\u6CE1\u5927\u5C0F" }
+};
+var CHART_PLUGIN = defineElementPlugin({
+  id: CHART_PLUGIN_ID,
+  version: CHART_EXECUTOR_VERSION,
+  kinds: CHART_KIND_DEFINITIONS.map((def) => ({
+    type: def.type,
+    label: def.label,
+    icon: def.icon,
+    fixedHeight: true,
+    requiredOptionKeys: def.requiredOptionKeys,
+    notes: def.notes,
+    optionMeta: def.type === "scatterChart" ? SCATTER_OPTION_META : CHART_OPTION_META,
+    defaultOptions: (partial) => chartFactoryDefaults(def.type, partial),
+    binding: { bind: (options, data) => bindChartData(def.type, options, data) }
+  })),
+  render: {
+    html: renderChartElement,
+    createRenderer: () => ({ render: renderChartElement })
+  }
+});
+var disposeHandle;
+function registerChartPlugin(designer, extraRender) {
+  const current = getElementPluginById(CHART_PLUGIN_ID);
+  if (!designer && !extraRender) {
+    const dispose2 = registerElementPlugin(CHART_PLUGIN);
+    disposeHandle = dispose2;
+    return dispose2;
+  }
+  const merged = {
+    ...CHART_PLUGIN,
+    designer: designer ?? current?.designer ?? CHART_PLUGIN.designer,
+    render: { ...CHART_PLUGIN.render, ...current?.render, ...extraRender }
+  };
+  const dispose = registerElementPlugin(merged);
+  disposeHandle = dispose;
+  return dispose;
+}
+registerChartPlugin();
+
+// src/index.ts
+registerChartPlugin();
+
 // src/ui.ts
+import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
+import { render } from "@worm-print-platform/plugin-kit/dom";
+import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
@@ -1436,7 +1456,7 @@ function renderLabelGroup(ctx, type) {
       group.appendChild(wrap);
     }
   }
-  if (has("position") || has("distance") || has("rotate") || has("offsetX")) {
+  if (has("position") || has("distance") || has("rotate") || has("offset")) {
     group.appendChild(el("div", "echarts-label-sub", "\u4F4D\u7F6E"));
     if (has("position")) {
       const wrap = field("\u6807\u7B7E\u4F4D\u7F6E");
@@ -1448,15 +1468,24 @@ function renderLabelGroup(ctx, type) {
     }
     if (has("distance")) group.appendChild(numberField("distance", state.distance));
     if (has("rotate")) group.appendChild(numberField("rotate", state.rotate));
-    if (has("offsetX") || has("offsetY")) {
+    if (has("offset")) {
+      let commitOffset2 = function() {
+        const parse = (input, fallback) => {
+          const text = input.value.trim();
+          if (text === "") return 0;
+          const value = Number(text);
+          return Number.isFinite(value) ? value : fallback;
+        };
+        commit({ offset: [parse(inputX, current[0] ?? 0), parse(inputY, current[1] ?? 0)] });
+      };
+      var commitOffset = commitOffset2;
       const wrap = field("\u504F\u79FB X / Y");
       const row = el("div", "echarts-field-row");
-      row.appendChild(
-        textInput({ value: state.offsetX === void 0 ? "" : String(state.offsetX), type: "number" }, (raw) => commitNumber("offsetX", raw))
-      );
-      row.appendChild(
-        textInput({ value: state.offsetY === void 0 ? "" : String(state.offsetY), type: "number" }, (raw) => commitNumber("offsetY", raw))
-      );
+      const current = state.offset ?? [0, 0];
+      const inputX = textInput({ value: String(current[0] ?? 0), type: "number" }, () => commitOffset2());
+      const inputY = textInput({ value: String(current[1] ?? 0), type: "number" }, () => commitOffset2());
+      row.appendChild(inputX);
+      row.appendChild(inputY);
       wrap.appendChild(row);
       group.appendChild(wrap);
     }

@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.5.3-384BFF" alt="npm">
+  <img src="https://img.shields.io/badge/npm-v1.6.0-384BFF" alt="npm">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
   <a href="/vue3">
     <img src="https://img.shields.io/badge/vue-optional%20peer-42b883" alt="vue peer">
@@ -108,10 +108,16 @@ import type { TemplateData } from '@worm-print-platform/canvas/vue3'
 
 | 面 | 内容 |
 | --- | --- |
-| attribute | `template` · `fields` · `name` · `fonts` · `design-data` · `theme` · `theme-config`（另 `is-edit` / `show-help` / `show-preview` / `show-save` 四个布尔开关） |
-| property | `template` · `fields` · `fonts` · `designData` · `isEdit` · `showHelp` · `showPreview` · `showSave` · `theme` · `themeConfig` · `uploadImage` · `uploadDesignBackground` |
+| attribute | `template` · `fields` · `name` · `fonts` · `design-data` · `theme` · `theme-config` · `field-display`（另 `is-edit` / `show-help` / `show-preview` / `show-save` 四个布尔开关） |
+| property | `template` · `fields` · `fonts` · `designData` · `isEdit` · `showHelp` · `showPreview` · `showSave` · `theme` · `themeConfig` · `uploadImage` · `uploadDesignBackground` · `fieldDisplay` |
 | 方法 | `getTemplateJson()` · `loadTemplate()` · `save()` · `validateTemplate()` · `getGeometryWarnings()` |
 | 事件（`bubbles + composed`） | `save` / `preview` → 模板 JSON 字符串；`help` → 无载荷；`dblclick-element` → 元素 id；`dblclick-cell` → `{ elementId, r, c, cellId? }` |
+
+`field-display`（property 名 `fieldDisplay`）取 `label`（只显示中文名）/ `key`（只显示字段 key）/ `both`（两者都显示，默认）。只影响素材台字段行与表达式弹窗「字段」页签；字段分组名始终显示，搜索、复制、双击插入与拖拽语义不变。只显示 key 时其字号、颜色与字族套用中文名样式。非法值静默回退 `both`。
+
+```html
+<print-designer field-display="label"></print-designer>
+```
 
 自定义外观：外壳 8 个 `::part` 挂钩 + 55 个 `--pd-*` 主题令牌（权威定义在 `@worm-print-platform/core/styles/theme.css`）。契约版本遵守语义化，`src/__tests__/host-contract.spec.ts` 做漂移检测。
 

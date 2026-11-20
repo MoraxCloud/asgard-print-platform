@@ -78,6 +78,51 @@ describe('labelFieldsOf 分档', () => {
     expect(labelFieldsOf('pieChart')).toContain('labelLine.length2')
     expect(labelFieldsOf('funnelChart')).not.toContain('labelLine.length2')
     expect(labelFieldsOf('radarChart')).toEqual(['formatter', 'fontSize', 'fontWeight', 'color'])
-    expect(labelFieldsOf('gaugeChart')).toEqual(['formatter', 'fontSize', 'fontWeight', 'color', 'offsetX', 'offsetY'])
+    expect(labelFieldsOf('gaugeChart')).toEqual(['formatter', 'fontSize', 'fontWeight', 'color', 'offset'])
+  })
+})
+
+describe('标签偏移 offset: [x, y]', () => {
+  const OFFSET_KINDS = [
+    'barChart', 'barHChart', 'lineChart', 'areaChart',
+    'pieChart', 'doughnutChart', 'scatterChart', 'gaugeChart',
+  ]
+
+  it('支持偏移的八类图表都能读写原生 offset', () => {
+    for (const type of OFFSET_KINDS) {
+      const next = updateChartLabel(createDefaultChartOption(type), type, { offset: [12, -8] })
+      const key = labelTargetOf(type)
+      expect((next.series as any[])[0][key].offset, type).toEqual([12, -8])
+      expect(readChartLabel(next, type).offset, type).toEqual([12, -8])
+    }
+    expect(labelFieldsOf('radarChart')).not.toContain('offset')
+    expect(labelFieldsOf('funnelChart')).not.toContain('offset')
+  })
+
+  it('旧 offsetX/offsetY 读入即迁移，写回不再残留旧键', () => {
+    const legacy = bar({ label: { show: true, offsetX: 7, offsetY: -3 } })
+    expect(readChartLabel(legacy, 'barChart').offset).toEqual([7, -3])
+    const next = updateChartLabel(legacy, 'barChart', { fontSize: 14 })
+    const label = (next.series as any[])[0].label
+    expect(label.offset).toEqual([7, -3])
+    expect(label.fontSize).toBe(14)
+    expect(label.offsetX).toBeUndefined()
+    expect(label.offsetY).toBeUndefined()
+  })
+
+  it('仪表盘 detail 的旧偏移同样迁移', () => {
+    const legacy = { series: [{ type: 'gauge', detail: { show: true, offsetX: 4, offsetY: 9 } }] }
+    expect(readChartLabel(legacy, 'gaugeChart').offset).toEqual([4, 9])
+    const next = updateChartLabel(legacy, 'gaugeChart', { color: '#fff' })
+    expect((next.series as any[])[0].detail.offset).toEqual([4, 9])
+  })
+
+  it('清空偏移同时删除原生键与旧键', () => {
+    const source = bar({ label: { show: true, offset: [2, 3], offsetX: 1, offsetY: 1 } })
+    const next = updateChartLabel(source, 'barChart', { offset: null as any })
+    const label = (next.series as any[])[0].label
+    expect(label.offset).toBeUndefined()
+    expect(label.offsetX).toBeUndefined()
+    expect(label.offsetY).toBeUndefined()
   })
 })

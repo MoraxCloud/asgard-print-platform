@@ -1,0 +1,13 @@
+{
+  "id": "data-preview",
+  "version": "0.1.0",
+  "name": "数据源预览",
+  "npmName": "@worm-print-platform/plugin-data-preview",
+  "entry": "dist/index.js",
+  "kinds": [],
+  "exportFormats": [],
+  "peerDeps": {
+    "@worm-print-platform/core": "^1.5.3"
+  },
+  "files": ["dist/index.js", "dist/index.d.ts", "plugin.json", "README.md"]
+}

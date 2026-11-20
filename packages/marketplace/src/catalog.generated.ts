@@ -28,6 +28,20 @@ export const BUNDLED_CATALOG: MarketIndex = {
       "homepage": "https://github.com/worm-longliu/worm-print-platform/tree/master/marketplace/plugins/echarts",
       "license": "MIT",
       "minCoreVersion": "1.5.2"
+    },
+    {
+      "id": "data-preview",
+      "name": "数据源预览",
+      "description": "字段树父节点增加查看数据源按钮，把 designData 按 JSON 形态解析为多 tab 表单/表格（总览汇总表 + 子标签页跳转），第一版不分页。",
+      "version": "0.1.0",
+      "npmName": "@worm-print-platform/plugin-data-preview",
+      "path": "plugins/data-preview",
+      "entry": "dist/index.js",
+      "kinds": [],
+      "exportFormats": [],
+      "homepage": "https://github.com/worm-longliu/worm-print-platform/tree/master/marketplace/plugins/data-preview",
+      "license": "MIT",
+      "minCoreVersion": "1.5.3"
     }
   ]
 }

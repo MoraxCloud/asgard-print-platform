@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>待增功能方案草图 · worm-print-platform</title>
+<style>
+  :root {
+    --ink: #1b2330; --muted: #6b7688; --line: #e3e8ef; --bg: #f5f7fa;
+    --brand: #2f6df6; --brand-soft: #eaf1ff; --p0: #e5484d; --p1: #f5a524; --p2: #30a46c;
+    --card: #fff; --shadow: 0 6px 24px rgba(27,35,48,.08);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--ink); background: var(--bg); line-height: 1.6; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 48px 24px 80px; }
+  .eyebrow { font-size: 13px; letter-spacing: .12em; color: var(--brand); font-weight: 700; }
+  h1 { font-size: 34px; margin: 10px 0 8px; }
+  .sub { color: var(--muted); font-size: 15px; max-width: 760px; }
+  .meta { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 36px; }
+  .pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); text-decoration: none; color: inherit; display: block; transition: transform .18s, border-color .18s; }
+  .card:hover { transform: translateY(-3px); border-color: var(--brand); }
+  .card .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .num { font: 700 13px/1 ui-monospace, monospace; color: var(--brand); background: var(--brand-soft); padding: 6px 10px; border-radius: 8px; }
+  .prio { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #fff; }
+  .p0 { background: var(--p0); } .p1 { background: var(--p1); } .p2 { background: var(--p2); }
+  .card h2 { font-size: 18px; margin: 0 0 8px; }
+  .card p { font-size: 14px; color: var(--muted); margin: 0 0 16px; min-height: 44px; }
+  .card .more { font-size: 13px; color: var(--brand); font-weight: 600; }
+  .flow { margin-top: 40px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); }
+  .flow h3 { margin: 0 0 16px; font-size: 16px; }
+  .flow .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+  .node { border: 1px solid var(--line); background: #fbfcfe; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
+  .arrow { color: var(--muted); }
+  footer { margin-top: 36px; color: var(--muted); font-size: 13px; }
+  code { background: #eef1f6; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">WORM-PRINT-PLATFORM · 功能规划</div>
+  <h1>待增功能方案草图</h1>
+  <p class="sub">基于 v1.6.0 代码基线盘点出的 6 项待增功能。每项功能配一份用纯 HTML/CSS 绘制的界面草图，用于评审功能形态与现有契约的衔接方式。</p>
+  <div class="meta">
+    <span class="pill">6 项功能</span>
+    <span class="pill">含 AI 会话接入</span>
+    <span class="pill">纯 HTML 草图 · 无外部依赖</span>
+    <span class="pill">基线 v1.6.0</span>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="01-ai-session-panel.html">
+      <div class="top"><span class="num">01</span><span class="prio p0">P0</span></div>
+      <h2>内置 AI 会话面板</h2>
+      <p>在设计器右侧新增 AI 助手页签，自然语言生成/修改模板，变更经 revision 校验后写回，可审阅可撤销。</p>
+      <span class="more">查看草图 →</span>
+    </a>
+    <a class="card" href="02-mcp-streaming.html">
+      <div class="top"><span class="num">02</span><span class="prio p1">P1</span></div>
+      <h2>MCP 流式工具调用与提示词</h2>
+      <p>为 MCP 增加 SSE 流式输出、长任务进度与 prompts/resources 能力，把常用指令沉淀为可复用提示词。</p>
+      <span class="more">查看草图 →</span>
+    </a>
+    <a class="card" href="03-browser-ai-sdk.html">
+      <div class="top"><span class="num">03</span><span class="prio p1">P1</span></div>
+      <h2>浏览器直连 AI 与统一会话 SDK</h2>
+      <p>新增可插拔传输的会话 SDK，去掉 Electron 前置条件，收敛四个 demo 中重复的会话实现。</p>
+      <span class="more">查看草图 →</span>
+    </a>
+    <a class="card" href="04-render-thumbnail.html">
+      <div class="top"><span class="num">04</span><span class="prio p1">P1</span></div>
+      <h2>PNG 截图与缩略图 API</h2>
+      <p>补齐渲染服务缺失的截图能力，提供模板缩略图墙与 AI 结果可视化回传。</p>
+      <span class="more">查看草图 →</span>
+    </a>
+    <a class="card" href="05-export-plugins.html">
+      <div class="top"><span class="num">05</span><span class="prio p2">P2</span></div>
+      <h2>Excel / Word 导出插件</h2>
+      <p>让已落地的导出插件注册表接上真实 xlsx / docx 插件与宿主导出菜单。</p>
+      <span class="more">查看草图 →</span>
+    </a>
+    <a class="card" href="06-template-version-history.html">
+      <div class="top"><span class="num">06</span><span class="prio p2">P2</span></div>
+      <h2>版本历史与差异审阅</h2>
+      <p>基于 revision 的快照时间线，支持手动/AI 变更来源标注、可视化 diff 与安全回滚。</p>
+      <span class="more">查看草图 →</span>
+    </a>
+  </div>
+
+  <div class="flow">
+    <h3>建议实施顺序与依赖</h3>
+    <div class="row">
+      <span class="node">03 统一会话 SDK</span><span class="arrow">→</span>
+      <span class="node">02 MCP 流式与提示词</span><span class="arrow">→</span>
+      <span class="node">01 AI 会话面板</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="arrow">├──</span><span class="node">04 缩略图 API（AI 结果可视化）</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="arrow">├──</span><span class="node">06 版本历史（AI 变更入时间线）</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="arrow">└──</span><span class="node">05 导出插件（独立，扩展交付形态）</span>
+    </div>
+  </div>
+
+  <footer>返回 <a href="README.md">功能清单说明</a> · 所有草图为方案示意，非最终视觉规范。</footer>
+</div>
+</body>
+</html>

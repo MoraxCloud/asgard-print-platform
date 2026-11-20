@@ -20,6 +20,7 @@
         vue2:   { port: 9332, path: '/canvas/vue2/' },
         react:  { port: 9335, path: '/canvas/react/' },
         jquery: { port: 9334, path: '/canvas/jquery/' },
+        'print-demo': { port: 9336, path: '/canvas/print-demo/' },
       };
       var isLocal = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.host);
       var base = isLocal ? '' : '/worm-print-platform';
@@ -52,6 +53,7 @@
             <a class="host-link" data-host="vue2">Vue2 宿主</a>
             <a class="host-link" data-host="react">React 宿主</a>
             <a class="host-link on" data-host="jquery" data-current="true" title="当前页面">jQuery 宿主</a>
+            <a class="host-link" data-host="print-demo">业务接入示例</a>
           </nav>
         </details></span>
         <span class="demo-ou" data-overflow-unit="biz"><span class="demo-badge">业务类型：<span id="badge-biz">空白模板</span></span></span>
@@ -78,15 +80,15 @@
           </button>
           <div class="demo-more-panel" hidden>
             <p class="demo-more-note">仅在横向空间不足时，顶部操作才会折叠到这里</p>
-            <div class="demo-more-item" data-unit="biz"><span class="demo-more-label">业务类型</span><span class="demo-more-slot" data-overflow-slot="biz"></span></div>
-            <div class="demo-more-item" data-unit="host-switch"><span class="demo-more-label">宿主示例</span><span class="demo-more-slot" data-overflow-slot="host-switch"></span></div>
-            <div class="demo-more-item" data-unit="host-badge"><span class="demo-more-label">宿主标识</span><span class="demo-more-slot" data-overflow-slot="host-badge"></span></div>
-            <div class="demo-more-item" data-unit="clear"><span class="demo-more-label">清空</span><span class="demo-more-slot" data-overflow-slot="clear"></span></div>
-            <div class="demo-more-item" data-unit="import"><span class="demo-more-label">导入模板</span><span class="demo-more-slot" data-overflow-slot="import"></span></div>
-            <div class="demo-more-item" data-unit="export"><span class="demo-more-label">导出模板</span><span class="demo-more-slot" data-overflow-slot="export"></span></div>
-            <div class="demo-more-item" data-unit="custom"><span class="demo-more-label">自定义字段与数据</span><span class="demo-more-slot" data-overflow-slot="custom"></span></div>
-            <div class="demo-more-item" data-unit="batch"><span class="demo-more-label">批量打印</span><span class="demo-more-slot" data-overflow-slot="batch"></span></div>
-            <div class="demo-more-item" data-unit="gallery"><span class="demo-more-label">加载示例</span><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
+            <div class="demo-more-item" data-unit="biz"><span class="demo-more-slot" data-overflow-slot="biz"></span></div>
+            <div class="demo-more-item" data-unit="host-switch"><span class="demo-more-slot" data-overflow-slot="host-switch"></span></div>
+            <div class="demo-more-item" data-unit="host-badge"><span class="demo-more-slot" data-overflow-slot="host-badge"></span></div>
+            <div class="demo-more-item" data-unit="clear"><span class="demo-more-slot" data-overflow-slot="clear"></span></div>
+            <div class="demo-more-item" data-unit="import"><span class="demo-more-slot" data-overflow-slot="import"></span></div>
+            <div class="demo-more-item" data-unit="export"><span class="demo-more-slot" data-overflow-slot="export"></span></div>
+            <div class="demo-more-item" data-unit="custom"><span class="demo-more-slot" data-overflow-slot="custom"></span></div>
+            <div class="demo-more-item" data-unit="batch"><span class="demo-more-slot" data-overflow-slot="batch"></span></div>
+            <div class="demo-more-item" data-unit="gallery"><span class="demo-more-slot" data-overflow-slot="gallery"></span></div>
           </div>
         </span>
         <button type="button" class="demo-print-btn" id="btn-config">配置</button>

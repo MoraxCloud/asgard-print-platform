@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案草图 03 · 浏览器直连 AI 与统一会话 SDK</title>
+<style>
+  :root{--bg:#f4f6f9;--ink:#1b2330;--muted:#6b7688;--line:#e2e7ee;--brand:#2f6df6;--brand-bg:#eef4ff;--green:#2e9e5b;--amber:#d98a1f;--card:#fff;--dark:#1e2733}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:36px 24px 72px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand)}
+  h1{font-size:26px;margin:8px 0 6px}
+  .lead{color:var(--muted);font-size:14px;max-width:900px;margin:0 0 22px}
+  .sec-t{font-size:14px;font-weight:700;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+  .sec-t::before{content:"";width:4px;height:16px;background:var(--brand);border-radius:2px}
+
+  .lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .lane{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .lane.new{border-color:#bcd2f8;box-shadow:0 8px 28px rgba(47,109,246,.10)}
+  .lane .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .lane h3{font-size:14px;margin:0}
+  .flag{font-size:9px;border-radius:999px;padding:2px 8px;font-weight:700;white-space:nowrap}
+  .flag.ok{background:#eaf7ef;color:var(--green)}
+  .flag.new{background:var(--brand-bg);color:var(--brand)}
+  .flag.now{background:#eef1f6;color:var(--muted)}
+  .nodes{display:flex;flex-direction:column;gap:6px;font-size:11px}
+  .node{border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:#fbfcfe;text-align:center}
+  .node.hl{border-color:var(--brand);background:var(--brand-bg);color:var(--brand);font-weight:700}
+  .node.dim{opacity:.55;text-decoration:line-through}
+  .arr{text-align:center;color:#9aa4b2;font-size:11px;line-height:1}
+  .lane .why{font-size:11px;color:var(--muted);margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+
+  .code{background:var(--dark);color:#d7e2f2;border-radius:14px;padding:18px 22px;font:12px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;overflow:auto}
+  .code .k{color:#7aa5ff}.code .c{color:#7d8ba1}.code .s{color:#8fe0a8}.code .f{color:#ffd479}
+
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .box.bad{border-color:#f3c7c9}
+  .box h4{margin:0 0 10px;font-size:13px}
+  .box ul{margin:0;padding-left:18px;font-size:12px;color:#556174}
+  .box li{margin:5px 0}
+  .box.bad li::marker{color:#e5484d}
+  .box.good li::marker{color:var(--green)}
+  .file{font-family:ui-monospace,monospace;background:#f1f4f8;border-radius:4px;padding:1px 5px;font-size:11px;color:#334155}
+  .to{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--brand);font-weight:700}
+
+  .notes{margin-top:24px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;box-shadow:0 6px 24px rgba(27,35,48,.05)}
+  .notes h3{margin:0 0 12px;font-size:16px}
+  .notes ol{margin:0;padding-left:22px}
+  .notes li{font-size:13px;margin:7px 0;color:#445064}
+  .notes code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:11px}
+  .callout{margin-top:14px;background:var(--brand-bg);border-left:3px solid var(--brand);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#274a8a}
+  .nav{margin-top:20px;font-size:13px}.nav a{color:var(--brand);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">方案草图 03 / 06 · P1</div>
+  <h1>浏览器直连 AI 通道与统一模板会话 SDK</h1>
+  <p class="lead">当前 AI 通道必须依赖桌面客户端 + 配对 token + 外部 MCP 客户端，且模板会话在四个 demo 中各自内联实现（jQuery 版还只能只读）。本方案新增公开 SDK <code>@worm-print-platform/ai-session</code>，把「连接 / revision / 写回校验」收敛为一层，并提供三条可插拔传输链路。</p>
+
+  <div class="sec-t">三条接入链路（同一套 SDK，传输可插拔）</div>
+  <div class="lanes">
+    <div class="lane new">
+      <div class="h"><h3>① 浏览器直连</h3><span class="flag new">新增</span></div>
+      <div class="nodes">
+        <div class="node hl">设计器（canvas）</div><div class="arr">↓</div>
+        <div class="node hl">ai-session SDK · SSE 传输</div><div class="arr">↓</div>
+        <div class="node">宿主配置的模型端点</div><div class="arr">↓</div>
+        <div class="node">工具循环：template.get / apply</div>
+      </div>
+      <div class="why">无需 Electron；密钥由宿主服务端代理下发短期令牌，浏览器不落地长期密钥。</div>
+    </div>
+    <div class="lane new">
+      <div class="h"><h3>② 服务端代理</h3><span class="flag new">新增</span></div>
+      <div class="nodes">
+        <div class="node hl">设计器（canvas）</div><div class="arr">↓</div>
+        <div class="node hl">ai-session SDK · HTTP 传输</div><div class="arr">↓</div>
+        <div class="node">render 服务 /ai/chat</div><div class="arr">↓</div>
+        <div class="node dim">模型密钥不暴露给浏览器</div>
+      </div>
+      <div class="why">复用渲染服务部署；适合企业内网、密钥集中管理与审计。</div>
+    </div>
+    <div class="lane">
+      <div class="h"><h3>③ Electron MCP</h3><span class="flag now">现状</span></div>
+      <div class="nodes">
+        <div class="node hl">设计器（canvas）</div><div class="arr">↓</div>
+        <div class="node">PrintClient · WebSocket</div><div class="arr">↓</div>
+        <div class="node">桌面 MCP（12 工具）</div><div class="arr">↓</div>
+        <div class="node">外部 Agent / 模型</div>
+      </div>
+      <div class="why">保留兼容：现有桌面静默打印与配对鉴权链路不动，SDK 作为统一的会话门面。</div>
+    </div>
+  </div>
+
+  <div class="sec-t">SDK 接口示意（与 template-session.ts 同口径）</div>
+  <div class="code">
+<span class="c">// @worm-print-platform/ai-session —— 连接层与校验层统一，模型/密钥归宿主</span>
+<span class="k">import</span> { createAISession, createTransport } <span class="k">from</span> <span class="s">'@worm-print-platform/ai-session'</span>
+
+<span class="k">const</span> transport = createTransport(<span class="s">'sse'</span>, { endpoint: <span class="s">'/ai/chat'</span> }) <span class="c">// 'ws' | 'sse' | 'http'</span>
+<span class="k">const</span> session = createAISession({
+  transport,
+  snapshot: () =&gt; ({ templateJson, fields, printData }), <span class="c">// readSnapshot</span>
+  apply:    (json, baseRevision) =&gt; canvas.write(json, baseRevision), <span class="c">// 写回钩子</span>
+  onStatus: (s, err) =&gt; badge.update(s, err),
+})
+session.start()   <span class="c">// attach + 建立传输 + 订阅 SSE delta / progress</span>
+session.ask(<span class="s">'把表头改成蓝色'</span>)  <span class="c">// 工具循环自动执行 template.get → apply</span>
+
+<span class="c">// 内置：revisionOf / createRevisionCache / 封禁元素校验 / 结构校验</span>
+<span class="c">// 与 demos/shared/template-session.ts、packages/mcp 完全同口径</span>
+  </div>
+
+  <div class="sec-t">收敛重复实现</div>
+  <div class="ba">
+    <div class="box bad">
+      <h4>现状：4 份内联实现 + 1 份测试专用</h4>
+      <ul>
+        <li><span class="file">demos/apps/vue3/src/mcp-session.js</span></li>
+        <li><span class="file">demos/apps/vue2/src/mcp-session.js</span></li>
+        <li><span class="file">demos/apps/react/src/mcp-session.js</span></li>
+        <li><span class="file">demos/apps/jquery/src/mcp-session.js</span>（仅只读）</li>
+        <li><span class="file">demos/shared/template-session.ts</span>（仅客户端集成测试复用）</li>
+      </ul>
+    </div>
+    <div class="to">→</div>
+    <div class="box good">
+      <h4>目标：1 个公开 SDK + 4 个宿主薄适配</h4>
+      <ul>
+        <li>新增 <span class="file">packages/ai-session</span>（随 npm 发布）</li>
+        <li>各 demo 只保留「读画布 / 写画布」两个钩子</li>
+        <li>jQuery 版同样获得写回能力（同一 revision 校验）</li>
+        <li>功能 01 的面板直接依赖 SDK，不再复制连接代码</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>设计要点（与现有代码的衔接）</h3>
+    <ol>
+      <li><b>抽取来源</b>：以 <code>demos/shared/template-session.ts</code> 为实现蓝本——状态机、24 位 sessionId、<code>revisionOf()</code> 键排序 SHA-256、<code>createRevisionCache()</code>、<code>template.get</code> / <code>template.apply</code> handler 全部平移进 SDK。</li>
+      <li><b>传输抽象</b>：<code>createTransport('ws' | 'sse' | 'http')</code> 对应功能 02 的三种链路；WS 复用 <code>PrintClient</code>，SSE 复用新增的 <code>/mcp/events</code>，HTTP 走服务端代理。</li>
+      <li><b>安全</b>：SDK 不持有模型密钥；浏览器直连场景由服务端下发短期令牌，沿用现有 Bearer pairing token 鉴权口径。</li>
+      <li><b>兼容</b>：桌面 MCP 12 工具与 <code>template.attach/get/apply/detach</code> 消息类型保持不变，四个 demo 仅做几行初始化替换，不重写业务逻辑。</li>
+      <li><b>发布</b>：新增包加入 <code>publish:npm</code> 列表，纳入 core → 宿主的分层边界（只依赖 core，不引入 Vue/React）。</li>
+    </ol>
+    <div class="callout">被依赖：功能 01 的连接层、功能 02 的 SSE 传输都需要本 SDK 提供统一入口；建议作为第一步实施。</div>
+  </div>
+
+  <div class="nav"><a href="02-mcp-streaming.html">← 上一个</a> &nbsp;·&nbsp; <a href="index.html">草图导航</a> &nbsp;·&nbsp; <a href="04-render-thumbnail.html">下一个：PNG 与缩略图 API →</a></div>
+</div>
+</body>
+</html>

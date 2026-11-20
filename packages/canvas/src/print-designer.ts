@@ -34,8 +34,8 @@ import { renderPropertyPanel } from './shell/property-panel'
 import { disposeAllElementUI } from './shell/plugin-ui'
 import { abortTableColResize, renderTableContextMenu } from './shell/table'
 import type { TableMenuState } from './shell/table'
-import { renderExpressionEditor } from './shell/expression-editor'
-import type { ExpressionEditorTarget } from './shell/expression-editor'
+import { renderExpressionEditor, normalizeFieldDisplay } from './shell/expression-editor'
+import type { ExpressionEditorTarget, FieldDisplayMode } from './shell/expression-editor'
 import { mountHelpModal } from './shell/help-modal'
 import { applyPropertySearch } from './shell/property-search'
 import { isExpressionText } from './shell/watermark'
@@ -149,6 +149,7 @@ export class PrintDesignerElement extends HTMLElement {
   private state: ShellState = {
     leftTab: 'elements', leftCollapsed: false, propTab: 'page', propCollapsed: false,
     openDd: null, openMore: false, collapsedGroups: new Set(), renamingPage: null,
+    fieldDisplay: 'both',
   }
   private geom: RulerGeom = { originX: 0, originY: 0, viewW: 0, viewH: 0, paperScale: 1 }
   /** 接管全局快捷键的实例（同页多设计器时最后一个交互者），见 bindKeys */
@@ -260,6 +261,15 @@ export class PrintDesignerElement extends HTMLElement {
     this.repaint()
   }
 
+  /** 字段行显示模式：label / key / both（默认 both）；非法值静默回退 both */
+  set fieldDisplay(v: unknown) {
+    const next = normalizeFieldDisplay(v)
+    this.state.fieldDisplay = next
+    if (this.getAttribute('field-display') !== next) this.setAttribute('field-display', next)
+    this.repaint()
+  }
+  get fieldDisplay(): FieldDisplayMode { return this.state.fieldDisplay ?? 'both' }
+
   /** 主题预设：auto（默认）跟随系统 prefers-color-scheme，light/dark 强制 */
   set theme(v: PrintDesignerThemeMode | undefined) {
     const next: PrintDesignerThemeMode = v === 'dark' || v === 'light' ? v : 'auto'
@@ -310,6 +320,12 @@ export class PrintDesignerElement extends HTMLElement {
       this.applyTheme()
       return
     }
+    // field-display 移除后要回落 both，必须放在通用空值返回之前
+    if (name === 'field-display') {
+      this.state.fieldDisplay = normalizeFieldDisplay(value)
+      this.repaint()
+      return
+    }
     if (!value) return
     if (name === 'name') { this.repaint(); return }
     let parsed: unknown
@@ -344,6 +360,8 @@ export class PrintDesignerElement extends HTMLElement {
     // 格式刷的触发点是「选中集变化」（Vue 3 轨 useFormatPainter 的 watch(selectedIds)）：
     // 单击目标元素即刷，不依赖拖拽收尾
     this.store.onSelectionChanged = () => this.format.painterSyncSelection()
+    // 声明式 attribute 可能在升级前就挂上，attributeChangedCallback 兜不到时在此补读
+    this.state.fieldDisplay = normalizeFieldDisplay(this.getAttribute('field-display'))
     this.readChrome()
     this.unsub = this.store.subscribe(() => this.repaint())
     this.attachDocKeys()
@@ -598,6 +616,7 @@ export class PrintDesignerElement extends HTMLElement {
     const target = this.exprTarget
     render(renderExpressionEditor({
       fields: this.store.fields,
+      fieldDisplay: this.state.fieldDisplay,
       onClose: () => this.closeExpression(),
       onApply: next => this.applyExpression(target, next),
     }, target), this.root)

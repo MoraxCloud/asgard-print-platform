@@ -506,7 +506,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     }
   }
 
-  if (has('position') || has('distance') || has('rotate') || has('offsetX')) {
+  if (has('position') || has('distance') || has('rotate') || has('offset')) {
     group.appendChild(el('div', 'echarts-label-sub', '位置'))
     if (has('position')) {
       const wrap = field('标签位置')
@@ -518,15 +518,24 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     }
     if (has('distance')) group.appendChild(numberField('distance', state.distance))
     if (has('rotate')) group.appendChild(numberField('rotate', state.rotate))
-    if (has('offsetX') || has('offsetY')) {
+    if (has('offset')) {
       const wrap = field('偏移 X / Y')
       const row = el('div', 'echarts-field-row')
-      row.appendChild(
-        textInput({ value: state.offsetX === undefined ? '' : String(state.offsetX), type: 'number' }, raw => commitNumber('offsetX', raw)),
-      )
-      row.appendChild(
-        textInput({ value: state.offsetY === undefined ? '' : String(state.offsetY), type: 'number' }, raw => commitNumber('offsetY', raw)),
-      )
+      const current: [number, number] = state.offset ?? [0, 0]
+      // ECharts 只认 offset: [x, y]；从两个输入框实时取值整对写回，空输入按 0 处理
+      const inputX = textInput({ value: String(current[0] ?? 0), type: 'number' }, () => commitOffset())
+      const inputY = textInput({ value: String(current[1] ?? 0), type: 'number' }, () => commitOffset())
+      function commitOffset(): void {
+        const parse = (input: HTMLInputElement, fallback: number): number => {
+          const text = input.value.trim()
+          if (text === '') return 0
+          const value = Number(text)
+          return Number.isFinite(value) ? value : fallback
+        }
+        commit({ offset: [parse(inputX, current[0] ?? 0), parse(inputY, current[1] ?? 0)] })
+      }
+      row.appendChild(inputX)
+      row.appendChild(inputY)
       wrap.appendChild(row)
       group.appendChild(wrap)
     }

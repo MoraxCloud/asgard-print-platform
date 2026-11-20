@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.5.3-384BFF" alt="npm version">
+  <img src="https://img.shields.io/badge/npm-v1.6.0-384BFF" alt="npm version">
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
