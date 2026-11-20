@@ -299,6 +299,21 @@
               <span>跟随系统</span>
             </label>
           </section>
+          <section class="config-section">
+            <div class="config-label">语言</div>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="auto" />
+              <span>跟随系统</span>
+            </label>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="zh-CN" />
+              <span>简体中文</span>
+            </label>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="en-US" />
+              <span>English</span>
+            </label>
+          </section>
         </div>
         <div class="config-foot">
           <button type="button" class="config-btn" @click="configVisible = false">完成</button>
@@ -362,6 +377,8 @@ const configVisible = ref(false)
 const showPreview = ref(true)
 const showSave = ref(true)
 const themeMode = ref('auto')
+// 设计器界面语言：auto 跟随系统 / zh-CN / en-US，走 property 写回
+const langMode = ref('auto')
 // 宿主端开关：是否暴露「数据源预览」入口（插件本身只提供触发 API）
 const dataPreviewEnabled = ref(true)
 // 数据源预览插件的入参：中文名旁是否显示字段 key（与设计器字段显示配置无关）
@@ -932,7 +949,7 @@ const aiSession = createTemplateSession({
   onApplyResult: (kind, message) => console.log(`[demo][AI 模板写回] ${kind}：${message}`),
 })
 
-/** 把按钮显隐、字段显示与主题预设写回设计器：全部走 property，避免自定义元素属性字符串化 */
+/** 把按钮显隐、字段显示、主题与语言写回设计器：全部走 property，避免自定义元素属性字符串化 */
 function applyDisplayConfig() {
   const el = designerRef.value
   if (!el) return
@@ -940,9 +957,11 @@ function applyDisplayConfig() {
   el.showSave = showSave.value
   el.fieldDisplay = fieldDisplay.value
   el.theme = themeMode.value
+  // auto 时清空 lang attribute，让设计器按 navigator.language 探测并回退中文
+  el.lang = langMode.value === 'auto' ? undefined : langMode.value
 }
 
-watch([showPreview, showSave, fieldDisplay, themeMode], applyDisplayConfig)
+watch([showPreview, showSave, fieldDisplay, themeMode, langMode], applyDisplayConfig)
 
 onMounted(() => {
   initTopbarOverflow()
