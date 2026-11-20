@@ -6,10 +6,10 @@
 import { tr } from './controls.js'
 import {
   buildCropAnchor,
-  CROP_SCALE_LABEL,
+  cropScaleLabel,
   CROP_SCALE_MAX,
   CROP_SCALE_MIN,
-  CROP_SAMPLE_NOTE,
+  cropSampleNote,
   cropAxisFields,
   cropAxisNote,
   cropPresetOptions,
@@ -103,7 +103,7 @@ export function cropAnchorField(ctx: ShellCtx, o: CropAnchorOpts) {
   ])]
   // 放大比例排在两框之前：先推大画面才有多出来的边，两框报的可挪量按推大后的尺寸结算
   rows.push(h('div', { class: 'pd-field', dataset: { field: 'ap-img-fit-scale' } }, [
-    h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [CROP_SCALE_LABEL, labelHelp(propertyTip('ap-img-fit-scale'))]), o.resetScale ?? ''].filter(Boolean)),
+    h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [cropScaleLabel(), labelHelp(propertyTip('ap-img-fit-scale'))]), o.resetScale ?? ''].filter(Boolean)),
     stepper({
       value: o.scale, min: CROP_SCALE_MIN, max: CROP_SCALE_MAX, step: 5, placeholder: tr(ctx, 'cropAnchor.k38'),
       onCommit: v => o.onScaleCommit(v > CROP_SCALE_MIN ? v : undefined),
@@ -122,7 +122,7 @@ export function cropAnchorField(ctx: ShellCtx, o: CropAnchorOpts) {
   const note = cropAxisNote(travel, keepRaw)
   if (note) rows.push(h('p', { class: 'pd-crop-note', text: note }))
 
-  if (preview.isSample) rows.push(h('p', { class: 'pd-crop-note', text: CROP_SAMPLE_NOTE }))
+  if (preview.isSample) rows.push(h('p', { class: 'pd-crop-note', text: cropSampleNote() }))
 
   rows.push(h('div', { class: 'pd-crop-preview' }, [
     h('img', {

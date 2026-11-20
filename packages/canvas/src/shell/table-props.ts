@@ -14,7 +14,7 @@ import {
   resolveSharedCellType, resolveCellTextFit, setCellBorderEdge, setHeaderRepeat,
   BORDER_LINE_STYLES,
   DEFAULT_BORDER,
-  setRowType, splitCells, propertyTip, IMAGE_FIT_OPTIONS, resolveDesignImageSrc, barcodeBarWidthRecommendText, createDefaultOptions,
+  setRowType, splitCells, propertyTip, imageFitOptions, resolveDesignImageSrc, barcodeBarWidthRecommendText, createDefaultOptions,
   CELL_BORDER_APPLY_HINT, CELL_BORDER_APPLY_HINT_MULTI, CELL_BORDER_APPLY_HINT_MIXED,
 } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -481,7 +481,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
       }), propertyTip('cd-quiet-zone'), cellReset('qrQuietZone')) : '',
 
       isBarcodeCell ? hint(tr(ctx, 'tableProps.k402')) : '',
-      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(IMAGE_FIT_OPTIONS),
+      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(imageFitOptions()),
         v => { if (v !== '__multi__') writeField('fit', v as TableCell['fit']) }, { reset: cellReset('fit') }) : '',
       isImageCell && !isMulti && cell0.fit === 'cover' ? cropAnchorField(ctx, {
         fieldKey: 'ap-img-object-position', label: tr(ctx, 'tableProps.k404'), src: resolveDesignImageSrc(cell0.formatter), fit: cell0.fit,

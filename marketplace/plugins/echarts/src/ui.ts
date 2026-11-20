@@ -85,7 +85,8 @@ const SEARCH_KEYWORDS = [
   '折线', '面积', '饼', '环形', '散点', '雷达', '漏斗', '仪表', '数据标签', '数值标签', 'label',
 ] as const
 
-const PANEL_HINT = t('echarts.ui.k19')
+// 语言包在文件底部 installChartCommonUI() 时才注册，模块加载期不能求值 t()；改为渲染时求值
+const panelHint = () => t('echarts.ui.k19')
 
 function escapeHtml(value: string): string {
   return value
@@ -838,7 +839,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     form.appendChild(wrap)
   }
 
-  form.appendChild(el('p', 'pd-hint', PANEL_HINT))
+  form.appendChild(el('p', 'pd-hint', panelHint()))
   return root
 }
 

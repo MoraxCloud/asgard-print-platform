@@ -69,7 +69,11 @@
 //   （页签高亮、搜索占位、列表、文本域、预览）；换 target 就重新调用本函数拿新 DOM，无需 update 接口。
 import { DEFAULT_DEMO_DATA, copyTextToClipboard, evaluateTemplate, filterGroups, groupFields } from '@worm-print-platform/core/designer'
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
+import { t as globalT } from '@worm-print-platform/core/i18n'
 import type { Translate } from '@worm-print-platform/core/i18n'
+
+/** 渲染期 translator：由 opts.t 设置，缺省用全局 t */
+let tr: Translate = globalT
 import { resolveSystemVariables } from '@worm-print-platform/core'
 import { clear, h, render } from './dom.js'
 import type { El } from './dom.js'
@@ -121,74 +125,85 @@ export interface ExpressionEditorOptions {
 type TabKey = 'field' | 'variable' | 'function'
 
 /** 与 Vue 3 轨的 .ee-nav-tab 顺序严格一致（重绘时按下标取元素，不额外加属性） */
-const TABS: { key: TabKey; text: string }[] = [
-  { key: 'field', text: '📁 字段' },
-  { key: 'variable', text: '🔧 变量' },
-  { key: 'function', text: '⚡ 函数' },
-]
+function getTabs(): { key: TabKey; text: string }[] {
+  return [
+    { key: 'field', text: tr('expression.tabField') },
+    { key: 'variable', text: tr('expression.tabVariable') },
+    { key: 'function', text: tr('expression.tabFunction') },
+  ]
+}
 
-const PLACEHOLDER: Record<TabKey, string> = {
-  field: '搜索字段...',
-  variable: '搜索变量...',
-  function: '搜索函数...',
+function getPlaceholder(): Record<TabKey, string> {
+  return {
+    field: tr('expression.placeholderField'),
+    variable: tr('expression.placeholderVariable'),
+    function: tr('expression.placeholderFunction'),
+  }
 }
 
 interface FnItem { name: string; label: string; template: string }
 
-// 以下四组常量逐字照抄 Vue 3 轨的 aggregateFunctions / mathFunctions / formatFunctions / systemVars
-const AGGREGATE_FUNCTIONS: FnItem[] = [
-  { name: 'SUM', label: '求和', template: 'SUM()' },
-  { name: 'AVG', label: '平均值', template: 'AVG()' },
-  { name: 'COUNT', label: '计数', template: 'COUNT()' },
-  { name: 'MIN', label: '最小值', template: 'MIN()' },
-  { name: 'MAX', label: '最大值', template: 'MAX()' },
-]
+function getAggregateFunctions(): FnItem[] {
+  return [
+    { name: 'SUM', label: tr('expression.fnSum'), template: 'SUM()' },
+    { name: 'AVG', label: tr('expression.fnAvg'), template: 'AVG()' },
+    { name: 'COUNT', label: tr('expression.fnCount'), template: 'COUNT()' },
+    { name: 'MIN', label: tr('expression.fnMin'), template: 'MIN()' },
+    { name: 'MAX', label: tr('expression.fnMax'), template: 'MAX()' },
+  ]
+}
+function getMathFunctions(): FnItem[] {
+  return [
+    { name: 'ADD', label: tr('expression.fnAdd'), template: 'ADD()' },
+    { name: 'SUB', label: tr('expression.fnSub'), template: 'SUB()' },
+    { name: 'MUL', label: tr('expression.fnMul'), template: 'MUL()' },
+    { name: 'DIV', label: tr('expression.fnDiv'), template: 'DIV()' },
+    { name: 'ROUND', label: tr('expression.fnRound'), template: 'ROUND()' },
+    { name: 'ROUNDUP', label: tr('expression.fnRoundUp'), template: 'ROUNDUP()' },
+    { name: 'ROUNDDOWN', label: tr('expression.fnRoundDown'), template: 'ROUNDDOWN()' },
+    { name: 'ROUNDBANK', label: tr('expression.fnRoundBank'), template: 'ROUNDBANK()' },
+  ]
+}
+function getFormatFunctions(): FnItem[] {
+  return [
+    { name: 'MONEY', label: tr('expression.fnMoney'), template: 'MONEY()' },
+    { name: 'DATE', label: tr('expression.fnDate'), template: 'DATE()' },
+    { name: 'UPPER', label: tr('expression.fnUpper'), template: 'UPPER()' },
+    { name: 'IF', label: tr('expression.fnIf'), template: 'IF()' },
+  ]
+}
+function getSystemVariables(): FnItem[] {
+  return [
+    { name: 'pageIndex', label: tr('expression.varPageIndex'), template: '{pageIndex}' },
+    { name: 'totalPages', label: tr('expression.varTotalPages'), template: '{totalPages}' },
+    { name: 'printDate', label: tr('expression.varPrintDate'), template: '{printDate}' },
+    { name: 'printTime', label: tr('expression.varPrintTime'), template: '{printTime}' },
+  ]
+}
 
-const MATH_FUNCTIONS: FnItem[] = [
-  { name: 'ADD', label: '相加', template: 'ADD()' },
-  { name: 'SUB', label: '相减', template: 'SUB()' },
-  { name: 'MUL', label: '相乘', template: 'MUL()' },
-  { name: 'DIV', label: '相除', template: 'DIV()' },
-  { name: 'ROUND', label: '四舍五入', template: 'ROUND()' },
-  { name: 'ROUNDUP', label: '进一法', template: 'ROUNDUP()' },
-  { name: 'ROUNDDOWN', label: '去尾法', template: 'ROUNDDOWN()' },
-  { name: 'ROUNDBANK', label: '四舍六入五成双', template: 'ROUNDBANK()' },
-]
+function getFuncGroups(): { title: string; items: FnItem[] }[] {
+  return [
+    { title: tr('expression.groupAggregate'), items: getAggregateFunctions() },
+    { title: tr('expression.groupMath'), items: getMathFunctions() },
+    { title: tr('expression.groupFormat'), items: getFormatFunctions() },
+  ]
+}
 
-const FORMAT_FUNCTIONS: FnItem[] = [
-  { name: 'MONEY', label: '金额格式化', template: 'MONEY()' },
-  { name: 'DATE', label: '日期格式化', template: 'DATE()' },
-  { name: 'UPPER', label: '大写金额', template: 'UPPER()' },
-  { name: 'IF', label: '条件判断', template: 'IF()' },
-]
+const EMPTY_PREVIEW_KEY = 'expression.previewEmpty'
+const NO_VALUE_PREVIEW_KEY = 'expression.previewNoValue'
+const ERROR_PREVIEW_KEY = 'expression.previewError'
 
-const SYSTEM_VARIABLES: FnItem[] = [
-  { name: 'pageIndex', label: '当前页码', template: '{pageIndex}' },
-  { name: 'totalPages', label: '总页数', template: '{totalPages}' },
-  { name: 'printDate', label: '打印日期', template: '{printDate}' },
-  { name: 'printTime', label: '打印时间', template: '{printTime}' },
-]
-
-const FUNC_GROUPS: { title: string; items: FnItem[] }[] = [
-  { title: '聚合函数', items: AGGREGATE_FUNCTIONS },
-  { title: '数值运算', items: MATH_FUNCTIONS },
-  { title: '格式化函数', items: FORMAT_FUNCTIONS },
-]
-
-const EMPTY_PREVIEW = '（输入表达式后预览）'
-const NO_VALUE_PREVIEW = '（无法计算）'
-const ERROR_PREVIEW = '（表达式错误）'
 
 /** 与 Vue 3 轨的 previewResult 同逻辑：默认示例数据 < 宿主 demoData < 系统变量 */
 function previewText(expr: string, demoData?: Record<string, any>): string {
-  if (!expr.trim()) return EMPTY_PREVIEW
+  if (!expr.trim()) return tr(EMPTY_PREVIEW_KEY)
   try {
     const ctx = { ...DEFAULT_DEMO_DATA, ...(demoData ?? {}), ...resolveSystemVariables() }
     const result = evaluateTemplate(expr, ctx)
-    if (result === undefined || result === null) return NO_VALUE_PREVIEW
+    if (result === undefined || result === null) return tr(NO_VALUE_PREVIEW_KEY)
     return String(result)
   } catch {
-    return ERROR_PREVIEW
+    return tr(ERROR_PREVIEW_KEY)
   }
 }
 
@@ -258,36 +273,36 @@ function helpCard(modifier: string, title: string, lines: string[]): El {
 /** 帮助信息四卡：文案逐字照抄 canvas */
 function helpSection(): El {
   return h('div', { class: 'ee-help-section' }, [
-    h('div', { class: 'ee-help-title', text: '帮助信息' }),
+    h('div', { class: 'ee-help-title', text: tr('expression.k1') }),
     h('div', { class: 'ee-help-grid' }, [
-      helpCard('ee-help-field', '输入方式', [
-        '双击左侧字段、变量、函数即可插入到表达式输入框中',
-        '双击途中按住 Ctrl（Mac 为 ⌘）切换为插入字段名称，当静态文本用',
-        '静态数据直接输入即可，如：供应商名称',
-        '动态解析字段、变量、函数必须用 {} 包裹',
-        '示例：{SUM(supplier.name)}',
-        '中文 key 直接写 {字段名}，如 {姓名}、{supplier.名称}',
-        '注意：只能嵌套一层',
+      helpCard('ee-help-field', tr('expression.k2'), [
+        tr('expression.k3'),
+        tr('expression.k4'),
+        tr('expression.k5'),
+        tr('expression.k6'),
+        tr('expression.k7'),
+        tr('expression.k8'),
+        tr('expression.k9'),
       ]),
-      helpCard('ee-help-function', '函数使用', [
-        'SUM(字段) - 求和',
-        'AVG(字段) - 平均值',
-        'COUNT(字段) - 计数',
-        'IF(条件, 真值, 假值) - 条件判断',
-        '四则运算：{qty * price}、{ADD(qty, 1)}',
-        '修约：ROUND 四舍五入 / ROUNDUP 进一 / ROUNDDOWN 去尾 / ROUNDBANK 四舍六入五成双',
+      helpCard('ee-help-function', tr('expression.k10'), [
+        tr('expression.k11'),
+        tr('expression.k12'),
+        tr('expression.k13'),
+        tr('expression.k14'),
+        tr('expression.k15'),
+        tr('expression.k16'),
       ]),
-      helpCard('ee-help-variable', '系统变量', [
-        '{pageIndex} - 当前页码',
-        '{totalPages} - 总页数',
-        '{printDate} - 打印日期',
+      helpCard('ee-help-variable', tr('expression.k17'), [
+        tr('expression.k18'),
+        tr('expression.k19'),
+        tr('expression.k20'),
       ]),
-      helpCard('ee-help-conditional', '示例', [
-        '静态文本：供应商名称',
-        '动态字段：{supplier.name}',
-        '函数调用：{SUM(amount)}',
-        '条件判断：{IF(amount>1000, "大单", "小单")}',
-        '运算并修约：{ROUND(qty * price, 2)}',
+      helpCard('ee-help-conditional', tr('expression.k21'), [
+        tr('expression.k22'),
+        tr('expression.k23'),
+        tr('expression.k24'),
+        tr('expression.k25'),
+        tr('expression.k26'),
       ]),
     ]),
   ])
@@ -295,6 +310,7 @@ function helpSection(): El {
 
 /** 渲染表达式编辑器弹窗的 DOM 描述（内部已含遮罩层，render 进 shadow 根下即可） */
 export function renderExpressionEditor(opts: ExpressionEditorOptions, target: ExpressionEditorTarget): El {
+  tr = opts.t ?? globalT
   const fieldDisplay = normalizeFieldDisplay(opts.fieldDisplay)
   const state = {
     activeTab: 'field' as TabKey,
@@ -316,7 +332,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
     if (!el) return
     const text = previewText(state.expression, opts.demoData)
     el.textContent = text
-    el.classList.toggle('ee-preview-error', text === ERROR_PREVIEW)
+    el.classList.toggle('ee-preview-error', text === tr(ERROR_PREVIEW_KEY))
   }
 
   /** 重绘格式提示条：仅双击插入中文 key 时显示正确写法，其余情况隐藏 */
@@ -329,7 +345,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
 
   const listItems = (): unknown[] => {
     if (state.activeTab === 'variable') {
-      return matchKeyword(SYSTEM_VARIABLES, state.searchText).map(sv => h('div', {
+      return matchKeyword(getSystemVariables(), state.searchText).map(sv => h('div', {
         class: 'ee-list-item',
         onDblclick: (ev: Event) => {
           const { insideParens } = region(ev)
@@ -338,7 +354,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
       }, [itemInfo(sv.label, sv.template)]))
     }
     if (state.activeTab === 'function') {
-      return FUNC_GROUPS.map(group => h('div', { class: 'ee-func-group' }, [
+      return getFuncGroups().map(group => h('div', { class: 'ee-func-group' }, [
         h('div', { class: 'ee-func-group-title', text: group.title }),
         ...matchKeyword(group.items, state.searchText).map(fn => h('div', {
           class: 'ee-list-item',
@@ -351,7 +367,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
       ]))
     }
     const groups = filterGroups(groupFields(opts.fields ?? []), state.searchText)
-    if (!groups.length) return [h('p', { class: 'pd-empty', text: '暂无字段' })]
+    if (!groups.length) return [h('p', { class: 'pd-empty', text: tr('expression.k27') })]
     const nodes: unknown[] = []
     for (const group of groups) {
       if (group.key) {
@@ -385,7 +401,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
             type: 'button',
             class: `ee-copy-btn${state.copiedFieldKey === field.fieldKey ? ' is-copied' : ''}`,
             // 提示浮层由 print-designer 的 hover-tip 委托承担（容器白名单含 .pd-dialog-overlay）
-            'data-tip': state.copiedFieldKey === field.fieldKey ? '已复制' : `复制字段名「${field.fieldLabel}」`,
+            'data-tip': state.copiedFieldKey === field.fieldKey ? tr('expression.k28') : `复制字段名「${field.fieldLabel}」`,
             'aria-label': `复制字段名 ${field.fieldLabel}`,
             html: iconSvg(state.copiedFieldKey === field.fieldKey ? 'Check' : 'Copy', 13),
             onClick: (ev: Event) => {
@@ -403,10 +419,10 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
   /** 显式重绘：页签高亮 / 搜索框 / 列表 / 文本域 / 预览（Vue 3 轨 的响应式更新在无框架版的等价物） */
   const repaint = (root: ParentNode) => {
     const tabs = Array.from(root.querySelectorAll<HTMLElement>('.ee-nav-tab'))
-    tabs.forEach((el, i) => el.classList.toggle('active', TABS[i]?.key === state.activeTab))
+    tabs.forEach((el, i) => el.classList.toggle('active', getTabs()[i]?.key === state.activeTab))
     const search = query<HTMLInputElement>(root, '.ee-content-search .pd-input')
     if (search) {
-      const placeholder = PLACEHOLDER[state.activeTab]
+      const placeholder = getPlaceholder()[state.activeTab]
       if (search.placeholder !== placeholder) search.placeholder = placeholder
       if (search.value !== state.searchText) search.value = state.searchText
     }
@@ -479,12 +495,12 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
   }
 
   const nav = h('div', { class: 'ee-nav' }, [
-    h('div', { class: 'ee-nav-title', text: '类型' }),
-    h('div', { class: 'ee-nav-tabs' }, TABS.map((tab, i) => h('div', {
+    h('div', { class: 'ee-nav-title', text: tr('expression.k29') }),
+    h('div', { class: 'ee-nav-tabs' }, getTabs().map((tab, i) => h('div', {
       class: `ee-nav-tab${state.activeTab === tab.key ? ' active' : ''}`,
       text: tab.text,
       onClick: (ev: MouseEvent) => {
-        state.activeTab = TABS[i]!.key
+        state.activeTab = getTabs()[i]!.key
         repaint(scope(ev))
       },
     }))),
@@ -494,7 +510,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
     h('div', { class: 'ee-content-search' }, [
       h('input', {
         class: 'pd-input',
-        placeholder: PLACEHOLDER[state.activeTab],
+        placeholder: getPlaceholder()[state.activeTab],
         onInput: (ev: Event) => {
           state.searchText = (ev.target as HTMLInputElement).value
           repaint(scope(ev))
@@ -508,11 +524,11 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
 
   const editor = h('div', { class: 'ee-editor' }, [
     h('div', { class: 'ee-editor-section' }, [
-      h('div', { class: 'ee-editor-title', text: '表达式编辑' }),
+      h('div', { class: 'ee-editor-title', text: tr('expression.k30') }),
       h('textarea', {
         class: 'ee-textarea',
         rows: 6,
-        placeholder: '双击左侧字段/变量/函数插入，双击途中按住 Ctrl（Mac 为 ⌘）切换为插入字段名，或直接输入静态内容',
+        placeholder: tr('expression.k31'),
         text: state.expression,
         onInput: (ev: Event) => {
           state.expression = (ev.target as HTMLTextAreaElement).value
@@ -528,9 +544,9 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
       }),
     ]),
     h('div', { class: 'ee-editor-section' }, [
-      h('div', { class: 'ee-editor-title', text: '预览结果' }),
+      h('div', { class: 'ee-editor-title', text: tr('expression.k32') }),
       h('div', {
-        class: `ee-preview${initialPreview === ERROR_PREVIEW ? ' ee-preview-error' : ''}`,
+        class: `ee-preview${initialPreview === tr(ERROR_PREVIEW_KEY) ? ' ee-preview-error' : ''}`,
         text: initialPreview,
       }),
     ]),
@@ -548,13 +564,13 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
       'aria-labelledby': 'expression-editor-title',
     }, [
       h('header', { class: 'pd-dialog-header' }, [
-        h('strong', { id: 'expression-editor-title', text: '编辑表达式' }),
-        h('button', { type: 'button', class: 'pd-close', 'aria-label': '关闭', text: '×', onClick: () => opts.onClose() }),
+        h('strong', { id: 'expression-editor-title', text: tr('expression.k33') }),
+        h('button', { type: 'button', class: 'pd-close', 'aria-label': tr('expression.k34'), text: '×', onClick: () => opts.onClose() }),
       ]),
       h('div', { class: 'expression-editor' }, [nav, content, editor]),
       h('footer', { class: 'pd-dialog-footer' }, [
-        h('button', { type: 'button', class: 'pd-button', text: '取消', onClick: () => opts.onClose() }),
-        h('button', { type: 'button', class: 'pd-button primary', text: '确定', onClick: () => onConfirm() }),
+        h('button', { type: 'button', class: 'pd-button', text: tr('expression.k35'), onClick: () => opts.onClose() }),
+        h('button', { type: 'button', class: 'pd-button primary', text: tr('expression.k36'), onClick: () => onConfirm() }),
       ]),
     ]),
   ])

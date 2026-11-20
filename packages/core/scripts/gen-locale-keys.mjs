@@ -24,15 +24,14 @@ export function checkParity(zhSource, enSource) {
 }
 
 function main() {
-  // 语言包用 ...shellZh / ...shellEn 汇总；把拆出的 shell 文件也纳入键集合与校验
-  const zhSource = [
-    readFileSync(resolve(MESSAGES_DIR, 'zh-CN.ts'), 'utf8'),
-    readFileSync(resolve(MESSAGES_DIR, 'shell-zh.ts'), 'utf8'),
-  ].join('\n')
-  const enSource = [
-    readFileSync(resolve(MESSAGES_DIR, 'en-US.ts'), 'utf8'),
-    readFileSync(resolve(MESSAGES_DIR, 'shell-en.ts'), 'utf8'),
-  ].join('\n')
+  // 语言包用 ...shell / ...expr 汇总；把拆出的文件也纳入键集合与校验
+  const bundleFiles = [
+    ['zh-CN.ts', 'shell-zh.ts', 'expr-zh.ts'],
+    ['en-US.ts', 'shell-en.ts', 'expr-en.ts'],
+  ]
+  const [zhSource, enSource] = bundleFiles.map(files =>
+    files.map(f => readFileSync(resolve(MESSAGES_DIR, f), 'utf8')).join('\n'),
+  )
   const { missing, extra } = checkParity(zhSource, enSource)
   if (missing.length || extra.length) {
     console.error(`[gen-locale-keys] 键不一致：en 缺失 [${missing.join(', ')}]；en 多出 [${extra.join(', ')}]`)

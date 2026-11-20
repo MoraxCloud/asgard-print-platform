@@ -1,8 +1,10 @@
+// @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest'
 import { resetLocale, setLocale, t } from '@worm-print-platform/core/i18n'
 import { CHART_ELEMENT_UI, installChartCommonUI, uninstallChartCommonUI } from '../ui.js'
 import { CHART_KIND_DEFINITIONS, CHART_KINDS } from '../kinds.js'
 import { getElementUI } from '@worm-print-platform/plugin-kit'
+import type { RuntimeElement } from '@worm-print-platform/core/designer'
 
 afterEach(() => {
   uninstallChartCommonUI()
@@ -27,6 +29,29 @@ describe('echarts 插件语言包', () => {
     for (const def of CHART_KIND_DEFINITIONS) {
       expect((def as unknown as { labelKey?: string }).labelKey).toMatch(/^echarts\./)
     }
+  })
+
+  it('属性面板提示文案不显示原始 key（模块加载期求值缺陷）', () => {
+    setLocale('zh-CN')
+    const ui = getElementUI('barChart')!
+    const element = {
+      id: 'e1', type: 'barChart',
+      options: { left: 0, top: 0, width: 100, height: 60, chartOption: {} },
+    } as unknown as RuntimeElement
+    const result = ui.renderProperty!({
+      element,
+      data: [{ name: 'x', value: 1 }],
+      fields: [],
+      update: () => {},
+      repaint: () => {},
+    })
+    const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
+    const host = document.createElement('div')
+    if (typeof node === 'string') host.innerHTML = node
+    else host.appendChild(node as Node)
+    const hint = [...host.querySelectorAll('.pd-hint')].map(n => n.textContent ?? '').join(' ')
+    expect(hint).not.toContain('echarts.ui.k')
+    expect(hint.length).toBeGreaterThan(0)
   })
 
   it('切英文后 engine 能解析插件键，切回中文恢复', () => {

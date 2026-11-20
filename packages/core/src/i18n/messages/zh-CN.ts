@@ -1,5 +1,6 @@
 // 内置中文（源文本）语言包。新增键时须同步 en-US.ts 与 locale-keys.json。
 import { shellZh } from './shell-zh.js'
+import { exprZh } from './expr-zh.js'
 
 export const zhCN = {
   'toolbar.save': '保存',
@@ -101,6 +102,24 @@ export const zhCN = {
   'crop.movableX': '水平可挪 {x}mm；垂直这一轴已贴满，挪不动',
   'crop.movableY': '垂直可挪 {y}mm；水平这一轴已贴满，挪不动',
   'crop.noRoom': '这个缩放下图与框正好一样大，两轴都没有可挪的余量',
+  'crop.top': '顶部',
+  'crop.center': '居中',
+  'crop.bottom': '底部',
+  'crop.left': '左侧',
+  'crop.right': '右侧',
+  'crop.topLeft': '左上',
+  'crop.topCenter': '上中',
+  'crop.topRight': '右上',
+  'crop.middleLeft': '左中',
+  'crop.middleRight': '右中',
+  'crop.bottomLeft': '左下',
+  'crop.bottomCenter': '下中',
+  'crop.bottomRight': '右下',
+  'crop.fitContain': '包含（保持比例）',
+  'crop.fitCover': '剪裁（等比铺满后裁边）',
+  'crop.fitFill': '拉伸填满',
+  'crop.fitNone': '原始尺寸',
+  'crop.fitScaleDown': '缩小（保持比例）',
 
   // 设计器外壳
   'save.geometryWarningConfirm': '出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n{warnings}',
@@ -114,4 +133,7 @@ export const zhCN = {
 
   // canvas shell UI 文案（由 Task 7 语义化脚本派生）
   ...shellZh,
+
+  // 表达式编辑器 UI 文案（由 Task 11 修复派生）
+  ...exprZh,
 }

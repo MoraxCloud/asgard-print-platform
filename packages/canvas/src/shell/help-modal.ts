@@ -12,7 +12,7 @@
 //   本包：外壳是整体重绘模型，弹窗必须挂在 shadow root 上（.designer-container 的兄弟节点），
 //         由 print-designer.ts 的 helpVisible + syncHelp() 决定 DOM 存在与否（同表达式编辑器范式）；
 //         mountHelpModal 登记一次性 document keydown，卸载即摘；无进出场过渡（见 PARITY §八）。
-import { trG } from './controls.js'
+import { createTranslator } from '@worm-print-platform/core/i18n'
 import { getHelpSections } from './help-content'
 import { h, render } from '../core/h'
 import type { El } from '../core/h'
@@ -48,6 +48,7 @@ function resolveTab(sections: ReturnType<typeof getHelpSections>, initial?: stri
 /** 渲染帮助弹窗（调用方负责挂到 shadow root 上） */
 export function renderHelpModal(opts: HelpModalOptions): El {
   const sections = getHelpSections(opts.locale)
+  const t = createTranslator(opts.locale ?? 'zh-CN')
   const active = resolveTab(sections, opts.initialTab)
 
   /** 切页签：canvas 由响应式重算 currentContent，这里只定点改高亮与正文，不重建弹窗 */
@@ -77,11 +78,11 @@ export function renderHelpModal(opts: HelpModalOptions): El {
     h('div', { class: 'help-modal' }, [
       h('div', { class: 'help-modal-header' }, [
         h('div', { class: 'help-modal-title-wrap' }, [
-          h('h2', { class: 'help-modal-title', text: trG( 'helpModal.k101') }),
+          h('h2', { class: 'help-modal-title', text: t('helpModal.k101') }),
           h('span', { class: 'help-modal-project', text: 'worm-print-platform' }),
         ]),
         h('button', {
-          type: 'button', class: 'help-modal-close', title: trG( 'helpModal.k102'), text: '×',
+          type: 'button', class: 'help-modal-close', title: t('helpModal.k102'), text: '×',
           onClick: () => opts.onClose(),
         }),
       ]),

@@ -153,6 +153,8 @@ export class PrintDesignerElement extends HTMLElement {
   private _lang: string | undefined
   /** messages 属性注册的用户语言包注销句柄 */
   private disposeMessages: (() => void) | null = null
+  /** 当前 messages 值，切换 lang 时按新 locale 重新注册 */
+  private _messages: CustomLocaleMessages | undefined
   /** 全局 locale 变化订阅；仅未显式设置 lang 的实例重绘 */
   private unsubI18n: (() => void) | null = null
   /** 首挂标尺测量的 rAF 句柄：卸载后取消，避免对已销毁实例回调 */
@@ -284,8 +286,15 @@ export class PrintDesignerElement extends HTMLElement {
   /** 界面语言；未设置时跟随 core 全局 locale（浏览器按 navigator.language 探测） */
   set lang(v: string | undefined) {
     this._lang = v ? normalizeLocale(v) : undefined
-    if (v === undefined) this.removeAttribute('lang')
-    else this.setAttribute('lang', this._lang!)
+    // 仅在值不同时回写 attribute，避免 attributeChangedCallback → setter 递归
+    if (v === undefined) {
+      if (this.hasAttribute('lang')) this.removeAttribute('lang')
+    } else if (this.getAttribute('lang') !== this._lang) {
+      this.setAttribute('lang', this._lang!)
+    }
+    // 用户包按 locale 分层，切换 lang 时须按新 locale 重新注册
+    this.disposeMessages?.()
+    this.disposeMessages = this._messages ? registerLocale(this.lang, this._messages) : null
     // 帮助弹窗按 locale 选语言内容，切换 lang 时若已打开则重建
     if (this.helpVisible && this.unmountHelp) {
       this.unmountHelp()
@@ -295,10 +304,13 @@ export class PrintDesignerElement extends HTMLElement {
   }
   get lang(): string { return this._lang ?? getLocale() }
 
-  /** 自定义语言包（对象注入）；注册为用户层，覆盖内置与插件译文 */
+  /** 自定义语言包（对象注入）；注册到实例 locale，覆盖内置与插件译文 */
   set messages(v: CustomLocaleMessages | undefined) {
+    this._messages = v
     this.disposeMessages?.()
-    this.disposeMessages = v ? registerLocale(getLocale(), v) : null
+    // 必须用实例 locale 注册：用户包由 createTranslator(this.lang) 读取；
+    // 若注册到全局 locale，显式 lang 与全局不同时覆盖会失效。
+    this.disposeMessages = v ? registerLocale(this.lang, v) : null
     this.repaint()
   }
 
@@ -364,8 +376,8 @@ export class PrintDesignerElement extends HTMLElement {
       return
     }
     if (name === 'lang') {
-      this._lang = value ? normalizeLocale(value) : undefined
-      this.repaint()
+      // 走 setter 以复用「重建帮助弹窗 + 按新 locale 重新注册 messages」逻辑
+      this.lang = value ?? undefined
       return
     }
     if (!value) return
@@ -387,6 +399,12 @@ export class PrintDesignerElement extends HTMLElement {
       this.attachDocKeys()
       this.attachPluginUI()
       this.attachInstanceListeners()
+      this.unsubI18n = subscribeI18n(() => {
+        if (this._lang) return
+        this.disposeMessages?.()
+        this.disposeMessages = this._messages ? registerLocale(getLocale(), this._messages) : null
+        this.repaint()
+      })
       return
     }
     const opts: DesignerOptions = {}
@@ -406,7 +424,13 @@ export class PrintDesignerElement extends HTMLElement {
     this.state.fieldDisplay = normalizeFieldDisplay(this.getAttribute('field-display'))
     this.readChrome()
     this.unsub = this.store.subscribe(() => this.repaint())
-    this.unsubI18n = subscribeI18n(() => { if (!this._lang) this.repaint() })
+    this.unsubI18n = subscribeI18n(() => {
+      if (this._lang) return // 显式 lang 的实例不跟随全局
+      // 未设 lang 的实例：用户包按旧 locale 注册，全局 locale 变化后重新注册到新 locale
+      this.disposeMessages?.()
+      this.disposeMessages = this._messages ? registerLocale(getLocale(), this._messages) : null
+      this.repaint()
+    })
     this.attachDocKeys()
     this.attachPluginUI()
     this.attachInstanceListeners()

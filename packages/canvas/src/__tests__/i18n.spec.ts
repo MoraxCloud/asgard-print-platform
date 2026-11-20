@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest'
-import { setLocale, t } from '@worm-print-platform/core/i18n'
+import { setLocale } from '@worm-print-platform/core/i18n'
 import { definePrintDesigner, type PrintDesignerElement } from '../index.js'
 import { PRINT_DESIGNER_ATTRIBUTES, PRINT_DESIGNER_METHODS, PRINT_DESIGNER_PROPERTY_NAMES, PRINT_DESIGNER_CONTRACT_VERSION } from '../host-contract.js'
 
@@ -33,10 +33,14 @@ describe('设计器语言通道', () => {
     expect(el.lang).toBe('zh-CN')
   })
 
-  it('messages 注入的用户包覆盖内置译文', async () => {
+  it('messages 注入的用户包覆盖内置译文（实例 locale 与全局不同时也生效）', async () => {
     const el = await mount(node => node.setAttribute('lang', 'en-US'))
-    el.messages = { 'toolbar.save': 'Store' }
-    expect(t('toolbar.save')).toBe('Store')
+    // 覆盖「保存」按钮对应的真实 key；实例 lang=en-US，而全局 locale 由 test-setup 锁为 zh-CN
+    el.messages = { 'toolbar.k537': 'Store' }
+    await new Promise<void>(r => requestAnimationFrame(() => r()))
+    const texts = [...el.shadowRoot!.querySelectorAll('button')].map(b => b.textContent?.trim() ?? '')
+    expect(texts).toContain('Store')
+    expect(texts).not.toContain('Save')
   })
 
   it('未设 lang 的实例跟随全局 locale，显式 lang 的实例不受影响', async () => {

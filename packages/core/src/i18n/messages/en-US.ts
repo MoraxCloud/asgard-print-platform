@@ -1,5 +1,6 @@
 import type { LocaleMessages } from '../types.js'
 import { shellEn } from './shell-en.js'
+import { exprEn } from './expr-en.js'
 
 // 内置英文语言包。键须与 zh-CN 一致，缺值回退中文源文本。
 export const enUS: Partial<LocaleMessages> = {
@@ -93,6 +94,24 @@ export const enUS: Partial<LocaleMessages> = {
   'crop.movableX': 'Horizontal range {x}mm; the vertical axis is already full',
   'crop.movableY': 'Vertical range {y}mm; the horizontal axis is already full',
   'crop.noRoom': 'At this scale the image exactly fits the box; neither axis has room to move',
+  'crop.top': 'Top',
+  'crop.center': 'Center',
+  'crop.bottom': 'Bottom',
+  'crop.left': 'Left',
+  'crop.right': 'Right',
+  'crop.topLeft': 'Top left',
+  'crop.topCenter': 'Top center',
+  'crop.topRight': 'Top right',
+  'crop.middleLeft': 'Middle left',
+  'crop.middleRight': 'Middle right',
+  'crop.bottomLeft': 'Bottom left',
+  'crop.bottomCenter': 'Bottom center',
+  'crop.bottomRight': 'Bottom right',
+  'crop.fitContain': 'Contain (keep ratio)',
+  'crop.fitCover': 'Cover (fill and crop edges)',
+  'crop.fitFill': 'Stretch to fill',
+  'crop.fitNone': 'Original size',
+  'crop.fitScaleDown': 'Scale down (keep ratio)',
 
   'save.geometryWarningConfirm': 'Print warning: some content extends beyond the paper and will be clipped.\nAccept clipping and continue saving?\nClick OK to save, Cancel to go back and edit.\n\n{warnings}',
   'store.tilingSinglePage': 'Tiling allows only one design page',
@@ -104,4 +123,7 @@ export const enUS: Partial<LocaleMessages> = {
 
   // canvas shell 英文（首版机翻草稿，未覆盖键默认中文回退）
   ...shellEn,
+
+  // 表达式编辑器 UI 文案
+  ...exprEn,
 }

@@ -79,16 +79,20 @@ export function getLocale(): Locale {
   return 'zh-CN'
 }
 
+function notify(locale: string): void {
+  for (const listener of [...state().listeners]) listener(locale)
+}
+
 export function setLocale(locale: string | null): void {
   const s = state()
   s.explicit = locale === null ? null : normalizeLocale(locale)
-  if (s.explicit) {
-    for (const listener of [...s.listeners]) listener(s.explicit)
-  }
+  // 重置为 null 也要通知：跟随全局的实例需要按探测到的 locale 重新取词
+  notify(getLocale())
 }
 
 export function resetLocale(): void {
   state().explicit = null
+  notify(getLocale())
 }
 
 export function translate(locale: Locale, key: string, params?: Record<string, string | number>): string {

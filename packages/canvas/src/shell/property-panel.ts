@@ -6,7 +6,7 @@
 // 搜索门控（filteredGroups / matchedKeys / searching）见 shell/property-search.ts，口径同 canvas。
 import { tr, trG } from './controls.js'
 import {
-  PAPER_PRESETS, isContinuousPaperSize, resolveElementTextFit, propertyTip, IMAGE_FIT_OPTIONS,
+  PAPER_PRESETS, isContinuousPaperSize, resolveElementTextFit, propertyTip, imageFitOptions,
   resolveDesignImageSrc, barcodeBarWidthRecommendText, normalizeRotationAngle,
   acceptsElementBorder, applyElementBorderPreset, elementBorderEdgeVisible, effectiveElementBorderSpec,
   resolveElementBorderDisplay, setElementBorderEdgeVisible, setElementBorderField, BORDER_LINE_STYLES,
@@ -212,7 +212,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
       rotateNote,
     ] : [
       // 平铺条件项：不能在这里套数组，common 的 h() 不摊平嵌套子节点（会让 paint 递归抛 TypeError）
-      type === 'image' ? gateItem(ctx, 'ap-img-fit', selectField(ctx, tr(ctx, 'propertyPanel.k230'), String(o.fit ?? 'contain'), IMAGE_FIT_OPTIONS,
+      type === 'image' ? gateItem(ctx, 'ap-img-fit', selectField(ctx, tr(ctx, 'propertyPanel.k230'), String(o.fit ?? 'contain'), imageFitOptions(),
         v => patch({ fit: v }), propertyTip('ap-img-fit'), reset('fit', 'ap-img-fit'))) : '',
       // 只有剪裁档有「被裁掉的那条边」可挪，其余档不出这一行（与 Vue 3 轨 AppearanceGroup、两端单元格台同一门禁）
       type === 'image' && o.fit === 'cover' ? gateItem(ctx, 'ap-img-object-position', cropAnchorField(ctx, {
@@ -290,7 +290,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
           class: 'pd-hint',
           text: tr(ctx, 'propertyPanel.k260'),
         }) : '',
-        !isBarcode ? gateItem(ctx, 'cd-fit', selectField(ctx, tr(ctx, 'propertyPanel.k261'), String(o.fit || 'contain'), IMAGE_FIT_OPTIONS,
+        !isBarcode ? gateItem(ctx, 'cd-fit', selectField(ctx, tr(ctx, 'propertyPanel.k261'), String(o.fit || 'contain'), imageFitOptions(),
           v => patch({ fit: v || undefined }), undefined, reset('fit', 'cd-fit'))) : '',
         gateItem(ctx, 'cd-max-width', field(tr(ctx, 'propertyPanel.k262'), stepper({
           value: o.maxWidth, min: 1, max: 200, placeholder: tr(ctx, 'propertyPanel.k263'),

@@ -1425,7 +1425,7 @@ var SEARCH_KEYWORDS = [
   "\u6570\u503C\u6807\u7B7E",
   "label"
 ];
-var PANEL_HINT = t2("echarts.ui.k19");
+var panelHint = () => t2("echarts.ui.k19");
 function escapeHtml2(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -2056,7 +2056,7 @@ function renderProperty(ctx) {
     wrap.appendChild(row);
     form.appendChild(wrap);
   }
-  form.appendChild(el("p", "pd-hint", PANEL_HINT));
+  form.appendChild(el("p", "pd-hint", panelHint()));
   return root;
 }
 var CHART_ELEMENT_UI = defineElementUI({

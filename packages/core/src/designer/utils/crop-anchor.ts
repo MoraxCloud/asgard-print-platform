@@ -174,6 +174,46 @@ export const CROP_AXIS_OPTIONS: Record<'vertical' | 'horizontal', Array<{ value:
 }
 
 /** 两轴组合档位（九宫格）：「上中」= 水平居中 + 垂直贴顶 */
+/** 跟随 locale 的档位标签；常量数组保留供 API 兼容 */
+export function cropAxisOptions(axis: 'vertical' | 'horizontal'): Array<{ value: number; label: string }> {
+  if (axis === 'vertical') {
+    return [
+      { value: 0, label: tr('crop.top') },
+      { value: 50, label: tr('crop.center') },
+      { value: 100, label: tr('crop.bottom') },
+    ]
+  }
+  return [
+    { value: 0, label: tr('crop.left') },
+    { value: 50, label: tr('crop.center') },
+    { value: 100, label: tr('crop.right') },
+  ]
+}
+
+export function cropGridOptions(): Array<{ x: number; y: number; label: string }> {
+  return [
+    { x: 0, y: 0, label: tr('crop.topLeft') },
+    { x: 50, y: 0, label: tr('crop.topCenter') },
+    { x: 100, y: 0, label: tr('crop.topRight') },
+    { x: 0, y: 50, label: tr('crop.middleLeft') },
+    { x: 50, y: 50, label: tr('crop.center') },
+    { x: 100, y: 50, label: tr('crop.middleRight') },
+    { x: 0, y: 100, label: tr('crop.bottomLeft') },
+    { x: 50, y: 100, label: tr('crop.bottomCenter') },
+    { x: 100, y: 100, label: tr('crop.bottomRight') },
+  ]
+}
+
+export function imageFitOptions(): Array<{ value: string; label: string }> {
+  return [
+    { value: 'contain', label: tr('crop.fitContain') },
+    { value: 'cover', label: tr('crop.fitCover') },
+    { value: 'fill', label: tr('crop.fitFill') },
+    { value: 'none', label: tr('crop.fitNone') },
+    { value: 'scale-down', label: tr('crop.fitScaleDown') },
+  ]
+}
+
 export const CROP_GRID_OPTIONS: Array<{ x: number; y: number; label: string }> = [
   { x: 0, y: 0, label: '左上' },
   { x: 50, y: 0, label: '上中' },
@@ -265,10 +305,10 @@ export function cropPresetOptions(travel: CropTravel, x: number, y: number): Arr
   const movX = travel.x !== null && travel.x > 0
   const movY = travel.y !== null && travel.y > 0
   if (movY && !movX) {
-    return CROP_AXIS_OPTIONS.vertical.map(o => ({ value: `${x},${o.value}`, label: o.label }))
+    return cropAxisOptions('vertical').map(o => ({ value: `${x},${o.value}`, label: o.label }))
   }
   if (movX && !movY) {
-    return CROP_AXIS_OPTIONS.horizontal.map(o => ({ value: `${o.value},${y}`, label: o.label }))
+    return cropAxisOptions('horizontal').map(o => ({ value: `${o.value},${y}`, label: o.label }))
   }
-  return CROP_GRID_OPTIONS.map(o => ({ value: `${o.x},${o.y}`, label: o.label }))
+  return cropGridOptions().map(o => ({ value: `${o.x},${o.y}`, label: o.label }))
 }

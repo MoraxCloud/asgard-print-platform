@@ -9,6 +9,8 @@ interface Entry {
   ui: ElementUI
   /** 注册序号：宿主按此决定素材卡顺序与「后注册覆盖」的稳定口径 */
   seq: number
+  /** 该 UI 的语言包注销句柄（若有 locales） */
+  disposeLocales?: Array<() => void>
 }
 
 interface RegistryState {
@@ -92,7 +94,7 @@ export function registerElementUI(ui: ElementUI): () => void {
   const disposeLocales = ui.locales
     ? Object.entries(ui.locales).map(([locale, messages]) => registerPluginMessages(locale, pluginId, messages))
     : []
-  for (const type of ui.types) s.entries.set(type, { ui, seq })
+  for (const type of ui.types) s.entries.set(type, { ui, seq, disposeLocales })
   notify()
   return () => {
     for (const dispose of disposeLocales) dispose()
@@ -148,6 +150,15 @@ export function subscribeElementUIRegistry(listener: () => void): () => void {
 export function clearElementUIs(): void {
   const s = state()
   if (s.entries.size === 0 && s.listeners.size === 0) return
+  // 每个 type 条目持有同一 UI 的 disposeLocales 引用；用 Set 去重，避免同一语言包被注销多次
+  const disposed = new Set<() => void>()
+  for (const entry of s.entries.values()) {
+    for (const dispose of entry.disposeLocales ?? []) {
+      if (disposed.has(dispose)) continue
+      disposed.add(dispose)
+      dispose()
+    }
+  }
   s.entries.clear()
   notify()
 }
