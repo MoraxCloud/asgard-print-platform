@@ -93,6 +93,7 @@ export const shellZh = {
   'formatBar.k91': "下划线",
   'formatBar.k92': "删除线",
   'formatBar.k93': "字体颜色{v0}",
+  'formatBar.fontDisabledHint': "（需选中或混选文本元素）",
   'formatBar.k94': "背景色",
   'formatBar.k95': "对齐",
   'formatBar.k96': "对齐（需选中文本元素或单元格）",

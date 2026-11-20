@@ -1,6 +1,7 @@
 // 左栏素材台 / 页签栏 / 状态栏：DOM 类名对齐 Vue 3 轨的
 // LeftPanel.vue、FieldTreePanel.vue、LayerPanel.vue、PageTabs.vue、StatusBar.vue。
-import { tr, trG } from './controls.js'
+import { tr } from './controls.js'
+import { translateConstantLabel } from './label-translation.js'
 import { PAPER_PRESETS, copyTextToClipboard, getPaperDimensions, groupFields, isWideMaterialLabel } from '@worm-print-platform/core/designer'
 import type { ElementType, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -63,7 +64,7 @@ export function renderLeftPanel(ctx: ShellCtx) {
             onClick: () => { st.leftTab = tab; ctx.repaint() },
           })),
       ]),
-      tabPane('elements', elementsPane(), 'material-grid'),
+      tabPane('elements', elementsPane(ctx), 'material-grid'),
       tabPane('fields', [fieldsPane(ctx)]),
       tabPane('layers', [layersPane(ctx)]),
     ]),
@@ -74,10 +75,27 @@ function collapseBtn(icon: string, title: string, onClick: () => void) {
   return h('button', { type: 'button', class: 'collapse-btn', title, html: iconMarkup(icon, 14), onClick })
 }
 
-function materialCard(type: string, label: string, icon: string) {
+/** 内置元素类型的 label 翻译键（label 在模块加载时由 trG 冻结为中文，渲染时必须按 locale 重取） */
+const ELEMENT_LABEL_KEYS: Record<string, string> = {
+  text: 'elementDefinitions.k553', barcode: 'elementDefinitions.k554', qrcode: 'elementDefinitions.k555',
+  image: 'elementDefinitions.k556', table: 'elementDefinitions.k557', longText: 'elementDefinitions.k558',
+  flowList: 'elementDefinitions.k559', hline: 'elementDefinitions.k560', vline: 'elementDefinitions.k561',
+  rect: 'elementDefinitions.k562', oval: 'elementDefinitions.k563', pageNumber: 'elementDefinitions.k564',
+  // 图表插件十类（键在 echarts 插件语言包，注册后按全局 locale 解析）
+  barChart: 'echarts.kinds.k84', barHChart: 'echarts.kinds.k86', lineChart: 'echarts.kinds.k88',
+  areaChart: 'echarts.kinds.k90', pieChart: 'echarts.kinds.k92', doughnutChart: 'echarts.kinds.k94',
+  scatterChart: 'echarts.kinds.k96', radarChart: 'echarts.kinds.k98', funnelChart: 'echarts.kinds.k100',
+  gaugeChart: 'echarts.kinds.k102',
+}
+
+/** 素材台分组标题的英文映射（group 来自 core 插件描述符，中文常量） */
+// 插件元素分组标题 → 语言包 key（group 来自插件描述符，按英文 type 识别避免中文字面量）
+const MATERIAL_GROUP_BY_TYPE: Record<string, string> = { barChart: 'elementGroup.chart' }
+
+function materialCard(type: string, label: string, icon: string, translatedLabel?: string) {
   return h('div', {
     // 与 Vue 3 轨 LeftPanel 同构：标签文本较长的素材在两列栅格下独占整行
-    class: `material-card${isWideMaterialLabel(label) ? ' material-card--wide' : ''}`,
+    class: `material-card${isWideMaterialLabel(translatedLabel ?? label) ? ' material-card--wide' : ''}`,
     draggable: true,
     dataset: { test: `material-${type}` },
     onDragstart: (ev: Event) => {
@@ -88,22 +106,28 @@ function materialCard(type: string, label: string, icon: string) {
     },
   }, [
     h('span', { class: 'material-icon', 'data-icon': icon, html: iconMarkup(icon, 14) }),
-    h('span', { class: 'material-label', text: label }),
+    h('span', { class: 'material-label', text: translatedLabel ?? label }),
   ])
 }
 
 /** 素材台：统一注册表（内置 + 自定义覆盖 + 插件项）按注册顺序出卡，group 出分组标题 */
-function elementsPane(): unknown[] {
+function elementsPane(ctx: ShellCtx): unknown[] {
   const cards: unknown[] = []
   let prevGroup: string | undefined
   for (const item of getMaterialElementDefinitions()) {
     const group = (item as { group?: string }).group
     // 与 Vue 3 轨 LeftPanel 的 groupStart 同判据：首个同组项前渲染分组标题
-    if (group && group !== prevGroup) cards.push(h('div', { class: 'material-group-title', text: group }))
+    if (group && group !== prevGroup) {
+      const groupKey = MATERIAL_GROUP_BY_TYPE[item.type]
+      cards.push(h('div', { class: 'material-group-title', text: groupKey ? tr(ctx, groupKey) : group }))
+    }
     if (group) prevGroup = group
-    cards.push(materialCard(item.type, item.label, item.icon))
+    // 内置类型与图表插件都按 type → 语言包 key 取译文（key 映射见 ELEMENT_LABEL_KEYS）
+    const labelKey = ELEMENT_LABEL_KEYS[item.type]
+    const translated = labelKey ? tr(ctx, labelKey) : undefined
+    cards.push(materialCard(item.type, item.label, item.icon, translated))
   }
-  return [h('div', { class: 'panel-title', text: trG( 'panels.k146') }), ...cards]
+  return [h('div', { class: 'panel-title', text: tr(ctx, 'panels.k146') }), ...cards]
 }
 
 function fieldsPane(ctx: ShellCtx) {
@@ -290,7 +314,7 @@ export function renderStatusBar(ctx: ShellCtx) {
   // 与 Vue 3 轨的 paperLabel 同口径：预设名（含尺寸）+ 方向 + 实际长宽 + 出纸旋转提示
   const dim = getPaperDimensions(t)
   const orient = t.orientation === 'landscape' ? tr(ctx, 'panels.k174') : tr(ctx, 'panels.k175')
-  const name = PAPER_PRESETS[t.paperSize]?.label ?? t.paperSize
+  const name = translateConstantLabel(PAPER_PRESETS[t.paperSize]?.label ?? t.paperSize, ctx.lang ?? 'zh-CN')
   const rot = t.outputRotation
   const paper = `${name} ${orient} ${Math.round(dim.width)}×${Math.round(dim.height)}mm${rot ? tr(ctx, 'panels.paperRotated', { rot }) : ''}`
   return h('div', { class: 'status-bar' }, [

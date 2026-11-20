@@ -124,6 +124,7 @@ export const zhCN = {
   // 设计器外壳
   'save.geometryWarningConfirm': '出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n{warnings}',
   'store.tilingSinglePage': '开启拼版后只能有一个设计页面',
+  'elementGroup.chart': '图表',
 
   // 打印数据校验（core / render / client 共用）
   'service.printData.emptyArray': '批量打印数据必须是非空对象数组',

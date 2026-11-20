@@ -5,6 +5,8 @@
 //  .pd-form / .position-grid / .margin-grid / .pd-field>.pd-label / .pd-divider / .pd-empty）。
 // 搜索门控（filteredGroups / matchedKeys / searching）见 shell/property-search.ts，口径同 canvas。
 import { tr, trG } from './controls.js'
+import { getLocale } from '@worm-print-platform/core/i18n'
+import { translateConstantLabel } from './label-translation.js'
 import {
   PAPER_PRESETS, isContinuousPaperSize, resolveElementTextFit, propertyTip, imageFitOptions,
   resolveDesignImageSrc, barcodeBarWidthRecommendText, normalizeRotationAngle,
@@ -411,9 +413,10 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
     setElementBorderField(next, key, value)
     patch(next)
   }
+  const lineStyles = BORDER_LINE_STYLES.map(o => ({ ...o, label: translateConstantLabel(o.label, ctx.lang ?? getLocale()) }))
   const styleOptions = styleMixed
-    ? [{ value: '', label: tr(ctx, 'propertyPanel.k280') }, ...BORDER_LINE_STYLES]
-    : [...BORDER_LINE_STYLES]
+    ? [{ value: '', label: tr(ctx, 'propertyPanel.k280') }, ...lineStyles]
+    : lineStyles
 
   rows.push(group(ctx, 'border-bg', tr(ctx, 'propertyPanel.k281'), 'Picture', [
     h('form', { class: 'pd-form', onSubmit: (ev: Event) => ev.preventDefault() }, [
@@ -493,10 +496,10 @@ function pagePane(ctx: ShellCtx) {
   }
   const groups: { group: string; items: { key: string; label: string }[] }[] = []
   for (const [key, preset] of Object.entries(PAPER_PRESETS)) {
-    const name = preset.group ?? tr(ctx, 'propertyPanel.k297')
+    const name = translateConstantLabel(preset.group ?? tr(ctx, 'propertyPanel.k297'), ctx.lang ?? getLocale())
     let bucket = groups.find(g => g.group === name)
     if (!bucket) { bucket = { group: name, items: [] }; groups.push(bucket) }
-    bucket.items.push({ key, label: preset.label ?? key })
+    bucket.items.push({ key, label: translateConstantLabel(preset.label ?? key, ctx.lang ?? getLocale()) })
   }
   const custom = !PAPER_PRESETS[t.paperSize]
   const continuous = isContinuousPaperSize(t.paperSize)

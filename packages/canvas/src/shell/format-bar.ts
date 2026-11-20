@@ -4,7 +4,7 @@
 //  .ft-color-btn>.ft-glyph / .ft-align-panel>.ft-align-row>.ft-cell-btn / .ft-border-panel>.ft-border-grid /
 //  .ft-style-row / .ft-border-style-row>.ft-edge-label / .ft-line-width）。
 // 逻辑全部走 core/format.ts（从 useFormatToolbar + useFormatPainter 移植），本文件只负责呈现与派发。
-import { tr, trG } from './controls.js'
+import { tr } from './controls.js'
 import { h } from '../core/h'
 import { iconSvg } from '../core/icons'
 import type { VerticalAlign } from '@worm-print-platform/core/designer'
@@ -17,10 +17,10 @@ import type { FormatToolbar } from '../core/format'
 type FormatCtx = ShellCtx & { format: FormatToolbar }
 
 const LINE_STYLES = [
-  { key: 'solid', label: trG( 'formatBar.k54'), preview: '1.5px solid currentColor' },
-  { key: 'dashed', label: trG( 'formatBar.k55'), preview: '1.5px dashed currentColor' },
-  { key: 'dotted', label: trG( 'formatBar.k56'), preview: '1.5px dotted currentColor' },
-  { key: 'double', label: trG( 'formatBar.k57'), preview: '3px double currentColor' },
+  { key: 'solid', labelKey: 'formatBar.k54', preview: '1.5px solid currentColor' },
+  { key: 'dashed', labelKey: 'formatBar.k55', preview: '1.5px dashed currentColor' },
+  { key: 'dotted', labelKey: 'formatBar.k56', preview: '1.5px dotted currentColor' },
+  { key: 'double', labelKey: 'formatBar.k57', preview: '3px double currentColor' },
 ]
 
 const ALIGN_ICON: Record<string, string> = {
@@ -80,7 +80,7 @@ export function renderFormatBar(ctx: FormatCtx) {
         class: `ft-style-btn${f.borderStyle === s.key ? ' on' : ''}`,
         dataset: {
           test: `style-${s.key}`,
-          tip: f.borderStyle === s.key ? tr(ctx, 'formatBar.k73', { v0: s.label }) : s.label,
+          tip: f.borderStyle === s.key ? tr(ctx, 'formatBar.k73', { v0: tr(ctx, s.labelKey) }) : tr(ctx, s.labelKey),
         },
         // 线型/粗细/颜色只暂存为「待应用规格」，点击预设或单边才落盘（与 Vue 3 轨口径一致）；再点已选中＝取消
         onClick: () => { f.toggleBorderStyle(s.key as 'solid' | 'dashed' | 'dotted' | 'double'); ctx.repaint() },
@@ -183,7 +183,7 @@ export function renderFormatBar(ctx: FormatCtx) {
     h('div', { class: 'tb-ou ft-group', dataset: { unit: 'color' } }, [
       h('span', {
         class: `ft-color-btn${fontDisabled ? ' dim' : ''}`,
-        title: tr(ctx, 'formatBar.k93', { v0: fontDisabled ? '（需选中或混选文本元素）' : '' }),
+        title: tr(ctx, 'formatBar.k93', { v0: fontDisabled ? tr(ctx, 'formatBar.fontDisabledHint') : '' }),
       }, [colorTrigger(typeof values.color === 'string' ? values.color : undefined, v => f.applyStyle({ color: v })), h('span', { class: 'ft-glyph', text: 'A' })]),
       h('span', { class: `ft-color-btn${borderDisabled ? ' dim' : ''}`, title: tr(ctx, 'formatBar.k94') }, [
         colorTrigger(typeof values.backgroundColor === 'string' ? values.backgroundColor : undefined, v => f.applyStyle({ backgroundColor: v })),

@@ -800,6 +800,7 @@ export class PrintDesignerElement extends HTMLElement {
       showSave: this.getAttribute('show-save') !== 'false',
       isEdit: this.getAttribute('is-edit') === 'true',
       t: createTranslator(this.lang),
+      lang: this.lang,
       host: {
         uploadImage: this.uploadImage,
         uploadDesignBackground: this.uploadDesignBackground,

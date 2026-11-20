@@ -17,7 +17,7 @@ function listTsFiles(dir) {
     if (statSync(full).isDirectory()) {
       if (name === '__tests__' || name === 'help-content' || name === 'i18n' || name === 'messages') continue
       out.push(...listTsFiles(full))
-    } else if (name.endsWith('.ts') && !name.endsWith('.spec.ts') && !name.endsWith('.test.ts') && !name.endsWith('-test.ts')) {
+    } else if (name.endsWith('.ts') && !name.endsWith('.spec.ts') && !name.endsWith('.test.ts') && !name.endsWith('-test.ts') && name !== 'label-translation.ts') {
       out.push(full)
     }
   }

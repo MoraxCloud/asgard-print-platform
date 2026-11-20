@@ -57,6 +57,8 @@ export interface ShellCtx {
   isEdit: boolean
   /** 当前实例 locale 的翻译函数；由 print-designer 注入，缺省用全局 t */
   t?: import('@worm-print-platform/core/i18n').Translate
+  /** 当前实例 locale BCP47（模块级常量 label 翻译用） */
+  lang?: string
   /** 宿主注入能力（图片上传、设计背景上传、字体清单），未注入时相关入口置灰 */
   host: {
     uploadImage?: (file: File) => Promise<string>
