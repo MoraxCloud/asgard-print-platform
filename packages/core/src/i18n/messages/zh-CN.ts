@@ -1,4 +1,6 @@
 // 内置中文（源文本）语言包。新增键时须同步 en-US.ts 与 locale-keys.json。
+import { shellZh } from './shell-zh.js'
+
 export const zhCN = {
   'toolbar.save': '保存',
   'toolbar.preview': '预览',
@@ -103,4 +105,7 @@ export const zhCN = {
   // 设计器外壳
   'save.geometryWarningConfirm': '出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n{warnings}',
   'store.tilingSinglePage': '开启拼版后只能有一个设计页面',
+
+  // canvas shell UI 文案（由 Task 7 语义化脚本派生）
+  ...shellZh,
 }

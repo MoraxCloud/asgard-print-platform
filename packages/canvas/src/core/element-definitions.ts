@@ -12,6 +12,7 @@
 //   本表负责设计器 UI 语义（素材卡、图层、属性台分组、双击字段）。
 // - 注册表挂 globalThis 固定 Symbol，与 core / plugin-kit 两张注册表同一条约定。
 
+import { trG } from '../shell/controls.js'
 import type { RuntimeElement } from '@worm-print-platform/core/designer'
 import type { DesignerStore } from './store'
 import type { TableFire } from '../shell/table'
@@ -60,21 +61,21 @@ export interface ElementDefinition {
  * 新增内置元素只需在此登记 + 在 shell/elements.ts 注入渲染器。
  */
 export const BUILTIN_ELEMENT_DEFINITIONS: readonly ElementDefinition[] = Object.freeze([
-  { type: 'text', label: '文本', icon: 'Type', material: true, propertyGroup: 'text', dblEditableField: 'formatter', origin: 'builtin' },
-  { type: 'barcode', label: '条形码', icon: 'Barcode', material: true, propertyGroup: 'code', dblEditableField: 'formatter', origin: 'builtin' },
-  { type: 'qrcode', label: '二维码', icon: 'QrCode', material: true, propertyGroup: 'code', dblEditableField: 'formatter', origin: 'builtin' },
-  { type: 'image', label: '图片', icon: 'Image', material: true, propertyGroup: 'general', dblEditableField: 'src', origin: 'builtin' },
-  { type: 'table', label: '表格', icon: 'Table', material: true, propertyGroup: 'table', origin: 'builtin' },
-  { type: 'longText', label: '长文', icon: 'TextAlignStart', material: true, propertyGroup: 'text', dblEditableField: 'formatter', origin: 'builtin' },
-  { type: 'flowList', label: '流式列表', icon: 'List', material: true, propertyGroup: 'general', dblEditableField: 'formatter', origin: 'builtin' },
-  { type: 'hline', label: '横线', icon: 'Minus', material: true, propertyGroup: 'general', origin: 'builtin' },
-  { type: 'vline', label: '竖线', icon: 'SeparatorVertical', material: true, propertyGroup: 'general', origin: 'builtin' },
-  { type: 'rect', label: '矩形', icon: 'Square', material: true, propertyGroup: 'general', origin: 'builtin' },
-  { type: 'oval', label: '椭圆', icon: 'Circle', material: true, propertyGroup: 'general', origin: 'builtin' },
+  { type: 'text', label: trG( 'elementDefinitions.k553'), icon: 'Type', material: true, propertyGroup: 'text', dblEditableField: 'formatter', origin: 'builtin' },
+  { type: 'barcode', label: trG( 'elementDefinitions.k554'), icon: 'Barcode', material: true, propertyGroup: 'code', dblEditableField: 'formatter', origin: 'builtin' },
+  { type: 'qrcode', label: trG( 'elementDefinitions.k555'), icon: 'QrCode', material: true, propertyGroup: 'code', dblEditableField: 'formatter', origin: 'builtin' },
+  { type: 'image', label: trG( 'elementDefinitions.k556'), icon: 'Image', material: true, propertyGroup: 'general', dblEditableField: 'src', origin: 'builtin' },
+  { type: 'table', label: trG( 'elementDefinitions.k557'), icon: 'Table', material: true, propertyGroup: 'table', origin: 'builtin' },
+  { type: 'longText', label: trG( 'elementDefinitions.k558'), icon: 'TextAlignStart', material: true, propertyGroup: 'text', dblEditableField: 'formatter', origin: 'builtin' },
+  { type: 'flowList', label: trG( 'elementDefinitions.k559'), icon: 'List', material: true, propertyGroup: 'general', dblEditableField: 'formatter', origin: 'builtin' },
+  { type: 'hline', label: trG( 'elementDefinitions.k560'), icon: 'Minus', material: true, propertyGroup: 'general', origin: 'builtin' },
+  { type: 'vline', label: trG( 'elementDefinitions.k561'), icon: 'SeparatorVertical', material: true, propertyGroup: 'general', origin: 'builtin' },
+  { type: 'rect', label: trG( 'elementDefinitions.k562'), icon: 'Square', material: true, propertyGroup: 'general', origin: 'builtin' },
+  { type: 'oval', label: trG( 'elementDefinitions.k563'), icon: 'Circle', material: true, propertyGroup: 'general', origin: 'builtin' },
   // 无素材入口但可加载：html 属 core 屏蔽类型，pageNumber 由页眉/页脚自动放置
   { type: 'html', label: 'HTML', icon: 'Code', material: false, propertyGroup: 'general', origin: 'builtin' },
   // 图标用 Shapes 以对齐历史口径（旧静态表未收录 pageNumber → 回落 Shapes）
-  { type: 'pageNumber', label: '页码', icon: 'Shapes', material: false, propertyGroup: 'general', origin: 'builtin' },
+  { type: 'pageNumber', label: trG( 'elementDefinitions.k564'), icon: 'Shapes', material: false, propertyGroup: 'general', origin: 'builtin' },
 ])
 
 const REGISTRY_KEY = Symbol.for('worm-print-platform.element-definitions.v1')
@@ -132,8 +133,8 @@ function builtinMap(): Map<string, ElementDefinition> {
  * 撤销内置类型的覆盖会自动回落到基线定义。
  */
 export function registerElementDefinition(def: Omit<ElementDefinition, 'origin'> & { origin?: ElementDefinition['origin'] }): () => void {
-  if (!def?.type || typeof def.type !== 'string') throw new Error('registerElementDefinition: type 必须是非空字符串')
-  if (!def.label || typeof def.label !== 'string') throw new Error('registerElementDefinition: label 必须是非空字符串')
+  if (!def?.type || typeof def.type !== 'string') throw new Error(trG( 'elementDefinitions.k565'))
+  if (!def.label || typeof def.label !== 'string') throw new Error(trG( 'elementDefinitions.k566'))
   const s = state()
   const own: ElementDefinition = { ...def, origin: def.origin ?? 'custom' }
   s.overrides.set(own.type, own)
@@ -149,7 +150,7 @@ export function registerElementDefinition(def: Omit<ElementDefinition, 'origin'>
 
 /** 覆盖某类型的内容渲染器（内置与插件同通路）；注销后自动回落内置基线 */
 export function registerElementRenderer(type: string, renderer: ElementContentRenderer): () => void {
-  if (!type || typeof renderer !== 'function') throw new Error('registerElementRenderer: 需要 type 与渲染函数')
+  if (!type || typeof renderer !== 'function') throw new Error(trG( 'elementDefinitions.k567'))
   const s = state()
   s.rendererOverrides.set(type, renderer)
   notify()

@@ -3,6 +3,7 @@
 // （样式由 scripts/gen-styles.mjs 从 canvas 派生，类名对不上样式就掉）。
 // 矩阵/边框/合并等操作一律走 @worm-print-platform/core/designer 纯函数，
 // 历史与重绘统一经 store.updateElement 收口（Vue 3 轨 侧靠 Vue 响应式，这里必须显式 emit）。
+import { tr, trG } from './controls.js'
 import type {
   BorderPreset, ElementOptions, RuntimeElement, TableCell, TableCellBorder,
   TableCellType, TextAlign, TextFit, TableRow, TableRowType,
@@ -68,18 +69,18 @@ function selectRowPlain(label: string, value: string, options: { value: string; 
 
 const hint = (text: string): El => h('p', { class: 'pd-hint', text })
 
-const HEADER_REPEAT_TIP = '多级表头作为一个结构整体重复，勾选后表头区所有行都会在每页顶部重复'
+const HEADER_REPEAT_TIP = trG( 'tableProps.k330')
 
 const ROW_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'header', label: '标题行' },
-  { value: 'data', label: '数据行' },
-  { value: 'subtotal', label: '小计行（每页小计）' },
-  { value: 'summary', label: '汇总行' },
+  { value: 'header', label: trG( 'tableProps.k331') },
+  { value: 'data', label: trG( 'tableProps.k332') },
+  { value: 'subtotal', label: trG( 'tableProps.k333') },
+  { value: 'summary', label: trG( 'tableProps.k334') },
 ]
 
 const BARCODE_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'CODE128', label: 'CODE128（通用）' },
-  { value: 'EAN13', label: 'EAN13（商品码）' },
+  { value: 'CODE128', label: trG( 'tableProps.k335') },
+  { value: 'EAN13', label: trG( 'tableProps.k336') },
   { value: 'EAN8', label: 'EAN8' },
   { value: 'UPC', label: 'UPC' },
   { value: 'CODE39', label: 'CODE39' },
@@ -87,20 +88,20 @@ const BARCODE_TYPE_OPTIONS: { value: string; label: string }[] = [
 ]
 
 const QR_LEVEL_OPTIONS: { value: string; label: string }[] = [
-  { value: 'L', label: 'L（最低，容量大）' },
-  { value: 'M', label: 'M（推荐）' },
+  { value: 'L', label: trG( 'tableProps.k337') },
+  { value: 'M', label: trG( 'tableProps.k338') },
   { value: 'Q', label: 'Q' },
-  { value: 'H', label: 'H（最高）' },
+  { value: 'H', label: trG( 'tableProps.k339') },
 ]
 
 const TEXT_FIT_OPTIONS: { value: string; label: string }[] = [
-  { value: 'clip', label: '截断' },
-  { value: 'shrink', label: '自动缩小' },
-  { value: 'autoHeight', label: '自适应行高' },
+  { value: 'clip', label: trG( 'tableProps.k340') },
+  { value: 'shrink', label: trG( 'tableProps.k341') },
+  { value: 'autoHeight', label: trG( 'tableProps.k342') },
 ]
 
 /** 多选占位项：禁用且用哨兵值，避免和「不指定/默认」这类真实空值撞车 */
-const MULTI_OPTION = { value: '__multi__', label: '多选', disabled: true }
+const MULTI_OPTION = { value: '__multi__', label: trG( 'tableProps.k343'), disabled: true }
 
 /** 行属性：行类型 / 行高 / 表头每页重复（作用于整个表头区） */
 export function tableRowGroup(ctx: ShellCtx, el: RuntimeElement): El {
@@ -108,26 +109,26 @@ export function tableRowGroup(ctx: ShellCtx, el: RuntimeElement): El {
   const sel = s.tableSelection
   const rows: TableRow[] = el.options.tableRows ?? []
   const row = sel ? rows[sel.r1] : undefined
-  if (!sel || !row) return group(ctx, 'table-row', '行属性', 'Grid', [])
+  if (!sel || !row) return group(ctx, 'table-row', tr(ctx, 'tableProps.k344'), 'Grid', [])
 
   const commit = (patch: Partial<ElementOptions>) => s.updateElement(el.id, patch)
 
-  return group(ctx, 'table-row', '行属性', 'Grid', [
+  return group(ctx, 'table-row', tr(ctx, 'tableProps.k345'), 'Grid', [
     pdForm([
-      selectRow('行类型', row.type, ROW_TYPE_OPTIONS, (v) => {
+      selectRow(tr(ctx, 'tableProps.k346'), row.type, ROW_TYPE_OPTIONS, (v) => {
         const err = setRowType(rows, sel.r1, v as TableRowType)
         if (err) { window.alert(err); return }
         commit({ tableRows: rows })
       }, true),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label', text: '行高 (mm)' }),
+        h('span', { class: 'pd-label', text: tr(ctx, 'tableProps.k347') }),
         stepper({
           value: row.height, min: 3, max: 100, step: 0.5,
           onCommit: (v) => { row.height = v; commit({ tableRows: rows }) },
         }),
       ]),
       row.type === 'header'
-        ? switchRow('表头每页重复', row.repeatOnPage ?? false, (v) => {
+        ? switchRow(tr(ctx, 'tableProps.k348'), row.repeatOnPage ?? false, (v) => {
           setHeaderRepeat(rows, v)
           commit({ tableRows: rows })
         }, HEADER_REPEAT_TIP)
@@ -156,49 +157,49 @@ export function tableSettingsGroup(ctx: ShellCtx, el: RuntimeElement): El {
     write: () => commit({ [key]: TABLE_FACTORY[key] } as never),
   })
 
-  return group(ctx, 'table-settings', '表格设置', 'Grid', [
+  return group(ctx, 'table-settings', tr(ctx, 'tableProps.k349'), 'Grid', [
     pdForm([
-      selectRow('列表数据源字段', o.dataSource ?? '', listFields, (v) => commit({ dataSource: v || undefined }), true),
+      selectRow(tr(ctx, 'tableProps.k350'), o.dataSource ?? '', listFields, (v) => commit({ dataSource: v || undefined }), true),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '默认字体' }), tableReset('tableDefaultFontFamily')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k351') }), tableReset('tableDefaultFontFamily')]),
         renderFontSelect({
           id: 'table-default-font',
           state: ctx.state,
           fonts: ctx.host.fonts,
           value: o.tableDefaultFontFamily,
-          placeholder: '默认',
+          placeholder: tr(ctx, 'tableProps.k352'),
           onChange: v => commit({ tableDefaultFontFamily: v || undefined }),
         }),
       ]),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '默认字号 (pt)' }), tableReset('tableDefaultFontSize')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k353') }), tableReset('tableDefaultFontSize')]),
         stepper({
-          value: optNum(o.tableDefaultFontSize), min: 0, max: 72, placeholder: '默认',
+          value: optNum(o.tableDefaultFontSize), min: 0, max: 72, placeholder: tr(ctx, 'tableProps.k354'),
           onCommit: (v) => commit({ tableDefaultFontSize: orUndef(v) }),
         }),
       ]),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '默认文字颜色' }), tableReset('tableDefaultColor')]),
-        colorTrigger(o.tableDefaultColor, v => commit({ tableDefaultColor: v }), '默认文字颜色'),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k355') }), tableReset('tableDefaultColor')]),
+        colorTrigger(o.tableDefaultColor, v => commit({ tableDefaultColor: v }), tr(ctx, 'tableProps.k356')),
       ]),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '默认内边距 (mm)' }), tableReset('tableDefaultPadding')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k357') }), tableReset('tableDefaultPadding')]),
         stepper({
-          value: optNum(o.tableDefaultPadding), min: 0, max: 10, step: 0.5, placeholder: '默认',
+          value: optNum(o.tableDefaultPadding), min: 0, max: 10, step: 0.5, placeholder: tr(ctx, 'tableProps.k358'),
           onCommit: (v) => commit({ tableDefaultPadding: orUndef(v) }),
         }),
       ]),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label', text: '列宽 (mm)' }),
+        h('span', { class: 'pd-label', text: tr(ctx, 'tableProps.k359') }),
         ...widths.map((w, i) => h('div', { class: 'col-width-row' }, [
-          h('span', { style: { width: '60px' }, text: `列${i + 1}` }),
+          h('span', { style: { width: '60px' }, text: tr(ctx, 'tableProps.k360', { v0: i + 1 }) }),
           stepper({
             value: w, min: 5, max: 200,
             onCommit: (v) => {
               const othersW = widths.reduce((sum, cw, idx) => (idx === i ? sum : sum + cw), 0)
               if (othersW + v > maxTableWidth) {
                 const clamped = Math.max(5, Math.round((maxTableWidth - othersW) * 10) / 10)
-                window.alert(`表格总宽不能超过打印范围宽度 ${maxTableWidth}mm，列${i + 1} 已调整为 ${clamped}mm`)
+                window.alert(tr(ctx, 'tableProps.k361', { v0: maxTableWidth, v1: i + 1, v2: clamped }))
                 widths[i] = clamped
               } else {
                 widths[i] = v
@@ -220,17 +221,17 @@ export function paginationGroup(ctx: ShellCtx, el: RuntimeElement): El {
   const patch = (p: Partial<ElementOptions>) => s.updateElement(el.id, p)
   const items: El[] = []
   if (isTable) {
-    items.push(gateItem(ctx, 'pg-enabled', switchRow('启用分页', o.tablePagination?.enabled ?? true,
+    items.push(gateItem(ctx, 'pg-enabled', switchRow(tr(ctx, 'tableProps.k362'), o.tablePagination?.enabled ?? true,
       v => patch({ tablePagination: { enabled: v } }))))
   } else {
     const pageable = o.pagination?.pageable ?? true
     const keepWithNext = o.pagination?.keepWithNext ?? false
-    items.push(gateItem(ctx, 'pg-pageable', switchRow('参与分页', pageable,
+    items.push(gateItem(ctx, 'pg-pageable', switchRow(tr(ctx, 'tableProps.k363'), pageable,
       v => patch({ pagination: { pageable: v, keepWithNext } }))))
-    items.push(gateItem(ctx, 'pg-keep-with-next', switchRow('与下元素同页', keepWithNext,
+    items.push(gateItem(ctx, 'pg-keep-with-next', switchRow(tr(ctx, 'tableProps.k364'), keepWithNext,
       v => patch({ pagination: { pageable, keepWithNext: v } }))))
   }
-  return group(ctx, 'pagination', '分页配置', 'Document', [pdForm(items)], false)
+  return group(ctx, 'pagination', tr(ctx, 'tableProps.k365'), 'Document', [pdForm(items)], false)
 }
 
 /** 单元格台的本选区草稿（Common 每次重绘重建 DOM，只能按 store 存）：
@@ -247,8 +248,8 @@ interface CellGroupDraft {
 const cellGroupDrafts = new WeakMap<DesignerStore, CellGroupDraft>()
 
 const BORDER_EDGES: { value: 'top' | 'right' | 'bottom' | 'left'; label: string }[] = [
-  { value: 'top', label: '上' }, { value: 'right', label: '右' },
-  { value: 'bottom', label: '下' }, { value: 'left', label: '左' },
+  { value: 'top', label: trG( 'tableProps.k366') }, { value: 'right', label: trG( 'tableProps.k367') },
+  { value: 'bottom', label: trG( 'tableProps.k368') }, { value: 'left', label: trG( 'tableProps.k369') },
 ]
 
 /** 单元格：内容类型与码制 / 内容表达式 / 样式 / 边框 / 合并拆分（作用于整个选区） */
@@ -256,10 +257,10 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
   const s = ctx.store
   const sel = s.tableSelection
   const rows: TableRow[] = el.options.tableRows ?? []
-  if (!sel) return group(ctx, 'table-cell', '单元格', 'Menu', [])
+  if (!sel) return group(ctx, 'table-cell', tr(ctx, 'tableProps.k370'), 'Menu', [])
   const main = findMainCell(rows, sel.r1, sel.c1)
   const cell0 = rows[main.r]?.cells[main.c]
-  if (!cell0) return group(ctx, 'table-cell', '单元格', 'Menu', [])
+  if (!cell0) return group(ctx, 'table-cell', tr(ctx, 'tableProps.k371'), 'Menu', [])
 
   const writableCells = (): TableCell[] => collectWritableCells(rows, sel)
   /** 单/多选：可写格=1 才回显单格配置；跨行/跨列的合并格仍算单选 */
@@ -364,7 +365,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
     : (cell0.cellType || 'text')
   const withMulti = <T extends { value: string }>(options: T[]): Array<T | typeof MULTI_OPTION> =>
     isMulti ? [MULTI_OPTION, ...options] : options
-  const multiPlaceholder = (single: string): string => (isMulti ? '多选' : single)
+  const multiPlaceholder = (single: string): string => (isMulti ? tr(ctx, 'tableProps.k372') : single)
   /** 数值：多选只认批写草稿（未写过留空），单选沿用原口径 */
   const numValue = (key: keyof TableCell, single: number | undefined): number | undefined =>
     isMulti ? ((groupDraft.values as Record<string, any>)[key] as number | undefined) : single
@@ -381,7 +382,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
   for (let r = sel.r1; r <= sel.r2; r++) {
     if (rows[r]?.type !== 'data') { mergeSameValueEnabled = false; break }
   }
-  const mergeSameValueReason = mergeSameValueEnabled ? '' : '仅数据行（明细行）支持按值合并'
+  const mergeSameValueReason = mergeSameValueEnabled ? '' : tr(ctx, 'tableProps.k373')
   let canSplit = false
   for (let r = sel.r1; r <= sel.r2 && !canSplit; r++) {
     for (let c = sel.c1; c <= sel.c2 && !canSplit; c++) {
@@ -399,7 +400,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
   /** 单元格出厂态即「未设」：base 传空对象 ⇒ 落点恒为 undefined，删键后回落到该表自己的表级默认。
    *  写回必须走整选区 write（resetButton 给了 write 就不再直改 target）；提示整组不带数字——
    *  回落目标是作者可改的表级默认，写死数字就是假承诺。多选时按钮恒可点、不显示单格脏点。 */
-  const CELL_TIP = '恢复默认值（跟随表格默认）'
+  const CELL_TIP = tr(ctx, 'tableProps.k374')
   const cellReset = (key: string): El => resetButton({
     target: cell0 as Record<string, any>, base: {}, propKey: key, tipOverride: CELL_TIP, force: isMulti,
     // 走 writeField 而非 write：多选时要同时清掉批写草稿，否则控件会继续显示重置前的值
@@ -414,14 +415,14 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
     height: cellFitCapMm(rows, main.r, cell0, cellPad),
   }
 
-  return group(ctx, 'table-cell', '单元格', 'Menu', [
+  return group(ctx, 'table-cell', tr(ctx, 'tableProps.k375'), 'Menu', [
     pdForm([
-      isMulti ? hint(`已选 ${cellCount} 格 · 批量设置：不显示单格配置，改动会应用到全部选中格`) : '',
+      isMulti ? hint(tr(ctx, 'tableProps.k376', { v0: cellCount })) : '',
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label', text: '单元格类型' }),
+        h('span', { class: 'pd-label', text: tr(ctx, 'tableProps.k377') }),
         radioGroup('cell-type', [
-          { value: 'text', label: '文本' }, { value: 'barcode', label: '条形码' },
-          { value: 'qrcode', label: '二维码' }, { value: 'image', label: '图片' },
+          { value: 'text', label: tr(ctx, 'tableProps.k378') }, { value: 'barcode', label: tr(ctx, 'tableProps.k379') },
+          { value: 'qrcode', label: tr(ctx, 'tableProps.k380') }, { value: 'image', label: tr(ctx, 'tableProps.k381') },
         ], cellTypeCurrent, (v) => {
           const type = v === 'text' ? undefined : (v as TableCellType)
           const patch: Partial<TableCell> = { cellType: v as TableCellType }
@@ -438,52 +439,52 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
         }),
       ]),
 
-      isBarcodeCell ? selectRowPlain('码制', barcodeTypeValue, withMulti(BARCODE_TYPE_OPTIONS),
+      isBarcodeCell ? selectRowPlain(tr(ctx, 'tableProps.k382'), barcodeTypeValue, withMulti(BARCODE_TYPE_OPTIONS),
         v => { if (v !== '__multi__') writeField('barcodeType', v || undefined) }) : '',
-      isBarcodeCell ? switchRow('显示文本', isMulti ? groupDraft.values.showBarcodeText === true : cell0.showBarcodeText !== false,
+      isBarcodeCell ? switchRow(tr(ctx, 'tableProps.k383'), isMulti ? groupDraft.values.showBarcodeText === true : cell0.showBarcodeText !== false,
         v => writeField('showBarcodeText', v), undefined, cellReset('showBarcodeText')) : '',
       isBarcodeCell
-        ? numField('条宽（倍率）', numValue('barWidth', cell0.barWidth ?? 2), 'barWidth',
+        ? numField(tr(ctx, 'tableProps.k384'), numValue('barWidth', cell0.barWidth ?? 2), 'barWidth',
           { min: 2, max: 8, step: 0.5, placeholder: multiPlaceholder('') }, cellReset('barWidth'))
         : '',
       isBarcodeCell ? hint((dotAligned
-        ? '已设置打印机分辨率：条宽会被吸附到最近的整数打印点（DPI 优先于毫米值），单元格放不下时整体等比缩小'
-        : '热敏/针式打印建议 3 及以上：决定条码的落纸尺寸，条越粗出纸后条宽越稳定') + (barWidthRec ? `。${barWidthRec}` : '')) : '',
+        ? tr(ctx, 'tableProps.k385')
+        : tr(ctx, 'tableProps.k386')) + (barWidthRec ? `。${barWidthRec}` : '')) : '',
       // 同二维码：走 stepper 而非 numField，0 档（不留白边）是合法值不能被归并成未设置
-      isBarcodeCell ? fieldHelp('静区 (模块)', stepper({
-        value: numValue('barQuietZone', cell0.barQuietZone), min: 0, max: 20, placeholder: multiPlaceholder('默认 10'),
+      isBarcodeCell ? fieldHelp(tr(ctx, 'tableProps.k387'), stepper({
+        value: numValue('barQuietZone', cell0.barQuietZone), min: 0, max: 20, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k388')),
         onCommit: v => writeField('barQuietZone', v),
       }), propertyTip('cd-bar-quiet-zone'), cellReset('barQuietZone')) : '',
-      isBarcodeCell ? fieldHelp('条高 (mm)', stepper({
-        value: numValue('barHeight', cell0.barHeight), min: 1, max: 100, placeholder: multiPlaceholder('默认 30 模块'),
+      isBarcodeCell ? fieldHelp(tr(ctx, 'tableProps.k389'), stepper({
+        value: numValue('barHeight', cell0.barHeight), min: 1, max: 100, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k390')),
         onCommit: v => writeField('barHeight', v ?? undefined),
       }), propertyTip('cd-bar-height'), cellReset('barHeight')) : '',
       isBarcodeCell
-        ? numField('文本字号（相对条高，条高为 30）', numValue('barFontSize', cell0.barFontSize ?? 10), 'barFontSize',
-          { min: 5, max: 24, placeholder: multiPlaceholder('默认 10') }, cellReset('barFontSize'))
+        ? numField(tr(ctx, 'tableProps.k391'), numValue('barFontSize', cell0.barFontSize ?? 10), 'barFontSize',
+          { min: 5, max: 24, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k392')) }, cellReset('barFontSize'))
         : '',
-      isBarcodeCell ? selectRowPlain('打印机分辨率', printerDpiValue, withMulti([
-        { value: '', label: '不指定（按条宽渲染）' }, { value: '203', label: '203 dpi（8 点/mm）' },
-        { value: '300', label: '300 dpi（11.8 点/mm）' }, { value: '600', label: '600 dpi（23.6 点/mm）' },
+      isBarcodeCell ? selectRowPlain(tr(ctx, 'tableProps.k393'), printerDpiValue, withMulti([
+        { value: '', label: tr(ctx, 'tableProps.k394') }, { value: '203', label: tr(ctx, 'tableProps.k395') },
+        { value: '300', label: tr(ctx, 'tableProps.k396') }, { value: '600', label: tr(ctx, 'tableProps.k397') },
       ]), (v) => {
         if (v === '__multi__') return
         const dpi = Number(v)
         writeField('printerDpi', dpi > 0 ? dpi : undefined)
       }, { reset: cellReset('printerDpi') }) : '',
-      isBarcodeCell ? hint('填写后条宽吸附到整数打印点（消除出纸「条宽忽宽忽窄」）：条码先按条宽渲染，可用宽度够就原样落纸，不够才整体等比缩小') : '',
-      isQrcodeCell ? selectRowPlain('纠错级别', qrCodeLevelValue, withMulti(QR_LEVEL_OPTIONS),
+      isBarcodeCell ? hint(tr(ctx, 'tableProps.k398')) : '',
+      isQrcodeCell ? selectRowPlain(tr(ctx, 'tableProps.k399'), qrCodeLevelValue, withMulti(QR_LEVEL_OPTIONS),
         v => { if (v !== '__multi__') writeField('qrCodeLevel', v || undefined) }, { reset: cellReset('qrCodeLevel') }) : '',
       // 与元素台同构造直接用 stepper：numField 经 orUndef 会把显式填的 0 归并成未设置（出图虽一致，存的值应与用户填的一致），且它也不带说明图标
-      isQrcodeCell ? fieldHelp('静区 (模块)', stepper({
-        value: numValue('qrQuietZone', cell0.qrQuietZone), min: 0, max: 8, placeholder: multiPlaceholder('默认 0'),
+      isQrcodeCell ? fieldHelp(tr(ctx, 'tableProps.k400'), stepper({
+        value: numValue('qrQuietZone', cell0.qrQuietZone), min: 0, max: 8, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k401')),
         onCommit: v => writeField('qrQuietZone', v),
       }), propertyTip('cd-quiet-zone'), cellReset('qrQuietZone')) : '',
 
-      isBarcodeCell ? hint('单元格条码尺寸由「条宽」与「打印机分辨率」结算：可用宽度足够时按条宽原样落纸，不足时整体等比缩小；拉伸会把条宽变成非整数，故条形码不提供缩放模式，可用「最大宽高」限制上限。要放大条码：先加条宽倍率，再收窄静区（左右白边会换成条宽），必要时关掉显示文本以让出文本区高度') : '',
-      (isQrcodeCell || isImageCell) ? selectRowPlain('缩放模式', fitValue, withMulti(IMAGE_FIT_OPTIONS),
+      isBarcodeCell ? hint(tr(ctx, 'tableProps.k402')) : '',
+      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(IMAGE_FIT_OPTIONS),
         v => { if (v !== '__multi__') writeField('fit', v as TableCell['fit']) }, { reset: cellReset('fit') }) : '',
       isImageCell && !isMulti && cell0.fit === 'cover' ? cropAnchorField(ctx, {
-        fieldKey: 'ap-img-object-position', label: '裁剪锚点', src: resolveDesignImageSrc(cell0.formatter), fit: cell0.fit,
+        fieldKey: 'ap-img-object-position', label: tr(ctx, 'tableProps.k404'), src: resolveDesignImageSrc(cell0.formatter), fit: cell0.fit,
         containerClass: 'pd-cell-anchor',
         widthMm: cellBox.width, heightMm: cellBox.height,
         scale: cell0.fitScale,
@@ -493,19 +494,19 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
         resetScale: cellReset('fitScale'),
       }) : '',
       (isBarcodeCell || isQrcodeCell || isImageCell)
-        ? numField('最大宽度 (mm)', numValue('maxWidth', optNum(cell0.maxWidth)), 'maxWidth',
-          { min: 0, max: 200, placeholder: multiPlaceholder('默认') }, cellReset('maxWidth'))
+        ? numField(tr(ctx, 'tableProps.k405'), numValue('maxWidth', optNum(cell0.maxWidth)), 'maxWidth',
+          { min: 0, max: 200, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k406')) }, cellReset('maxWidth'))
         : '',
       (isBarcodeCell || isQrcodeCell || isImageCell)
-        ? numField('最大高度 (mm)', numValue('maxHeight', optNum(cell0.maxHeight)), 'maxHeight',
-          { min: 0, max: 200, placeholder: multiPlaceholder('默认') }, cellReset('maxHeight'))
+        ? numField(tr(ctx, 'tableProps.k407'), numValue('maxHeight', optNum(cell0.maxHeight)), 'maxHeight',
+          { min: 0, max: 200, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k408')) }, cellReset('maxHeight'))
         : '',
 
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label', text: '内容' }),
+        h('span', { class: 'pd-label', text: tr(ctx, 'tableProps.k409') }),
         h('input', {
           class: 'pd-input', type: 'text', value: isMulti ? (val('formatter') ?? '') : (cell0.formatter || ''),
-          placeholder: isMulti ? '多选（输入后覆盖全部选中格）' : '输入内容，支持 {字段} 表达式',
+          placeholder: isMulti ? tr(ctx, 'tableProps.k410') : tr(ctx, 'tableProps.k411'),
           onChange: (ev: Event) => writeField('formatter', (ev.target as HTMLInputElement).value || undefined),
           // 表达式编辑器入口在壳层（对照 Vue 3 轨 的 onDblClickCell → table-cell-dblclick）
           onDblclick: () => ctx.fire('table-cell-dblclick', { elementId: el.id, r: main.r, c: main.c, cellId: cell0.id }),
@@ -513,35 +514,35 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
       ]),
 
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '水平对齐' }), cellReset('align')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k412') }), cellReset('align')]),
         radioGroup('cell-align', [
-          { value: 'left', label: '左' }, { value: 'center', label: '中' }, { value: 'right', label: '右' }, { value: 'justify', label: '两端' },
+          { value: 'left', label: tr(ctx, 'tableProps.k413') }, { value: 'center', label: tr(ctx, 'tableProps.k414') }, { value: 'right', label: tr(ctx, 'tableProps.k415') }, { value: 'justify', label: tr(ctx, 'tableProps.k416') },
         ], isMulti ? (groupDraft.values.align ?? '') : (cell0.align || 'left'),
         v => writeField('align', v as TextAlign)),
       ]),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '垂直对齐' }), cellReset('valign')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k417') }), cellReset('valign')]),
         radioGroup('cell-valign', [
-          { value: 'top', label: '上' }, { value: 'middle', label: '中' }, { value: 'bottom', label: '下' },
+          { value: 'top', label: tr(ctx, 'tableProps.k418') }, { value: 'middle', label: tr(ctx, 'tableProps.k419') }, { value: 'bottom', label: tr(ctx, 'tableProps.k420') },
         ], isMulti ? (groupDraft.values.valign ?? '') : (cell0.valign || 'top'),
         v => writeField('valign', v as TableCell['valign'])),
       ]),
       h('div', { class: 'cell-style-grid' }, [
         h('div', { class: 'pd-field cell-font-field' }, [
-          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '字体' }), cellReset('fontFamily')]),
+          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k421') }), cellReset('fontFamily')]),
           renderFontSelect({
             id: 'cell-font',
             state: ctx.state,
             fonts: ctx.host.fonts,
             value: isMulti ? val('fontFamily') : cell0.fontFamily,
-            placeholder: multiPlaceholder('继承默认'),
+            placeholder: multiPlaceholder(tr(ctx, 'tableProps.k422')),
             onChange: v => writeField('fontFamily', v),
           }),
         ]),
-        numField('字号 (pt)', numValue('fontSize', optNum(cell0.fontSize)), 'fontSize',
-          { min: 0, max: 72, placeholder: multiPlaceholder('默认') }, cellReset('fontSize')),
+        numField(tr(ctx, 'tableProps.k423'), numValue('fontSize', optNum(cell0.fontSize)), 'fontSize',
+          { min: 0, max: 72, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k424')) }, cellReset('fontSize')),
         h('div', { class: 'pd-field' }, [
-          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '加粗' }), cellReset('fontWeight')]),
+          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k425') }), cellReset('fontWeight')]),
           h('input', {
             class: 'pd-switch', type: 'checkbox',
             checked: isMulti ? groupDraft.values.fontWeight === 'bold' : cell0.fontWeight === 'bold',
@@ -551,32 +552,32 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
           }),
         ]),
         h('div', { class: 'pd-field' }, [
-          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '文字颜色' }), cellReset('color')]),
-          colorTrigger(isMulti ? val('color') : cell0.color, v => writeField('color', v), '文字颜色'),
+          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k426') }), cellReset('color')]),
+          colorTrigger(isMulti ? val('color') : cell0.color, v => writeField('color', v), tr(ctx, 'tableProps.k427')),
         ]),
         h('div', { class: 'pd-field' }, [
-          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '背景色' }), cellReset('backgroundColor')]),
-          colorTrigger(isMulti ? val('backgroundColor') : cell0.backgroundColor, v => writeField('backgroundColor', v), '背景颜色'),
+          h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'tableProps.k428') }), cellReset('backgroundColor')]),
+          colorTrigger(isMulti ? val('backgroundColor') : cell0.backgroundColor, v => writeField('backgroundColor', v), tr(ctx, 'tableProps.k429')),
         ]),
       ]),
 
-      divider('边框'),
+      divider(tr(ctx, 'tableProps.k430')),
       h('div', { class: 'border-style-row' }, [
         // 裸下拉必须显式赋值当前值（只靠 <option selected> 在内核不一致时会回落到第二项）
         plainSelect(borderStyleDisplay, [
-          ...(styleMixed ? [{ value: BORDER_MIXED_VALUE, label: '混合', disabled: true }] : []),
+          ...(styleMixed ? [{ value: BORDER_MIXED_VALUE, label: tr(ctx, 'tableProps.k431'), disabled: true }] : []),
           ...BORDER_LINE_STYLES,
         ], v => { if (v !== BORDER_MIXED_VALUE) setBorderStyle(v as TableCellBorder['style']) },
         { width: '90px' }),
         h('div', { style: { width: '112px', flexShrink: '0' } }, [stepper({
           value: borderWidthDisplay, min: 0.25, max: 5, step: 0.25,
-          placeholder: isMulti ? '多选' : (widthMixed ? '混合' : undefined),
+          placeholder: isMulti ? tr(ctx, 'tableProps.k432') : (widthMixed ? tr(ctx, 'tableProps.k433') : undefined),
           onCommit: v => setBorderPatch('width', v),
         })]),
-        colorTrigger(borderColorDisplay, v => setBorderPatch('color', v), '边框颜色'),
+        colorTrigger(borderColorDisplay, v => setBorderPatch('color', v), tr(ctx, 'tableProps.k434')),
       ]),
       h('div', { class: 'pd-button-group border-presets' }, ([
-        ['all', '全部'], ['outer', '外侧'], ['inner', '内部'], ['none', '无'],
+        ['all', tr(ctx, 'tableProps.k435')], ['outer', tr(ctx, 'tableProps.k436')], ['inner', tr(ctx, 'tableProps.k437')], ['none', tr(ctx, 'tableProps.k438')],
       ] as [BorderPreset, string][]).map(([p, label]) => h('button', {
         type: 'button', class: 'pd-button small', text: label,
         // 线型＝无 ⇒ 预设就是清边框（不写一条隐形的 none 边）
@@ -605,36 +606,36 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
         ? CELL_BORDER_APPLY_HINT_MULTI
         : (mixedActiveAny ? CELL_BORDER_APPLY_HINT_MIXED : CELL_BORDER_APPLY_HINT)),
 
-      numField('内边距 (mm)', numValue('padding', optNum(cell0.padding)), 'padding',
-        { min: 0, max: 10, step: 0.5, placeholder: multiPlaceholder('默认') }, cellReset('padding')),
-      switchRow('自动换行', isMulti ? groupDraft.values.wordWrap === true : (cell0.wordWrap ?? true),
+      numField(tr(ctx, 'tableProps.k439'), numValue('padding', optNum(cell0.padding)), 'padding',
+        { min: 0, max: 10, step: 0.5, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k440')) }, cellReset('padding')),
+      switchRow(tr(ctx, 'tableProps.k441'), isMulti ? groupDraft.values.wordWrap === true : (cell0.wordWrap ?? true),
         v => writeField('wordWrap', v), undefined, cellReset('wordWrap')),
-      isTextCell ? selectRowPlain('文字溢出', textFitValue, withMulti(TEXT_FIT_OPTIONS),
+      isTextCell ? selectRowPlain(tr(ctx, 'tableProps.k442'), textFitValue, withMulti(TEXT_FIT_OPTIONS),
         v => { if (v !== '__multi__') writeField('textFit', v as TextFit) }, { full: true, reset: cellReset('textFit') }) : '',
       (isTextCell && cellTextFit === 'shrink')
-        ? numField('最小字号 (pt)', numValue('shrinkMinFontSize', optNum(cell0.shrinkMinFontSize)), 'shrinkMinFontSize',
-          { min: 0, max: 72, step: 0.5, placeholder: multiPlaceholder('默认 6') }, cellReset('shrinkMinFontSize'))
+        ? numField(tr(ctx, 'tableProps.k443'), numValue('shrinkMinFontSize', optNum(cell0.shrinkMinFontSize)), 'shrinkMinFontSize',
+          { min: 0, max: 72, step: 0.5, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k444')) }, cellReset('shrinkMinFontSize'))
         : '',
 
       // 合并相关三件套（动作按钮 + 按值开关）的子卡：动作与声明开关同区聚拢
       h('div', { class: 'merge-card' }, [
-        h('div', { class: 'merge-card-title', text: '单元格合并' }),
+        h('div', { class: 'merge-card-title', text: tr(ctx, 'tableProps.k445') }),
         h('div', { class: 'merge-btns' }, [
           h('button', {
-            type: 'button', class: 'pd-button small', text: '合并单元格',
+            type: 'button', class: 'pd-button small', text: tr(ctx, 'tableProps.k446'),
             disabled: !!mergeReason, title: mergeReason || '',
             onClick: () => { mergeCells(rows, sel); s.updateElement(el.id, { tableRows: rows }) },
           }),
           h('button', {
-            type: 'button', class: 'pd-button small', text: '拆分单元格', disabled: !canSplit,
+            type: 'button', class: 'pd-button small', text: tr(ctx, 'tableProps.k447'), disabled: !canSplit,
             onClick: () => { splitCells(rows, sel); s.updateElement(el.id, { tableRows: rows }) },
           }),
         ]),
         h('div', { class: 'merge-card-divider' }),
-        switchRow('按值合并', isMulti ? groupDraft.values.mergeSameValue === true : cell0.mergeSameValue === true,
+        switchRow(tr(ctx, 'tableProps.k448'), isMulti ? groupDraft.values.mergeSameValue === true : cell0.mergeSameValue === true,
           v => writeField('mergeSameValue', v), mergeSameValueReason || undefined,
           mergeSameValueEnabled ? cellReset('mergeSameValue') : undefined, !mergeSameValueEnabled),
-        hint('明细相邻行同值时自动纵向合并；跨页时在该页内成段，续页首行重放该值'),
+        hint(tr(ctx, 'tableProps.k449')),
       ]),
     ]),
   ])

@@ -1,5 +1,6 @@
 // 左栏素材台 / 页签栏 / 状态栏：DOM 类名对齐 Vue 3 轨的
 // LeftPanel.vue、FieldTreePanel.vue、LayerPanel.vue、PageTabs.vue、StatusBar.vue。
+import { tr, trG } from './controls.js'
 import { PAPER_PRESETS, copyTextToClipboard, getPaperDimensions, groupFields, isWideMaterialLabel } from '@worm-print-platform/core/designer'
 import type { ElementType, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -28,8 +29,8 @@ export function renderLeftPanel(ctx: ShellCtx) {
   if (st.leftCollapsed) {
     return h('div', { class: 'left-panel collapsed' }, [
       h('div', { class: 'left-collapsed' }, [
-        collapseBtn('ChevronsRight', '展开素材台', () => { st.leftCollapsed = false; ctx.repaint() }),
-        ...([['elements', '元素', 'Table2'], ['fields', '字段', 'ListTree'], ['layers', '图层', 'Layers']] as const).map(([tab, title, icon]) =>
+        collapseBtn('ChevronsRight', tr(ctx, 'panels.k137'), () => { st.leftCollapsed = false; ctx.repaint() }),
+        ...([['elements', tr(ctx, 'panels.k138'), 'Table2'], ['fields', tr(ctx, 'panels.k139'), 'ListTree'], ['layers', tr(ctx, 'panels.k140'), 'Layers']] as const).map(([tab, title, icon]) =>
           h('button', {
             type: 'button', class: `lc-btn${st.leftTab === tab ? ' on' : ''}`, title,
             html: iconMarkup(icon, 14),
@@ -50,12 +51,12 @@ export function renderLeftPanel(ctx: ShellCtx) {
 
   return h('div', { class: 'left-panel' }, [
     h('div', { class: 'left-head' }, [
-      h('span', { class: 'left-title', text: '素材台' }),
-      collapseBtn('ChevronsLeft', '收起素材台', () => { st.leftCollapsed = true; ctx.repaint() }),
+      h('span', { class: 'left-title', text: tr(ctx, 'panels.k141') }),
+      collapseBtn('ChevronsLeft', tr(ctx, 'panels.k142'), () => { st.leftCollapsed = true; ctx.repaint() }),
     ]),
     h('div', { class: 'pd-tabs left-tabs' }, [
       h('div', { class: 'pd-tab-bar', role: 'tablist' }, [
-        ...([['elements', '元素'], ['fields', '字段'], ['layers', '图层']] as const).map(([tab, label]) =>
+        ...([['elements', tr(ctx, 'panels.k143')], ['fields', tr(ctx, 'panels.k144')], ['layers', tr(ctx, 'panels.k145')]] as const).map(([tab, label]) =>
           h('button', {
             type: 'button', class: `pd-tab${st.leftTab === tab ? ' active' : ''}`,
             text: label,
@@ -102,7 +103,7 @@ function elementsPane(): unknown[] {
     if (group) prevGroup = group
     cards.push(materialCard(item.type, item.label, item.icon))
   }
-  return [h('div', { class: 'panel-title', text: '拖拽元素到画布' }), ...cards]
+  return [h('div', { class: 'panel-title', text: trG( 'panels.k146') }), ...cards]
 }
 
 function fieldsPane(ctx: ShellCtx) {
@@ -116,10 +117,10 @@ function fieldsPane(ctx: ShellCtx) {
       .filter(g => g.fields.length)
     : groups
   return h('div', { class: 'field-tree-panel' }, [
-    h('div', { class: 'panel-title', text: '业务字段' }),
+    h('div', { class: 'panel-title', text: tr(ctx, 'panels.k147') }),
     h('input', {
-      class: 'pd-input search-input', type: 'search', placeholder: '搜索字段...',
-      'aria-label': '搜索字段', value: st.fieldSearch ?? '',
+      class: 'pd-input search-input', type: 'search', placeholder: tr(ctx, 'panels.k148'),
+      'aria-label': tr(ctx, 'panels.k149'), value: st.fieldSearch ?? '',
       onInput: (ev: Event) => { st.fieldSearch = (ev.target as HTMLInputElement).value },
       onChange: () => ctx.repaint(),
     }),
@@ -139,7 +140,7 @@ function fieldsPane(ctx: ShellCtx) {
       const rows = collapsed ? [] : group.fields.map(field => h('div', {
         class: 'field-row',
         draggable: true,
-        'data-tip': `${field.fieldLabel} (${field.fieldKey}) · 单击复制字段名 · 拖动中按住 Ctrl（Mac 为 ⌘）切换为插入字段名`,
+        'data-tip': tr(ctx, 'panels.k150', { v0: field.fieldLabel, v1: field.fieldKey }),
         style: { paddingLeft: `${group.key ? 22 : 8}px` },
         onDragstart: (ev: Event) => {
           const dt = (ev as DragEvent).dataTransfer
@@ -169,11 +170,11 @@ function fieldsPane(ctx: ShellCtx) {
             text: mode === 'key' ? field.fieldKey : `(${field.fieldKey})`,
           }) : '',
         ].filter(Boolean) as never),
-        st.copiedFieldKey === field.fieldKey ? h('span', { class: 'copy-hint', text: '已复制' }) : '',
+        st.copiedFieldKey === field.fieldKey ? h('span', { class: 'copy-hint', text: tr(ctx, 'panels.k151') }) : '',
       ].filter(Boolean)))
       return [header, h('div', {}, rows.filter(Boolean))].filter(Boolean)
     })),
-    matched.length === 0 ? h('p', { class: 'pd-empty', text: '暂无字段' }) : '',
+    matched.length === 0 ? h('p', { class: 'pd-empty', text: tr(ctx, 'panels.k152') }) : '',
   ].filter(Boolean))
 }
 
@@ -183,9 +184,9 @@ function layersPane(ctx: ShellCtx) {
   const selected = s.elements.filter(e => s.selectedIds.has(e.id))
   const canGroup = selected.length >= 2
   const canUngroup = selected.some(e => !!(e.options as { groupId?: string }).groupId)
-  const zoneTag = (el: RuntimeElement) => el.zone === 'header' ? '页眉' : el.zone === 'footer' ? '页脚' : ''
+  const zoneTag = (el: RuntimeElement) => el.zone === 'header' ? tr(ctx, 'panels.k153') : el.zone === 'footer' ? tr(ctx, 'panels.k154') : ''
   return h('div', { class: 'layer-panel' }, [
-    h('div', { class: 'panel-title', text: '图层' }),
+    h('div', { class: 'panel-title', text: tr(ctx, 'panels.k155') }),
     ...layers.map(layer => {
       // 统一注册表：内置 / 自定义覆盖 / core 插件项共用同一条解析路径，未注册回落 Shapes
       const icon = getElementLayerIcon(layer.printElementType.type)
@@ -200,7 +201,7 @@ function layersPane(ctx: ShellCtx) {
       ].filter(Boolean))
     }),
     layers.length ? h('div', { class: 'layer-actions' }, [
-      ...([['top', '置顶', 'ArrowUpToLine'], ['up', '上移', 'ArrowUp'], ['down', '下移', 'ArrowDown'], ['bottom', '置底', 'ArrowDownToLine']] as const).map(([dir, title, icon]) =>
+      ...([['top', tr(ctx, 'panels.k156'), 'ArrowUpToLine'], ['up', tr(ctx, 'panels.k157'), 'ArrowUp'], ['down', tr(ctx, 'panels.k158'), 'ArrowDown'], ['bottom', tr(ctx, 'panels.k159'), 'ArrowDownToLine']] as const).map(([dir, title, icon]) =>
         h('button', {
           type: 'button', class: 'pd-button small', title,
           html: iconSvg(icon, 14),
@@ -209,11 +210,11 @@ function layersPane(ctx: ShellCtx) {
     ]) : '',
     (canGroup || canUngroup) ? h('div', { class: 'layer-actions' }, [
       canGroup ? h('button', {
-        type: 'button', class: 'pd-button small', title: '组合 (Ctrl+G)',
+        type: 'button', class: 'pd-button small', title: tr(ctx, 'panels.k160'),
         html: iconSvg('Group', 14), onClick: () => ctx.fire('group'),
       }) : '',
       canUngroup ? h('button', {
-        type: 'button', class: 'pd-button small', title: '取消组合 (Ctrl+Shift+G)',
+        type: 'button', class: 'pd-button small', title: tr(ctx, 'panels.k161'),
         html: iconSvg('Ungroup', 14), onClick: () => ctx.fire('ungroup'),
       }) : '',
     ].filter(Boolean)) : '',
@@ -224,7 +225,7 @@ export function renderPageTabs(ctx: ShellCtx) {
   const s = ctx.store
   const st = ctx.state
   const multi = s.pages.length > 1
-  const activeName = s.pages[s.activePageIndex]?.name || `页面 ${s.activePageIndex + 1}`
+  const activeName = s.pages[s.activePageIndex]?.name || tr(ctx, 'panels.k162', { v0: s.activePageIndex + 1 })
   const tiling = s.tilingEnabled
   return h('div', { class: 'page-tabs' }, [
     h('div', { class: 'page-tabs-list' }, s.pages.map((p, i) => {
@@ -245,31 +246,31 @@ export function renderPageTabs(ctx: ShellCtx) {
       return h('button', {
         type: 'button',
         class: `page-tab${i === s.activePageIndex ? ' active' : ''}`,
-        dataset: { tip: p.name ? `${p.name}（双击重命名）` : '双击重命名' },
-        text: p.name || `页面 ${i + 1}`,
+        dataset: { tip: p.name ? tr(ctx, 'panels.k163', { v0: p.name }) : tr(ctx, 'panels.k164') },
+        text: p.name || tr(ctx, 'panels.k165', { v0: i + 1 }),
         onClick: () => s.switchPage(i),
         onDblclick: () => { st.renamingPage = i; st.renameText = p.name ?? ''; ctx.repaint() },
       })
     })),
     h('div', { class: 'page-tabs-actions' }, [
       h('button', {
-        type: 'button', dataset: { test: 'add-page', tip: tiling ? '拼版模板仅允许一个设计页面' : '新增页面（在当前页后追加空白页）' },
+        type: 'button', dataset: { test: 'add-page', tip: tiling ? tr(ctx, 'panels.k166') : tr(ctx, 'panels.k167') },
         disabled: tiling, text: '＋', onClick: () => ctx.fire('add-page'),
       }),
       h('button', {
-        type: 'button', dataset: { test: 'duplicate-page', tip: tiling ? '拼版模板仅允许一个设计页面' : `复制当前页「${activeName}」` },
+        type: 'button', dataset: { test: 'duplicate-page', tip: tiling ? tr(ctx, 'panels.k168') : tr(ctx, 'panels.k169', { v0: activeName }) },
         disabled: tiling, text: '⧉', onClick: () => ctx.fire('duplicate-page'),
       }),
       h('button', {
-        type: 'button', dataset: { test: 'delete-page', tip: multi ? `删除当前页「${activeName}」` : '仅多页面模板可删除页面' },
+        type: 'button', dataset: { test: 'delete-page', tip: multi ? tr(ctx, 'panels.k170', { v0: activeName }) : tr(ctx, 'panels.k171') },
         disabled: !multi, text: '✕', onClick: () => ctx.fire('delete-page'),
       }),
       h('button', {
-        type: 'button', dataset: { test: 'move-left', tip: `前移「${activeName}」` },
+        type: 'button', dataset: { test: 'move-left', tip: tr(ctx, 'panels.k172', { v0: activeName }) },
         disabled: s.activePageIndex <= 0, text: '←', onClick: () => ctx.fire('move-page', -1),
       }),
       h('button', {
-        type: 'button', dataset: { test: 'move-right', tip: `后移「${activeName}」` },
+        type: 'button', dataset: { test: 'move-right', tip: tr(ctx, 'panels.k173', { v0: activeName }) },
         disabled: s.activePageIndex >= s.pages.length - 1, text: '→', onClick: () => ctx.fire('move-page', 1),
       }),
     ]),
@@ -288,17 +289,20 @@ export function renderStatusBar(ctx: ShellCtx) {
   const t = s.templateData
   // 与 Vue 3 轨的 paperLabel 同口径：预设名（含尺寸）+ 方向 + 实际长宽 + 出纸旋转提示
   const dim = getPaperDimensions(t)
-  const orient = t.orientation === 'landscape' ? '横向' : '纵向'
+  const orient = t.orientation === 'landscape' ? tr(ctx, 'panels.k174') : tr(ctx, 'panels.k175')
   const name = PAPER_PRESETS[t.paperSize]?.label ?? t.paperSize
   const rot = t.outputRotation
-  const paper = `${name} ${orient} ${Math.round(dim.width)}×${Math.round(dim.height)}mm${rot ? `（旋转${rot}°）` : ''}`
+  const paper = `${name} ${orient} ${Math.round(dim.width)}×${Math.round(dim.height)}mm${rot ? tr(ctx, 'panels.paperRotated', { rot }) : ''}`
   return h('div', { class: 'status-bar' }, [
     // Vue 3 轨的坐标位是 v-if，无坐标时不占位：这里用 display 同步隐藏
     h('span', { class: 'status-item coord', dataset: { coord: '' }, style: { display: 'none' } }),
-    h('span', { class: 'status-item', text: `缩放 ${s.scale}%` }),
+    h('span', { class: 'status-item', text: tr(ctx, 'panels.k176', { v0: s.scale }) }),
     h('span', {
       class: 'status-item',
-      text: `元素 ${s.elements.length}${s.selectedIds.size ? ` (选中 ${s.selectedIds.size})` : ''}`,
+      text: tr(ctx, 'panels.statusElements', {
+        count: s.elements.length,
+        selected: s.selectedIds.size ? tr(ctx, 'panels.statusSelected', { n: s.selectedIds.size }) : '',
+      }),
     }),
     h('span', { class: 'status-item status-version', text: `v${CANVAS_VERSION}` }),
     h('span', { class: 'status-item status-paper', text: paper }),

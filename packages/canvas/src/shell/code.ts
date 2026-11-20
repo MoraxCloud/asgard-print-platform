@@ -1,6 +1,7 @@
 // 条码 / 二维码绘制：与 Vue 3 轨的 BarcodeElement / QrcodeElement 同口径
 // （条宽定首选尺寸 → dpi 吸附 → 框不够等比缩小；二维码取 core/browser 同一份 SVG 出 <img> 铺满元素盒）。
 // 绘制在 DOM 落位后由 hydrateCodes 补上，避免每次重渲染都同步跑一遍码制计算。
+import { trG } from './controls.js'
 import JsBarcode from 'jsbarcode'
 import { browserCodeRenderer } from '@worm-print-platform/core/browser'
 import {
@@ -96,7 +97,7 @@ function drawBarcode(el: RuntimeElement, svg: SVGSVGElement, listSource?: readon
 
 function drawQrcode(el: RuntimeElement, box: HTMLElement, listSource?: readonly Record<string, unknown>[]) {
   const o = el.options
-  const text = resolveBarcodeDesignValue(o.formatter, listSource, String(o.testData || o.title || '')) || '二维码'
+  const text = resolveBarcodeDesignValue(o.formatter, listSource, String(o.testData || o.title || '')) || trG( 'code.k27')
   box.replaceChildren()
   try {
     // 与出纸同源（core/browser）：同一份 SVG、同一静区，矢量图形不随元素盒大小重出图

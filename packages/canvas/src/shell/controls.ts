@@ -71,8 +71,17 @@ export interface ShellCtx {
 }
 
 /** 外壳文案翻译：优先实例 translator，缺省回退 core 全局 t */
-export function tr(ctx: ShellCtx, key: string, params?: Record<string, string | number>): string {
+export function tr(
+  ctx: { t?: import('@worm-print-platform/core/i18n').Translate },
+  key: string,
+  params?: Record<string, string | number>,
+): string {
   return ctx.t ? ctx.t(key, params) : globalT(key, params)
+}
+
+/** 无 ctx 作用域（模块级常量与工具函数）的翻译：直接走全局 locale */
+export function trG(key: string, params?: Record<string, string | number>): string {
+  return globalT(key, params)
 }
 
 /** 带图标的工具栏按钮（对应 Vue 3 轨 的 .tb-btn.tb-icon） */
@@ -167,7 +176,7 @@ export function stepper(opts: {
     h('button', {
       type: 'button', class: 'pd-step-btn pd-step-minus',
       disabled: !!opts.disabled || base <= (opts.min ?? -Infinity),
-      title: '减小', 'aria-label': '减小',
+      title: trG( 'controls.k28'), 'aria-label': trG( 'controls.k29'),
       text: '−',
       onClick: () => commit(clamp(base - step)),
     }),
@@ -175,7 +184,7 @@ export function stepper(opts: {
     h('button', {
       type: 'button', class: 'pd-step-btn pd-step-plus',
       disabled: !!opts.disabled || base >= (opts.max ?? Infinity),
-      title: '增大', 'aria-label': '增大',
+      title: trG( 'controls.k30'), 'aria-label': trG( 'controls.k31'),
       text: '+',
       onClick: () => commit(clamp(base + step)),
     }),
@@ -193,7 +202,7 @@ export function field(label: string, control: unknown, hint?: string, reset?: un
 
 /** 字段说明图标：说明不常驻行内，悬浮或点击聚焦时才浮出（对应 Vue 3 轨 的 button.pd-help） */
 export const labelHelp = (tip: string) => h('button', {
-  class: 'pd-help', type: 'button', 'data-tip': tip, 'aria-label': '字段说明',
+  class: 'pd-help', type: 'button', 'data-tip': tip, 'aria-label': trG( 'controls.k32'),
 })
 
 /** 带说明图标的属性行：与 field() 同结构，差别只在说明挂图标而非常驻 .pd-hint 段落 */
@@ -231,9 +240,9 @@ export function resetButton(o: {
   const changed = o.target?.[o.propKey] !== factory
   const actionable = o.force === true || changed
   const baseTip = o.tipOverride ?? (o.tipValue === undefined
-    ? '恢复默认值'
-    : `恢复默认值（${o.tipValue}${o.tipUnit ? ' ' + o.tipUnit : ''}）`)
-  const tip = o.force ? `${baseTip}（应用到全部选中格）` : baseTip
+    ? trG( 'controls.k33')
+    : trG( 'controls.k34', { v0: o.tipValue, v1: o.tipUnit ? ' ' + o.tipUnit : '' }))
+  const tip = o.force ? trG( 'controls.k35', { v0: baseTip }) : baseTip
   return h('button', {
     type: 'button',
     class: `pd-reset-btn${changed && !o.force ? ' is-dirty' : ''}`,
@@ -255,7 +264,7 @@ export const divider = (text: string) => h('h3', { class: 'pd-divider', text })
 /** 颜色触发钮：预设色板面板（移植 Vue 3 轨的 PresetColorPicker.vue，面板实现见 shell/color-picker.ts）。
  * onPick 收到的 undefined 表示「清除颜色」：Vue 3 轨侧 emit '' 后由消费方归一化为未设置，
  * 本包在触发器层直接归一后透传，调用方 patch 即删除该颜色属性（签名保持 (v: string) 不变）。 */
-export function colorTrigger(value: string | undefined, onPick: (v: string) => void, title = '颜色选择', triggerClass?: string) {
+export function colorTrigger(value: string | undefined, onPick: (v: string) => void, title = trG( 'controls.k36'), triggerClass?: string) {
   return colorPicker({ value, title, triggerClass, onChange: v => onPick(v as string) })
 }
 

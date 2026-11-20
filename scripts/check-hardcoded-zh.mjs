@@ -38,8 +38,14 @@ for (const arg of dirs) {
     readFileSync(file, 'utf8').split(/\r?\n/).forEach((line, i) => {
       const trimmed = line.trim()
       if (!trimmed || /^(\/\/|\/\*|\*)/.test(trimmed)) return
-      if (line.includes('t(')) return
-      if (!CJK.test(line)) return
+      if (line.includes('tr(') || line.includes('trG(') || line.includes('t(')) return
+      // 去掉所有 /* ... */ 与 // 注释（中文注释不算 UI 文案；这里按首个注释符截断）
+      let code = line
+      const blockAt = code.indexOf('/*')
+      const lineAt = code.indexOf('//')
+      const cut = Math.min(blockAt === -1 ? Infinity : blockAt, lineAt === -1 ? Infinity : lineAt)
+      if (cut !== Infinity) code = code.slice(0, cut)
+      if (!CJK.test(code)) return
       hits += 1
       if (samples.length < 12) samples.push(`${relative(process.cwd(), file)}:${i + 1}: ${trimmed.slice(0, 100)}`)
     })

@@ -4,6 +4,7 @@
 // 落盘口径照抄 Vue 3 轨的 onChange：表达式写 binding、静态文本写 content，两种模式 core 都支持；
 // 文本输入用 change（失焦/回车提交）而非 input —— 无框架版每次 store 变更都会整体重绘属性台，
 // 边打边提交会把光标顶回输入框开头。
+import { tr } from './controls.js'
 import { WATERMARK_DEFAULTS, WATERMARK_DENSITY_PRESETS } from '@worm-print-platform/core'
 import type { WatermarkOptions } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -79,14 +80,14 @@ export function watermarkSection(ctx: ShellCtx) {
   })
 
   return h('div', { class: 'watermark-config' }, [
-    divider('水印'),
+    divider(tr(ctx, 'watermark.k538')),
     h('form', { class: 'pd-form', onSubmit: (ev: Event) => ev.preventDefault() }, [
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label', text: '水印表达式' }),
+        h('span', { class: 'pd-label', text: tr(ctx, 'watermark.k539') }),
         h('input', {
           class: 'pd-input', type: 'text', value: text,
-          placeholder: '直接输入文字，或用表达式：{order.no}、{printDate}',
-          title: '双击或点「编辑表达式」打开表达式弹框',
+          placeholder: tr(ctx, 'watermark.k540'),
+          title: tr(ctx, 'watermark.k541'),
           onChange: (ev: Event) => {
             const v = (ev.target as HTMLInputElement).value
             commit(isExpressionText(v)
@@ -96,16 +97,16 @@ export function watermarkSection(ctx: ShellCtx) {
           onDblclick: openEditor,
         }),
         h('button', {
-          type: 'button', class: 'pd-button small', text: '编辑表达式', onClick: openEditor,
+          type: 'button', class: 'pd-button small', text: tr(ctx, 'watermark.k542'), onClick: openEditor,
         }),
       ]),
-      isExpression ? field('测试值', h('input', {
+      isExpression ? field(tr(ctx, 'watermark.k543'), h('input', {
         class: 'pd-input', type: 'text', value: wm?.testData ?? '',
-        placeholder: '表达式取不到值时预览显示',
+        placeholder: tr(ctx, 'watermark.k544'),
         onChange: (ev: Event) => commit({ testData: (ev.target as HTMLInputElement).value }),
       })) : '',
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '旋转角度' }), wmReset('rotate')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'watermark.k545') }), wmReset('rotate')]),
         h('input', {
           type: 'range', class: 'pd-range',
           min: -90, max: 90, step: 5, value: String(wm?.rotate ?? WATERMARK_DEFAULTS.rotate),
@@ -113,9 +114,9 @@ export function watermarkSection(ctx: ShellCtx) {
         }),
         h('span', { class: 'pd-hint', text: `${wm?.rotate ?? WATERMARK_DEFAULTS.rotate}°` }),
       ]),
-      field('颜色', colorTrigger(wm?.color || WATERMARK_DEFAULTS.color, v => commit({ color: v }), '水印颜色'), undefined, wmReset('color')),
+      field(tr(ctx, 'watermark.k546'), colorTrigger(wm?.color || WATERMARK_DEFAULTS.color, v => commit({ color: v }), tr(ctx, 'watermark.k547')), undefined, wmReset('color')),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '透明度' }), wmReset('opacity')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'watermark.k548') }), wmReset('opacity')]),
         h('input', {
           type: 'range', class: 'pd-range',
           min: 0.05, max: 0.5, step: 0.05, value: String(wm?.opacity ?? WATERMARK_DEFAULTS.opacity),
@@ -127,7 +128,7 @@ export function watermarkSection(ctx: ShellCtx) {
         }),
       ]),
       h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label', text: '密度' }),
+        h('span', { class: 'pd-label', text: tr(ctx, 'watermark.k549') }),
         h('select', {
           class: 'pd-select', style: { width: '100%' },
           onChange: (ev: Event) => {
@@ -139,11 +140,11 @@ export function watermarkSection(ctx: ShellCtx) {
           ...Object.entries(PRESETS).map(([key, p]) => h('option', {
             value: key, text: `${p.label}（${p.width}×${p.height}）`, selected: density === key,
           })),
-          h('option', { value: 'custom', text: '自定义', selected: density === 'custom' }),
+          h('option', { value: 'custom', text: tr(ctx, 'watermark.k550'), selected: density === 'custom' }),
         ]),
       ]),
       density === 'custom' ? h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '瓦片宽' }), wmReset('tileWidth')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'watermark.k551') }), wmReset('tileWidth')]),
         h('input', {
           type: 'number', class: 'pd-input', min: WATERMARK_DEFAULTS.minTileWidth, step: 10,
           value: String(wm?.tileWidth ?? WATERMARK_DEFAULTS.tileWidth),
@@ -151,7 +152,7 @@ export function watermarkSection(ctx: ShellCtx) {
         }),
       ]) : '',
       density === 'custom' ? h('div', { class: 'pd-field' }, [
-        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: '瓦片高' }), wmReset('tileHeight')]),
+        h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t', text: tr(ctx, 'watermark.k552') }), wmReset('tileHeight')]),
         h('input', {
           type: 'number', class: 'pd-input', min: WATERMARK_DEFAULTS.minTileHeight, step: 10,
           value: String(wm?.tileHeight ?? WATERMARK_DEFAULTS.tileHeight),

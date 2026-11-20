@@ -1,4 +1,5 @@
 import type { LocaleMessages } from '../types.js'
+import { shellEn } from './shell-en.js'
 
 // 内置英文语言包。键须与 zh-CN 一致，缺值回退中文源文本。
 export const enUS: Partial<LocaleMessages> = {
@@ -95,4 +96,7 @@ export const enUS: Partial<LocaleMessages> = {
 
   'save.geometryWarningConfirm': 'Print warning: some content extends beyond the paper and will be clipped.\nAccept clipping and continue saving?\nClick OK to save, Cancel to go back and edit.\n\n{warnings}',
   'store.tilingSinglePage': 'Tiling allows only one design page',
+
+  // canvas shell 英文（首版机翻草稿，未覆盖键默认中文回退）
+  ...shellEn,
 }

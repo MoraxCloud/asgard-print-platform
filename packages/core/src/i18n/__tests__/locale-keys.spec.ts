@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { checkParity, parseKeys } from '../../../scripts/gen-locale-keys.mjs'
 
-const zhSource = () => readFileSync(new URL('../messages/zh-CN.ts', import.meta.url), 'utf8')
-const enSource = () => readFileSync(new URL('../messages/en-US.ts', import.meta.url), 'utf8')
+const readMsg = (name: string) => readFileSync(new URL(`../messages/${name}`, import.meta.url), 'utf8')
+const zhSource = () => `${readMsg('zh-CN.ts')}\n${readMsg('shell-zh.ts')}`
+const enSource = () => `${readMsg('en-US.ts')}\n${readMsg('shell-en.ts')}`
 
 describe('parseKeys', () => {
   it('从语言包源文件提取顶层键', () => {

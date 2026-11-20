@@ -1,6 +1,7 @@
 // 页面属性补充区段：设计背景 + 拼版打印。
 // DOM 类名对齐 Vue 3 轨的 DesignBackgroundConfig.vue / TilingConfig.vue，
 // 拼版的校验与布局数字全部走 core 纯函数（TILE_DEFAULTS / validateTiling / computeTileLayout 等）。
+import { tr } from './controls.js'
 import { PAPER_PRESETS, isContinuousPaperSize } from '@worm-print-platform/core/designer'
 import {
   TILE_DEFAULTS, computeMaxColumns, computeTileLayout, resolveSheetMm, validateTiling,
@@ -18,7 +19,7 @@ const SHEET_PRESET_KEYS = Object.keys(PAPER_PRESETS)
 function backgroundUpload(ctx: ShellCtx) {
   const label = document.createElement('label')
   label.className = 'pd-button small upload-label'
-  const textNode = document.createTextNode('上传背景图')
+  const textNode = document.createTextNode(tr(ctx, 'pageExtras.k103'))
   const input = document.createElement('input')
   input.className = 'visually-hidden'
   input.type = 'file'
@@ -34,26 +35,26 @@ function backgroundUpload(ctx: ShellCtx) {
     const file = input.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      alert('仅支持上传图片文件')
+      alert(tr(ctx, 'pageExtras.k104'))
       input.value = ''
       return
     }
     const upload = ctx.host.uploadDesignBackground
     if (!upload) {
-      alert('设计背景上传能力未配置')
+      alert(tr(ctx, 'pageExtras.k105'))
       input.value = ''
       return
     }
     setDisabled(true)
-    textNode.textContent = '上传中...'
+    textNode.textContent = tr(ctx, 'pageExtras.k106')
     try {
       const src = await upload(file)
       if (src) ctx.store.updateTemplateData({ designBackground: { src, rotation: 0 } } as never)
-      else alert('设计背景上传失败')
+      else alert(tr(ctx, 'pageExtras.k107'))
     } catch (err) {
-      alert(err instanceof Error ? err.message : '设计背景上传失败')
+      alert(err instanceof Error ? err.message : tr(ctx, 'pageExtras.k108'))
     } finally {
-      textNode.textContent = '上传背景图'
+      textNode.textContent = tr(ctx, 'pageExtras.k109')
       setDisabled(!ctx.host.uploadDesignBackground)
       input.value = ''
     }
@@ -66,21 +67,21 @@ export function designBackgroundSection(ctx: ShellCtx) {
   const bg = t.designBackground
   const rotation = bg?.rotation ?? 0
   return h('div', { class: 'design-background-config' }, [
-    divider('设计背景'),
-    h('p', { class: 'design-background-tip', text: '仅设计器显示，用于套打定位，不会出现在预览和打印中' }),
+    divider(tr(ctx, 'pageExtras.k110')),
+    h('p', { class: 'design-background-tip', text: tr(ctx, 'pageExtras.k111') }),
     bg?.src
       ? [
         h('div', { class: 'design-background-path', title: bg.src, text: bg.src }),
         h('div', { class: 'design-background-actions' }, [
           h('button', {
             type: 'button', class: 'pd-button small rotate-btn',
-            text: `旋转（${(rotation + 90) % 360}°）`,
+            text: tr(ctx, 'pageExtras.k112', { v0: (rotation + 90) % 360 }),
             onClick: () => ctx.store.updateTemplateData({
               designBackground: { ...bg, rotation: ((rotation + 90) % 360) as 0 | 90 | 180 | 270 },
             }),
           }),
           h('button', {
-            type: 'button', class: 'pd-button small remove-btn', text: '移除',
+            type: 'button', class: 'pd-button small remove-btn', text: tr(ctx, 'pageExtras.k113'),
             onClick: () => ctx.store.updateTemplateData({ designBackground: undefined }),
           }),
         ]),
@@ -122,15 +123,15 @@ export function tilingSection(ctx: ShellCtx) {
     try {
       const l = computeTileLayout(withTiling as never)
       const s = resolveSheetMm(withTiling as never)
-      const name = cfg.sheetPaperSize === 'CUSTOM' ? '自定义' : (cfg.sheetPaperSize ?? 'A4')
-      const dir = cfg.sheetPaperSize === 'CUSTOM' ? '' : (cfg.sheetOrientation === 'landscape' ? ' 横向' : ' 纵向')
-      summary = `目标纸 ${name}${dir} ${s.width}×${s.height}mm · ${l.columns} 列 × ${l.rows} 行 = 每张 ${l.perSheet} 格 · 每格 ${l.tile.width}×${l.tile.height}mm`
+      const name = cfg.sheetPaperSize === 'CUSTOM' ? tr(ctx, 'pageExtras.k114') : (cfg.sheetPaperSize ?? 'A4')
+      const dir = cfg.sheetPaperSize === 'CUSTOM' ? '' : (cfg.sheetOrientation === 'landscape' ? tr(ctx, 'pageExtras.k115') : tr(ctx, 'pageExtras.k116'))
+      summary = tr(ctx, 'pageExtras.k117', { v0: name, v1: dir, v2: s.width, v3: s.height, v4: l.columns, v5: l.rows, v6: l.perSheet, v7: l.tile.width, v8: l.tile.height })
     } catch { summary = '' }
   }
 
   return h('div', { class: 'tiling-config', dataset: { test: 'tiling-config' } }, [
-    divider('拼版打印'),
-    h('p', { class: 'pd-hint', text: '把标签按「列 × 行」铺到一张大纸上批量打印' }),
+    divider(tr(ctx, 'pageExtras.k118')),
+    h('p', { class: 'pd-hint', text: tr(ctx, 'pageExtras.k119') }),
     h('div', { class: 'pd-field' }, [
       h('label', { class: 'tiling-switch' }, [
         h('input', {
@@ -143,12 +144,12 @@ export function tilingSection(ctx: ShellCtx) {
             patch({ ...TILE_DEFAULTS, columns: Math.min(TILE_DEFAULTS.columns, Math.max(columnMax, 1)) })
           },
         }),
-        h('span', { text: '启用拼版' }),
+        h('span', { text: tr(ctx, 'pageExtras.k120') }),
       ]),
-      labelContinuous ? h('p', { class: 'pd-hint tiling-error', text: '连续纸不支持拼版' }) : '',
+      labelContinuous ? h('p', { class: 'pd-hint tiling-error', text: tr(ctx, 'pageExtras.k121') }) : '',
     ].filter(Boolean)),
     cfg.enabled && !labelContinuous ? [
-      field('目标纸张', h('select', {
+      field(tr(ctx, 'pageExtras.k122'), h('select', {
         class: 'pd-select',
         style: { width: '100%' },
         onChange: (ev: Event) => {
@@ -166,28 +167,28 @@ export function tilingSection(ctx: ShellCtx) {
         ...SHEET_PRESET_KEYS.map(key => h('option', {
           value: key, text: PAPER_PRESETS[key]?.label ?? key, selected: (cfg.sheetPaperSize ?? 'A4') === key,
         })),
-        h('option', { value: 'CUSTOM', text: '自定义', selected: cfg.sheetPaperSize === 'CUSTOM' }),
+        h('option', { value: 'CUSTOM', text: tr(ctx, 'pageExtras.k123'), selected: cfg.sheetPaperSize === 'CUSTOM' }),
       ]), undefined, tileReset('sheetPaperSize')),
       cfg.sheetPaperSize === 'CUSTOM'
-        ? field('目标纸宽高 (mm)', h('div', { class: 'custom-size-grid' }, [
+        ? field(tr(ctx, 'pageExtras.k124'), h('div', { class: 'custom-size-grid' }, [
           stepper({ value: Number(cfg.sheetCustomWidth ?? 0), min: 25, max: 2000, onCommit: v => patch({ sheetCustomWidth: v }) }),
           h('span', { class: 'custom-size-x', text: '×' }),
           stepper({ value: Number(cfg.sheetCustomHeight ?? 0), min: 25, max: 2000, onCommit: v => patch({ sheetCustomHeight: v }) }),
         ]))
-        : field('目标纸方向', radioGroup('tiling-ori', [
-          { value: 'portrait', label: '纵向' }, { value: 'landscape', label: '横向' },
+        : field(tr(ctx, 'pageExtras.k125'), radioGroup('tiling-ori', [
+          { value: 'portrait', label: tr(ctx, 'pageExtras.k126') }, { value: 'landscape', label: tr(ctx, 'pageExtras.k127') },
         ], cfg.sheetOrientation === 'landscape' ? 'landscape' : 'portrait', v => patch({ sheetOrientation: v as TilingOptions['sheetOrientation'] })), undefined, tileReset('sheetOrientation')),
-      divider('拼版留白 (mm)'),
+      divider(tr(ctx, 'pageExtras.k128')),
       h('div', { class: 'margin-grid' }, [
-        field('上', stepper({ value: cfg.sheetMargin.top ?? 0, min: 0, max: 100, onCommit: v => patchMargin('top', v) }), undefined, marginReset('top')),
-        field('下', stepper({ value: cfg.sheetMargin.bottom ?? 0, min: 0, max: 100, onCommit: v => patchMargin('bottom', v) }), undefined, marginReset('bottom')),
-        field('左', stepper({ value: cfg.sheetMargin.left ?? 0, min: 0, max: 100, onCommit: v => patchMargin('left', v) }), undefined, marginReset('left')),
-        field('右', stepper({ value: cfg.sheetMargin.right ?? 0, min: 0, max: 100, onCommit: v => patchMargin('right', v) }), undefined, marginReset('right')),
+        field(tr(ctx, 'pageExtras.k129'), stepper({ value: cfg.sheetMargin.top ?? 0, min: 0, max: 100, onCommit: v => patchMargin('top', v) }), undefined, marginReset('top')),
+        field(tr(ctx, 'pageExtras.k130'), stepper({ value: cfg.sheetMargin.bottom ?? 0, min: 0, max: 100, onCommit: v => patchMargin('bottom', v) }), undefined, marginReset('bottom')),
+        field(tr(ctx, 'pageExtras.k131'), stepper({ value: cfg.sheetMargin.left ?? 0, min: 0, max: 100, onCommit: v => patchMargin('left', v) }), undefined, marginReset('left')),
+        field(tr(ctx, 'pageExtras.k132'), stepper({ value: cfg.sheetMargin.right ?? 0, min: 0, max: 100, onCommit: v => patchMargin('right', v) }), undefined, marginReset('right')),
       ]),
-      divider('格间距与列数'),
-      field('横向间距', stepper({ value: cfg.gapX ?? 0, min: 0, max: 50, onCommit: v => patch({ gapX: v ?? 0 }) }), undefined, tileReset('gapX')),
-      field('纵向间距', stepper({ value: cfg.gapY ?? 0, min: 0, max: 50, onCommit: v => patch({ gapY: v ?? 0 }) }), undefined, tileReset('gapY')),
-      field('列数', stepper({ value: cfg.columns ?? 1, min: 1, max: columnMax, onCommit: v => patch({ columns: v || 1 }) })),
+      divider(tr(ctx, 'pageExtras.k133')),
+      field(tr(ctx, 'pageExtras.k134'), stepper({ value: cfg.gapX ?? 0, min: 0, max: 50, onCommit: v => patch({ gapX: v ?? 0 }) }), undefined, tileReset('gapX')),
+      field(tr(ctx, 'pageExtras.k135'), stepper({ value: cfg.gapY ?? 0, min: 0, max: 50, onCommit: v => patch({ gapY: v ?? 0 }) }), undefined, tileReset('gapY')),
+      field(tr(ctx, 'pageExtras.k136'), stepper({ value: cfg.columns ?? 1, min: 1, max: columnMax, onCommit: v => patch({ columns: v || 1 }) })),
       ...issues.map(issue => h('p', { class: 'pd-hint tiling-error', text: issue.message })),
       !issues.length && summary ? h('p', { class: 'pd-hint tiling-summary', text: summary }) : '',
     ] : '',

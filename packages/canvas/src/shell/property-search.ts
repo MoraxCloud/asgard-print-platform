@@ -10,6 +10,7 @@
 //
 // 为什么用 display 而不是直接不建节点：Vue 3 轨的 v-show 本身就是保留节点隐藏，
 // 且输入过滤词时只做定点 DOM 更新（不整体重绘），中文输入法组合与光标才不会被打断。
+import { tr } from './controls.js'
 import { PROPERTY_REGISTRY, searchProperties } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
 import type { El } from '../core/h'
@@ -104,8 +105,8 @@ export function renderPropertySearch(ctx: ShellCtx): El {
     h('input', {
       class: 'pd-input',
       type: 'search',
-      placeholder: '搜索属性...',
-      'aria-label': '搜索属性',
+      placeholder: tr(ctx, 'propertySearch.k328'),
+      'aria-label': tr(ctx, 'propertySearch.k329'),
       value: ctx.state.propSearch ?? '',
       onInput: (ev: Event) => {
         const input = ev.target as HTMLInputElement

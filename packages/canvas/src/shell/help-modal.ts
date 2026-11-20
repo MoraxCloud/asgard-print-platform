@@ -12,6 +12,7 @@
 //   本包：外壳是整体重绘模型，弹窗必须挂在 shadow root 上（.designer-container 的兄弟节点），
 //         由 print-designer.ts 的 helpVisible + syncHelp() 决定 DOM 存在与否（同表达式编辑器范式）；
 //         mountHelpModal 登记一次性 document keydown，卸载即摘；无进出场过渡（见 PARITY §八）。
+import { trG } from './controls.js'
 import { helpSections } from './help-content'
 import { h, render } from '../core/h'
 import type { El } from '../core/h'
@@ -73,11 +74,11 @@ export function renderHelpModal(opts: HelpModalOptions): El {
     h('div', { class: 'help-modal' }, [
       h('div', { class: 'help-modal-header' }, [
         h('div', { class: 'help-modal-title-wrap' }, [
-          h('h2', { class: 'help-modal-title', text: '帮助文档' }),
+          h('h2', { class: 'help-modal-title', text: trG( 'helpModal.k101') }),
           h('span', { class: 'help-modal-project', text: 'worm-print-platform' }),
         ]),
         h('button', {
-          type: 'button', class: 'help-modal-close', title: '关闭', text: '×',
+          type: 'button', class: 'help-modal-close', title: trG( 'helpModal.k102'), text: '×',
           onClick: () => opts.onClose(),
         }),
       ]),

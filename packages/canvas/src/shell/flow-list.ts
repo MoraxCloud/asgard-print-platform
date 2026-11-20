@@ -1,6 +1,7 @@
 // 流式列表元素的内容层（对应 Vue 3 轨 的 FlowListElement.vue）。
 // 设计台按「一列一格」铺，不预演跨列：画布不运行出纸的跨列测量与分页，
 // 预演只能靠估算，画布与出纸就会出现两套栏数（口径见 specs 第八节第 7 项）。
+import { trG } from './controls.js'
 import {
   DEFAULT_DEMO_DATA,
   detectFlowListKey,
@@ -17,8 +18,8 @@ import type { DesignerStore } from '../core/store'
 
 /** 与 Vue 3 轨 FlowListElement 的 DESIGN_FALLBACK_ITEMS 逐字一致：新拖入的元素也要看得见形状 */
 export const FLOW_LIST_DEMO_ITEMS = [
-  '黄芪 20g', '当归尾 15g', '赤芍 10g', '川芎 10g',
-  '地龙 10g', '桃仁 10g', '红花 10g',
+  trG( 'flowList.k44'), trG( 'flowList.k45'), trG( 'flowList.k46'), trG( 'flowList.k47'),
+  trG( 'flowList.k48'), trG( 'flowList.k49'), trG( 'flowList.k50'),
 ]
 
 function asList(source: unknown): Record<string, any>[] {
