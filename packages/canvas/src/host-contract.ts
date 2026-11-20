@@ -13,16 +13,17 @@
 import type { MultiPageTemplateData, PrintBusinessField, TemplateData } from '@worm-print-platform/core/designer'
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
 import type { FieldDisplayMode } from '@worm-print-platform/plugin-kit/expression-editor'
+import type { CustomLocaleMessages } from '@worm-print-platform/core/i18n'
 
 /** 宿主契约版本；每次改动可观察面必须同步升号 */
-export const PRINT_DESIGNER_CONTRACT_VERSION = '1.3.0'
+export const PRINT_DESIGNER_CONTRACT_VERSION = '1.4.0'
 
 /** 自定义元素标签名 */
 export const PRINT_DESIGNER_TAG = 'print-designer' as const
 
 /** 会触发 attributeChangedCallback 的声明式 attribute（字符串形态） */
 export const PRINT_DESIGNER_ATTRIBUTES = [
-  'template', 'fields', 'name', 'fonts', 'design-data', 'theme', 'theme-config', 'field-display',
+  'template', 'fields', 'name', 'fonts', 'design-data', 'theme', 'theme-config', 'field-display', 'lang',
 ] as const
 export type PrintDesignerAttribute = typeof PRINT_DESIGNER_ATTRIBUTES[number]
 
@@ -64,6 +65,10 @@ export interface PrintDesignerProperties {
    * 分组名、搜索、复制、插入与拖拽语义不受影响；非法值静默回退 both。
    */
   fieldDisplay: FieldDisplayMode
+  /** 界面语言（BCP47，如 en-US）；缺省按 navigator.language 探测，回退 zh-CN */
+  lang?: string
+  /** 自定义语言包（对象注入），覆盖内置与插件译文；缺键回退中文 */
+  messages?: CustomLocaleMessages
 }
 
 /** 方法的返回类型契约 */
@@ -78,6 +83,8 @@ export interface PrintDesignerMethods {
   validateTemplate(): Array<{ message: string }>
   /** 出纸裁切预估提示（不阻断保存） */
   getGeometryWarnings(): string[]
+  /** 切换当前设计器实例的界面语言并即时重绘 */
+  setLocale(locale: string): void
 }
 
 /** 事件 detail 联合：宿主按事件名即可推出载荷类型，不必再猜 */
@@ -172,12 +179,12 @@ export interface PrintDesignerHostContract {
 }
 
 export const PRINT_DESIGNER_METHODS: readonly (keyof PrintDesignerMethods)[] = [
-  'getTemplateJson', 'loadTemplate', 'save', 'validateTemplate', 'getGeometryWarnings',
+  'getTemplateJson', 'loadTemplate', 'save', 'validateTemplate', 'getGeometryWarnings', 'setLocale',
 ]
 
 export const PRINT_DESIGNER_PROPERTY_NAMES: readonly (keyof PrintDesignerProperties)[] = [
   'template', 'fields', 'fonts', 'designData', 'isEdit', 'showHelp', 'showPreview', 'showSave',
-  'theme', 'themeConfig', 'uploadImage', 'uploadDesignBackground', 'fieldDisplay',
+  'theme', 'themeConfig', 'uploadImage', 'uploadDesignBackground', 'fieldDisplay', 'lang', 'messages',
 ]
 
 /** 事件名的具名常量：实现侧派发事件时引用这里，避免契约表与运行时字符串漂移 */

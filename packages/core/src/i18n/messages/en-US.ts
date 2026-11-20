@@ -92,4 +92,7 @@ export const enUS: Partial<LocaleMessages> = {
   'crop.movableX': 'Horizontal range {x}mm; the vertical axis is already full',
   'crop.movableY': 'Vertical range {y}mm; the horizontal axis is already full',
   'crop.noRoom': 'At this scale the image exactly fits the box; neither axis has room to move',
+
+  'save.geometryWarningConfirm': 'Print warning: some content extends beyond the paper and will be clipped.\nAccept clipping and continue saving?\nClick OK to save, Cancel to go back and edit.\n\n{warnings}',
+  'store.tilingSinglePage': 'Tiling allows only one design page',
 }

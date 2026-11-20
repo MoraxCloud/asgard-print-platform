@@ -8,6 +8,11 @@ import {
 import { buildFontFaceCss, normalizeTemplate, validateTiling, collectPrintWarnings } from '@worm-print-platform/core'
 import { fitTextNode } from '@worm-print-platform/core/browser'
 import { getElementUIEntries, subscribeElementUIRegistry } from '@worm-print-platform/plugin-kit'
+import {
+  createTranslator, getLocale, normalizeLocale, registerLocale,
+  t as globalT, subscribe as subscribeI18n,
+} from '@worm-print-platform/core/i18n'
+import type { CustomLocaleMessages } from '@worm-print-platform/core/i18n'
 import type { AlignLine, ElementType, MultiPageTemplateData, ResizePoint, RuntimeElement, TemplateData, UploadDesignBackgroundFn, UploadImageFn } from '@worm-print-platform/core/designer'
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
 import { clear, h, render } from './core/h'
@@ -144,6 +149,12 @@ export class PrintDesignerElement extends HTMLElement {
   private pluginStyleEls = new Map<string, HTMLStyleElement>()
   /** 实例级监听登记：卸载时成对摘除，避免 SPA 反复挂载累积 window/document 监听并持有整个实例 */
   private instanceDisposers: Array<() => void> = []
+  /** 实例显式语言；未设置时跟随 core 全局 locale */
+  private _lang: string | undefined
+  /** messages 属性注册的用户语言包注销句柄 */
+  private disposeMessages: (() => void) | null = null
+  /** 全局 locale 变化订阅；仅未显式设置 lang 的实例重绘 */
+  private unsubI18n: (() => void) | null = null
   /** 首挂标尺测量的 rAF 句柄：卸载后取消，避免对已销毁实例回调 */
   private measureRaf: number | null = null
   private state: ShellState = {
@@ -270,6 +281,27 @@ export class PrintDesignerElement extends HTMLElement {
   }
   get fieldDisplay(): FieldDisplayMode { return this.state.fieldDisplay ?? 'both' }
 
+  /** 界面语言；未设置时跟随 core 全局 locale（浏览器按 navigator.language 探测） */
+  set lang(v: string | undefined) {
+    this._lang = v ? normalizeLocale(v) : undefined
+    if (v === undefined) this.removeAttribute('lang')
+    else this.setAttribute('lang', this._lang!)
+    this.repaint()
+  }
+  get lang(): string { return this._lang ?? getLocale() }
+
+  /** 自定义语言包（对象注入）；注册为用户层，覆盖内置与插件译文 */
+  set messages(v: CustomLocaleMessages | undefined) {
+    this.disposeMessages?.()
+    this.disposeMessages = v ? registerLocale(getLocale(), v) : null
+    this.repaint()
+  }
+
+  /** 切换当前实例语言并即时重绘；不影响全局 locale */
+  setLocale(locale: string): void {
+    this.lang = normalizeLocale(locale)
+  }
+
   /** 主题预设：auto（默认）跟随系统 prefers-color-scheme，light/dark 强制 */
   set theme(v: PrintDesignerThemeMode | undefined) {
     const next: PrintDesignerThemeMode = v === 'dark' || v === 'light' ? v : 'auto'
@@ -326,6 +358,11 @@ export class PrintDesignerElement extends HTMLElement {
       this.repaint()
       return
     }
+    if (name === 'lang') {
+      this._lang = value ? normalizeLocale(value) : undefined
+      this.repaint()
+      return
+    }
     if (!value) return
     if (name === 'name') { this.repaint(); return }
     let parsed: unknown
@@ -364,6 +401,7 @@ export class PrintDesignerElement extends HTMLElement {
     this.state.fieldDisplay = normalizeFieldDisplay(this.getAttribute('field-display'))
     this.readChrome()
     this.unsub = this.store.subscribe(() => this.repaint())
+    this.unsubI18n = subscribeI18n(() => { if (!this._lang) this.repaint() })
     this.attachDocKeys()
     this.attachPluginUI()
     this.attachInstanceListeners()
@@ -440,6 +478,10 @@ export class PrintDesignerElement extends HTMLElement {
     this.detachThemeMedia()
     this.unsub?.()
     this.unsub = null
+    this.unsubI18n?.()
+    this.unsubI18n = null
+    this.disposeMessages?.()
+    this.disposeMessages = null
     this.unsubPluginUI?.()
     this.unsubPluginUI = null
     this.unsubDefinitions?.()
@@ -563,7 +605,7 @@ export class PrintDesignerElement extends HTMLElement {
     // 格式校验通过后再询问裁切：确认即放行保存；取消保留当前编辑状态（#PR15 移植）
     const warnings = this.getGeometryWarnings()
     if (warnings.length && !window.confirm(
-      `出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n${warnings.join('\n')}`,
+      (this.ctx.t ?? globalT)('save.geometryWarningConfirm', { warnings: warnings.join('\n') }),
     )) return
     const text = JSON.stringify(json)
     this.store.dirty = false
@@ -617,6 +659,7 @@ export class PrintDesignerElement extends HTMLElement {
     render(renderExpressionEditor({
       fields: this.store.fields,
       fieldDisplay: this.state.fieldDisplay,
+      t: this.ctx.t,
       onClose: () => this.closeExpression(),
       onApply: next => this.applyExpression(target, next),
     }, target), this.root)
@@ -726,6 +769,7 @@ export class PrintDesignerElement extends HTMLElement {
       showPreview: this.getAttribute('show-preview') !== 'false',
       showSave: this.getAttribute('show-save') !== 'false',
       isEdit: this.getAttribute('is-edit') === 'true',
+      t: createTranslator(this.lang),
       host: {
         uploadImage: this.uploadImage,
         uploadDesignBackground: this.uploadDesignBackground,

@@ -1,6 +1,7 @@
 // 外壳共用控件构造：与 print-Vue 3 轨的同名控件保持 DOM 结构一致
 // （下拉壳 .tb-dd、步进输入 .pd-stepper、颜色触发钮 .preset-color-trigger、字体下拉 .font-select）。
 // 派生样式只认类名，结构一致才有样式，这是「样式完全一致」的机械约束。
+import { t as globalT } from '@worm-print-platform/core/i18n'
 import { h } from '../core/h'
 import { iconSvg } from '../core/icons'
 import { colorPicker } from './color-picker'
@@ -54,6 +55,8 @@ export interface ShellCtx {
   showPreview?: boolean
   showSave?: boolean
   isEdit: boolean
+  /** 当前实例 locale 的翻译函数；由 print-designer 注入，缺省用全局 t */
+  t?: import('@worm-print-platform/core/i18n').Translate
   /** 宿主注入能力（图片上传、设计背景上传、字体清单），未注入时相关入口置灰 */
   host: {
     uploadImage?: (file: File) => Promise<string>
@@ -65,6 +68,11 @@ export interface ShellCtx {
     /** 宿主业务字段清单；插件属性台据此生成数据源/字段映射下拉 */
     fields?: readonly PrintBusinessField[]
   }
+}
+
+/** 外壳文案翻译：优先实例 translator，缺省回退 core 全局 t */
+export function tr(ctx: ShellCtx, key: string, params?: Record<string, string | number>): string {
+  return ctx.t ? ctx.t(key, params) : globalT(key, params)
 }
 
 /** 带图标的工具栏按钮（对应 Vue 3 轨 的 .tb-btn.tb-icon） */

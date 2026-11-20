@@ -79,5 +79,7 @@
   "crop.movableBoth",
   "crop.movableX",
   "crop.movableY",
-  "crop.noRoom"
+  "crop.noRoom",
+  "save.geometryWarningConfirm",
+  "store.tilingSinglePage"
 ]

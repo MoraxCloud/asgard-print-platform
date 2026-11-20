@@ -99,4 +99,8 @@ export const zhCN = {
   'crop.movableX': '水平可挪 {x}mm；垂直这一轴已贴满，挪不动',
   'crop.movableY': '垂直可挪 {y}mm；水平这一轴已贴满，挪不动',
   'crop.noRoom': '这个缩放下图与框正好一样大，两轴都没有可挪的余量',
+
+  // 设计器外壳
+  'save.geometryWarningConfirm': '出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n{warnings}',
+  'store.tilingSinglePage': '开启拼版后只能有一个设计页面',
 }

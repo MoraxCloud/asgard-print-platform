@@ -69,6 +69,7 @@
 //   （页签高亮、搜索占位、列表、文本域、预览）；换 target 就重新调用本函数拿新 DOM，无需 update 接口。
 import { DEFAULT_DEMO_DATA, copyTextToClipboard, evaluateTemplate, filterGroups, groupFields } from '@worm-print-platform/core/designer'
 import type { PrintBusinessField } from '@worm-print-platform/core/designer'
+import type { Translate } from '@worm-print-platform/core/i18n'
 import { resolveSystemVariables } from '@worm-print-platform/core'
 import { clear, h, render } from './dom.js'
 import type { El } from './dom.js'
@@ -109,6 +110,8 @@ export interface ExpressionEditorOptions {
   demoData?: Record<string, any>
   /** 字段行显示模式；缺省 / 非法值按 both（中文名 + key） */
   fieldDisplay?: FieldDisplayMode
+  /** 当前 locale 的翻译函数；缺省用全局 t */
+  t?: Translate
   /** 关闭弹窗 */
   onClose: () => void
   /** 点确定：把最终表达式回写 */

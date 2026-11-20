@@ -11,8 +11,11 @@ import {
 } from '@worm-print-platform/core/designer'
 import { createDefaultTemplate } from './default-template'
 
-/** 拼版模板只允许单页：增页入口被拦截时的提示文案（与 Vue 3 轨同口径） */
+import { t } from '@worm-print-platform/core/i18n'
+
+/** 拼版模板只允许单页：中文别名保留兼容，运行时按 locale 取译文 */
 export const TILING_SINGLE_PAGE_TIP = '开启拼版后只能有一个设计页面'
+export const tilingSinglePageTip = (): string => t('store.tilingSinglePage')
 
 /** 纸面 mm 落点（与 Vue 3 轨的 toPaperPoint 同口径，原点为纸张左上角） */
 export interface PaperPoint { x: number; y: number }
@@ -158,7 +161,7 @@ export class DesignerStore {
   }
 
   addPage() {
-    if (this.tilingEnabled) { window.alert(TILING_SINGLE_PAGE_TIP); return }
+    if (this.tilingEnabled) { window.alert(tilingSinglePageTip()); return }
     this.recordHistory()
     // 新增页继承当前页纸张、设计方向与内容旋转（Vue 3 轨同口径）：否则横版模板加出竖版页，
     // 保存时会被「各页纸张尺寸必须一致」校验整份拦下
@@ -183,7 +186,7 @@ export class DesignerStore {
   }
 
   duplicatePage(i: number) {
-    if (this.tilingEnabled) { window.alert(TILING_SINGLE_PAGE_TIP); return }
+    if (this.tilingEnabled) { window.alert(tilingSinglePageTip()); return }
     this.recordHistory()
     const copy = clone(this.pages[i]!)
     copy.name = `${copy.name ?? `页面 ${i + 1}`} 副本`
