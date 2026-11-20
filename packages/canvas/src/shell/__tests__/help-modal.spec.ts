@@ -13,6 +13,8 @@ import { helpSections } from '../help-content'
  * 兼容「在包目录跑」与「在仓库根跑」两种 cwd。
  */
 const HELP_BASES = [
+  'src/shell/help-content/zh-CN',
+  'packages/canvas/src/shell/help-content/zh-CN',
   'src/shell/help-content',
   'packages/canvas/src/shell/help-content',
 ] as const

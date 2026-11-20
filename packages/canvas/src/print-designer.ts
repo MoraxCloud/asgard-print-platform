@@ -286,6 +286,11 @@ export class PrintDesignerElement extends HTMLElement {
     this._lang = v ? normalizeLocale(v) : undefined
     if (v === undefined) this.removeAttribute('lang')
     else this.setAttribute('lang', this._lang!)
+    // 帮助弹窗按 locale 选语言内容，切换 lang 时若已打开则重建
+    if (this.helpVisible && this.unmountHelp) {
+      this.unmountHelp()
+      this.unmountHelp = null
+    }
     this.repaint()
   }
   get lang(): string { return this._lang ?? getLocale() }
@@ -688,6 +693,7 @@ export class PrintDesignerElement extends HTMLElement {
     if (want && !this.unmountHelp) {
       this.unmountHelp = mountHelpModal(this.root, {
         initialTab: this.helpInitialTab,
+        locale: this.lang,
         onClose: () => this.closeHelp(),
       })
     } else if (!want && this.unmountHelp) {
