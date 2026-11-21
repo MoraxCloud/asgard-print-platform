@@ -117,7 +117,10 @@ export function getMissingKeys(): string[] {
 
 /** 清空用户层与插件层，保留 core 内置包 */
 export function clearLocales(): void {
-  for (const locale of ['zh-CN', 'en-US', 'th-TH']) {
+  // 遍历实际已加载的所有 locale（含自定义 locale），避免硬编码内置三语种漏清理
+  const data = instance.services?.resourceStore?.data as Record<string, unknown> | undefined
+  const locales = data ? Object.keys(data) : ['zh-CN', 'en-US', 'th-TH']
+  for (const locale of locales) {
     instance.removeResourceBundle(locale, 'user')
     for (const pluginId of registeredPluginIds) instance.removeResourceBundle(locale, pluginId)
   }

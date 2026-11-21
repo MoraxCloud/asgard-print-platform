@@ -90,6 +90,14 @@ describe('分层回退与覆盖', () => {
     expect(() => registerPluginMessages('en-US', 'echarts', { 'other.key': 'x' })).toThrow(/echarts\./)
   })
 
+  it('clearLocales 清除自定义 locale 注入的用户层', () => {
+    registerLocale('fr-FR', { 'toolbar.save': 'Sauvegarder' })
+    setLocale('fr-FR')
+    expect(t('toolbar.save')).toBe('Sauvegarder')
+    clearLocales()
+    expect(t('toolbar.save')).not.toBe('Sauvegarder')
+  })
+
   it('clearLocales 后插件 key 不再命中，但 core 内置译文保留', () => {
     setLocale('en-US')
     registerPluginMessages('en-US', 'echarts', { 'echarts.kind.bar': 'Bar' })

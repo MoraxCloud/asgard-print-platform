@@ -67,17 +67,17 @@ async function main() {
     }
     helpContent[locale] = help
 
-    // 常量映射：中文源文本 → 各语文案
+    // 常量映射：中文源文本 → 目标语文案。源语言 zh-CN 无需映射（直接显示源文本），留空。
     const labelSrc = read('packages/canvas/src/shell/label-translation.ts')
     const en = parseStringRecord(labelSrc, 'SOURCE_EN')
     const th = parseStringRecord(labelSrc, 'SOURCE_TH')
-    constants[locale] = locale === 'th-TH' ? th : en
+    constants[locale] = locale === 'th-TH' ? th : locale === 'zh-CN' ? {} : en
 
-    // 属性说明：属性 key → 各语文案
+    // 属性说明：属性 key → 目标语文案。zh-CN 同样留空（回退 core 中文原文）。
     const tipSrc = read('packages/canvas/src/shell/property-tip-translation.ts')
     const tipEn = parseStringRecord(tipSrc, 'EN')
     const tipTh = parseStringRecord(tipSrc, 'TH')
-    propertyTips[locale] = locale === 'th-TH' ? tipTh : tipEn
+    propertyTips[locale] = locale === 'th-TH' ? tipTh : locale === 'zh-CN' ? {} : tipEn
 
     // echarts 插件语言包
     const eSrc = read(`marketplace/plugins/echarts/src/i18n/${dir === 'th-TH' ? 'th-TH' : dir === 'en-US' ? 'en-US' : 'zh-CN'}.ts`)
