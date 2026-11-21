@@ -28,14 +28,17 @@ function main() {
   const bundleFiles = [
     ['zh-CN.ts', 'shell-zh.ts', 'expr-zh.ts'],
     ['en-US.ts', 'shell-en.ts', 'expr-en.ts'],
+    ['th-TH.ts', 'shell-th.ts', 'expr-th.ts'],
   ]
-  const [zhSource, enSource] = bundleFiles.map(files =>
+  const [zhSource, enSource, thSource] = bundleFiles.map(files =>
     files.map(f => readFileSync(resolve(MESSAGES_DIR, f), 'utf8')).join('\n'),
   )
-  const { missing, extra } = checkParity(zhSource, enSource)
-  if (missing.length || extra.length) {
-    console.error(`[gen-locale-keys] 键不一致：en 缺失 [${missing.join(', ')}]；en 多出 [${extra.join(', ')}]`)
-    process.exit(1)
+  for (const [label, source] of [['en', enSource], ['th', thSource]]) {
+    const { missing, extra } = checkParity(zhSource, source)
+    if (missing.length || extra.length) {
+      console.error(`[gen-locale-keys] 键不一致：${label} 缺失 [${missing.join(', ')}]；${label} 多出 [${extra.join(', ')}]`)
+      process.exit(1)
+    }
   }
   const keys = parseKeys(zhSource)
   // locale-keys.json 必须是合法 JSON（不能加 // 注释头），否则下游 JSON.parse 失败
