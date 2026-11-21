@@ -41,3 +41,5 @@ opencode.json
 
 # 本地待办清单，不入库
 todo.md
+**/.mimosa/**
+.idea/**
