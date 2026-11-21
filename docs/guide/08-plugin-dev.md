@@ -35,18 +35,33 @@ registerExportPlugin(defineExportPlugin({
 
 ### 5.1.3 插件包协议
 
-- `package.json` 带 `wormPrint` 元数据：`{ id, version, entry, kinds, exportFormats, peerDeps }`。
+- `package.json` 带 `wormPrint` 元数据：`{ id, version, entry, kinds, exportFormats, peerDeps, i18n }`。
+  其中 `i18n` 形如 `{ "dir": "dist/i18n", "base": "zh-CN" }`，`id` 必须与注册 UI 时的 `i18nId` 一致。
 - `plugin.json` 放插件目录，字段与索引条目一致（id / version / npmName / entry / kinds / exportFormats / files）。
 - `dist/` 必须预构建并提交；单文件 ESM；external 仅 core 与 plugin-kit，其余依赖内联。
 - 插件包**可独立发布到 npm**（包名建议 `@worm-print-platform/plugin-<id>`）。
 
-### 5.1.4 收录与发版
+### 5.1.4 插件语言资源契约
+
+插件必须提供 `zh-CN` 语言资源，`en-US`/`th-TH` 可选：
+
+```
+src/i18n/<locale>.json      { "<插件 id>": { "<插件 id>.<语义键>": "译文" } }
+dist/i18n/<locale>.json     构建脚本复制，npm 包的 files 需包含 dist
+```
+
+- 顶层是插件命名空间，第二层是扁平点号键（键以插件 id 为前缀），值为字符串；不允许 `_meta` 或嵌套。
+- `ElementUI.locales` 与 `wormPrint.i18n` 指向的 JSON 内容保持一致；`i18nId` = `wormPrint.id` = JSON 顶层命名空间。
+- 构建脚本 `scripts/gen-i18n-dist.mjs` 把 `src/i18n/*.json` 复制到 `dist/i18n/`，并用 `sync-compat.mjs` 同步兼容包的 `wormPrint` 字段与 dist。
+- 宿主可用 `worm-print-i18n template` 导出包含插件键的骨架；市场安装会把资源同步到 `.worm-print/i18n/<id>/`。
+
+### 5.1.5 收录与发版
 
 1. 在本仓 `marketplace/plugins/<id>/` 开发，更新 `marketplace/marketplace.json` 索引条目，走 PR 审核。
 2. 发版时同步三处版本：`marketplace.json`、`plugin.json`、`package.json`（含 `wormPrint.version`）。
 3. 维护者 `npm publish` 插件包，并在本仓打 tag `plugins/<id>/vX.Y.Z` 供 GitHub / Gitee 源解析。
 
-### 5.1.5 示例：百度图表（唯一源码真源）
+### 5.1.6 示例：百度图表（唯一源码真源）
 
 `marketplace/plugins/echarts/` 是百度图表插件的唯一源码真源：十类图表描述符、SSR 渲染器、页面执行器
 与设计器 UI 均在此目录。构建脚本 `npm run build` 从同一源码同时产出：

@@ -24,7 +24,7 @@ npx @worm-print-platform/marketplace remove echarts
 | --- | --- |
 | `list` | 列出 CLI 内置索引中的插件 |
 | `install <名称>[@版本]` | 安装单个插件；缺省版本取最新稳定版 |
-| `remove <名称>` | 卸载插件（删除目录与清单条目） |
+| `remove <名称>` | 卸载插件（删除目录、语言资源与清单条目） |
 
 ### 4.1.2 选项
 
@@ -62,11 +62,28 @@ npx @worm-print-platform/marketplace remove echarts
       "npmName": "@worm-print-platform/plugin-echarts",
       "source": { "mode": "npm" },
       "stable": true,
-      "installedAt": "…"
+      "installedAt": "…",
+      "i18n": { "base": "zh-CN", "locales": ["zh-CN", "en-US", "th-TH"] }
     }
   }
 }
 ```
+
+### 4.1.5 语言资源同步
+
+插件包声明 `wormPrint.i18n` 时，安装器在安装/升级后把其 `dist/i18n/<locale>.json` 同步到
+应用根的统一目录 `.worm-print/i18n/<id>/`，并把 `i18n` 字段记入 `plugins.json`：
+
+```
+.worm-print/plugins/echarts/            插件代码
+.worm-print/i18n/echarts/zh-CN.json     插件语言资源（统一目录）
+.worm-print/plugins.json                清单
+```
+
+- **卸载**：同时删除 `.worm-print/i18n/<id>/` 与清单条目。
+- **升级（`--force`）**：先清旧目录再写入，不留已删除语言；清单 `i18n.locales` 同步更新。
+- **旧安装**：旧清单没有 `i18n` 字段、也没有统一目录，`worm-print-i18n` 会提示「插件 X 的语言资源未同步，请重新安装」，不阻断其他插件的骨架生成。请用 `install <名称> --force` 重装一次。
+- npm 直装的插件只要在 `node_modules` 中声明了 `wormPrint.i18n`，也会被语言包 CLI 发现，不必经过市场安装。
 
 ## 4.2 宿主加载
 

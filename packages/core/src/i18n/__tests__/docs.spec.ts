@@ -10,6 +10,8 @@ describe('国际化文档', () => {
     for (const token of [
       'registerLocale', 'mergeLocale', 'PluginLocaleMessages',
       'lang', 'messages', 'i18nId', 'documentLang', 'locale-keys.json',
+      'worm-print-i18n', 'wormPrint.i18n', 'WORM_PRINT_LOCALE_FILE', 'localePack',
+      'constants.borderStyle', 'propertyTips',
     ]) {
       expect(doc).toContain(token)
     }

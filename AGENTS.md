@@ -50,13 +50,14 @@
   - `packages/echarts`（`@worm-print-platform/echarts`）：ECharts 图表元素**兼容镜像包**；源码唯一真源在 `marketplace/plugins/echarts/`，本包由其构建脚本同步生成，保留原包名与全部子路径供存量依赖方零改动使用。
   - `marketplace/plugins/echarts`（`@worm-print-platform/plugin-echarts`）：百度图表插件**唯一源码真源**（十类图表描述符、SSR 渲染器、设计器 UI 全部在此）；同一源码构建出市场主包与 `packages/echarts` 兼容镜像，二者均可单独发布，README 统一为市场口径。
   - `packages/marketplace`（`@worm-print-platform/marketplace`）：插件市场 CLI 安装器（bin：`worm-print-marketplace`），支持从 npm / GitHub / Gitee 三源安装单个插件，缺省取最新稳定版；索引与插件源码常驻顶层 `marketplace/`。
+  - `packages/i18n`（`@worm-print-platform/i18n`）：语言包工具 CLI（bin：`worm-print-i18n`），零运行时依赖，提供 `template`/`validate`/`update`，导出骨架、校验与增量更新自定义语言包。
   - `packages/mcp`（`@worm-print-platform/mcp`）：桌面客户端 MCP 协议实现（不发布，随 client 打包）。
   - `services/render`（`@worm-print-platform/render`）：基于 Playwright（Headless Chromium）的 PDF/截图打印渲染微服务，Docker 部署。
   - `clients/client`（`@worm-print-platform/client`）：跨平台静默打印桌面客户端（Electron，本地 WebSocket + core 同构渲染）。
 - 其他目录：`marketplace`（插件市场索引 `marketplace.json` 与插件源码/产物，常驻本仓、不创建独立仓库）、`demos`（Vue3 / Vue2 / React / jQuery 四宿主接入示例 + print-demo 业务接入示例，彼此独立的 npm 工程）、`demos/templates`（契约校验用的真实模板 JSON）、`demos/shared`（桌面客户端 AI 助手通道参考实现）。
 - 边界约定：`core`（纯逻辑）→ `plugin-kit`（插件 UI 契约）→ `canvas`（Web Components 设计器）→ 宿主应用；`echarts` 依赖 `core` 与 `plugin-kit`；`render` / `client` 只依赖 `core`（+ `echarts` / `contract` / `mcp`），分层不得破坏。
 - 开发命令：`npm install` / `npm run build` / `npm test`。
-- 发布到 npm 的正式包为 `core`、`plugin-kit`、`canvas`、`echarts`、`plugin-echarts`、`skills`、`marketplace` 七个（`publish:npm`）；`skills` 为命令行安装器（bin：`worm-print-skills`，npx 调用 `@worm-print-platform/skills`），默认从本仓 GitHub → Gitee 双源拉取技能到 `.agents/skills/`；`marketplace` 为插件市场安装器（bin：`worm-print-marketplace`，npx 调用 `@worm-print-platform/marketplace`），支持 npm / GitHub / Gitee 三源安装单个插件、缺省最新稳定版；补发 canvas 用 `publish:canvas`；`contract` / `mcp` / `render` / `client` 不发布。
+- 发布到 npm 的正式包为 `core`、`plugin-kit`、`canvas`、`echarts`、`plugin-echarts`、`skills`、`marketplace`、`i18n` 八个（`publish:npm`）；`skills` 为命令行安装器（bin：`worm-print-skills`，npx 调用 `@worm-print-platform/skills`），默认从本仓 GitHub → Gitee 双源拉取技能到 `.agents/skills/`；`marketplace` 为插件市场安装器（bin：`worm-print-marketplace`，npx 调用 `@worm-print-platform/marketplace`），支持 npm / GitHub / Gitee 三源安装单个插件、缺省最新稳定版；补发 canvas 用 `publish:canvas`；`contract` / `mcp` / `render` / `client` 不发布。
 
 ## 六、协作约定
 
