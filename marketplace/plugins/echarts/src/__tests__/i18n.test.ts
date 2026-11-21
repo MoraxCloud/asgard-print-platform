@@ -26,6 +26,14 @@ describe('echarts 插件语言包', () => {
     expect(zhKeys.sort()).toEqual(enKeys.sort())
     expect(zhKeys.sort()).toEqual(thKeys.sort())
     expect(zhKeys.every(k => k.startsWith('echarts.'))).toBe(true)
+    // 135 基础键 + 10 notes 键 = 145；notes 与 label 键三语种齐全
+    expect(zhKeys).toHaveLength(145)
+    for (const n of Array.from({ length: 10 }, (_, i) => `echarts.notes.k${146 + i}`)) {
+      expect(zhKeys).toContain(n)
+    }
+    for (const n of Array.from({ length: 36 }, (_, i) => `echarts.label.k${104 + i}`)) {
+      expect(zhKeys).toContain(n)
+    }
   })
 
   it('切泰语后 engine 能解析插件键', () => {

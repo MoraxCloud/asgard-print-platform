@@ -29,7 +29,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight"
+    notes: "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight",
+    notesKey: "echarts.notes.k146"
   },
   {
     type: "barHChart",
@@ -42,7 +43,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D"
+    notes: "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D",
+    notesKey: "echarts.notes.k147"
   },
   {
     type: "lineChart",
@@ -54,7 +56,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle"
+    notes: "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle",
+    notesKey: "echarts.notes.k148"
   },
   {
     type: "areaChart",
@@ -66,7 +69,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE"
+    notes: "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE",
+    notesKey: "echarts.notes.k149"
   },
   {
     type: "pieChart",
@@ -78,7 +82,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5"
+    notes: "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5",
+    notesKey: "echarts.notes.k150"
   },
   {
     type: "doughnutChart",
@@ -90,7 +95,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E"
+    notes: "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E",
+    notesKey: "echarts.notes.k151"
   },
   {
     type: "scatterChart",
@@ -102,7 +108,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 80,
     defaultHeight: 60,
-    notes: "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F"
+    notes: "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F",
+    notesKey: "echarts.notes.k152"
   },
   {
     type: "radarChart",
@@ -114,7 +121,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 70,
     defaultHeight: 60,
-    notes: "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09"
+    notes: "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09",
+    notesKey: "echarts.notes.k153"
   },
   {
     type: "funnelChart",
@@ -126,7 +134,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09"
+    notes: "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09",
+    notesKey: "echarts.notes.k154"
   },
   {
     type: "gaugeChart",
@@ -138,7 +147,8 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max"
+    notes: "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max",
+    notesKey: "echarts.notes.k155"
   }
 ];
 var CHART_KINDS = CHART_KIND_DEFINITIONS.map((def) => def.type);
@@ -638,55 +648,55 @@ function writeRadarRadius(option, percent) {
 
 // src/label.ts
 var LABEL_PRESETS = [
-  { key: "value", label: "\u6570\u503C", formatter: "{c}" },
-  { key: "name-value", label: "\u540D\u79F0: \u6570\u503C", formatter: "{b}: {c}" },
-  { key: "name", label: "\u540D\u79F0", formatter: "{b}" },
-  { key: "percent", label: "\u767E\u5206\u6BD4", formatter: "{d}%" }
+  { key: "value", label: "\u6570\u503C", labelKey: "echarts.label.k104", formatter: "{c}" },
+  { key: "name-value", label: "\u540D\u79F0: \u6570\u503C", labelKey: "echarts.label.k105", formatter: "{b}: {c}" },
+  { key: "name", label: "\u540D\u79F0", labelKey: "echarts.label.k106", formatter: "{b}" },
+  { key: "percent", label: "\u767E\u5206\u6BD4", labelKey: "echarts.label.k107", formatter: "{d}%" }
 ];
 var LABEL_POSITIONS = {
   bar: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "inside", label: "\u5185\u90E8" },
-    { value: "insideTop", label: "\u5185\u90E8\u9876\u7AEF" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "insideBottom", label: "\u5185\u90E8\u5E95\u7AEF" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "middle", label: "\u5C45\u4E2D" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k108" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k109" },
+    { value: "insideTop", label: "\u5185\u90E8\u9876\u7AEF", labelKey: "echarts.label.k110" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k111" },
+    { value: "insideBottom", label: "\u5185\u90E8\u5E95\u7AEF", labelKey: "echarts.label.k112" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k113" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k114" },
+    { value: "middle", label: "\u5C45\u4E2D", labelKey: "echarts.label.k115" }
   ],
   line: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "inside", label: "\u5185\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k116" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k117" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k118" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k119" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k120" }
   ],
   pie: [
-    { value: "outside", label: "\u5916\u4FA7" },
-    { value: "inside", label: "\u5185\u90E8" },
-    { value: "center", label: "\u4E2D\u5FC3" }
+    { value: "outside", label: "\u5916\u4FA7", labelKey: "echarts.label.k121" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k122" },
+    { value: "center", label: "\u4E2D\u5FC3", labelKey: "echarts.label.k123" }
   ],
   scatter: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "inside", label: "\u5185\u90E8" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k124" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k125" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k126" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k127" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k128" }
   ],
   radar: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "inside", label: "\u5185\u90E8" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k129" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k130" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k131" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k132" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k133" }
   ],
   funnel: [
-    { value: "outer", label: "\u5916\u4FA7" },
-    { value: "inner", label: "\u5185\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" }
+    { value: "outer", label: "\u5916\u4FA7", labelKey: "echarts.label.k134" },
+    { value: "inner", label: "\u5185\u90E8", labelKey: "echarts.label.k135" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k136" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k137" },
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k138" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k139" }
   ],
   gauge: []
 };
@@ -1052,11 +1062,17 @@ var CHART_PLUGIN = defineElementPlugin({
   version: CHART_EXECUTOR_VERSION,
   kinds: CHART_KIND_DEFINITIONS.map((def) => ({
     type: def.type,
-    label: def.label,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get label() {
+      return t(def.labelKey);
+    },
     icon: def.icon,
     fixedHeight: true,
     requiredOptionKeys: def.requiredOptionKeys,
-    notes: def.notes,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get notes() {
+      return t(def.notesKey);
+    },
     optionMeta: def.type === "scatterChart" ? SCATTER_OPTION_META : CHART_OPTION_META,
     defaultOptions: (partial) => chartFactoryDefaults(def.type, partial),
     binding: { bind: (options, data) => bindChartData(def.type, options, data) }
@@ -1227,7 +1243,18 @@ var echartsZhCN = {
   "echarts.plugin.k142": "\u7C7B\u76EE\u5B57\u6BB5",
   "echarts.plugin.k143": "\u6570\u503C\u5B57\u6BB5",
   "echarts.plugin.k144": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
-  "echarts.plugin.k145": "\u6C14\u6CE1\u5927\u5C0F"
+  "echarts.plugin.k145": "\u6C14\u6CE1\u5927\u5C0F",
+  // 十类图表的 AI 提示说明（notes），键顺序对应 CHART_KIND_DEFINITIONS
+  "echarts.notes.k146": "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight",
+  "echarts.notes.k147": "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D",
+  "echarts.notes.k148": "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle",
+  "echarts.notes.k149": "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE",
+  "echarts.notes.k150": "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5",
+  "echarts.notes.k151": "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E",
+  "echarts.notes.k152": "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F",
+  "echarts.notes.k153": "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09",
+  "echarts.notes.k154": "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09",
+  "echarts.notes.k155": "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max"
 };
 
 // src/i18n/en-US.ts
@@ -1366,7 +1393,18 @@ var echartsEnUS = {
   "echarts.plugin.k142": "Category field",
   "echarts.plugin.k143": "Value fields",
   "echarts.plugin.k144": "Series split field",
-  "echarts.plugin.k145": "Bubble size"
+  "echarts.plugin.k145": "Bubble size",
+  // AI hints for the ten chart kinds (notes), order matches CHART_KIND_DEFINITIONS
+  "echarts.notes.k146": "Bar chart: category + multiple value fields, one series per field; write the $data placeholder in series[].data; fixed height, autoHeight is forbidden",
+  "echarts.notes.k147": "Horizontal bar: xAxis is the value axis, yAxis is the category axis; write the $data placeholder in yAxis.data for categories",
+  "echarts.notes.k148": "Line chart: category + multiple value fields; do not write areaStyle",
+  "echarts.notes.k149": "Area chart: line + series[].areaStyle; otherwise same as the line chart",
+  "echarts.notes.k150": "Pie chart: category + the first value field produce { name, value }; only one value field is needed",
+  "echarts.notes.k151": "Doughnut: pie + radius:[inner, outer]; the inner radius is configured in the panel",
+  "echarts.notes.k152": "Scatter: the category field is x, the first value field is y; when chartBubble is on, the second value field is the point size",
+  "echarts.notes.k153": "Radar: each value field is a dimension (radar.indicator), each data row is a series (the category field is the series name); the radius is written by the panel to radar.radius (%, default 75)",
+  "echarts.notes.k154": "Funnel: category + the first value field, sorted descending; the four insets are written by the panel to series.left/right/top/bottom (%, reserve room on the right for outer labels)",
+  "echarts.notes.k155": "Gauge: the first value field of the first data row is the pointer value; min/max are written by the panel to series[0].min/max"
 };
 
 // src/i18n/th-TH.ts
@@ -1505,7 +1543,18 @@ var echartsThTH = {
   "echarts.plugin.k142": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
   "echarts.plugin.k143": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
   "echarts.plugin.k144": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.plugin.k145": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07"
+  "echarts.plugin.k145": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
+  // คำแนะนำ AI สำหรับแผนภูมิทั้งสิบประเภท (notes) ลำดับตรงกับ CHART_KIND_DEFINITIONS
+  "echarts.notes.k146": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27 \u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 series[].data; \u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E04\u0E07\u0E17\u0E35\u0E48 \u0E2B\u0E49\u0E32\u0E21\u0E43\u0E0A\u0E49 autoHeight",
+  "echarts.notes.k147": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19: xAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E04\u0E48\u0E32 yAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 yAxis.data \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+  "echarts.notes.k148": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27; \u0E44\u0E21\u0E48\u0E40\u0E02\u0E35\u0E22\u0E19 areaStyle",
+  "echarts.notes.k149": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48: \u0E40\u0E2A\u0E49\u0E19 + series[].areaStyle; \u0E19\u0E2D\u0E01\u0E19\u0E31\u0E49\u0E19\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
+  "echarts.notes.k150": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E2A\u0E23\u0E49\u0E32\u0E07 { name, value }; \u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E1E\u0E35\u0E22\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+  "echarts.notes.k151": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19: \u0E27\u0E07\u0E01\u0E25\u0E21 + radius:[\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19, \u0E23\u0E31\u0E28\u0E21\u0E35\u0E19\u0E2D\u0E01]; \u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E43\u0E19\u0E41\u0E1C\u0E07",
+  "echarts.notes.k152": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19 x \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19 y; \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14 chartBubble \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E19\u0E32\u0E14\u0E08\u0E38\u0E14",
+  "echarts.notes.k153": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E17\u0E38\u0E01\u0E15\u0E31\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34 (radar.indicator) \u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E15\u0E48\u0E25\u0E30\u0E41\u0E16\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series (\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E37\u0E48\u0E2D series); \u0E23\u0E31\u0E28\u0E21\u0E35\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 radar.radius (%, \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19 75)",
+  "echarts.notes.k154": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01 \u0E40\u0E23\u0E35\u0E22\u0E07\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32\u0E25\u0E07\u0E21\u0E32; \u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19\u0E2A\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series.left/right/top/bottom (%, \u0E40\u0E1C\u0E37\u0E48\u0E2D\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E02\u0E27\u0E32\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
+  "echarts.notes.k155": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E02\u0E2D\u0E07\u0E41\u0E16\u0E27\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E04\u0E48\u0E32\u0E1C\u0E25\u0E31\u0E01\u0E14\u0E31\u0E19; min/max \u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series[0].min/max"
 };
 
 // src/ui.ts
@@ -1871,7 +1920,7 @@ function renderLabelGroup(ctx, type) {
       const wrap = field(t2("echarts.ui.k48"));
       wrap.appendChild(
         selectInput(
-          [{ value: "", label: t2("echarts.ui.k49") }, ...LABEL_PRESETS.map((preset) => ({ value: preset.formatter, label: preset.label }))],
+          [{ value: "", label: t2("echarts.ui.k49") }, ...LABEL_PRESETS.map((preset) => ({ value: preset.formatter, label: t2(preset.labelKey) }))],
           state.formatter ?? "",
           (value) => commit({ formatter: value })
         )
@@ -1893,7 +1942,7 @@ function renderLabelGroup(ctx, type) {
       const wrap = field(t2("echarts.ui.k53"));
       const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : [];
       wrap.appendChild(
-        selectInput([{ value: "", label: t2("echarts.ui.k54") }, ...positions], state.position ?? "", (value) => commit({ position: value }))
+        selectInput([{ value: "", label: t2("echarts.ui.k54") }, ...positions.map((p) => ({ value: p.value, label: t2(p.labelKey) }))], state.position ?? "", (value) => commit({ position: value }))
       );
       group.appendChild(wrap);
     }
