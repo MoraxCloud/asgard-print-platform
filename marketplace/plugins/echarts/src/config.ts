@@ -35,6 +35,8 @@ export function getChartPluginConfig(): ChartPluginConfig {
 export interface ChartPalette {
   key: string
   label: string
+  /** 内置配色的语义键；自定义配色无此字段时沿用 label 原文 */
+  labelKey?: string
   colors: readonly string[]
 }
 
@@ -44,8 +46,8 @@ export function getChartPalettes(): ChartPalette[] {
   const builtin: ChartPalette[] = CHART_PALETTES.map(palette => {
     const custom = overrides[palette.key]
     return custom
-      ? { key: palette.key, label: custom.label ?? palette.label, colors: custom.colors }
-      : { key: palette.key, label: palette.label, colors: palette.colors }
+      ? { key: palette.key, label: custom.label ?? palette.label, labelKey: custom.label ? undefined : palette.labelKey, colors: custom.colors }
+      : { key: palette.key, label: palette.label, labelKey: palette.labelKey, colors: palette.colors }
   })
   const extra: ChartPalette[] = Object.entries(overrides)
     .filter(([key]) => !CHART_PALETTES.some(palette => palette.key === key))

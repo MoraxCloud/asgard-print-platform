@@ -344,10 +344,10 @@ import { configurePlugin, getPluginConfig } from "@worm-print-platform/core/desi
 // src/constants.ts
 var CHART_PLUGIN_ID = "@worm-print-platform/echarts";
 var CHART_PALETTES = [
-  { key: "default", label: "\u9ED8\u8BA4\u84DD", colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"] },
-  { key: "fresh", label: "\u6E05\u65B0\u7EFF", colors: ["#2f9e6e", "#5cc9a7", "#9ad6c1", "#f2c94c", "#4a90e2"] },
-  { key: "warm", label: "\u6696\u6A59\u7EA2", colors: ["#f2704e", "#f7a35c", "#f7d56d", "#c54e3f", "#8f5a4a"] },
-  { key: "purple", label: "\u7D2B\u7070", colors: ["#7b61ff", "#9b8cff", "#c3baff", "#596275", "#8d99ae"] }
+  { key: "default", label: "\u9ED8\u8BA4\u84DD", labelKey: "echarts.palette.default", colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"] },
+  { key: "fresh", label: "\u6E05\u65B0\u7EFF", labelKey: "echarts.palette.fresh", colors: ["#2f9e6e", "#5cc9a7", "#9ad6c1", "#f2c94c", "#4a90e2"] },
+  { key: "warm", label: "\u6696\u6A59\u7EA2", labelKey: "echarts.palette.warm", colors: ["#f2704e", "#f7a35c", "#f7d56d", "#c54e3f", "#8f5a4a"] },
+  { key: "purple", label: "\u7D2B\u7070", labelKey: "echarts.palette.purple", colors: ["#7b61ff", "#9b8cff", "#c3baff", "#596275", "#8d99ae"] }
 ];
 var FALLBACK_SAMPLE_CATEGORIES = ["\u793A\u4F8B\u4E00", "\u793A\u4F8B\u4E8C", "\u793A\u4F8B\u4E09"];
 var FUNNEL_PADDING_DEFAULTS = { top: 6, right: 25, bottom: 6, left: 5 };
@@ -435,7 +435,7 @@ function getChartPalettes() {
   const overrides = getChartPluginConfig().palettes ?? {};
   const builtin = CHART_PALETTES.map((palette) => {
     const custom = overrides[palette.key];
-    return custom ? { key: palette.key, label: custom.label ?? palette.label, colors: custom.colors } : { key: palette.key, label: palette.label, colors: palette.colors };
+    return custom ? { key: palette.key, label: custom.label ?? palette.label, labelKey: custom.label ? void 0 : palette.labelKey, colors: custom.colors } : { key: palette.key, label: palette.label, labelKey: palette.labelKey, colors: palette.colors };
   });
   const extra = Object.entries(overrides).filter(([key]) => !CHART_PALETTES.some((palette) => palette.key === key)).map(([key, value]) => ({ key, label: value.label ?? key, colors: value.colors }));
   return [...builtin, ...extra];
@@ -1105,7 +1105,7 @@ registerChartPlugin();
 registerChartPlugin();
 
 // src/ui.ts
-import { t as t2 } from "@worm-print-platform/core/i18n";
+import { t as globalT } from "@worm-print-platform/core/i18n";
 
 // src/i18n/zh-CN.ts
 var echartsZhCN = {
@@ -1182,6 +1182,10 @@ var echartsZhCN = {
   "echarts.panel.titleHint": "\u7559\u7A7A\u4E0D\u663E\u793A\u6807\u9898",
   "echarts.panel.legend": "\u663E\u793A\u56FE\u4F8B",
   "echarts.panel.palette": "\u914D\u8272",
+  "echarts.palette.default": "\u9ED8\u8BA4\u84DD",
+  "echarts.palette.fresh": "\u6E05\u65B0\u7EFF",
+  "echarts.palette.warm": "\u6696\u6A59\u7EA2",
+  "echarts.palette.purple": "\u7D2B\u7070",
   "echarts.panel.stack": "\u5806\u53E0\u663E\u793A",
   "echarts.panel.innerRadius": "\u5185\u5F84\uFF08%\uFF09",
   "echarts.panel.paddingTRBL": "\u5185\u8FB9\u8DDD \u4E0A/\u53F3/\u4E0B/\u5DE6 (%)",
@@ -1332,6 +1336,10 @@ var echartsEnUS = {
   "echarts.panel.titleHint": "Leave empty to hide the title",
   "echarts.panel.legend": "Show legend",
   "echarts.panel.palette": "Color palette",
+  "echarts.palette.default": "Default blue",
+  "echarts.palette.fresh": "Fresh green",
+  "echarts.palette.warm": "Warm orange-red",
+  "echarts.palette.purple": "Purple grey",
   "echarts.panel.stack": "Stacked",
   "echarts.panel.innerRadius": "Inner radius (%)",
   "echarts.panel.paddingTRBL": "Padding top/right/bottom/left (%)",
@@ -1482,6 +1490,10 @@ var echartsThTH = {
   "echarts.panel.titleHint": "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E0B\u0E48\u0E2D\u0E19\u0E0A\u0E37\u0E48\u0E2D",
   "echarts.panel.legend": "\u0E41\u0E2A\u0E14\u0E07\u0E04\u0E33\u0E2D\u0E18\u0E34\u0E1A\u0E32\u0E22",
   "echarts.panel.palette": "\u0E0A\u0E38\u0E14\u0E2A\u0E35",
+  "echarts.palette.default": "\u0E2A\u0E35\u0E19\u0E49\u0E33\u0E40\u0E07\u0E34\u0E19\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+  "echarts.palette.fresh": "\u0E2A\u0E35\u0E40\u0E02\u0E35\u0E22\u0E27\u0E2A\u0E14\u0E0A\u0E37\u0E48\u0E19",
+  "echarts.palette.warm": "\u0E2A\u0E35\u0E2A\u0E49\u0E21\u0E41\u0E14\u0E07\u0E2D\u0E1A\u0E2D\u0E38\u0E48\u0E19",
+  "echarts.palette.purple": "\u0E2A\u0E35\u0E21\u0E39\u0E1F\u0E40\u0E17\u0E32",
   "echarts.panel.stack": "\u0E0B\u0E49\u0E2D\u0E19\u0E01\u0E31\u0E19",
   "echarts.panel.innerRadius": "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19 (%)",
   "echarts.panel.paddingTRBL": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19/\u0E02\u0E27\u0E32/\u0E25\u0E48\u0E32\u0E07/\u0E0B\u0E49\u0E32\u0E22 (%)",
@@ -1561,6 +1573,17 @@ var echartsThTH = {
 import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
 import { render } from "@worm-print-platform/plugin-kit/dom";
 import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
+var activeT = globalT;
+var t2 = (key, params) => activeT(key, params);
+function withTranslator(translator, render2) {
+  const prev = activeT;
+  activeT = translator ?? globalT;
+  try {
+    return render2();
+  } finally {
+    activeT = prev;
+  }
+}
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
@@ -1845,18 +1868,18 @@ function dropdownSelect(options, value, onCommit) {
   });
   return trigger;
 }
-var OVERFLOW_OPTIONS = [
+var overflowOptions = () => [
   { value: "", label: t2("echarts.panel.overflow.default") },
   { value: "none", label: t2("echarts.panel.overflow.none") },
   { value: "truncate", label: t2("echarts.panel.overflow.truncate") },
   { value: "break", label: t2("echarts.panel.overflow.break") }
 ];
-var FONT_WEIGHT_OPTIONS = [
+var fontWeightOptions = () => [
   { value: "", label: t2("echarts.panel.fontWeight.default") },
   { value: "normal", label: t2("echarts.panel.fontWeight.normal") },
   { value: "bold", label: t2("echarts.panel.fontWeight.bold") }
 ];
-var STYLE_FIELD_LABELS = {
+var styleFieldLabels = () => ({
   distance: t2("echarts.panel.label.distance"),
   rotate: t2("echarts.panel.label.rotate"),
   fontSize: t2("echarts.panel.label.fontSize"),
@@ -1867,13 +1890,14 @@ var STYLE_FIELD_LABELS = {
   borderWidth: t2("echarts.panel.label.borderWidth"),
   borderRadius: t2("echarts.panel.label.borderRadius"),
   padding: t2("echarts.panel.label.padding")
-};
+});
 function renderLabelGroup(ctx, type) {
   const element = ctx.element;
   const def = getChartKindDefinition(type);
   const fields = labelFieldsOf(type);
   const has = (key) => fields.includes(key);
   const state = readChartLabel(panelOption(element), type);
+  const styleLabels = styleFieldLabels();
   const commit = (patch) => {
     commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch));
   };
@@ -1890,18 +1914,20 @@ function renderLabelGroup(ctx, type) {
     commit({ labelLine: { [key]: value } });
   };
   const numberField = (key, value) => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    const wrap = field(styleLabels[key] ?? key);
     wrap.appendChild(
       textInput({ value: value === void 0 ? "" : String(value), type: "number" }, (raw) => commitNumber(key, raw))
     );
     return wrap;
   };
   const colorField = (key, value) => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    const wrap = field(styleLabels[key] ?? key);
     const holder = el("span");
     render(colorPicker({
       value: value ?? "",
-      title: STYLE_FIELD_LABELS[key] ?? key,
+      title: styleLabels[key] ?? key,
+      // 面板点击时才构建，届时候选渲染期 translator 已还原，必须固化 ctx.t
+      translator: ctx.t,
       onChange: (next) => commit({ [key]: next ?? "" })
     }), holder);
     wrap.appendChild(holder);
@@ -1932,7 +1958,7 @@ function renderLabelGroup(ctx, type) {
     }
     if (has("overflow")) {
       const wrap = field(t2("echarts.panel.label.overflow"));
-      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? "", (value) => commit({ overflow: value })));
+      wrap.appendChild(selectInput(overflowOptions(), state.overflow ?? "", (value) => commit({ overflow: value })));
       group.appendChild(wrap);
     }
   }
@@ -1976,7 +2002,7 @@ function renderLabelGroup(ctx, type) {
     if (has("fontSize")) group.appendChild(numberField("fontSize", state.fontSize));
     if (has("fontWeight")) {
       const wrap = field(t2("echarts.panel.labelLine.fontWeight"));
-      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
+      wrap.appendChild(selectInput(fontWeightOptions(), state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
       group.appendChild(wrap);
     }
     for (const key of ["color", "backgroundColor", "borderColor"]) {
@@ -2020,6 +2046,9 @@ function renderLabelGroup(ctx, type) {
   return group;
 }
 function renderProperty(ctx) {
+  return withTranslator(ctx.t, () => renderPropertyInner(ctx));
+}
+function renderPropertyInner(ctx) {
   const element = ctx.element;
   const type = elementType(element);
   const def = getChartKindDefinition(type);
@@ -2139,7 +2168,7 @@ function renderProperty(ctx) {
     for (const palette of palettes) {
       const optionEl = el("option");
       optionEl.value = palette.key;
-      optionEl.textContent = palette.label;
+      optionEl.textContent = palette.labelKey ? t2(palette.labelKey) : palette.label;
       select.appendChild(optionEl);
     }
     select.value = readPaletteKey(panelOption(element), palettes);

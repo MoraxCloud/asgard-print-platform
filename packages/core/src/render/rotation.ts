@@ -2,6 +2,7 @@
 // 元素级旋转的口径单点：AABB 几何、类型/档位放行与直角吸附。
 // 分页引擎、连续纸推导、出纸校验与 HTML 渲染四处共用本文件，禁止各自重抄三角公式。
 import { getElementCapabilities } from '../designer/element-capabilities.js'
+import { t as tr, type Translate } from '../i18n/index.js'
 
 /** 旋转后轴对齐外接盒（mm），坐标与设计盒同一参照系 */
 export interface RotatedAabb {
@@ -71,6 +72,10 @@ function isCodeRotationDpiGated(type: string): boolean {
 
 /** 码类「任意角度」需 385dpi 以上打印头；属性台据此置灰自由角度输入（90° 步进不受限） */
 export const CODE_OBLIQUE_NOTE = '条码与二维码仅支持 90° 步进；任意角度需 385dpi 以上打印头'
+/** 跟随 locale 的门槛说明；常量保留作 zh 别名 */
+export function codeObliqueNote(translator: Translate = tr): string {
+  return translator('code.rotateNote')
+}
 
 /**
  * 自由角度是否可编辑：`barcode` / `qrcode` 受 CODE_ROTATION_MIN_DPI 门槛约束（未声明打印头分辨率即不可），

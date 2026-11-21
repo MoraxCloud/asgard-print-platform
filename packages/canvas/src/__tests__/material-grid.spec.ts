@@ -69,7 +69,7 @@ describe('print-designer 素材台两列栅格（对照 Vue 3 轨）', () => {
   })
 
   it('插件语言包未注册时不显示裸 key，回退到定义的 label', async () => {
-    // barChart 在 ELEMENT_LABEL_KEYS 里映射到 echarts.kinds.k84；
+    // barChart 在 ELEMENT_LABEL_KEYS 里映射到 echarts.series.typeNames.bar；
     // 本测试环境未注册 echarts 语言包，tr(key) 会返回 key 本身。
     const release = registerElementDefinition({
       type: 'barChart', label: '自定义柱状图', icon: 'ChartColumn', material: true,

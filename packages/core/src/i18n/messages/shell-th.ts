@@ -328,6 +328,7 @@ export const shellTh: Record<string, string> = {
   'propertyPanel.k325': "คุณสมบัติองค์ประกอบ",
   'propertyPanel.k326': "คุณสมบัติหน้ากระดาษ",
   'propertyPanel.k327': "เลือกองค์ประกอบบนพื้นที่ทำงาน",
+  'propertyPanel.k328': "คุณสมบัติที่กำหนดเอง",
   'propertySearch.k328': "ค้นหาคุณสมบัติ...",
   'propertySearch.k329': "ค้นหาคุณสมบัติ",
   'tableProps.k330': "ส่วนหัวหลายระดับทำซ้ำทั้งกลุ่ม เมื่อเลือก แถวหัวทั้งหมดจะซ้ำที่ด้านบนของทุกหน้า",

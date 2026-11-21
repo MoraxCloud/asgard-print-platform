@@ -17,6 +17,8 @@
 // 3. 可用框放不下首选尺寸时等比缩小：有点阵时按整数点逐级缩小以保住点对齐；连 1 点/模块都
 //    放不下才退回连续等比缩放（此时已无法点对齐，宁可缩小也不让条码溢出可用框）。
 
+import { t as tr, type Translate } from '../i18n/index.js'
+
 /** 1 英寸 = 25.4mm */
 export const MM_PER_INCH = 25.4
 
@@ -92,19 +94,26 @@ export function recommendBarcodeBarWidth(dpi?: number): BarcodeBarWidthRecommend
 export function barcodeBarWidthRecommendText(
   dpi: number | undefined,
   currentBarWidth: number | undefined,
+  translator: Translate = tr,
 ): string {
   const rec = recommendBarcodeBarWidth(dpi)
   if (!rec) return ''
   const mm = (v: number) => String(Number(v.toFixed(3)))
-  const head = `按 ${dpi}dpi 推荐条宽倍率 ${rec.barWidth}（每模块 ${rec.dotsPerModule} 个打印点 = ${mm(rec.moduleWidthMm)}mm，取达到 ${mm(BARCODE_MIN_MODULE_WIDTH_MM)}mm 下限的最小档）`
   const cur = barcodePreferredModuleWidthMm(currentBarWidth ?? 2)
   const curDots = Math.max(1, Math.round(cur * (dpi as number) / MM_PER_INCH))
   const curMm = curDots / ((dpi as number) / MM_PER_INCH)
   // 未填也按缺省档 2 折算：203dpi 下 2 点是 0.250mm，本身就卡在下限之下，该提醒
-  const tail = curMm >= BARCODE_MIN_MODULE_WIDTH_MM - 1e-9
-    ? `当前倍率 ${currentBarWidth ?? 2} 折算为 ${curDots} 点 / ${mm(curMm)}mm，已达标`
-    : `当前倍率 ${currentBarWidth ?? 2} 只有 ${curDots} 点 / ${mm(curMm)}mm，低于下限`
-  return `${head}；${tail}。这里只提示，不会替你改值`
+  const ok = curMm >= BARCODE_MIN_MODULE_WIDTH_MM - 1e-9
+  return translator(ok ? 'barcode.recommendOk' : 'barcode.recommendLow', {
+    dpi: dpi as number,
+    rec: rec.barWidth,
+    recDots: rec.dotsPerModule,
+    width: mm(rec.moduleWidthMm),
+    min: mm(BARCODE_MIN_MODULE_WIDTH_MM),
+    current: currentBarWidth ?? 2,
+    curDots,
+    curWidth: mm(curMm),
+  })
 }
 
 /** 每模块的用户单位数：与出图端 jsbarcode 的 width 同口径（barWidth=2 → 1，barWidth=4 → 2） */

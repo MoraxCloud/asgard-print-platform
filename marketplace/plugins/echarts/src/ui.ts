@@ -4,7 +4,24 @@
 //
 // 事件统一用 change（失焦/回车提交）：common 每次 store 变更都会整树重绘，
 // 用 input 会让输入框在每次按键后重建、丢焦点。
-import { t } from '@worm-print-platform/core/i18n'
+import { t as globalT, type Translate } from '@worm-print-platform/core/i18n'
+
+/**
+ * 渲染期 translator：插件 UI 的所有 t() 都经此转发。
+ * 宿主按实例 lang 注入 ctx.t；未注入时回退 core 全局 locale（旧行为）。
+ * 与 canvas 的 withRenderTranslator 同口径：一次渲染内有效，结束即还原。
+ */
+let activeT: Translate = globalT
+const t: Translate = (key, params) => activeT(key, params)
+function withTranslator<R>(translator: Translate | undefined, render: () => R): R {
+  const prev = activeT
+  activeT = translator ?? globalT
+  try {
+    return render()
+  } finally {
+    activeT = prev
+  }
+}
 import { echartsZhCN } from './i18n/zh-CN.js'
 import { echartsEnUS } from './i18n/en-US.js'
 import { echartsThTH } from './i18n/th-TH.js'
@@ -410,20 +427,22 @@ function dropdownSelect(
   return trigger
 }
 
-const OVERFLOW_OPTIONS = [
+// 以下档位表/标签表曾为模块级常量，t() 在模块加载期求值会冻结成单一语言；
+// 改为渲染期求值的函数，才能跟随本次 ctx.t（实例 locale）。
+const overflowOptions = () => [
   { value: '', label: t('echarts.panel.overflow.default') },
   { value: 'none', label: t('echarts.panel.overflow.none') },
   { value: 'truncate', label: t('echarts.panel.overflow.truncate') },
   { value: 'break', label: t('echarts.panel.overflow.break') },
 ] as const
 
-const FONT_WEIGHT_OPTIONS = [
+const fontWeightOptions = () => [
   { value: '', label: t('echarts.panel.fontWeight.default') },
   { value: 'normal', label: t('echarts.panel.fontWeight.normal') },
   { value: 'bold', label: t('echarts.panel.fontWeight.bold') },
 ] as const
 
-const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
+const styleFieldLabels = (): Partial<Record<LabelFieldKey, string>> => ({
   distance: t('echarts.panel.label.distance'),
   rotate: t('echarts.panel.label.rotate'),
   fontSize: t('echarts.panel.label.fontSize'),
@@ -434,7 +453,7 @@ const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
   borderWidth: t('echarts.panel.label.borderWidth'),
   borderRadius: t('echarts.panel.label.borderRadius'),
   padding: t('echarts.panel.label.padding'),
-}
+})
 
 /** 数据标签分组：一个可折叠 details，内部按「内容 / 位置 / 样式 / 引导线」分块 */
 function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDetailsElement {
@@ -443,6 +462,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   const fields = labelFieldsOf(type)
   const has = (key: LabelFieldKey): boolean => fields.includes(key)
   const state = readChartLabel(panelOption(element), type)
+  const styleLabels = styleFieldLabels()
 
   const commit = (patch: ChartLabelPatch): void => {
     commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch))
@@ -460,18 +480,20 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     commit({ labelLine: { [key]: value } })
   }
   const numberField = (key: LabelFieldKey, value: number | undefined): HTMLDivElement => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    const wrap = field(styleLabels[key] ?? key)
     wrap.appendChild(
       textInput({ value: value === undefined ? '' : String(value), type: 'number' }, raw => commitNumber(key, raw)),
     )
     return wrap
   }
   const colorField = (key: LabelFieldKey, value: string | undefined): HTMLDivElement => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    const wrap = field(styleLabels[key] ?? key)
     const holder = el('span')
     render(colorPicker({
       value: value ?? '',
-      title: STYLE_FIELD_LABELS[key] ?? key,
+      title: styleLabels[key] ?? key,
+      // 面板点击时才构建，届时候选渲染期 translator 已还原，必须固化 ctx.t
+      translator: ctx.t,
       onChange: next => commit({ [key]: next ?? '' } as ChartLabelPatch),
     }), holder)
     wrap.appendChild(holder)
@@ -506,7 +528,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     }
     if (has('overflow')) {
       const wrap = field(t('echarts.panel.label.overflow'))
-      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? '', value => commit({ overflow: value })))
+      wrap.appendChild(selectInput(overflowOptions(), state.overflow ?? '', value => commit({ overflow: value })))
       group.appendChild(wrap)
     }
   }
@@ -552,7 +574,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     if (has('fontSize')) group.appendChild(numberField('fontSize', state.fontSize))
     if (has('fontWeight')) {
       const wrap = field(t('echarts.panel.labelLine.fontWeight'))
-      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? '', value => commit({ fontWeight: value })))
+      wrap.appendChild(selectInput(fontWeightOptions(), state.fontWeight ?? '', value => commit({ fontWeight: value })))
       group.appendChild(wrap)
     }
     for (const key of ['color', 'backgroundColor', 'borderColor'] as const) {
@@ -599,6 +621,10 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
 }
 
 function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
+  return withTranslator(ctx.t, () => renderPropertyInner(ctx))
+}
+
+function renderPropertyInner(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   const element = ctx.element
   const type = elementType(element)
   const def = getChartKindDefinition(type)
@@ -728,7 +754,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     for (const palette of palettes) {
       const optionEl = el('option')
       optionEl.value = palette.key
-      optionEl.textContent = palette.label
+      optionEl.textContent = palette.labelKey ? t(palette.labelKey) : palette.label
       select.appendChild(optionEl)
     }
     select.value = readPaletteKey(panelOption(element), palettes)

@@ -328,6 +328,7 @@ export const shellEn: Record<string, string> = {
   'propertyPanel.k325': "Element properties",
   'propertyPanel.k326': "Page properties",
   'propertyPanel.k327': "Select an element on the canvas",
+  'propertyPanel.k328': "Custom properties",
   'propertySearch.k328': "Search properties...",
   'propertySearch.k329': "Search properties",
   'tableProps.k330': "Multi-level headers repeat as a whole; when checked, all header rows repeat at the top of each page",

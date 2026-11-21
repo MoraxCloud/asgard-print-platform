@@ -4,7 +4,7 @@
 //  .property-search>input.pd-input / .font-select>.font-select-input+.font-select-list /
 //  .pd-form / .position-grid / .margin-grid / .pd-field>.pd-label / .pd-divider / .pd-empty）。
 // 搜索门控（filteredGroups / matchedKeys / searching）见 shell/property-search.ts，口径同 canvas。
-import { tr } from './controls.js'
+import { tr, trG } from './controls.js'
 import { getLocale } from '@worm-print-platform/core/i18n'
 import { translateConstantLabel } from './label-translation.js'
 import { localizedPropertyTip } from './property-tip-translation.js'
@@ -28,7 +28,7 @@ import { getElementPropertyGroup } from '../core/element-definitions'
 import { mountElementUIResult } from './plugin-ui'
 import { colorTrigger, divider, field, fieldHelp, radioGroup, resetButton, stepper } from './controls'
 import { createDefaultOptions, propertyDefault, DEFAULT_DEMO_DATA } from '@worm-print-platform/core/designer'
-import { isRotationExcludedType, isFreeAngleEditable, CODE_OBLIQUE_NOTE, collectFollowMemberIds } from '@worm-print-platform/core/designer'
+import { isRotationExcludedType, isFreeAngleEditable, codeObliqueNote, collectFollowMemberIds } from '@worm-print-platform/core/designer'
 import { designBackgroundSection, tilingSection } from './page-extras'
 import { bindingGroup } from './binding'
 import { renderFontSelect } from './font-select'
@@ -171,7 +171,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
   /** 置灰原因常驻说明（与 Vue 3 轨的 .pd-rotate-note 同文案，出自 core 单点常量） */
   const rotateNote = rotateBlocked || angleEditable
     ? ''
-    : h('p', { class: 'pd-hint pd-rotate-note', text: CODE_OBLIQUE_NOTE })
+    : h('p', { class: 'pd-hint pd-rotate-note', text: codeObliqueNote(ctx.t ?? trG) })
 
   rows.push(group(ctx, 'appearance', tr(ctx, 'propertyPanel.k196'), 'Brush', [
     h('form', { class: 'pd-form', onSubmit: (ev: Event) => ev.preventDefault() }, isText ? [
@@ -215,7 +215,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
       rotateNote,
     ] : [
       // 平铺条件项：不能在这里套数组，common 的 h() 不摊平嵌套子节点（会让 paint 递归抛 TypeError）
-      type === 'image' ? gateItem(ctx, 'ap-img-fit', selectField(ctx, tr(ctx, 'propertyPanel.k230'), String(o.fit ?? 'contain'), imageFitOptions(),
+      type === 'image' ? gateItem(ctx, 'ap-img-fit', selectField(ctx, tr(ctx, 'propertyPanel.k230'), String(o.fit ?? 'contain'), imageFitOptions(ctx.t ?? trG),
         v => patch({ fit: v }), localizedPropertyTip('ap-img-fit', ctx.lang ?? getLocale()), reset('fit', 'ap-img-fit'))) : '',
       // 只有剪裁档有「被裁掉的那条边」可挪，其余档不出这一行（与 Vue 3 轨 AppearanceGroup、两端单元格台同一门禁）
       type === 'image' && o.fit === 'cover' ? gateItem(ctx, 'ap-img-object-position', cropAnchorField(ctx, {
@@ -241,7 +241,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
     const barcodeType = String(o.barcodeType || 'CODE128').toUpperCase()
     const dpi = o.printerDpi ? String(o.printerDpi) : ''
     /** 条宽推荐段：只在填了分辨率时出现，只给参考不回写值（与画布元素台共用 core 文案） */
-    const barWidthRec = barcodeBarWidthRecommendText(o.printerDpi, o.barWidth)
+    const barWidthRec = barcodeBarWidthRecommendText(o.printerDpi, o.barWidth, ctx.t ?? trG)
     rows.push(group(ctx, 'code', tr(ctx, 'propertyPanel.k233'), 'Postcard', [
       h('form', { class: 'pd-form', onSubmit: (ev: Event) => ev.preventDefault() }, [
         isBarcode ? [
@@ -293,7 +293,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
           class: 'pd-hint',
           text: tr(ctx, 'propertyPanel.k260'),
         }) : '',
-        !isBarcode ? gateItem(ctx, 'cd-fit', selectField(ctx, tr(ctx, 'propertyPanel.k261'), String(o.fit || 'contain'), imageFitOptions(),
+        !isBarcode ? gateItem(ctx, 'cd-fit', selectField(ctx, tr(ctx, 'propertyPanel.k261'), String(o.fit || 'contain'), imageFitOptions(ctx.t ?? trG),
           v => patch({ fit: v || undefined }), undefined, reset('fit', 'cd-fit'))) : '',
         gateItem(ctx, 'cd-max-width', field(tr(ctx, 'propertyPanel.k262'), stepper({
           value: o.maxWidth, min: 1, max: 200, placeholder: tr(ctx, 'propertyPanel.k263'),
@@ -571,6 +571,8 @@ function customPane(ctx: ShellCtx, el: RuntimeElement, custom: PluginPropertyTab
         fields: ctx.host.fields ?? [],
         update: partial => ctx.store.updateElement(el.id, partial),
         repaint: () => ctx.repaint(),
+        // 插件 UI 用契约里的 t 取词；不传会退回 core 全局 locale（与实例 lang 脱节）
+        t: ctx.t ?? trG,
       }), content)
     } catch {
       // 插件渲染失败时保持空内容，不打断属性台其余页签

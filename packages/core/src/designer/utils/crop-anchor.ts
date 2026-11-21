@@ -2,7 +2,7 @@
  * 裁剪锚点（图片剪裁）的结构化读写与逐轴可挪余量判定。
  * Vue 3 轨与本包两套宿主共用，避免两端各写一遍判据而漂移。
  */
-import { t as tr } from '../../i18n/index.js'
+import { t as tr, type Translate } from '../../i18n/index.js'
 import { evaluateTemplate } from './expression-eval.js'
 import { DEFAULT_DEMO_DATA } from './demo-data.js'
 import { cropScalePct, CROP_SCALE_MIN } from '../../render/crop-style.js'
@@ -204,13 +204,18 @@ export function cropGridOptions(): Array<{ x: number; y: number; label: string }
   ]
 }
 
-export function imageFitOptions(): Array<{ value: string; label: string }> {
+/**
+ * 缩放模式档位表：value 仍是 CSS object-fit 原值（模板 JSON 不变），label 走语义键。
+ * 缺省用 core 全局 locale；宿主实例级 lang 与全局不同时（canvas 的 designer.setLocale 只改实例、不碰全局）
+ * 必须传实例 translator，否则选项停在全局语言、同行标签却已是实例语言。
+ */
+export function imageFitOptions(translator: Translate = tr): Array<{ value: string; label: string }> {
   return [
-    { value: 'contain', label: tr('crop.fitContain') },
-    { value: 'cover', label: tr('crop.fitCover') },
-    { value: 'fill', label: tr('crop.fitFill') },
-    { value: 'none', label: tr('crop.fitNone') },
-    { value: 'scale-down', label: tr('crop.fitScaleDown') },
+    { value: 'contain', label: translator('crop.fitContain') },
+    { value: 'cover', label: translator('crop.fitCover') },
+    { value: 'fill', label: translator('crop.fitFill') },
+    { value: 'none', label: translator('crop.fitNone') },
+    { value: 'scale-down', label: translator('crop.fitScaleDown') },
   ]
 }
 

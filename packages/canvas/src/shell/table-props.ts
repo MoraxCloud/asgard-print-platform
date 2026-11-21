@@ -3,7 +3,7 @@
 // （样式由 scripts/gen-styles.mjs 从 canvas 派生，类名对不上样式就掉）。
 // 矩阵/边框/合并等操作一律走 @worm-print-platform/core/designer 纯函数，
 // 历史与重绘统一经 store.updateElement 收口（Vue 3 轨 侧靠 Vue 响应式，这里必须显式 emit）。
-import { tr } from './controls.js'
+import { tr, trG } from './controls.js'
 import { getLocale } from '@worm-print-platform/core/i18n'
 import { translateConstantLabel } from './label-translation.js'
 import { localizedPropertyTip } from './property-tip-translation.js'
@@ -378,7 +378,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
   const isTextCell = sharedType === 'text'
   const dotAligned = isBarcodeCell && !!val('printerDpi')
   /** 条宽推荐段：只在填了分辨率时出现，只给参考不回写值（与画布单元格台共用 core 文案） */
-  const barWidthRec = barcodeBarWidthRecommendText(val('printerDpi'), val('barWidth'))
+  const barWidthRec = barcodeBarWidthRecommendText(val('printerDpi'), val('barWidth'), ctx.t ?? trG)
   const cellTextFit = isMulti ? groupDraft.values.textFit : resolveCellTextFit(cell0)
   const cellTypeCurrent = isMulti
     ? ('cellType' in groupDraft.values ? (groupDraft.values.cellType ?? 'text') : '')
@@ -501,7 +501,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
       }), localizedPropertyTip('cd-quiet-zone', ctx.lang ?? getLocale()), cellReset('qrQuietZone')) : '',
 
       isBarcodeCell ? hint(tr(ctx, 'tableProps.k402')) : '',
-      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(imageFitOptions()),
+      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(imageFitOptions(ctx.t ?? trG)),
         v => { if (v !== '__multi__') writeField('fit', v as TableCell['fit']) }, { reset: cellReset('fit') }) : '',
       isImageCell && !isMulti && cell0.fit === 'cover' ? cropAnchorField(ctx, {
         fieldKey: 'ap-img-object-position', label: tr(ctx, 'tableProps.k404'), src: resolveDesignImageSrc(cell0.formatter), fit: cell0.fit,

@@ -81,11 +81,12 @@ const ELEMENT_LABEL_KEYS: Record<string, string> = {
   image: 'elementDefinitions.k556', table: 'elementDefinitions.k557', longText: 'elementDefinitions.k558',
   flowList: 'elementDefinitions.k559', hline: 'elementDefinitions.k560', vline: 'elementDefinitions.k561',
   rect: 'elementDefinitions.k562', oval: 'elementDefinitions.k563', pageNumber: 'elementDefinitions.k564',
-  // 图表插件十类（键在 echarts 插件语言包，注册后按全局 locale 解析）
-  barChart: 'echarts.kinds.k84', barHChart: 'echarts.kinds.k86', lineChart: 'echarts.kinds.k88',
-  areaChart: 'echarts.kinds.k90', pieChart: 'echarts.kinds.k92', doughnutChart: 'echarts.kinds.k94',
-  scatterChart: 'echarts.kinds.k96', radarChart: 'echarts.kinds.k98', funnelChart: 'echarts.kinds.k100',
-  gaugeChart: 'echarts.kinds.k102',
+  // 图表插件十类（键在 echarts 插件语言包；旧的数字后缀键已废弃，统一用语义键）
+  barChart: 'echarts.series.typeNames.bar', barHChart: 'echarts.series.typeNames.barH',
+  lineChart: 'echarts.series.typeNames.line', areaChart: 'echarts.series.typeNames.area',
+  pieChart: 'echarts.series.typeNames.pie', doughnutChart: 'echarts.series.typeNames.doughnut',
+  scatterChart: 'echarts.series.typeNames.scatter', radarChart: 'echarts.series.typeNames.radar',
+  funnelChart: 'echarts.series.typeNames.funnel', gaugeChart: 'echarts.series.typeNames.gauge',
 }
 
 /** 素材台分组标题的英文映射（group 来自 core 插件描述符，中文常量） */
