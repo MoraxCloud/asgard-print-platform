@@ -1,7 +1,6 @@
 // 左栏素材台 / 页签栏 / 状态栏：DOM 类名对齐 Vue 3 轨的
 // LeftPanel.vue、FieldTreePanel.vue、LayerPanel.vue、PageTabs.vue、StatusBar.vue。
 import { tr } from './controls.js'
-import { translateConstantLabel } from './label-translation.js'
 import { PAPER_PRESETS, copyTextToClipboard, getPaperDimensions, groupFields, isWideMaterialLabel } from '@worm-print-platform/core/designer'
 import type { ElementType, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -324,7 +323,8 @@ export function renderStatusBar(ctx: ShellCtx) {
   // 与 Vue 3 轨的 paperLabel 同口径：预设名（含尺寸）+ 方向 + 实际长宽 + 出纸旋转提示
   const dim = getPaperDimensions(t)
   const orient = t.orientation === 'landscape' ? tr(ctx, 'panels.k174') : tr(ctx, 'panels.k175')
-  const name = translateConstantLabel(PAPER_PRESETS[t.paperSize]?.label ?? t.paperSize, ctx.lang ?? 'zh-CN')
+  const preset = PAPER_PRESETS[t.paperSize]
+  const name = preset ? tr(ctx, preset.labelKey) : t.paperSize
   const rot = t.outputRotation
   const paper = `${name} ${orient} ${Math.round(dim.width)}×${Math.round(dim.height)}mm${rot ? tr(ctx, 'panels.paperRotated', { rot }) : ''}`
   return h('div', { class: 'status-bar' }, [

@@ -15,9 +15,8 @@ export interface ElementBorderSpec {
 /** 整圈宽度 ≤0 / 非法时的兜底档：点预设要真的出框，不能把 0 原样铺上去 */
 export const ELEMENT_BORDER_FALLBACK_WIDTH = 0.75
 
-/** 元素台边框操作说明：三行显示当前生效规格，改一行就是按新规格重铺四边（与单元格的草稿口径不同） */
-export const ELEMENT_BORDER_APPLY_HINT
-  = '线型 / 宽度 / 颜色即时生效，这三行显示的就是当前生效规格：已有边框时任改一行都会按新规格铺满四边并清掉单边覆盖；上、下、左、右只给选中的边加框，撤掉一边会把它其余三边落成单边；「无」清除边框，「内部」仅表格单元格可用'
+/** 元素台边框操作说明语义键（constants.hint.border.apply，中文文案只在资源 JSON 中存一份） */
+export const ELEMENT_BORDER_APPLY_HINT_KEY = 'constants.hint.border.apply'
 
 type BorderFields = Pick<ElementOptions, 'borderWidth' | 'borderStyle' | 'borderColor' | 'borders'>
 
@@ -44,14 +43,14 @@ export function resolveBorderEdgeStates(
   return out
 }
 
-/** 线型档位（含「无」）：属性台下拉与工具栏图标共用，避免各处各写一份 */
+/** 线型档位（含「无」）：属性台下拉与工具栏图标共用；显示文案走 constants 命名空间 */
 export type BorderLineStyle = 'none' | 'solid' | 'dashed' | 'dotted' | 'double'
-export const BORDER_LINE_STYLES: readonly { value: BorderLineStyle; label: string }[] = [
-  { value: 'none', label: '无' },
-  { value: 'solid', label: '实线' },
-  { value: 'dashed', label: '虚线' },
-  { value: 'dotted', label: '点线' },
-  { value: 'double', label: '双线' },
+export const BORDER_LINE_STYLES: readonly { value: BorderLineStyle; labelKey: string }[] = [
+  { value: 'none', labelKey: 'constants.borderStyle.none' },
+  { value: 'solid', labelKey: 'constants.borderStyle.solid' },
+  { value: 'dashed', labelKey: 'constants.borderStyle.dashed' },
+  { value: 'dotted', labelKey: 'constants.borderStyle.dotted' },
+  { value: 'double', labelKey: 'constants.borderStyle.double' },
 ]
 
 const VALID_BORDER_STYLES: ReadonlySet<string> = new Set(['solid', 'dashed', 'dotted', 'double'])

@@ -209,7 +209,7 @@ describe('setElementBorderField：改整圈任一行（方案 B 的落盘）', (
 describe('线型「无」：选项单点 + 选它即无边框', () => {
   it('线型选项是 core 单点：无打头，其余四档与出纸档位一致', () => {
     expect(BORDER_LINE_STYLES.map(o => o.value)).toEqual(['none', 'solid', 'dashed', 'dotted', 'double'])
-    expect(BORDER_LINE_STYLES[0]?.label).toBe('无')
+    expect(BORDER_LINE_STYLES[0]?.labelKey).toBe('constants.borderStyle.none')
   })
 
   it('已有边框时选「无」＝清边框：宽度归零、分边清空、线型记成 none', () => {

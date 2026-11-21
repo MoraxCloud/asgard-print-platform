@@ -101,14 +101,14 @@ export const BUILTIN_ELEMENT_CAPABILITIES: Readonly<Record<string, ElementCapabi
   text: {
     zoneAllowed: true,
     defaultTextFit: 'clip',
-    bindings: [{ targetPath: 'options.formatter', label: '内容', dataSource: 'main' }],
+    bindings: [{ targetPath: 'options.formatter', label: '内容', labelKey: 'constants.label.content', dataSource: 'main' }],
     defaultOptions: (): Partial<ElementOptions> => ({ formatter: '文本', exampleValue: '示例文本', fontSize: 12, textAlign: 'left', height: 5.3 }),
     title: '文本',
   },
   longText: {
     defaultTextFit: 'autoHeight',
     bindings: [
-      { targetPath: 'options.formatter', label: '内容', dataSource: 'main' },
+      { targetPath: 'options.formatter', label: '内容', labelKey: 'constants.label.content', dataSource: 'main' },
       { targetPath: 'options.styler', label: '样式', dataSource: 'main' },
     ],
     defaultOptions: (): Partial<ElementOptions> => ({ width: 141.1, height: 28.2, fontSize: 12, lineHeight: 18, exampleValue: '示例长文本内容' }),
@@ -117,21 +117,21 @@ export const BUILTIN_ELEMENT_CAPABILITIES: Readonly<Record<string, ElementCapabi
   barcode: {
     zoneAllowed: true,
     codeRotationDpiGated: true,
-    bindings: [{ targetPath: 'options.formatter', label: '内容', dataSource: 'main' }],
+    bindings: [{ targetPath: 'options.formatter', label: '内容', labelKey: 'constants.label.content', dataSource: 'main' }],
     defaultOptions: (): Partial<ElementOptions> => ({ width: 56.4, height: 14.1, title: '条形码', barcodeType: 'code128', testData: '12345678', exampleValue: '12345678' }),
     title: '条形码',
   },
   qrcode: {
     zoneAllowed: true,
     codeRotationDpiGated: true,
-    bindings: [{ targetPath: 'options.formatter', label: '内容', dataSource: 'main' }],
+    bindings: [{ targetPath: 'options.formatter', label: '内容', labelKey: 'constants.label.content', dataSource: 'main' }],
     defaultOptions: (): Partial<ElementOptions> => ({ width: 28.2, height: 28.2, title: '二维码', testData: 'qrcode', exampleValue: 'qrcode' }),
     title: '二维码',
   },
   image: {
     zoneAllowed: true,
     bindings: [{
-      targetPath: 'options.src', label: '内容', dataSource: 'main',
+      targetPath: 'options.src', label: '内容', labelKey: 'constants.label.content', dataSource: 'main',
       placeholder: '输入图片路径，支持 /docfiles/... 相对路径、绝对 URL 或 {字段} 表达式',
     }],
     defaultOptions: (): Partial<ElementOptions> => ({ width: 28.2, height: 28.2, fit: 'contain' }),

@@ -2,8 +2,6 @@
 // DOM 类名对齐 Vue 3 轨的 DesignBackgroundConfig.vue / TilingConfig.vue，
 // 拼版的校验与布局数字全部走 core 纯函数（TILE_DEFAULTS / validateTiling / computeTileLayout 等）。
 import { tr } from './controls.js'
-import { getLocale } from '@worm-print-platform/core/i18n'
-import { translateConstantLabel } from './label-translation.js'
 import { PAPER_PRESETS, isContinuousPaperSize } from '@worm-print-platform/core/designer'
 import {
   TILE_DEFAULTS, computeMaxColumns, computeTileLayout, resolveSheetMm, validateTiling,
@@ -167,7 +165,7 @@ export function tilingSection(ctx: ShellCtx) {
         },
       }, [
         ...SHEET_PRESET_KEYS.map(key => h('option', {
-          value: key, text: translateConstantLabel(PAPER_PRESETS[key]?.label ?? key, ctx.lang ?? getLocale()), selected: (cfg.sheetPaperSize ?? 'A4') === key,
+          value: key, text: tr(ctx, PAPER_PRESETS[key]?.labelKey ?? key), selected: (cfg.sheetPaperSize ?? 'A4') === key,
         })),
         h('option', { value: 'CUSTOM', text: tr(ctx, 'pageExtras.k123'), selected: cfg.sheetPaperSize === 'CUSTOM' }),
       ]), undefined, tileReset('sheetPaperSize')),

@@ -29,24 +29,19 @@ describe('i18next resources 聚合导出（getResources）', () => {
     const read = (p: string) => readFileSync(resolve(MODULE_DIR, p), 'utf8')
     const files = [
       '../messages/th-TH.ts', '../messages/shell-th.ts', '../messages/expr-th.ts',
-      '../../../../canvas/src/shell/label-translation.ts',
-      '../../../../canvas/src/shell/property-tip-translation.ts',
+      '../locales/constants-th-TH.json', '../locales/propertyTips-th-TH.json',
       '../../../../../marketplace/plugins/echarts/src/i18n/th-TH.ts',
     ]
     const helpDir = resolve(MODULE_DIR, '../../../../canvas/src/shell/help-content/th-TH')
     for (const f of readdirSync(helpDir).filter(n => n.endsWith('.ts'))) {
       files.push(`../../../../canvas/src/shell/help-content/th-TH/${f}`)
-
     }
-    const isMappingTable = (r: string) => /label-translation|property-tip-translation/.test(r)
     for (const rel of files) {
       let src = read(rel)
-      // 剥离注释（块注释 + 行注释）
+      // 剥离 TS 注释；JSON 资源无注释，键均为语义键
       src = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
-      // 映射表的键是中文源文本，移除所有 '键': 形式，仅留冒号右侧的译文值
-      const code = isMappingTable(rel) ? src.replace(/'[^']*'\s*:\s*/g, '') : src
-      expect(code, rel).not.toMatch(/[\u4e00-\u9fff]/)
-      expect(code, rel).not.toMatch(/à¸/) // UTF-8 泰语被当 Latin-1 解码的典型乱码
+      expect(src, rel).not.toMatch(/[\u4e00-\u9fff]/)
+      expect(src, rel).not.toMatch(/à¸/) // UTF-8 泰语被当 Latin-1 解码的典型乱码
     }
   })
 })

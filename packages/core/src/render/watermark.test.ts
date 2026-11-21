@@ -333,8 +333,8 @@ describe('generateHtml 水印集成（四端起同构渲染）', () => {
   })
 
   it('WATERMARK_DENSITY_PRESETS 提供密/中/疏三档', () => {
-    expect(WATERMARK_DENSITY_PRESETS.dense).toEqual({ width: 200, height: 120, label: '密' })
-    expect(WATERMARK_DENSITY_PRESETS.medium).toEqual({ width: 260, height: 180, label: '中（默认）' })
-    expect(WATERMARK_DENSITY_PRESETS.loose).toEqual({ width: 340, height: 260, label: '疏' })
+    expect(WATERMARK_DENSITY_PRESETS.dense).toEqual({ width: 200, height: 120, labelKey: 'constants.watermark.density.dense' })
+    expect(WATERMARK_DENSITY_PRESETS.medium).toEqual({ width: 260, height: 180, labelKey: 'constants.watermark.density.medium' })
+    expect(WATERMARK_DENSITY_PRESETS.loose).toEqual({ width: 340, height: 260, labelKey: 'constants.watermark.density.loose' })
   })
 })

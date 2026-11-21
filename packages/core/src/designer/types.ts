@@ -542,8 +542,10 @@ export interface PrintBusinessField {
 export interface BindingDescriptor {
   /** 绑定的属性路径（如 'options.formatter'、'options.tableRows[0].cells[0].formatter'） */
   targetPath: string
-  /** 显示名称 */
+  /** 显示名称（兼容旧消费方；有 labelKey 时 UI 走语义键取词） */
   label: string
+  /** 显示名称的语义键（constants.label.*），未提供时沿用 label */
+  labelKey?: string
   /** 数据源上下文 */
   dataSource: 'main' | 'list' | 'subtotal' | 'summary'
   /** 绑定的列表字段（仅表格行需要） */

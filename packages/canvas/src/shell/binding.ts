@@ -3,8 +3,6 @@
 // 每项由 core 的绑定注册表声明（getElementBindings / getTableCellBindings），
 // 输入框双击打开表达式编辑器，写回统一走 parsePath → 路径末段赋值（与 Vue 3 轨同实现）。
 import { tr } from './controls.js'
-import { getLocale } from '@worm-print-platform/core/i18n'
-import { translateConstantLabel } from './label-translation.js'
 import { getElementBindings, getTableCellBindings } from '@worm-print-platform/core/designer'
 import type { BindingDescriptor, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h, render } from '../core/h'
@@ -135,7 +133,7 @@ export function bindingGroup(ctx: ShellCtx, el: RuntimeElement) {
   // Vue 3 轨的「内容」分组把 BindingControl 列表直接放进 .group-content（没有 form.pd-form 壳）
   return group(ctx, 'binding', tr(ctx, 'binding.k9'), 'Document', [
     ...bindingDescriptorsFor(ctx, el).map(d => field(
-      translateConstantLabel(d.label, ctx.lang ?? getLocale()),
+      d.labelKey ? tr(ctx, d.labelKey) : d.label,
       h('input', {
         class: 'pd-input',
         type: 'text',

@@ -5,15 +5,12 @@
 //  .pd-form / .position-grid / .margin-grid / .pd-field>.pd-label / .pd-divider / .pd-empty）。
 // 搜索门控（filteredGroups / matchedKeys / searching）见 shell/property-search.ts，口径同 canvas。
 import { tr, trG } from './controls.js'
-import { getLocale } from '@worm-print-platform/core/i18n'
-import { translateConstantLabel } from './label-translation.js'
-import { localizedPropertyTip } from './property-tip-translation.js'
 import {
   PAPER_PRESETS, isContinuousPaperSize, resolveElementTextFit, imageFitOptions,
   resolveDesignImageSrc, barcodeBarWidthRecommendText, normalizeRotationAngle,
   acceptsElementBorder, applyElementBorderPreset, elementBorderEdgeVisible, effectiveElementBorderSpec,
   resolveElementBorderDisplay, setElementBorderEdgeVisible, setElementBorderField, BORDER_LINE_STYLES,
-  ELEMENT_BORDER_APPLY_HINT,
+  ELEMENT_BORDER_APPLY_HINT_KEY,
   resolveFlowColumns, resolveFlowGapX, resolveFlowLayoutMode, resolveFlowMaxSpan, resolveFlowPadding, resolveFlowRowHeight, suggestFlowColumns,
   resolveCellGroupMode, matchKeywords,
 } from '@worm-print-platform/core/designer'
@@ -167,7 +164,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
         onClick: () => rotateCommit((rotateCurrent ?? 0) + 90),
       }),
     ]),
-    localizedPropertyTip('ap-rotate', ctx.lang ?? getLocale()), reset('rotate', 'ap-rotate')))
+    tr(ctx, 'propertyTips.ap-rotate'), reset('rotate', 'ap-rotate')))
   /** 置灰原因常驻说明（与 Vue 3 轨的 .pd-rotate-note 同文案，出自 core 单点常量） */
   const rotateNote = rotateBlocked || angleEditable
     ? ''
@@ -208,7 +205,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
         value: o.shrinkMinFontSize, min: 1, max: 72, step: 0.5, placeholder: tr(ctx, 'propertyPanel.k225'),
         onCommit: v => patch({ shrinkMinFontSize: v || undefined }),
       }), undefined, reset('shrinkMinFontSize', 'ap-shrink-min'))) : '',
-      type === 'longText' ? gateItem(ctx, 'ap-long-text-indent', fieldHelp(tr(ctx, 'propertyPanel.k226'), stepper({ value: o.longTextIndent, min: 0, max: 10, placeholder: tr(ctx, 'propertyPanel.k227'), onCommit: v => patch({ longTextIndent: v || undefined }) }), localizedPropertyTip('ap-long-text-indent', ctx.lang ?? getLocale()), reset('longTextIndent', 'ap-long-text-indent'))) : '',
+      type === 'longText' ? gateItem(ctx, 'ap-long-text-indent', fieldHelp(tr(ctx, 'propertyPanel.k226'), stepper({ value: o.longTextIndent, min: 0, max: 10, placeholder: tr(ctx, 'propertyPanel.k227'), onCommit: v => patch({ longTextIndent: v || undefined }) }), tr(ctx, 'propertyTips.ap-long-text-indent'), reset('longTextIndent', 'ap-long-text-indent'))) : '',
       gateItem(ctx, 'ap-word-wrap', switchField(ctx, tr(ctx, 'propertyPanel.k228'), o.wordWrap !== false, v => patch({ wordWrap: v ? undefined : false }), reset('wordWrap', 'ap-word-wrap'))),
       gateItem(ctx, 'ap-keep-line-breaks', switchField(ctx, tr(ctx, 'propertyPanel.k229'), o.keepLineBreaks === true, v => patch({ keepLineBreaks: v ? true : undefined }), reset('keepLineBreaks', 'ap-keep-line-breaks'))),
       rotateRow,
@@ -216,7 +213,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
     ] : [
       // 平铺条件项：不能在这里套数组，common 的 h() 不摊平嵌套子节点（会让 paint 递归抛 TypeError）
       type === 'image' ? gateItem(ctx, 'ap-img-fit', selectField(ctx, tr(ctx, 'propertyPanel.k230'), String(o.fit ?? 'contain'), imageFitOptions(ctx.t ?? trG),
-        v => patch({ fit: v }), localizedPropertyTip('ap-img-fit', ctx.lang ?? getLocale()), reset('fit', 'ap-img-fit'))) : '',
+        v => patch({ fit: v }), tr(ctx, 'propertyTips.ap-img-fit'), reset('fit', 'ap-img-fit'))) : '',
       // 只有剪裁档有「被裁掉的那条边」可挪，其余档不出这一行（与 Vue 3 轨 AppearanceGroup、两端单元格台同一门禁）
       type === 'image' && o.fit === 'cover' ? gateItem(ctx, 'ap-img-object-position', cropAnchorField(ctx, {
         fieldKey: 'ap-img-object-position', label: tr(ctx, 'propertyPanel.k231'), src: resolveDesignImageSrc(o.src as string),
@@ -268,11 +265,11 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
           gateItem(ctx, 'cd-bar-quiet-zone', fieldHelp(tr(ctx, 'propertyPanel.k246'), stepper({
             value: o.barQuietZone, min: 0, max: 20, placeholder: tr(ctx, 'propertyPanel.k247'),
             onCommit: v => patch({ barQuietZone: v }),
-          }), localizedPropertyTip('cd-bar-quiet-zone', ctx.lang ?? getLocale()), reset('barQuietZone', 'cd-bar-quiet-zone'))),
+          }), tr(ctx, 'propertyTips.cd-bar-quiet-zone'), reset('barQuietZone', 'cd-bar-quiet-zone'))),
           gateItem(ctx, 'cd-bar-height', fieldHelp(tr(ctx, 'propertyPanel.k248'), stepper({
             value: o.barHeight, min: 1, max: 100, placeholder: tr(ctx, 'propertyPanel.k249'),
             onCommit: v => patch({ barHeight: v ?? undefined }),
-          }), localizedPropertyTip('cd-bar-height', ctx.lang ?? getLocale()), reset('barHeight', 'cd-bar-height'))),
+          }), tr(ctx, 'propertyTips.cd-bar-height'), reset('barHeight', 'cd-bar-height'))),
           gateItem(ctx, 'cd-show-text', switchField(ctx, tr(ctx, 'propertyPanel.k250'), o.hideTitle !== true, v => patch({ hideTitle: v ? undefined : true }), reset('hideTitle', 'cd-show-text'))),
           gateItem(ctx, 'cd-font-size', field(tr(ctx, 'propertyPanel.k251'), stepper({
             value: o.fontSize, min: 5, max: 24, placeholder: tr(ctx, 'propertyPanel.k252'),
@@ -286,7 +283,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
           gateItem(ctx, 'cd-quiet-zone', fieldHelp(tr(ctx, 'propertyPanel.k257'), stepper({
             value: o.qrQuietZone, min: 0, max: 8, placeholder: tr(ctx, 'propertyPanel.k258'),
             onCommit: v => patch({ qrQuietZone: v }),
-          }), localizedPropertyTip('cd-quiet-zone', ctx.lang ?? getLocale()), reset('qrQuietZone', 'cd-quiet-zone'))),
+          }), tr(ctx, 'propertyTips.cd-quiet-zone'), reset('qrQuietZone', 'cd-quiet-zone'))),
         ],
         divider(tr(ctx, 'propertyPanel.k259')),
         isBarcode ? h('p', {
@@ -334,25 +331,25 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
           ctx, tr(ctx, 'propertyPanel.k267'), layoutMode,
           [{ value: 'fixed', label: tr(ctx, 'propertyPanel.k268') }, { value: 'dynamic', label: tr(ctx, 'propertyPanel.k269') }],
           v => patch({ flowLayoutMode: v === 'dynamic' ? 'dynamic' : 'fixed' }),
-          localizedPropertyTip('fl-layout-mode', ctx.lang ?? getLocale()),
+          tr(ctx, 'propertyTips.fl-layout-mode'),
         )),
         ...(isDynamic ? [
           gateItem(ctx, 'fl-padding-top', fieldHelp(tr(ctx, 'propertyPanel.k270'), stepper({
             value: padding.top, min: 0, max: 100, step: 0.5,
             onCommit: v => commitPadding('flowPaddingTop', v),
-          }), localizedPropertyTip('fl-padding-top', ctx.lang ?? getLocale()))),
+          }), tr(ctx, 'propertyTips.fl-padding-top'))),
           gateItem(ctx, 'fl-padding-right', fieldHelp(tr(ctx, 'propertyPanel.k271'), stepper({
             value: padding.right, min: 0, max: 100, step: 0.5,
             onCommit: v => commitPadding('flowPaddingRight', v),
-          }), localizedPropertyTip('fl-padding-right', ctx.lang ?? getLocale()))),
+          }), tr(ctx, 'propertyTips.fl-padding-right'))),
           gateItem(ctx, 'fl-padding-bottom', fieldHelp(tr(ctx, 'propertyPanel.k272'), stepper({
             value: padding.bottom, min: 0, max: 100, step: 0.5,
             onCommit: v => commitPadding('flowPaddingBottom', v),
-          }), localizedPropertyTip('fl-padding-bottom', ctx.lang ?? getLocale()))),
+          }), tr(ctx, 'propertyTips.fl-padding-bottom'))),
           gateItem(ctx, 'fl-padding-left', fieldHelp(tr(ctx, 'propertyPanel.k273'), stepper({
             value: padding.left, min: 0, max: 100, step: 0.5,
             onCommit: v => commitPadding('flowPaddingLeft', v),
-          }), localizedPropertyTip('fl-padding-left', ctx.lang ?? getLocale()))),
+          }), tr(ctx, 'propertyTips.fl-padding-left'))),
         ] : []),
         gateItem(ctx, 'fl-columns', fieldHelp(tr(ctx, 'propertyPanel.k274'), stepper({
           value: cols, min: 1, max: 12,
@@ -360,15 +357,15 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
             flowColumns: resolveFlowColumns(v),
             flowMaxSpan: resolveFlowMaxSpan(o.flowMaxSpan, resolveFlowColumns(v)),
           }),
-        }), localizedPropertyTip('fl-columns', ctx.lang ?? getLocale()))),
+        }), tr(ctx, 'propertyTips.fl-columns'))),
         gateItem(ctx, 'fl-row-height', fieldHelp(tr(ctx, 'propertyPanel.k275'), stepper({
           value: rowH, min: 3, max: 100, step: 0.5,
           onCommit: v => patch({ flowRowHeight: resolveFlowRowHeight(v) }),
-        }), localizedPropertyTip('fl-row-height', ctx.lang ?? getLocale()))),
+        }), tr(ctx, 'propertyTips.fl-row-height'))),
         gateItem(ctx, 'fl-gap-x', fieldHelp(tr(ctx, 'propertyPanel.k276'), stepper({
           value: gap, min: 0, max: 50, step: 0.5,
           onCommit: v => patch({ flowGapX: resolveFlowGapX(v) }),
-        }), localizedPropertyTip('fl-gap-x', ctx.lang ?? getLocale()))),
+        }), tr(ctx, 'propertyTips.fl-gap-x'))),
         // 关开关不动 flowMaxSpan：与 Vue 3 轨 onAutoSpanChange 同口径，只开时补钳一次
         gateItem(ctx, 'fl-auto-span', switchField(ctx, tr(ctx, 'propertyPanel.k277'), o.flowAutoSpan === true, v => {
           patch(v ? { flowAutoSpan: v, flowMaxSpan: maxSpan } : { flowAutoSpan: v })
@@ -376,7 +373,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
         o.flowAutoSpan === true ? gateItem(ctx, 'fl-max-span', fieldHelp(tr(ctx, 'propertyPanel.k278'), stepper({
           value: maxSpan, min: 1, max: cols,
           onCommit: v => patch({ flowMaxSpan: resolveFlowMaxSpan(v, cols) }),
-        }), localizedPropertyTip('fl-max-span', ctx.lang ?? getLocale()))) : '',
+        }), tr(ctx, 'propertyTips.fl-max-span'))) : '',
         cols > fitCols ? h('p', {
           class: 'pd-hint',
           text: tr(ctx, 'propertyPanel.k279', { v0: cols, v1: fitCols, v2: cols }),
@@ -414,7 +411,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
     setElementBorderField(next, key, value)
     patch(next)
   }
-  const lineStyles = BORDER_LINE_STYLES.map(o => ({ ...o, label: translateConstantLabel(o.label, ctx.lang ?? getLocale()) }))
+  const lineStyles = BORDER_LINE_STYLES.map(o => ({ ...o, label: tr(ctx, o.labelKey) }))
   const styleOptions = styleMixed
     ? [{ value: '', label: tr(ctx, 'propertyPanel.k280') }, ...lineStyles]
     : lineStyles
@@ -443,7 +440,7 @@ function elementPane(ctx: ShellCtx, el: RuntimeElement) {
           }),
           h('span', { text: tr(ctx, edge.labelKey) }),
         ]))),
-        h('p', { class: 'pd-hint', text: translateConstantLabel(ELEMENT_BORDER_APPLY_HINT, ctx.lang ?? getLocale()) }),
+        h('p', { class: 'pd-hint', text: tr(ctx, ELEMENT_BORDER_APPLY_HINT_KEY) }),
       ] : []),
       gateItem(ctx, 'bb-bg-color', field(tr(ctx, 'propertyPanel.k287'), colorTrigger(o.backgroundColor, v => patch({ backgroundColor: v }), tr(ctx, 'propertyPanel.k288')), undefined, reset('backgroundColor', 'bb-bg-color'))),
     ]),
@@ -497,10 +494,10 @@ function pagePane(ctx: ShellCtx) {
   }
   const groups: { group: string; items: { key: string; label: string }[] }[] = []
   for (const [key, preset] of Object.entries(PAPER_PRESETS)) {
-    const name = translateConstantLabel(preset.group ?? tr(ctx, 'propertyPanel.k297'), ctx.lang ?? getLocale())
+    const name = tr(ctx, `constants.paper.group.${preset.group}`)
     let bucket = groups.find(g => g.group === name)
     if (!bucket) { bucket = { group: name, items: [] }; groups.push(bucket) }
-    bucket.items.push({ key, label: translateConstantLabel(preset.label ?? key, ctx.lang ?? getLocale()) })
+    bucket.items.push({ key, label: tr(ctx, preset.labelKey) })
   }
   const custom = !PAPER_PRESETS[t.paperSize]
   const continuous = isContinuousPaperSize(t.paperSize)
