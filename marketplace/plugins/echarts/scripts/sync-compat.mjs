@@ -35,6 +35,10 @@ for (const path of listTextFiles(join(compatDir, 'dist'))) {
   if (next !== source) writeFileSync(path, next, 'utf8')
 }
 
+// 语言资源契约字段随 dist 一起同步，避免兼容包与插件包的发现信息漂移
+const compatPkgNext = { ...compatPkg, wormPrint: { ...compatPkg.wormPrint, ...pluginPkg.wormPrint } }
+writeFileSync(join(compatDir, 'package.json'), `${JSON.stringify(compatPkgNext, null, 2)}\n`)
+
 cpSync(join(pluginDir, 'README.md'), join(compatDir, 'README.md'))
 cpSync(join(pluginDir, 'LICENSE'), join(compatDir, 'LICENSE'))
-console.log('已同步兼容包 @worm-print-platform/echarts 的 dist / README / LICENSE')
+console.log('已同步兼容包 @worm-print-platform/echarts 的 dist / README / LICENSE / wormPrint')

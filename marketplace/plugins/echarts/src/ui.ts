@@ -22,9 +22,9 @@ function withTranslator<R>(translator: Translate | undefined, render: () => R): 
     activeT = prev
   }
 }
-import { echartsZhCN } from './i18n/zh-CN.js'
-import { echartsEnUS } from './i18n/en-US.js'
-import { echartsThTH } from './i18n/th-TH.js'
+import zhCN from './i18n/zh-CN.json'
+import enUS from './i18n/en-US.json'
+import thTH from './i18n/th-TH.json'
 import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
 import { defineElementUI, registerElementUI } from '@worm-print-platform/plugin-kit'
 import { render } from '@worm-print-platform/plugin-kit/dom'
@@ -879,7 +879,7 @@ export const CHART_ELEMENT_UI: ElementUI = defineElementUI({
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: 'echarts',
-  locales: { 'zh-CN': echartsZhCN, 'en-US': echartsEnUS, 'th-TH': echartsThTH },
+  locales: { 'zh-CN': zhCN.echarts, 'en-US': enUS.echarts, 'th-TH': thTH.echarts },
 })
 
 let disposeHandle: (() => void) | undefined

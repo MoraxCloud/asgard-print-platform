@@ -1,6 +1,9 @@
 // @vitest-environment happy-dom
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createTranslator, resetLocale, setLocale, t } from '@worm-print-platform/core/i18n'
+import zh from '../i18n/zh-CN.json'
 import { CHART_ELEMENT_UI, installChartCommonUI, uninstallChartCommonUI } from '../ui.js'
 import { CHART_KIND_DEFINITIONS, CHART_KINDS } from '../kinds.js'
 import { LABEL_POSITIONS, LABEL_PRESETS } from '../label.js'
@@ -15,6 +18,19 @@ afterEach(() => {
 })
 
 describe('echarts 插件语言包', () => {
+  it('语言资源含 zh-CN 且键以 echarts. 开头', () => {
+    expect(Object.keys(zh.echarts).length).toBeGreaterThan(100)
+    for (const key of Object.keys(zh.echarts)) expect(key.startsWith('echarts.')).toBe(true)
+  })
+
+  it('主包与兼容包都声明 wormPrint.i18n', () => {
+    const root = resolve(process.cwd(), '../../..')
+    for (const rel of ['marketplace/plugins/echarts/package.json', 'packages/echarts/package.json']) {
+      const pkg = JSON.parse(readFileSync(resolve(root, rel), 'utf8'))
+      expect(pkg.wormPrint.i18n).toEqual({ dir: 'dist/i18n', base: 'zh-CN' })
+    }
+  })
+
   it('注册了 id 与双语包，键集合一致且前缀合规', () => {
     expect(CHART_ELEMENT_UI.i18nId).toBe('echarts')
     expect(CHART_ELEMENT_UI.locales).toHaveProperty('zh-CN')

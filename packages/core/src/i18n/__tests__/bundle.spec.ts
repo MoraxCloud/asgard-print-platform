@@ -37,7 +37,7 @@ describe('i18next resources 聚合导出（getResources）', () => {
     const files = [
       '../messages/th-TH.ts', '../messages/shell-th.ts', '../messages/expr-th.ts',
       '../locales/constants-th-TH.json', '../locales/propertyTips-th-TH.json',
-      '../../../../../marketplace/plugins/echarts/src/i18n/th-TH.ts',
+      '../../../../../marketplace/plugins/echarts/src/i18n/th-TH.json',
     ]
     const helpDir = resolve(MODULE_DIR, '../../../../canvas/src/shell/help-content/th-TH')
     for (const f of readdirSync(helpDir).filter(n => n.endsWith('.ts'))) {

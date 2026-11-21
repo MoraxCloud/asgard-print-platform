@@ -39,6 +39,32 @@
   "files": [
     "dist"
   ],
+  "wormPrint": {
+    "id": "echarts",
+    "i18n": {
+      "dir": "dist/i18n",
+      "base": "zh-CN"
+    },
+    "version": "1.1.0",
+    "entry": "dist/marketplace.js",
+    "kinds": [
+      "barChart",
+      "barHChart",
+      "lineChart",
+      "areaChart",
+      "pieChart",
+      "doughnutChart",
+      "scatterChart",
+      "radarChart",
+      "funnelChart",
+      "gaugeChart"
+    ],
+    "exportFormats": [],
+    "peerDeps": {
+      "@worm-print-platform/core": "^1.6.0",
+      "@worm-print-platform/plugin-kit": "^1.6.0"
+    }
+  },
   "license": "MIT",
   "author": "worm <liu_long_qqcom@qq.com>",
   "repository": {
