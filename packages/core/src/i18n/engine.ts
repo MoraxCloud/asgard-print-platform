@@ -1,133 +1,89 @@
+// i18n 引擎：在 i18next 实例上的薄封装，对外 API 与旧实现完全一致。
+// 状态（explicit / missing / listeners / 插件命名空间）在本模块维护，
+// i18next 负责资源分层与插值解析。
 import type { CustomLocaleMessages, Locale, Translate } from './types.js'
-import { enUS } from './messages/en-US.js'
-import { zhCN } from './messages/zh-CN.js'
+import { createI18nInstance, detectLocale, normalizeLocale } from './i18n-instance.js'
 
-const REGISTRY_KEY = Symbol.for('worm-print-platform.i18n.v1')
-
-const ORDER_USER = 0
-const ORDER_PLUGIN = 1
-const ORDER_EN = 2
-const ORDER_ZH = 3
-
-interface State {
-  explicit: string | null
-  layers: Map<string, Map<number, Record<string, string>>>
-  listeners: Set<(locale: string) => void>
-  missing: Set<string>
-}
-
-type Host = { [key: symbol]: State | undefined }
-const host = globalThis as unknown as Host
-
-function state(): State {
-  const existing = host[REGISTRY_KEY]
-  if (existing) return existing
-  const created: State = {
-    explicit: null,
-    layers: new Map(),
-    listeners: new Set(),
-    missing: new Set(),
-  }
-  addLayer(created, 'en-US', ORDER_EN, enUS as Record<string, string>)
-  addLayer(created, 'zh-CN', ORDER_ZH, zhCN as Record<string, string>)
-  host[REGISTRY_KEY] = created
-  return created
-}
+export { normalizeLocale } from './i18n-instance.js'
 
 const DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production'
 
-function addLayer(s: State, locale: string, order: number, messages: Record<string, string>): () => void {
-  const key = normalizeLocale(locale)
-  let byOrder = s.layers.get(key)
-  if (!byOrder) {
-    byOrder = new Map()
-    s.layers.set(key, byOrder)
-  }
-  let dict = byOrder.get(order)
-  if (!dict) {
-    dict = {}
-    byOrder.set(order, dict)
-  }
-  const added = Object.keys(messages)
-  for (const name of added) dict[name] = messages[name]
-  return () => {
-    for (const name of added) delete dict![name]
-  }
-}
+const instance = createI18nInstance()
 
-function interpolate(text: string, params?: Record<string, string | number>): string {
-  if (!params) return text
-  return text.replace(/\{(\w+)\}/g, (whole, name: string) => (
-    name in params ? String(params[name]) : whole
-  ))
-}
+let explicit: string | null = null
+const missing = new Set<string>()
+const listeners = new Set<(locale: string) => void>()
+const registeredPluginIds = new Set<string>()
 
-export function normalizeLocale(input: unknown): Locale {
-  if (typeof input !== 'string') return 'zh-CN'
-  const value = input.trim()
-  if (!value) return 'zh-CN'
-  if (/^en([-_]|$)/i.test(value)) return 'en-US'
-  return value
-}
+// i18next 的缺键事件收集；只有 fallback 语言也没有该键时才计入（保持旧语义）
+instance.on('missingKey', (_lngs: readonly string[], _ns: string, key: string) => {
+  if (DEV) console.warn(`[i18n] missing key: ${key} (locale=${getLocale()})`)
+  if (!instance.exists(key, { lng: 'zh-CN' })) missing.add(key)
+})
 
-export function getLocale(): Locale {
-  const s = state()
-  if (s.explicit) return s.explicit
-  if (typeof navigator !== 'undefined' && typeof (navigator as { language?: string }).language === 'string') {
-    return normalizeLocale((navigator as { language: string }).language)
-  }
-  return 'zh-CN'
+function currentLocale(): string {
+  return explicit ?? detectLocale()
 }
 
 function notify(locale: string): void {
-  for (const listener of [...state().listeners]) listener(locale)
+  for (const listener of [...listeners]) listener(locale)
+}
+
+export function getLocale(): Locale {
+  return currentLocale()
 }
 
 export function setLocale(locale: string | null): void {
-  const s = state()
-  s.explicit = locale === null ? null : normalizeLocale(locale)
-  // 重置为 null 也要通知：跟随全局的实例需要按探测到的 locale 重新取词
-  notify(getLocale())
+  const next = locale === null ? null : normalizeLocale(locale)
+  const changed = next !== explicit || next === null
+  explicit = next
+  const resolved = currentLocale()
+  void instance.changeLanguage(resolved)
+  // 语言未变时 i18next 不触发 languageChanged：此处主动通知，保持旧语义
+  if (changed) notify(resolved)
 }
 
 export function resetLocale(): void {
-  state().explicit = null
-  notify(getLocale())
+  setLocale(null)
+}
+
+/** 把 i18next 的 TFunction 结果归一为 string（i18next 类型可返回 object） */
+function asString(value: unknown, fallback: string): string {
+  return typeof value === 'string' ? value : (value == null ? fallback : String(value))
 }
 
 export function translate(locale: Locale, key: string, params?: Record<string, string | number>): string {
-  const s = state()
-  const normalized = normalizeLocale(locale)
-  const byOrder = s.layers.get(normalized)
-  if (byOrder) {
-    for (const order of [ORDER_USER, ORDER_PLUGIN, ORDER_EN, ORDER_ZH]) {
-      const dict = byOrder.get(order)
-      if (dict && key in dict) return interpolate(dict[key], params)
-    }
-  }
-  if (DEV) {
-    s.missing.add(key)
-    console.warn(`[i18n] missing key: ${key} (locale=${normalized})`)
-  }
-  const zh = s.layers.get('zh-CN')?.get(ORDER_ZH)
-  if (zh && key in zh) return interpolate(zh[key], params)
-  return key
+  const fixed = instance.getFixedT(normalizeLocale(locale), lookupNamespaces())
+  const result = params ? fixed(key, params) : fixed(key)
+  return asString(result, key)
 }
 
 export function t(key: string, params?: Record<string, string | number>): string {
-  return translate(getLocale(), key, params)
+  return translate(currentLocale(), key, params)
 }
 
 export function createTranslator(locale: Locale): Translate {
-  return (key, params) => translate(locale, key, params)
+  const fixed = instance.getFixedT(normalizeLocale(locale), lookupNamespaces())
+  return (key, params) => asString(params ? fixed(key, params) : fixed(key), key)
+}
+
+/**
+ * 检索命名空间顺序：user > plugins > core。
+ * 旧引擎优先级 user > plugin > 内置，i18next 按 ns 数组顺序命中，
+ * 显式传入本列表可保证用户/插件覆盖 core（defaultNS 只查 core 会导致覆盖失效）。
+ */
+function lookupNamespaces(): string[] {
+  return ['user', ...registeredPluginIds, 'core']
 }
 
 export function registerLocale(locale: Locale, messages: CustomLocaleMessages): () => void {
-  return addLayer(state(), locale, ORDER_USER, messages as Record<string, string>)
+  const normalized = normalizeLocale(locale)
+  instance.addResourceBundle(normalized, 'user', messages as Record<string, string>, true, true)
+  return () => { instance.removeResourceBundle(normalized, 'user') }
 }
 
 export function mergeLocale(locale: Locale, messages: CustomLocaleMessages): () => void {
-  return addLayer(state(), locale, ORDER_USER, messages as Record<string, string>)
+  return registerLocale(locale, messages)
 }
 
 export function registerPluginMessages(
@@ -141,25 +97,40 @@ export function registerPluginMessages(
       throw new Error(`registerPluginMessages: 语言包键必须以 "${prefix}" 开头，收到 "${key}"`)
     }
   }
-  return addLayer(state(), locale, ORDER_PLUGIN, messages)
+  const normalized = normalizeLocale(locale)
+  instance.addResourceBundle(normalized, pluginId, messages, true, true)
+  registeredPluginIds.add(pluginId)
+  return () => {
+    instance.removeResourceBundle(normalized, pluginId)
+    registeredPluginIds.delete(pluginId)
+  }
 }
 
 export function subscribe(listener: (locale: string) => void): () => void {
-  const s = state()
-  s.listeners.add(listener)
-  return () => { s.listeners.delete(listener) }
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
 }
 
 export function getMissingKeys(): string[] {
-  return [...state().missing]
+  return [...missing]
 }
 
-/** 仅供测试与热重载：清空用户层与插件层，保留内置包 */
+/** 清空用户层与插件层，保留 core 内置包 */
 export function clearLocales(): void {
-  const s = state()
-  for (const byOrder of s.layers.values()) {
-    byOrder.delete(ORDER_USER)
-    byOrder.delete(ORDER_PLUGIN)
+  for (const locale of ['zh-CN', 'en-US', 'th-TH']) {
+    instance.removeResourceBundle(locale, 'user')
+    for (const pluginId of registeredPluginIds) instance.removeResourceBundle(locale, pluginId)
   }
-  s.missing.clear()
+  registeredPluginIds.clear()
+  missing.clear()
+}
+
+/**
+ * 导出聚合 resources（i18next services.resourceStore.data 原生结构）。
+ * 传 locale 返回该语言的 { namespace: messages }，不传返回全量。
+ */
+export function getResources(locale?: string): Record<string, any> {
+  const data = (instance.services?.resourceStore?.data ?? {}) as Record<string, any>
+  if (locale === undefined) return data
+  return data[normalizeLocale(locale)] ?? {}
 }

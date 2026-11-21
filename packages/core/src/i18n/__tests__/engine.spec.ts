@@ -26,6 +26,8 @@ describe('normalizeLocale', () => {
   it('把 en 系列归一为 en-US，其余保留，空值回退 zh-CN', () => {
     expect(normalizeLocale('en')).toBe('en-US')
     expect(normalizeLocale('en-GB')).toBe('en-US')
+    expect(normalizeLocale('th')).toBe('th-TH')
+    expect(normalizeLocale('th-TH')).toBe('th-TH')
     expect(normalizeLocale('ja-JP')).toBe('ja-JP')
     expect(normalizeLocale(undefined)).toBe('zh-CN')
     expect(normalizeLocale('')).toBe('zh-CN')
@@ -51,6 +53,13 @@ describe('内置语言包与插值', () => {
     expect(t('toolbar.preview')).toBe('Preview')
     registerLocale('en-US', { 'diagnostic.position': 'position {pos}' })
     expect(t('diagnostic.position', { pos: 3 })).toBe('position 3')
+  })
+
+  it('含 HTML 的文案不被转义', () => {
+    setLocale('en-US')
+    const result = t('toolbarOverflow.k488', { v0: '<svg/>', v1: '' })
+    expect(result).toContain('<svg/>')
+    expect(result).not.toContain('&lt;')
   })
 })
 
@@ -91,6 +100,16 @@ describe('缺键诊断与订阅', () => {
     off()
     setLocale('zh-CN')
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('resetLocale 在回退探测 locale 时也通知订阅者', () => {
+    const listener = vi.fn()
+    const off = subscribe(listener)
+    setLocale('en-US')
+    expect(listener).toHaveBeenCalledTimes(1)
+    resetLocale()
+    expect(listener).toHaveBeenCalledTimes(2)
+    off()
   })
 
   it('createTranslator 绑定 locale 不受全局切换影响', () => {

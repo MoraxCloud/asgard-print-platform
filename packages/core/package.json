@@ -76,6 +76,7 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "i18next": "^27.2.2",
     "jsbarcode": "^3.12.3",
     "qrcode": "^1.5.4"
   }
