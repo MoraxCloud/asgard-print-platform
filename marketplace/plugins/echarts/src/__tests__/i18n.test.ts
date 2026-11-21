@@ -55,6 +55,17 @@ describe('echarts 插件语言包', () => {
     setLocale('zh-CN')
   })
 
+  it('notes 三语种齐全且随 locale 切换', () => {
+    for (const loc of ['zh-CN', 'en-US', 'th-TH']) {
+      setLocale(loc)
+      expect(CHART_PLUGIN.kinds.every(k => k.notes.length > 0 && !/^echarts\./.test(k.notes))).toBe(true)
+    }
+    setLocale('en-US'); const en = CHART_PLUGIN.kinds[0]!.notes
+    setLocale('zh-CN'); const zh = CHART_PLUGIN.kinds[0]!.notes
+    expect(en).not.toBe(zh)
+    setLocale('zh-CN')
+  })
+
   it('十类图表 id/type 不变，labelKey 指向语言包', () => {
     expect(CHART_KIND_DEFINITIONS).toHaveLength(10)
     expect(CHART_KINDS).toHaveLength(10)

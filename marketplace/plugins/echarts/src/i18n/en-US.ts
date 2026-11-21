@@ -135,4 +135,15 @@ export const echartsEnUS: Record<string, string> = {
   'echarts.plugin.k143': "Value fields",
   'echarts.plugin.k144': "Series split field",
   'echarts.plugin.k145': "Bubble size",
+  // AI hints for the ten chart kinds (notes), order matches CHART_KIND_DEFINITIONS
+  'echarts.notes.k146': "Bar chart: category + multiple value fields, one series per field; write the $data placeholder in series[].data; fixed height, autoHeight is forbidden",
+  'echarts.notes.k147': "Horizontal bar: xAxis is the value axis, yAxis is the category axis; write the $data placeholder in yAxis.data for categories",
+  'echarts.notes.k148': "Line chart: category + multiple value fields; do not write areaStyle",
+  'echarts.notes.k149': "Area chart: line + series[].areaStyle; otherwise same as the line chart",
+  'echarts.notes.k150': "Pie chart: category + the first value field produce { name, value }; only one value field is needed",
+  'echarts.notes.k151': "Doughnut: pie + radius:[inner, outer]; the inner radius is configured in the panel",
+  'echarts.notes.k152': "Scatter: the category field is x, the first value field is y; when chartBubble is on, the second value field is the point size",
+  'echarts.notes.k153': "Radar: each value field is a dimension (radar.indicator), each data row is a series (the category field is the series name); the radius is written by the panel to radar.radius (%, default 75)",
+  'echarts.notes.k154': "Funnel: category + the first value field, sorted descending; the four insets are written by the panel to series.left/right/top/bottom (%, reserve room on the right for outer labels)",
+  'echarts.notes.k155': "Gauge: the first value field of the first data row is the pointer value; min/max are written by the panel to series[0].min/max",
 }

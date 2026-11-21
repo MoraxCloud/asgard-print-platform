@@ -135,4 +135,15 @@ export const echartsZhCN = {
   'echarts.plugin.k143': "数值字段",
   'echarts.plugin.k144': "系列拆分字段",
   'echarts.plugin.k145': "气泡大小",
+  // 十类图表的 AI 提示说明（notes），键顺序对应 CHART_KIND_DEFINITIONS
+  'echarts.notes.k146': "柱状图：类目 + 多个数值字段，每字段一个 series；series[].data 写 $data 占位；固定高，禁止 autoHeight",
+  'echarts.notes.k147': "横向条形图：xAxis 为数值、yAxis 为类目；类目写 yAxis.data 的 $data 占位",
+  'echarts.notes.k148': "折线图：类目 + 多个数值字段；不写 areaStyle",
+  'echarts.notes.k149': "面积图：折线 + series[].areaStyle；其余同折线图",
+  'echarts.notes.k150': "饼图：类目 + 首个数值字段生成 { name, value }；只需一个数值字段",
+  'echarts.notes.k151': "环形图：饼图 + radius:[内径,外径]；内径由面板配置",
+  'echarts.notes.k152': "散点图：类目字段作 x、首个数值字段作 y；chartBubble 开启时用第二个数值字段作点大小",
+  'echarts.notes.k153': "雷达图：每个数值字段是一个维度（radar.indicator），每行数据是一个系列（类目字段作系列名）；半径由面板写 radar.radius（%，默认 75）",
+  'echarts.notes.k154': "漏斗图：类目 + 首个数值字段，按数值降序；四边内边距由面板写 series.left/right/top/bottom（%，右侧需留外置标签空间）",
+  'echarts.notes.k155': "仪表盘：取首行数据的首个数值字段作指针值；min/max 由面板写入 series[0].min/max",
 }

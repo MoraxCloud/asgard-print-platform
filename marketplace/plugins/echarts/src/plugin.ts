@@ -49,7 +49,8 @@ export const CHART_PLUGIN: PrintElementPlugin = defineElementPlugin({
     icon: def.icon,
     fixedHeight: true,
     requiredOptionKeys: def.requiredOptionKeys,
-    notes: def.notes,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get notes() { return t(def.notesKey) },
     optionMeta: def.type === 'scatterChart' ? SCATTER_OPTION_META : CHART_OPTION_META,
     defaultOptions: partial => chartFactoryDefaults(def.type, partial as Record<string, unknown> | undefined),
     binding: { bind: (options, data) => bindChartData(def.type, options, data) },
