@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// 四宿主「配置」弹窗验收：显隐开关 + 主题三档写回 + 语言三档写回与界面文案 + 外壳/纸张边界 + auto 跟随系统。
+// 四宿主「配置」弹窗验收：显隐开关 + 主题三档写回 + 语言四档写回与界面文案 + 外壳/纸张边界 + auto 跟随系统。
 // 用法：node demos/scripts/verify-config-dialog.mjs
 // 需先起四个 demo（npm run dev:demos:all），端口可用 DEMO_PORT_* 覆盖。
 // 前置：jQuery 直挂读 public/vendor/worm-print-canvas.js 构建副本，旧副本不含 i18n 会让语言断言失败；
@@ -59,17 +59,20 @@ for (const demo of DEMOS) {
     const langRadios = page.locator(`${demo.mask} input[name="config-lang"]`)
     const langValues = await langRadios.evaluateAll(els => els.map(e => e.value).sort())
     const langChecked = await langRadios.evaluateAll(els => els.filter(e => e.checked).map(e => e.value))
-    check(`${demo.name} 语言三档齐全`, JSON.stringify(langValues) === JSON.stringify(['auto', 'en-US', 'zh-CN']), langValues.join(','))
+    check(`${demo.name} 语言四档齐全`, JSON.stringify(langValues) === JSON.stringify(['auto', 'en-US', 'th-TH', 'zh-CN']), langValues.join(','))
     check(`${demo.name} 语言默认跟随系统`, JSON.stringify(langChecked) === JSON.stringify(['auto']), langChecked.join(',') || '(无选中)')
 
     const el = page.locator('print-designer').first()
     const saveBtnText = () => el.evaluate(x => {
       const btns = [...x.shadowRoot.querySelectorAll('button')]
-      return btns.map(b => (b.textContent || '').trim()).find(t => t === 'Save' || t === '保存') || ''
+      return btns.map(b => (b.textContent || '').trim()).find(t => t === 'Save' || t === '保存' || t === 'บันทึก') || ''
     })
     await page.locator(`${demo.mask} input[name="config-lang"][value="en-US"]`).check()
     check(`${demo.name} 切英文写回 lang`, await el.evaluate(x => x.lang) === 'en-US', await el.evaluate(x => x.lang))
     check(`${demo.name} 英文界面文案`, await saveBtnText() === 'Save', await saveBtnText())
+    await page.locator(`${demo.mask} input[name="config-lang"][value="th-TH"]`).check()
+    check(`${demo.name} 切泰语写回 lang`, await el.evaluate(x => x.lang) === 'th-TH', await el.evaluate(x => x.lang))
+    check(`${demo.name} 泰语界面文案`, await saveBtnText() === 'บันทึก', await saveBtnText())
     await page.locator(`${demo.mask} input[name="config-lang"][value="zh-CN"]`).check()
     check(`${demo.name} 切中文写回 lang`, await el.evaluate(x => x.lang) === 'zh-CN', await el.evaluate(x => x.lang))
     check(`${demo.name} 中文界面文案`, await saveBtnText() === '保存', await saveBtnText())

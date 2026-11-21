@@ -127,7 +127,7 @@ export default {
       showPreview: true,
       showSave: true,
       themeMode: 'auto',
-      // 设计器界面语言：auto 跟随系统 / zh-CN / en-US
+      // 设计器界面语言：auto 跟随系统 / zh-CN / en-US / th-TH
       langMode: 'auto',
     }
   },
@@ -904,6 +904,10 @@ export default {
             <label class="config-row">
               <input v-model="langMode" type="radio" name="config-lang" value="en-US" />
               <span>English</span>
+            </label>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="th-TH" />
+              <span>ไทย (泰语)</span>
             </label>
           </section>
         </div>

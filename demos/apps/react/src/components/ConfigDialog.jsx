@@ -55,6 +55,10 @@ export default function ConfigDialog({
               <input type="radio" name="config-lang" value="en-US" checked={langMode === 'en-US'} onChange={() => setLangMode('en-US')} />
               <span>English</span>
             </label>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="th-TH" checked={langMode === 'th-TH'} onChange={() => setLangMode('th-TH')} />
+              <span>ไทย (泰语)</span>
+            </label>
           </section>
         </div>
         <div className="config-foot">
