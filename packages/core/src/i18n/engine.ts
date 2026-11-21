@@ -68,12 +68,12 @@ export function createTranslator(locale: Locale): Translate {
 }
 
 /**
- * 检索命名空间顺序：user > plugins > core。
- * 旧引擎优先级 user > plugin > 内置，i18next 按 ns 数组顺序命中，
- * 显式传入本列表可保证用户/插件覆盖 core（defaultNS 只查 core 会导致覆盖失效）。
+ * 检索命名空间顺序：user > 插件 > constants > propertyTips > core。
+ * i18next 按 ns 数组顺序命中，显式传入本列表可保证用户/插件覆盖内置包
+ * （defaultNS 只查 core 会导致覆盖失效）。
  */
 function lookupNamespaces(): string[] {
-  return ['user', ...registeredPluginIds, 'core']
+  return ['user', ...registeredPluginIds, 'constants', 'propertyTips', 'core']
 }
 
 export function registerLocale(locale: Locale, messages: CustomLocaleMessages): () => void {

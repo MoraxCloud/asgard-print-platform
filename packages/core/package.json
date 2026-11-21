@@ -45,6 +45,10 @@
   "files": [
     "dist"
   ],
+  "wormPrint": {
+    "id": "core",
+    "i18n": { "dir": "dist/i18n", "base": "zh-CN" }
+  },
   "license": "MIT",
   "author": "worm <liu_long_qqcom@qq.com>",
   "repository": {
