@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { i as installPlugin, r as removePlugin, M as MarketIndex, a as MarketSource } from './install-BwEzFjBk.js';
+import { i as installPlugin, r as removePlugin, M as MarketIndex, a as MarketSource } from './install-_nzKFo4K.js';
 
 interface ParsedArgs {
     command?: 'list' | 'install' | 'remove';
