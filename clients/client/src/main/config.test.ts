@@ -72,6 +72,16 @@ describe('parseConfig', () => {
     // 旧配置缺字段不报错
     expect(parseConfig({ port: 19001 }).mcpEnabled).toBe(false)
   })
+
+  it('locale/localePack 缺省空串、非法类型回退、合法值去空白', () => {
+    expect(DEFAULT_CONFIG.locale).toBe('')
+    expect(DEFAULT_CONFIG.localePack).toBe('')
+    const cfg = parseConfig({ locale: 'fr-FR', localePack: ' packs/fr-FR.json ' })
+    expect(cfg.locale).toBe('fr-FR')
+    expect(cfg.localePack).toBe('packs/fr-FR.json')
+    expect(parseConfig({ locale: 1, localePack: {} }).locale).toBe('')
+    expect(parseConfig({ locale: 1, localePack: {} }).localePack).toBe('')
+  })
 })
 
 describe('generatePairingToken', () => {

@@ -14,7 +14,7 @@
     "start": "node scripts/electron-vite-with-env.mjs preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "pack:dir": "electron-vite build && electron-builder --dir"
+    "pack:dir": "electron-vite build && node scripts/copy-locales.mjs && electron-builder --dir"
   },
   "dependencies": {
     "@worm-print-platform/core": "*",

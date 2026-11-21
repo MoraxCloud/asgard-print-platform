@@ -4,9 +4,8 @@ import { join } from 'node:path'
 import { APP_ID } from '@worm-print-platform/core/client'
 import { normalizeLocale, setLocale } from '@worm-print-platform/core/i18n'
 
-// 桌面客户端诊断语言跟随系统 locale（en-* 走英文，其余中文）
-setLocale(normalizeLocale(app.getLocale()))
 import { ConfigStore, generatePairingToken } from './config.js'
+import { loadLocalePack, resolveLocalePackPath } from './locale-pack.js'
 import { Logger } from './logger.js'
 import { JobHistoryStore } from './job-history.js'
 import { getPrintHostWindow, destroyPrintHostWindow } from './print-host.js'
@@ -58,6 +57,23 @@ if (!gotLock) {
         level: configStore.current.logLevel,
         filePath: join(userData, 'logs', 'client.log'),
       })
+
+      // 诊断语言与语言包：先配置 → setLocale → 加载用户包 → 再初始化打印引擎。
+      // 显式 localePack 优先，缺省回落 app 内置 out/locales/<locale>.json；失败只告警不阻塞启动。
+      const locale = normalizeLocale(configStore.current.locale || app.getLocale())
+      setLocale(locale)
+      const packPath = resolveLocalePackPath({
+        locale,
+        localePack: configStore.current.localePack,
+        userDataDir: userData,
+        appDir: app.getAppPath(),
+      })
+      if (packPath) {
+        const error = loadLocalePack(packPath, locale)
+        if (error) logger.warn(error)
+      } else if (configStore.current.locale || configStore.current.localePack) {
+        logger.warn(`[i18n] 未找到语言包：locale=${locale} localePack=${configStore.current.localePack || '(空)'}`)
+      }
 
       const history = new JobHistoryStore(join(userData, 'jobs.jsonl'), 500)
       // 打印机枚举走常驻隐藏窗口（托盘应用可能没有其它窗口存活）
