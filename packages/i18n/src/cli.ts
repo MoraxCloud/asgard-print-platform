@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { discover } from './discover.js'
 import { buildTemplate } from './template.js'
 import { validatePack } from './validate.js'
+import { updatePack } from './update.js'
 
 export interface RunDeps {
   cwd?: string
@@ -65,6 +66,30 @@ export function run(argv: string[], deps: RunDeps = {}): number {
     }
     if (!issues.length) out('校验通过')
     return hasError ? 1 : 0
+  }
+
+  if (command === 'update') {
+    const file = positional(rest, ['-o', '--dir'])
+    if (!file) { out('用法错误：update 需要语言包文件路径'); return 2 }
+    let pack: Record<string, string>
+    try {
+      const raw: unknown = JSON.parse(readFileSync(resolve(cwd, file), 'utf8'))
+      if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('语言包必须是扁平对象')
+      pack = raw as Record<string, string>
+    } catch (err) {
+      out(`读取语言包失败：${file}: ${(err as Error).message}`)
+      return 1
+    }
+    const base = template()
+    const { next, added, removed } = updatePack(pack, base, { prune: rest.includes('--prune') })
+    // 写回前按骨架顺序排序；保留的多余键排在最后
+    const order = [...Object.keys(base), ...Object.keys(next).filter(k => !(k in base)).sort()]
+    const sorted = Object.fromEntries(order.filter(k => k in next).map(k => [k, next[k]]))
+    writeFileSync(resolve(cwd, file), `${JSON.stringify(sorted, null, 2)}\n`, 'utf8')
+    out(`已更新 ${file}：新增 ${added.length} 键${removed.length ? `，删除 ${removed.length} 键` : ''}`)
+    for (const key of added) out(`  + ${key}`)
+    for (const key of removed) out(`  - ${key}`)
+    return 0
   }
 
   if (command === '-h' || command === '--help') { out(USAGE); return 0 }
