@@ -43,6 +43,7 @@ export interface WormPrintMeta {
   kinds: readonly string[]
   exportFormats: readonly string[]
   peerDeps?: Record<string, string>
+  i18n?: { dir: string; base?: string }
 }
 
 /** 宿主清单 .worm-print/plugins.json 中的一条 */
@@ -55,6 +56,8 @@ export interface ManifestEntry {
   source: { mode: MarketSource; repo?: string; tag?: string; path?: string }
   stable: boolean
   installedAt: string
+  /** 已同步的语言资源信息；旧安装没有该字段，需提示重装 */
+  i18n?: { base: string; locales: string[] }
 }
 
 export interface PluginsManifest {

@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
@@ -190,6 +190,30 @@ function copyFiles(sourceDir: string, target: string, meta: PluginMeta): void {
   }
 }
 
+/**
+ * 把插件包声明的语言资源同步到统一目录 .worm-print/i18n/<id>/。
+ * 临时目录 + 原子改名：升级时清掉已删除语言，不留残留。
+ */
+function syncLocaleResources(sourceDir: string, pluginTarget: string, id: string) {
+  const pkgFile = join(sourceDir, 'package.json')
+  if (!existsSync(pkgFile)) return undefined
+  const raw = JSON.parse(readFileSync(pkgFile, 'utf8')) as {
+    wormPrint?: { i18n?: { dir?: string; base?: string } }
+  }
+  const i18n = raw.wormPrint?.i18n
+  if (!i18n?.dir) return undefined
+  const from = join(sourceDir, i18n.dir)
+  if (!existsSync(from)) throw new MarketError('INVALID_PLUGIN', `声明了 wormPrint.i18n 但目录不存在：${i18n.dir}`)
+  const to = join(dirname(dirname(pluginTarget)), 'i18n', id)
+  const tmp = `${to}.tmp`
+  rmSync(tmp, { recursive: true, force: true })
+  cpSync(from, tmp, { recursive: true })
+  rmSync(to, { recursive: true, force: true })
+  renameSync(tmp, to)
+  const locales = readdirSync(from).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5))
+  return { base: i18n.base ?? 'zh-CN', locales }
+}
+
 export async function installPlugin(options: InstallOptions): Promise<InstallResult> {
   const cwd = options.cwd ?? process.cwd()
   const dir = options.dir ?? '.worm-print/plugins'
@@ -224,8 +248,10 @@ export async function installPlugin(options: InstallOptions): Promise<InstallRes
 
       mkdirSync(target, { recursive: true })
       copyFiles(fetched.sourceDir, target, fetched.meta)
+      const i18n = syncLocaleResources(fetched.sourceDir, target, id)
       upsertManifestEntry(dir, id, {
         version: fetched.version,
+        i18n,
         entry: fetched.meta.entry,
         kinds: fetched.meta.kinds,
         exportFormats: fetched.meta.exportFormats,
@@ -270,6 +296,9 @@ export async function removePlugin(options: RemoveOptions): Promise<void> {
       // 卸载失败不阻断本地文件与清单清理
     }
   }
-  rmSync(absPath(join(dir, id), cwd), { recursive: true, force: true })
+  const pluginDir = absPath(join(dir, id), cwd)
+  rmSync(pluginDir, { recursive: true, force: true })
+  // 统一目录 .worm-print/i18n/<id> 是 plugins 目录的同级 i18n 目录
+  rmSync(join(dirname(dirname(pluginDir)), 'i18n', id), { recursive: true, force: true })
   removeManifestEntry(dir, id, cwd)
 }

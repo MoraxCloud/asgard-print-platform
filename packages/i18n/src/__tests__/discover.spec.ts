@@ -22,3 +22,16 @@ it('优先读统一目录，再补 node_modules，同 id 统一目录优先', ()
   expect(pkgs.find(p => p.id === 'echarts')!.locales.get('zh-CN')!.echarts['echarts.a']).toBe('统一目录')
   expect(pkgs.find(p => p.id === 'core')!.locales.get('zh-CN')!.core['toolbar.save']).toBe('保存')
 })
+
+it('旧安装的插件清单无 i18n 字段时提示重装，不阻断发现', () => {
+  const root = mkdtempSync(join(tmpdir(), 'wpi18n-stale-'))
+  writeJson(join(root, '.worm-print/plugins.json'), {
+    schemaVersion: 1,
+    plugins: { old: { version: '1.0.0' } },
+  })
+  writeJson(join(root, '.worm-print/i18n/good/zh-CN.json'), { good: { 'good.a': '甲' } })
+  const warnings: string[] = []
+  const pkgs = discover(root, msg => warnings.push(msg))
+  expect(pkgs.map(p => p.id)).toEqual(['good'])
+  expect(warnings.some(w => w.includes('old') && w.includes('重新安装'))).toBe(true)
+})

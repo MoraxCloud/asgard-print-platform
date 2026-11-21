@@ -27,6 +27,21 @@ function makeRepo(root: string, pluginVersion = '1.0.0') {
 const indexOf = (repo: string): MarketIndex =>
   JSON.parse(readFileSync(join(repo, 'marketplace.json'), 'utf8'))
 
+/** 带语言资源的插件仓库：plugin.json + package.json(wormPrint.i18n) + dist/i18n/<locale>.json */
+function makeRepoWithI18n(root: string, locales: string[] = ['zh-CN']) {
+  const repo = makeRepo(root)
+  const dir = join(repo, 'plugins/echarts')
+  mkdirSync(join(dir, 'dist/i18n'), { recursive: true })
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({
+    name: '@worm-print-platform/plugin-echarts',
+    wormPrint: { id: 'echarts', i18n: { dir: 'dist/i18n', base: 'zh-CN' } },
+  }))
+  for (const locale of locales) {
+    writeFileSync(join(dir, 'dist/i18n', `${locale}.json`), JSON.stringify({ echarts: { 'echarts.panel.chart': locale } }))
+  }
+  return repo
+}
+
 const okExec = async () => ({ stdout: '', stderr: '' })
 
 describe('三源安装引擎', () => {
@@ -139,5 +154,44 @@ describe('三源安装引擎', () => {
     await removePlugin({ name: 'echarts', cwd })
     expect(existsSync(join(cwd, '.worm-print/plugins/echarts'))).toBe(false)
     expect(readManifest('.worm-print/plugins', cwd).plugins.echarts).toBeUndefined()
+  })
+})
+
+describe('插件语言资源同步', () => {
+  it('安装同步语言资源到 .worm-print/i18n/<id> 并写入清单', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-i18n-'))
+    const repo = makeRepoWithI18n(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, force: true, index: indexOf(repo) })
+    expect(existsSync(join(cwd, '.worm-print/i18n/echarts/zh-CN.json'))).toBe(true)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.i18n?.locales).toEqual(['zh-CN'])
+  })
+
+  it('卸载清理语言资源目录', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-i18n-'))
+    const repo = makeRepoWithI18n(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    await removePlugin({ name: 'echarts', cwd })
+    expect(existsSync(join(cwd, '.worm-print/i18n/echarts'))).toBe(false)
+  })
+
+  it('升级重写语言目录，不残留已删除语言', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-i18n-'))
+    const repo = makeRepoWithI18n(cwd, ['zh-CN', 'en-US'])
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    expect(existsSync(join(cwd, '.worm-print/i18n/echarts/en-US.json'))).toBe(true)
+    // 源仓库删掉 en-US，强制升级后只剩 zh-CN
+    const { unlinkSync } = await import('node:fs')
+    unlinkSync(join(repo, 'plugins/echarts/dist/i18n/en-US.json'))
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, force: true, index: indexOf(repo) })
+    expect(existsSync(join(cwd, '.worm-print/i18n/echarts/en-US.json'))).toBe(false)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.i18n?.locales).toEqual(['zh-CN'])
+  })
+
+  it('插件未声明 i18n 时不写语言目录也不写清单字段', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-i18n-'))
+    const repo = makeRepo(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    expect(existsSync(join(cwd, '.worm-print/i18n/echarts'))).toBe(false)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.i18n).toBeUndefined()
   })
 })

@@ -38,7 +38,7 @@ export function run(argv: string[], deps: RunDeps = {}): number {
   const out = deps.out ?? ((line: string) => process.stdout.write(`${line}\n`))
   const [command, ...rest] = argv
   const dir = (() => { const i = rest.indexOf('--dir'); return i >= 0 ? rest[i + 1] : undefined })()
-  const template = () => buildTemplate(discover(dir ?? cwd))
+  const template = () => buildTemplate(discover(dir ?? cwd, msg => out(msg)))
 
   if (command === 'template') {
     const outputFile = (() => { const i = rest.indexOf('-o'); return i >= 0 ? rest[i + 1] : undefined })()

@@ -35,8 +35,17 @@ function fromPackage(dir: string, pkg: PkgManifest): LocalePackage | null {
  * 发现宿主项目的语言资源：先读 .worm-print/i18n/<id>/（统一目录优先），
  * 再扫 node_modules 下声明了 wormPrint.i18n 的包作为补充。
  */
-export function discover(root = process.cwd()): LocalePackage[] {
+export function discover(root = process.cwd(), onWarn?: (message: string) => void): LocalePackage[] {
   const merged = new Map<string, LocalePackage>()
+
+  // 旧市场安装：清单里有插件但没有 i18n 字段，语言资源从未同步，提示重装
+  const pluginsFile = join(root, '.worm-print/plugins.json')
+  if (existsSync(pluginsFile)) {
+    const manifest = readJson(pluginsFile) as { plugins?: Record<string, { i18n?: unknown }> }
+    for (const [id, entry] of Object.entries(manifest.plugins ?? {})) {
+      if (!entry?.i18n) onWarn?.(`插件 ${id} 的语言资源未同步，请重新安装`)
+    }
+  }
 
   const unifiedRoot = join(root, '.worm-print/i18n')
   if (existsSync(unifiedRoot)) {
