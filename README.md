@@ -43,7 +43,7 @@
 
 把 worm-print-platform 作为打印插件接入你的系统？
 [阅读完整使用文档 →](./docs/guide/README.md)
-文档覆盖四类框架接入、多语言配置、插件安装配置与插件开发。
+文档覆盖四类框架接入、多语言配置、插件安装配置与插件开发；内置 AI Agent 接入提示词与官方技能（npx 一键安装），[可直接粘给 AI 工具按规范接入](./docs/guide/01-getting-started.md#12-配套技能与-ai-提示词ai-agent-接入用)。
 
 ### 仓库开发
 
@@ -122,10 +122,10 @@ marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 
 | 框架 | 文档 | 接入形态 | 可运行示例 | 端口 |
 | --- | --- | --- | --- | --- |
-| Vue 3 | [用户使用文档 · Vue 3](./docs/guide/README.md#21-vue-3) | `@worm-print-platform/canvas/vue3` 组件门面 | `demos/apps/vue3` | 9331 |
-| Vue 2.7 | [用户使用文档 · Vue 2.7](./docs/guide/README.md#22-vue-27) | `<print-designer>` + `registerAll()` | `demos/apps/vue2` | 9332 |
-| React 18 | [用户使用文档 · React 18](./docs/guide/README.md#23-react-18) | `<print-designer>` + `addEventListener` | `demos/apps/react` | 9335 |
-| jQuery / 原生 JS | [用户使用文档 · jQuery/原生 JS](./docs/guide/README.md) | UMD 直挂 `window.WormPrintCanvas` | `demos/apps/jquery` | 9334 |
+| Vue 3 | [用户使用文档 · Vue 3](./docs/guide/02-vue3.md) | `@worm-print-platform/canvas/vue3` 组件门面 | `demos/apps/vue3` | 9331 |
+| Vue 2.7 | [用户使用文档 · Vue 2.7](./docs/guide/03-vue2.md) | `<print-designer>` + `registerAll()` | `demos/apps/vue2` | 9332 |
+| React 18 | [用户使用文档 · React 18](./docs/guide/04-react.md) | `<print-designer>` + `addEventListener` | `demos/apps/react` | 9335 |
+| jQuery / 原生 JS | [用户使用文档 · jQuery/原生 JS](./docs/guide/05-jquery.md) | UMD 直挂 `window.WormPrintCanvas` | `demos/apps/jquery` | 9334 |
 
 - 老用户迁移：[docs/migration-worm-vue3-print.md](./docs/migration-worm-vue3-print.md)
 - 五个 demo 的总览页在 `:9300`，一条命令拉起：`npm run dev:demos:all`
@@ -150,7 +150,7 @@ import '@worm-print-platform/plugin-echarts/ui'
 自定义插件写法见 [packages/plugin-kit/README](./packages/plugin-kit/README.md)。
 
 插件市场（索引与插件源码常驻本仓 `marketplace/`，三源安装、缺省最新稳定版）见
-[用户使用文档 · 插件安装与配置](./docs/guide/README.md#四插件安装与配置)。百度图表插件源码真源在
+[用户使用文档 · 插件安装与配置](./docs/guide/07-plugin-install.md)。百度图表插件源码真源在
 `marketplace/plugins/echarts/`，同一源码发布 `@worm-print-platform/plugin-echarts`（市场主口径）与
 `@worm-print-platform/echarts`（兼容镜像，存量依赖零改动），两者 README 统一为市场口径。
 

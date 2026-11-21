@@ -98,7 +98,7 @@ npm publish --registry=https://registry.npmjs.org --access public
 
 发版时同步 `marketplace.json`、`plugin.json`、本 `package.json` 的 `wormPrint.version`；市场 CLI
 通过本仓 tag `plugins/echarts/vX.Y.Z` 解析稳定版本。完整收录与版本规则见
-[用户使用文档 · 插件安装与配置](../../../docs/guide/README.md#四插件安装与配置)。
+[用户使用文档 · 插件安装与配置](../../../docs/guide/07-plugin-install.md)。
 
 ## 信任边界
 
