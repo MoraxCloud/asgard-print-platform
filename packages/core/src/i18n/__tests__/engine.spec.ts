@@ -55,6 +55,12 @@ describe('内置语言包与插值', () => {
     expect(t('diagnostic.position', { pos: 3 })).toBe('position 3')
   })
 
+  it('切到泰语后 t() 返回泰语译文（内置包真实接入）', () => {
+    setLocale('th-TH')
+    expect(t('toolbar.save')).toBe('บันทึก')
+    expect(t('toolbar.preview')).not.toBe('Preview')
+  })
+
   it('含 HTML 的文案不被转义', () => {
     setLocale('en-US')
     const result = t('toolbarOverflow.k488', { v0: '<svg/>', v1: '' })

@@ -30,10 +30,10 @@ export function detectLocale(): string {
 
 /**
  * 创建 i18next 实例。
- * - 内联三语种内置资源（th-TH 由 engine 的 thTH 占位/真实包注入，见 createI18nInstance 参数）
- * - 关闭 key/ns 分隔符与 HTML 转义、改用 {name} 插值、initImmediate:false 保证同步可用
+ * - 内联三语种内置资源（zh-CN / en-US / th-TH 均用真实包）
+ * - 关闭 key/ns 分隔符与 HTML 转义、改用 {name} 插值
  */
-export function createI18nInstance(thTH: Record<string, string> = {}): I18nInstance {
+export function createI18nInstance(): I18nInstance {
   const instance = createInstance()
   instance.init({
     resources: {
