@@ -17,10 +17,19 @@ describe('echarts 插件语言包', () => {
     expect(CHART_ELEMENT_UI.i18nId).toBe('echarts')
     expect(CHART_ELEMENT_UI.locales).toHaveProperty('zh-CN')
     expect(CHART_ELEMENT_UI.locales).toHaveProperty('en-US')
+    expect(CHART_ELEMENT_UI.locales).toHaveProperty('th-TH')
     const zhKeys = Object.keys(CHART_ELEMENT_UI.locales!['zh-CN']!)
     const enKeys = Object.keys(CHART_ELEMENT_UI.locales!['en-US']!)
+    const thKeys = Object.keys(CHART_ELEMENT_UI.locales!['th-TH']!)
     expect(zhKeys.sort()).toEqual(enKeys.sort())
+    expect(zhKeys.sort()).toEqual(thKeys.sort())
     expect(zhKeys.every(k => k.startsWith('echarts.'))).toBe(true)
+  })
+
+  it('切泰语后 engine 能解析插件键', () => {
+    const firstKey = Object.keys(CHART_ELEMENT_UI.locales!['en-US']!)[0]!
+    setLocale('th-TH')
+    expect(t(firstKey)).toBe(CHART_ELEMENT_UI.locales!['th-TH']![firstKey])
   })
 
   it('十类图表 id/type 不变，labelKey 指向语言包', () => {

@@ -7,6 +7,7 @@
 import { t } from '@worm-print-platform/core/i18n'
 import { echartsZhCN } from './i18n/zh-CN.js'
 import { echartsEnUS } from './i18n/en-US.js'
+import { echartsThTH } from './i18n/th-TH.js'
 import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
 import { defineElementUI, registerElementUI } from '@worm-print-platform/plugin-kit'
 import { render } from '@worm-print-platform/plugin-kit/dom'
@@ -852,7 +853,7 @@ export const CHART_ELEMENT_UI: ElementUI = defineElementUI({
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: 'echarts',
-  locales: { 'zh-CN': echartsZhCN, 'en-US': echartsEnUS },
+  locales: { 'zh-CN': echartsZhCN, 'en-US': echartsEnUS, 'th-TH': echartsThTH },
 })
 
 let disposeHandle: (() => void) | undefined
