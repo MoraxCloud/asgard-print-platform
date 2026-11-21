@@ -1,0 +1,31 @@
+{
+  "name": "@worm-print-platform/i18n",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "worm-print-platform 语言包工具：导出翻译骨架、校验与增量更新。",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "bin": {
+    "worm-print-i18n": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run typecheck",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^1.6.0"
+  }
+}
