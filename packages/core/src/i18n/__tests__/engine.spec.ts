@@ -141,6 +141,29 @@ describe('缺键诊断与订阅', () => {
     expect(en('toolbar.save')).toBe('Save')
     expect(t('toolbar.save')).toBe('保存')
   })
+
+  it('scoped translator 优先 messages，缺键回退全局', () => {
+    resetLocale()
+    setLocale('zh-CN')
+    const tr = createTranslator('fr-FR', { 'toolbar.save': 'Enregistrer' })
+    expect(tr('toolbar.save')).toBe('Enregistrer')
+    expect(tr('toolbar.preview')).toBe('预览')
+  })
+
+  it('不同 messages 的 translator 互不影响', () => {
+    const a = createTranslator('fr-FR', { 'toolbar.save': 'A' })
+    const b = createTranslator('fr-FR', { 'toolbar.save': 'B' })
+    expect(a('toolbar.save')).toBe('A')
+    expect(b('toolbar.save')).toBe('B')
+  })
+
+  it('空串译文回退全局中文，且不污染全局 user 层', () => {
+    resetLocale()
+    setLocale('zh-CN')
+    const tr = createTranslator('fr-FR', { 'toolbar.save': '' })
+    expect(tr('toolbar.save')).toBe('保存')
+    expect(t('toolbar.save')).toBe('保存')
+  })
 })
 
 describe('locale 感知格式化', () => {

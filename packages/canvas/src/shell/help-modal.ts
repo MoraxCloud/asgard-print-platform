@@ -13,6 +13,7 @@
 //         由 print-designer.ts 的 helpVisible + syncHelp() 决定 DOM 存在与否（同表达式编辑器范式）；
 //         mountHelpModal 登记一次性 document keydown，卸载即摘；无进出场过渡（见 PARITY §八）。
 import { createTranslator } from '@worm-print-platform/core/i18n'
+import type { Translate } from '@worm-print-platform/core/i18n'
 import { getHelpSections } from './help-content'
 import { h, render } from '../core/h'
 import type { El } from '../core/h'
@@ -24,8 +25,10 @@ const DEFAULT_TAB = 'getting-started'
 export interface HelpModalOptions {
   /** 首次打开的页签（Vue 3 轨 的 initialTab，默认「快速入门」） */
   initialTab?: string
-  /** 语言包标识；en-* 显示英文帮助，其余中文 */
+  /** 语言包标识；en-* 显示英文帮助，其余中文（正文/页签本期静态，自定义语言回退中文） */
   locale?: string
+  /** 外壳标题/关闭按钮的实例取词器；未传时按 locale 取全局 */
+  t?: Translate
   onClose: () => void
 }
 
@@ -48,7 +51,7 @@ function resolveTab(sections: ReturnType<typeof getHelpSections>, initial?: stri
 /** 渲染帮助弹窗（调用方负责挂到 shadow root 上） */
 export function renderHelpModal(opts: HelpModalOptions): El {
   const sections = getHelpSections(opts.locale)
-  const t = createTranslator(opts.locale ?? 'zh-CN')
+  const t = opts.t ?? createTranslator(opts.locale ?? 'zh-CN')
   const active = resolveTab(sections, opts.initialTab)
 
   /** 切页签：canvas 由响应式重算 currentContent，这里只定点改高亮与正文，不重建弹窗 */
