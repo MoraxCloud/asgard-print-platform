@@ -73,6 +73,21 @@ check('bundle 结构含五个命名空间', () => {
   }
 })
 
+// 示例目录里被跟踪的插件副本必须与源码构建一致，否则会重演「中英混杂 / 裸 key」的旧包问题。
+check('示例图表插件副本与源码构建一致', () => {
+  const pairs = [
+    ['marketplace/plugins/echarts/dist/marketplace.js', 'demos/apps/vue3/.worm-print/plugins/echarts/dist/marketplace.js'],
+    ['marketplace/plugins/echarts/README.md', 'demos/apps/vue3/.worm-print/plugins/echarts/README.md'],
+    ['marketplace/plugins/echarts/plugin.json', 'demos/apps/vue3/.worm-print/plugins/echarts/plugin.json'],
+    ['marketplace/plugins/echarts/LICENSE', 'demos/apps/vue3/.worm-print/plugins/echarts/LICENSE'],
+  ]
+  for (const [src, dst] of pairs) {
+    if (!readFileSync(join(root, src)).equals(readFileSync(join(root, dst)))) {
+      throw new Error(`${dst} 与源码构建不一致，请运行 npm --prefix demos/apps/vue3 run sync-plugin`)
+    }
+  }
+})
+
 const suites = [
   ['@worm-print-platform/core', 'src/i18n/__tests__/namespaces.spec.ts'],
   ['@worm-print-platform/core', 'src/i18n/__tests__/engine.spec.ts'],

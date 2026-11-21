@@ -16,6 +16,9 @@ demos/evidence/
 demos/apps/*/public/vendor/
 demos/apps/*/dist/
 
+# demo 启动时由 sync-plugin 生成的市场安装语言资源
+demos/apps/*/.worm-print/i18n/
+
 # demos 子工程的示例字体：单个体积 1.5~8MB 不入库，需要时自行放置
 demos/apps/*/public/fonts/
 
