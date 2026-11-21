@@ -83,6 +83,15 @@ describe('分层回退与覆盖', () => {
   it('插件键前缀非法时抛错', () => {
     expect(() => registerPluginMessages('en-US', 'echarts', { 'other.key': 'x' })).toThrow(/echarts\./)
   })
+
+  it('clearLocales 后插件 key 不再命中，但 core 内置译文保留', () => {
+    setLocale('en-US')
+    registerPluginMessages('en-US', 'echarts', { 'echarts.kind.bar': 'Bar' })
+    expect(t('echarts.kind.bar')).toBe('Bar')
+    clearLocales()
+    expect(t('echarts.kind.bar')).toBe('echarts.kind.bar')
+    expect(t('toolbar.save')).toBe('Save')
+  })
 })
 
 describe('缺键诊断与订阅', () => {
