@@ -76,6 +76,16 @@ describe('设计器 shell 文案国际化', () => {
     expect(texts).toContain('预览')
   })
 
+  it('泰语界面：工具栏按钮为泰语且无中文残留', async () => {
+    const root = await mount('th-TH')
+    const texts = [...root.querySelectorAll('button')].map(b => b.textContent?.trim() ?? '')
+    expect(texts).toContain('บันทึก')
+    expect(texts).toContain('ตัวอย่าง')
+    // 页签名来自模板数据（非 UI 文案），仅检查工具栏与状态栏按钮不含中文
+    const uiTexts = [...root.querySelectorAll('.designer-toolbar button, .status-bar')].map(e => e.textContent?.trim() ?? '')
+    expect(uiTexts.some(t => /[\u4e00-\u9fff]/.test(t))).toBe(false)
+  })
+
   it('英文界面：属性控件提示与图层名也跟随实例语言', async () => {
     const root = await mount('en-US')
     const stepperTitles = [...root.querySelectorAll('.pd-step-btn')].map(e => e.getAttribute('title'))
