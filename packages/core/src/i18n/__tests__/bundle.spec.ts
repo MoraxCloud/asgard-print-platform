@@ -12,6 +12,13 @@ describe('i18next resources 聚合导出（getResources）', () => {
     expect(Object.keys(resources).sort()).toEqual(['en-US', 'th-TH', 'zh-CN'])
   })
 
+  it('getResources 的每个 locale 都含三个内置命名空间', () => {
+    for (const lng of ['zh-CN', 'en-US', 'th-TH']) {
+      const res = getResources(lng)
+      expect(Object.keys(res).sort()).toEqual(['constants', 'core', 'propertyTips'])
+    }
+  })
+
   it('getResources("th-TH") 含 core namespace 且 toolbar.save 为泰语', () => {
     const th = getResources('th-TH')
     expect(th).toHaveProperty('core')

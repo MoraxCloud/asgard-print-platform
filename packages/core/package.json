@@ -66,7 +66,7 @@
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "npm run i18n:keys && tsup && node scripts/copy-styles.mjs && node ../../scripts/inject-license-banner.mjs dist",
+    "build": "npm run i18n:keys && tsup && node scripts/gen-i18n-json.mjs && node scripts/copy-styles.mjs && node ../../scripts/inject-license-banner.mjs dist",
     "test": "npm run i18n:check && vitest run",
     "i18n:keys": "node scripts/gen-locale-keys.mjs",
     "i18n:check": "node scripts/gen-locale-keys.mjs --check",

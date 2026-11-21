@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { checkParity, parseKeys } from '../../../scripts/gen-locale-keys.mjs'
+import { checkParity, parseKeys, readJsonKeys } from '../../../scripts/gen-locale-keys.mjs'
 
 const readMsg = (name: string) => readFileSync(new URL(`../messages/${name}`, import.meta.url), 'utf8')
 const zhSource = () => `${readMsg('zh-CN.ts')}\n${readMsg('shell-zh.ts')}\n${readMsg('expr-zh.ts')}`
@@ -54,8 +54,22 @@ describe('泰语包（AI 直译）', () => {
 })
 
 describe('键名清单', () => {
-  it('locale-keys.json 与 zh-CN 包键一致', () => {
+  it('locale-keys.json 含 core + constants + propertyTips 三语资源键', () => {
     const json = readFileSync(new URL('../locale-keys.json', import.meta.url), 'utf8')
-    expect(JSON.parse(json)).toEqual(parseKeys(zhSource()))
+    const expected = [
+      ...parseKeys(zhSource()),
+      ...readJsonKeys('zh-CN', 'constants'),
+      ...readJsonKeys('zh-CN', 'propertyTips'),
+    ]
+    expect(JSON.parse(json)).toEqual([...new Set(expected)].sort())
+  })
+
+  it('constants / propertyTips 三语键集合一致', () => {
+    for (const ns of ['constants', 'propertyTips']) {
+      const base = [...readJsonKeys('zh-CN', ns)].sort()
+      for (const locale of ['en-US', 'th-TH']) {
+        expect([...readJsonKeys(locale, ns)].sort()).toEqual(base)
+      }
+    }
   })
 })
