@@ -28,6 +28,7 @@
     "constants.watermark.density.dense": "密",
     "constants.watermark.density.medium": "中（默认）",
     "constants.watermark.density.loose": "疏",
+    "constants.watermark.density.size": "（{w}×{h}）",
     "constants.label.content": "内容",
     "constants.hint.border.apply": "线型 / 宽度 / 颜色即时生效，这三行显示的就是当前生效规格：已有边框时任改一行都会按新规格铺满四边并清掉单边覆盖；上、下、左、右只给选中的边加框，撤掉一边会把它其余三边落成单边；「无」清除边框，「内部」仅表格单元格可用",
     "constants.hint.border.pending": "线型 / 宽度 / 颜色是待应用规格：选中格已有的边框规格一致时会填进这三行；四边不一致的项显示「混合」，一条边都没有时显示「无 / 0」。改完点「全部 / 外侧 / 内部」或勾选上、下、左、右某条边才会写入选中的单元格；「无」是清除边框",

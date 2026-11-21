@@ -78,6 +78,7 @@
   "constants.watermark.density.dense",
   "constants.watermark.density.loose",
   "constants.watermark.density.medium",
+  "constants.watermark.density.size",
   "controls.k28",
   "controls.k29",
   "controls.k30",

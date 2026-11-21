@@ -28,6 +28,7 @@
     "constants.watermark.density.dense": "Dense",
     "constants.watermark.density.medium": "Medium (default)",
     "constants.watermark.density.loose": "Sparse",
+    "constants.watermark.density.size": " ({w}×{h})",
     "constants.label.content": "Content",
     "constants.hint.border.apply": "Line style / width / color apply immediately; these three rows show the effective spec. With an existing border, changing any row fills all four sides and clears per-side overrides. Top / right / bottom / left add a border only to the selected side; removing one turns the other three into per-side borders. \"None\" clears the border; \"Inside\" is available for table cells only.",
     "constants.hint.border.pending": "Line style / width / color are a pending spec: they are prefilled when the selected cells share one border spec. Mixed values show \"Mixed\"; no border shows \"None / 0\". Click All / Outside / Inside or tick a side (top / right / bottom / left) to write to the selected cells; \"None\" clears the border.",

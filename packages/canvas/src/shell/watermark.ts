@@ -138,7 +138,7 @@ export function watermarkSection(ctx: ShellCtx) {
           },
         }, [
           ...Object.entries(PRESETS).map(([key, p]) => h('option', {
-            value: key, text: `${tr(ctx, p.labelKey)}（${p.width}×${p.height}）`, selected: density === key,
+            value: key, text: `${tr(ctx, p.labelKey)}${tr(ctx, 'constants.watermark.density.size', { w: p.width, h: p.height })}`, selected: density === key,
           })),
           h('option', { value: 'custom', text: tr(ctx, 'watermark.k550'), selected: density === 'custom' }),
         ]),
