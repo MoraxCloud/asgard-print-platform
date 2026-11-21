@@ -11,6 +11,12 @@ import enAdvancedSettings from './en-US/advanced-settings'
 import enShortcuts from './en-US/shortcuts'
 import enFaq from './en-US/faq'
 import enChangelog from './en-US/changelog'
+import thGettingStarted from './th-TH/getting-started'
+import thFeatures from './th-TH/features'
+import thAdvancedSettings from './th-TH/advanced-settings'
+import thShortcuts from './th-TH/shortcuts'
+import thFaq from './th-TH/faq'
+import thChangelog from './th-TH/changelog'
 
 export type HelpSection = {
   id: string
@@ -24,9 +30,13 @@ const zhSections: HelpSection[] = [
 const enSections: HelpSection[] = [
   enGettingStarted, enFeatures, enAdvancedSettings, enShortcuts, enFaq, enChangelog,
 ]
+const thSections: HelpSection[] = [
+  thGettingStarted, thFeatures, thAdvancedSettings, thShortcuts, thFaq, thChangelog,
+]
 
-/** 未指定语言时默认中文；en-* 走英文；其余回退中文 */
+/** 未指定语言时默认中文；en-* 走英文；th-* 走泰语；其余回退中文 */
 export function getHelpSections(locale?: string): HelpSection[] {
+  if (locale && /^th([-_]|$)/i.test(locale)) return thSections
   return locale && /^en([-_]|$)/i.test(locale) ? enSections : zhSections
 }
 

@@ -27,6 +27,19 @@ describe('帮助文档按语言拆分', () => {
     }
   })
 
+  it('泰语六章节 id 相同、标题为泰语、正文无中文', () => {
+    const en = getHelpSections('en-US')
+    const th = getHelpSections('th-TH')
+    expect(th.map(s => s.id)).toEqual(en.map(s => s.id))
+    for (const s of th) {
+      expect(CJK.test(s.title)).toBe(false)
+      expect(s.content.length).toBeGreaterThan(20)
+      expect(CJK.test(s.content)).toBe(false)
+    }
+    expect(th[0]!.title).not.toBe(en[0]!.title)
+    expect(th[0]!.title).not.toBe(getHelpSections('zh-CN')[0]!.title)
+  })
+
   it('未知 locale 回退中文', () => {
     expect(getHelpSections('ja-JP')).toEqual(getHelpSections('zh-CN'))
     expect(getHelpSections('zh-CN')).toEqual(getHelpSections())
