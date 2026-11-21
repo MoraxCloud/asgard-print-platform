@@ -1,5 +1,8 @@
 # 插件开发
 
+[← 返回目录](./README.md) | ← 上一篇：[插件安装与配置](./07-plugin-install.md) | 下一篇：[迁移与故障排查附录](./09-migration-faq.md) →
+
+
 ## 5.1 插件作者指南
 
 ### 5.1.1 元素插件
@@ -60,3 +63,7 @@ registerExportPlugin(defineExportPlugin({
 市场不做沙箱。信任来自 PR 审核 + npm 版本锁定；插件代码在宿主进程内运行，等同于普通 npm 依赖。
 
 ---
+
+---
+
+[← 返回目录](./README.md) | ← 上一篇：[插件安装与配置](./07-plugin-install.md) | 下一篇：[迁移与故障排查附录](./09-migration-faq.md) →

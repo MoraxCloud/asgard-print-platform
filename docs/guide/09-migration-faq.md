@@ -1,5 +1,8 @@
 # 迁移与故障排查附录
 
+[← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md)
+
+
 ## 6.1 从 @worm-vue3-print 迁移（摘要）
 
 老仓库 `@worm-vue3-print` 的用户迁移目标是**业务代码零改动**，只换依赖与 import。核心包名映射：
@@ -28,3 +31,7 @@
 - **打印不出纸**：按三条链路分别排查——浏览器打印确认 iframe 已加载且调用 `contentWindow.print()`；服务端 PDF 确认 `services/render` 已部署且后端持密钥代理；静默打印确认本机客户端已启动且监听 `127.0.0.1:17521`。
 
 更完整的诊断步骤、常见报错与环境检查见 integration 技能的 [troubleshooting.md](../../skills/worm-print-platform-integration/references/troubleshooting.md)；服务端 PDF 与静默打印分别见同目录的 `server-render.md` 与 `silent-print.md`。
+
+---
+
+[← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md)

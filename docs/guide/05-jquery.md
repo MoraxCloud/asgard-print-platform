@@ -1,5 +1,8 @@
 # jQuery / 原生 JS 接入
 
+[← 返回目录](./README.md) | ← 上一篇：[React 18 接入](./04-react.md) | 下一篇：[多语言配置与自定义](./06-i18n.md) →
+
+
 > 操作方法 + AI 集成提示词。可运行完整示例：`demos/apps/jquery`（9334，无打包器）。
 > 直挂形态：插件不进 `import`，页面挂一个 `<link>` + 一个 `<script>`，
 > 业务代码用 `window.WormPrintCanvas` 全局 + jQuery 操作 DOM。
@@ -133,3 +136,7 @@ B 服务端 PDF：同源 `/render-api/*` 由宿主后端代理到 `services/rend
 
 
 ---
+
+---
+
+[← 返回目录](./README.md) | ← 上一篇：[React 18 接入](./04-react.md) | 下一篇：[多语言配置与自定义](./06-i18n.md) →

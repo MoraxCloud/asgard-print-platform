@@ -1,5 +1,8 @@
 # 开始之前
 
+[← 返回目录](./README.md) | 下一篇：[Vue 3 接入](./02-vue3.md) →
+
+
 ## 1.1 三条打印链路速记
 
 三条链路吃同一份 `templateJson + printData + baseUrl`，可单选可并存：
@@ -92,3 +95,7 @@ npx @worm-print-platform/skills worm-print-platform-integration --repo https://g
 
 
 ---
+
+---
+
+[← 返回目录](./README.md) | 下一篇：[Vue 3 接入](./02-vue3.md) →

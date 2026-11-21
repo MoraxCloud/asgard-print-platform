@@ -1,5 +1,8 @@
 # 插件安装与配置
 
+[← 返回目录](./README.md) | ← 上一篇：[多语言配置与自定义](./06-i18n.md) | 下一篇：[插件开发](./08-plugin-dev.md) →
+
+
 插件市场让第三方能力以**独立插件包**的形式接入打印设计器。索引与插件源码常驻本仓 `marketplace/`，
 不创建独立仓库；安装器 `@worm-print-platform/marketplace` 支持从 npm / GitHub / Gitee 三种来源安装，
 **不指定版本时取最新稳定版**。
@@ -80,3 +83,7 @@ Object.values(import.meta.glob('../.worm-print/plugins/*/dist/marketplace.js', {
 宿主构建工具建议对 `@worm-print-platform/core`、`@worm-print-platform/plugin-kit` 做 `dedupe`。
 
 ---
+
+---
+
+[← 返回目录](./README.md) | ← 上一篇：[多语言配置与自定义](./06-i18n.md) | 下一篇：[插件开发](./08-plugin-dev.md) →

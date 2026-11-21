@@ -1,5 +1,8 @@
 # React 18 接入
 
+[← 返回目录](./README.md) | ← 上一篇：[Vue 2.7 接入](./03-vue2.md) | 下一篇：[jQuery / 原生 JS 接入](./05-jquery.md) →
+
+
 > 操作方法 + AI 集成提示词。可运行完整示例：`demos/apps/react`（9335）。
 > React 走零框架主入口 `<print-designer>` 自定义元素：未知标签按原生元素渲染，
 > 无编译期配置；差异全在运行期——property 注入与 `addEventListener`。
@@ -113,3 +116,7 @@ Shadow DOM 内联注入样式，普通用法无需引 CSS；只有 light DOM 形
   （不存在 setTemplateMeta、back 事件；fields 无 getter，读回用 el.store.fields；
   JSX 的 onSave 不绑定 CustomEvent）。
 ```
+
+---
+
+[← 返回目录](./README.md) | ← 上一篇：[Vue 2.7 接入](./03-vue2.md) | 下一篇：[jQuery / 原生 JS 接入](./05-jquery.md) →
