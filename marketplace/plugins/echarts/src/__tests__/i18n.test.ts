@@ -4,6 +4,7 @@ import { resetLocale, setLocale, t } from '@worm-print-platform/core/i18n'
 import { CHART_ELEMENT_UI, installChartCommonUI, uninstallChartCommonUI } from '../ui.js'
 import { CHART_KIND_DEFINITIONS, CHART_KINDS } from '../kinds.js'
 import { LABEL_POSITIONS, LABEL_PRESETS } from '../label.js'
+import { CHART_PLUGIN } from '../plugin.js'
 import { getElementUI } from '@worm-print-platform/plugin-kit'
 import type { RuntimeElement } from '@worm-print-platform/core/designer'
 
@@ -46,6 +47,12 @@ describe('echarts 插件语言包', () => {
   it('常量保留中文 label 源字段', () => {
     expect(LABEL_PRESETS[0]!.label).toBe('数值')
     expect(LABEL_POSITIONS.bar[0]!.label).toBe('顶部')
+  })
+
+  it('图表种类 label 随 locale 切换', () => {
+    setLocale('zh-CN'); expect(CHART_PLUGIN.kinds[0]!.label).toBe('柱状图')
+    setLocale('en-US'); expect(CHART_PLUGIN.kinds[0]!.label).toBe('Bar chart')
+    setLocale('zh-CN')
   })
 
   it('十类图表 id/type 不变，labelKey 指向语言包', () => {

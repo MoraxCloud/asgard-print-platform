@@ -44,7 +44,8 @@ export const CHART_PLUGIN: PrintElementPlugin = defineElementPlugin({
   version: CHART_EXECUTOR_VERSION,
   kinds: CHART_KIND_DEFINITIONS.map(def => ({
     type: def.type,
-    label: def.label,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get label() { return t(def.labelKey) },
     icon: def.icon,
     fixedHeight: true,
     requiredOptionKeys: def.requiredOptionKeys,
