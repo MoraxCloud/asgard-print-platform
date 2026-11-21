@@ -5,6 +5,7 @@ import { checkParity, parseKeys } from '../../../scripts/gen-locale-keys.mjs'
 const readMsg = (name: string) => readFileSync(new URL(`../messages/${name}`, import.meta.url), 'utf8')
 const zhSource = () => `${readMsg('zh-CN.ts')}\n${readMsg('shell-zh.ts')}\n${readMsg('expr-zh.ts')}`
 const enSource = () => `${readMsg('en-US.ts')}\n${readMsg('shell-en.ts')}\n${readMsg('expr-en.ts')}`
+const thSource = () => `${readMsg('th-TH.ts')}\n${readMsg('shell-th.ts')}\n${readMsg('expr-th.ts')}`
 
 describe('parseKeys', () => {
   it('从语言包源文件提取顶层键', () => {
@@ -28,6 +29,27 @@ describe('checkParity', () => {
 
   it('真实语言包键齐全', () => {
     expect(checkParity(zhSource(), enSource())).toEqual({ missing: [], extra: [] })
+    expect(checkParity(zhSource(), thSource())).toEqual({ missing: [], extra: [] })
+  })
+})
+
+describe('泰语包（AI 直译）', () => {
+  it('thTH 已导出且值非空、与英文不同', async () => {
+    const { thTH } = await import('../index.js')
+    expect(typeof thTH['toolbar.save']).toBe('string')
+    expect(thTH['toolbar.save']!.length).toBeGreaterThan(0)
+    expect(thTH['toolbar.save']).not.toBe('Save')
+  })
+
+  it('占位符与英文包逐键一致', () => {
+    const placeholders = (s: string) => (s.match(/\{[a-zA-Z0-9_]+\}/g) ?? []).sort().join(',')
+    const enKeys = parseKeys(enSource())
+    for (const key of enKeys) {
+      const enMatch = enSource().match(new RegExp(`^\\s{2}'${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}':\\s*["'](.*)["'],?$`, 'm'))
+      const thMatch = thSource().match(new RegExp(`^\\s{2}'${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}':\\s*["'](.*)["'],?$`, 'm'))
+      if (!enMatch || !thMatch) continue
+      expect(placeholders(thMatch[1]!), key).toBe(placeholders(enMatch[1]!))
+    }
   })
 })
 

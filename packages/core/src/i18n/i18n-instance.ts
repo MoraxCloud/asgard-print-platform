@@ -4,6 +4,7 @@ import { createInstance } from 'i18next'
 import type { i18n as I18nInstance } from 'i18next'
 import { zhCN } from './messages/zh-CN.js'
 import { enUS } from './messages/en-US.js'
+import { thTH } from './messages/th-TH.js'
 
 export type { I18nInstance }
 
@@ -38,8 +39,7 @@ export function createI18nInstance(thTH: Record<string, string> = {}): I18nInsta
     resources: {
       'zh-CN': { core: zhCN },
       'en-US': { core: enUS },
-      // Task 3 前用英文占位；Task 3 起传入真实 thTH 包
-      'th-TH': { core: Object.keys(thTH).length ? thTH : enUS },
+      'th-TH': { core: thTH },
     },
     lng: detectLocale(),
     fallbackLng: 'zh-CN',
