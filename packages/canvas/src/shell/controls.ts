@@ -2,6 +2,7 @@
 // （下拉壳 .tb-dd、步进输入 .pd-stepper、颜色触发钮 .preset-color-trigger、字体下拉 .font-select）。
 // 派生样式只认类名，结构一致才有样式，这是「样式完全一致」的机械约束。
 import { t as globalT } from '@worm-print-platform/core/i18n'
+import type { Translate } from '@worm-print-platform/core/i18n'
 import { h } from '../core/h'
 import { iconSvg } from '../core/icons'
 import { colorPicker } from './color-picker'
@@ -81,9 +82,26 @@ export function tr(
   return ctx.t ? ctx.t(key, params) : globalT(key, params)
 }
 
-/** 无 ctx 作用域（模块级常量与工具函数）的翻译：直接走全局 locale */
+/**
+ * 渲染期 translator：外壳是「状态变更即整树重建」模型，绘制同步完成，
+ * 故在 repaint() 内临时把实例 translator 设为活动值，绘制结束还原。
+ * 这样 stepper / resetButton / colorTrigger 等无 ctx 的共用控件也能跟随实例语言；
+ * 不会残留到下一次绘制，多实例各自 repaint 互不串味。
+ */
+let renderT: Translate | null = null
+
+export function withRenderTranslator(t: Translate, paint: () => void): void {
+  const prev = renderT
+  renderT = t
+  try { paint() } finally { renderT = prev }
+}
+
+/**
+ * 无 ctx 作用域（模块级常量与工具函数）的翻译：
+ * 绘制期间优先取实例 translator，其余场景回落 core 全局 locale。
+ */
 export function trG(key: string, params?: Record<string, string | number>): string {
-  return globalT(key, params)
+  return renderT ? renderT(key, params) : globalT(key, params)
 }
 
 /** 带图标的工具栏按钮（对应 Vue 3 轨 的 .tb-btn.tb-icon） */

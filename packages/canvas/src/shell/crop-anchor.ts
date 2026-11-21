@@ -4,6 +4,8 @@
 //  .pd-crop-note / .pd-crop-preview>img.pd-crop-thumb+div.pd-crop-win）。
 // 判轴、档位表、行模型、提示文案全部取自 core 的 crop-anchor，两端不再各写一遍。
 import { tr } from './controls.js'
+import { getLocale } from '@worm-print-platform/core/i18n'
+import { localizedPropertyTip } from './property-tip-translation.js'
 import {
   buildCropAnchor,
   cropScaleLabel,
@@ -15,7 +17,6 @@ import {
   cropPresetOptions,
   cropWindow,
   parseCropAnchor,
-  propertyTip,
   resolveCropPreview,
   resolveCropTravel,
 } from '@worm-print-platform/core/designer'
@@ -96,14 +97,14 @@ export function cropAnchorField(ctx: ShellCtx, o: CropAnchorOpts) {
     o.onCommit(buildCropAnchor(nx, ny))
   })
 
-  const tip = propertyTip(o.fieldKey)
+  const tip = localizedPropertyTip(o.fieldKey, ctx.lang ?? getLocale())
   const rows: unknown[] = [h('div', { class: 'pd-field', dataset: { field: o.fieldKey } }, [
     h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [o.label, labelHelp(tip)]), o.resetAnchor ?? ''].filter(Boolean)),
     select,
   ])]
   // 放大比例排在两框之前：先推大画面才有多出来的边，两框报的可挪量按推大后的尺寸结算
   rows.push(h('div', { class: 'pd-field', dataset: { field: 'ap-img-fit-scale' } }, [
-    h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [cropScaleLabel(), labelHelp(propertyTip('ap-img-fit-scale'))]), o.resetScale ?? ''].filter(Boolean)),
+    h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [cropScaleLabel(), labelHelp(localizedPropertyTip('ap-img-fit-scale', ctx.lang ?? getLocale()))]), o.resetScale ?? ''].filter(Boolean)),
     stepper({
       value: o.scale, min: CROP_SCALE_MIN, max: CROP_SCALE_MAX, step: 5, placeholder: tr(ctx, 'cropAnchor.k38'),
       onCommit: v => o.onScaleCommit(v > CROP_SCALE_MIN ? v : undefined),

@@ -23,6 +23,23 @@ async function mount(lang?: string) {
   return el.shadowRoot!
 }
 
+/** 挂载并选中一个元素，使元素属性台可见 */
+async function mountWithSelected(lang: string, type: string, setup?: (store: any) => void) {
+  definePrintDesigner()
+  const host = document.createElement('div')
+  document.body.replaceChildren(host)
+  const el = document.createElement('print-designer') as PrintDesignerElement
+  el.setAttribute('lang', lang)
+  host.appendChild(el)
+  await frame()
+  const store = (el as unknown as { store: any }).store
+  store.addElement(type, { left: 10, top: 10, width: 40, height: 10 })
+  store.selectOne(store.elements[0]!.id)
+  setup?.(store)
+  await frame()
+  return el.shadowRoot!
+}
+
 afterEach(() => {
   setLocale('zh-CN')
   document.body.replaceChildren()
@@ -41,6 +58,64 @@ describe('设计器 shell 文案国际化', () => {
     const texts = [...root.querySelectorAll('button')].map(b => b.textContent?.trim() ?? '')
     expect(texts).toContain('保存')
     expect(texts).toContain('预览')
+  })
+
+  it('英文界面：属性控件提示与图层名也跟随实例语言', async () => {
+    const root = await mount('en-US')
+    const stepperTitles = [...root.querySelectorAll('.pd-step-btn')].map(e => e.getAttribute('title'))
+    expect(stepperTitles).toContain('Decrease')
+    expect(stepperTitles).toContain('Increase')
+    expect([...root.querySelectorAll('.pd-reset-btn')].some(e => e.getAttribute('data-tip')?.includes('Restore default'))).toBe(true)
+    expect([...root.querySelectorAll('[title]')].some(e => e.getAttribute('title') === '颜色选择')).toBe(false)
+  })
+
+  it('英文界面：图层名按元素类型取词，不冻结在模块加载时的语言', async () => {
+    const root = await mountWithSelected('en-US', 'text')
+    expect([...root.querySelectorAll('.layer-name')].map(e => e.textContent?.trim())).toContain('Text')
+  })
+
+  it('英文界面：边框预设与单边选项按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'text')
+    const labels = [...root.querySelectorAll('.border-presets button, .pd-checkbox-group .pd-checkbox span')]
+      .map(e => e.textContent?.trim())
+    expect(labels).toContain('All')
+    expect(labels).toContain('Outside')
+    expect(labels).toContain('Top')
+  })
+
+  it('英文界面：表格属性下拉按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'table')
+    const options = [...root.querySelectorAll('.property-panel option')].map(e => e.textContent?.trim())
+    expect(options.filter(o => /[\u3400-\u9fff]/.test(o))).toEqual([])
+  })
+
+  it('英文界面：core 中文常量文案按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'text')
+    expect([...root.querySelectorAll('.pd-label-t')].map(e => e.textContent?.trim())).toContain('Content')
+    expect(root.textContent ?? '').not.toContain('线型 / 宽度 / 颜色即时生效')
+    const tips = [...root.querySelectorAll('.pd-help')].map(e => e.getAttribute('data-tip') ?? '')
+    expect(tips.some(t => t.startsWith('Rotation of the element'))).toBe(true)
+    expect(tips.some(t => t.includes('元素绕自身中心旋转的角度'))).toBe(false)
+  })
+
+  it('英文界面：表格行类型角标按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'table')
+    const badges = [...root.querySelectorAll('.row-badge')].map(e => e.textContent?.trim())
+    expect(badges).toContain('H')
+    expect(badges.some(b => /[\u3400-\u9fff]/.test(b ?? ''))).toBe(false)
+  })
+
+  it('英文界面：表格单元格属性下拉按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'table', store => {
+      store.setTableSelection({ elementId: store.elements[0].id, r1: 1, c1: 0, r2: 1, c2: 0 })
+    })
+    const options = [...root.querySelectorAll('.property-panel option')].map(e => e.textContent?.trim())
+    expect(options.filter(o => /[\u3400-\u9fff]/.test(o))).toEqual([])
+  })
+
+  it('英文界面：流式列表示例数据按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'flowList')
+    expect(root.textContent ?? '').toContain('Herb 20g')
   })
 
   it('shell 与元素定义无残留硬编码中文', () => {

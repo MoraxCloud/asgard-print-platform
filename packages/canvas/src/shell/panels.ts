@@ -202,6 +202,13 @@ function fieldsPane(ctx: ShellCtx) {
   ].filter(Boolean))
 }
 
+/** 图层名：自定义 title 优先；否则按元素类型取当前实例语言的译文（definitions 的 label 在模块加载时已冻结） */
+function layerLabel(layer: RuntimeElement, ctx: ShellCtx): string {
+  if (layer.options.title) return layer.options.title
+  const key = ELEMENT_LABEL_KEYS[layer.printElementType.type]
+  return key ? tr(ctx, key) : (layer.printElementType.title || layer.printElementType.type)
+}
+
 function layersPane(ctx: ShellCtx) {
   const s = ctx.store
   const layers = [...(s.elements as RuntimeElement[])].sort((a, b) => (b.options.zIndex ?? 0) - (a.options.zIndex ?? 0))
@@ -219,7 +226,7 @@ function layersPane(ctx: ShellCtx) {
         onClick: (ev: Event) => s.selectElement(layer.id, (ev as MouseEvent).ctrlKey || (ev as MouseEvent).metaKey),
       }, [
         h('span', { class: 'layer-icon', 'data-icon': icon ?? 'Shapes', html: iconMarkup(icon, 12) }),
-        h('span', { class: 'layer-name', text: layer.options.title || layer.printElementType.title || layer.printElementType.type }),
+        h('span', { class: 'layer-name', text: layerLabel(layer, ctx) }),
         zoneTag(layer) ? h('span', { class: 'layer-zone', text: zoneTag(layer) }) : '',
         h('span', { class: 'layer-zindex', text: `z:${layer.options.zIndex ?? 0}` }),
       ].filter(Boolean))

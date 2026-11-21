@@ -54,15 +54,15 @@ export interface TableFire { (action: string, arg?: unknown): void }
 /** 表格右键菜单可见状态：由外层持有并逐帧传给 renderTableContextMenu */
 export interface TableMenuState { visible: boolean; x: number; y: number }
 
-const ROW_TYPE_BADGE: Record<TableRowType, string> = {
-  header: trG( 'table.k450'), data: trG( 'table.k451'), subtotal: trG( 'table.k452'), summary: trG( 'table.k453'),
+const ROW_TYPE_BADGE_KEYS: Record<TableRowType, string> = {
+  header: 'table.k450', data: 'table.k451', subtotal: 'table.k452', summary: 'table.k453',
 }
 
-const ROW_TYPES: { value: TableRowType; label: string }[] = [
-  { value: 'header', label: trG( 'table.k454') },
-  { value: 'data', label: trG( 'table.k455') },
-  { value: 'subtotal', label: trG( 'table.k456') },
-  { value: 'summary', label: trG( 'table.k457') },
+const ROW_TYPES: { value: TableRowType; labelKey: string }[] = [
+  { value: 'header', labelKey: 'table.k454' },
+  { value: 'data', labelKey: 'table.k455' },
+  { value: 'subtotal', labelKey: 'table.k456' },
+  { value: 'summary', labelKey: 'table.k457' },
 ]
 
 /** 96dpi 下 1mm ≈ 3.78px（与 Vue 3 轨 TableElement / 渲染端测量遍同一常量） */
@@ -678,7 +678,7 @@ export function renderTableContextMenu(
     }),
     MENU_DIVIDER(),
     h('div', { class: 'menu-group-title', text: tr(ctx, 'table.k476') }),
-    ...ROW_TYPES.map(t => menuItem(t.label, () => onMenuAction(ctx, 'set-row-type', t.value), {
+    ...ROW_TYPES.map(t => menuItem(trG(t.labelKey), () => onMenuAction(ctx, 'set-row-type', t.value), {
       disabled: !!rowTypeReason(ctx, t.value),
       title: rowTypeReason(ctx, t.value) || '',
       active: currentRowType === t.value,
@@ -895,7 +895,7 @@ export function renderTable(el: RuntimeElement, store: DesignerStore, fire: Tabl
     children.push(h('div', { class: 'row-badges' }, ctx.rows.map((row, ri) => h('span', {
       class: 'row-badge',
       style: { top: badgeTopMm(ctx, ri) + 'mm', height: badgeHeightMm(ctx, ri) + 'mm' },
-      text: ROW_TYPE_BADGE[row.type],
+      text: trG(ROW_TYPE_BADGE_KEYS[row.type]),
     }))))
   }
   children.push(measureProbe(store, el.id))

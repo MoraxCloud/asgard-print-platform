@@ -47,6 +47,7 @@ import { isExpressionText } from './shell/watermark'
 import { writeBindingValue } from './shell/binding'
 import { renderToolbar } from './shell/toolbar'
 import { applyToolbarOverflow } from './shell/toolbar-overflow'
+import { withRenderTranslator } from './shell/controls'
 import type { ShellCtx, ShellState } from './shell/controls'
 import { drawRuler } from './shell/ruler'
 import type { RulerGeom } from './shell/ruler'
@@ -832,6 +833,12 @@ export class PrintDesignerElement extends HTMLElement {
   }
 
   private paint() {
+    // 所有绘制路径（含拖拽/缩放的直接调用）都在实例语言作用域内，
+    // 无 ctx 的共用控件（步进/重置/取色/表格角标等）才不会回落到全局 locale
+    withRenderTranslator(createTranslator(this.lang), () => this.paintInternal())
+  }
+
+  private paintInternal() {
     if (!this.store) return
     // 插件 UI 与注册态同步：整树重建前先释放上一轮插件实例，再幂等注入 styles
     disposeAllElementUI()
