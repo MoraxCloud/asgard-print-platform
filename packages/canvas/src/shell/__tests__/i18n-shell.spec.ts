@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import { setLocale } from '@worm-print-platform/core/i18n'
 import { definePrintDesigner, type PrintDesignerElement } from '../../index.js'
+import { translateConstantLabel } from '../label-translation.js'
+import { localizedPropertyTip } from '../property-tip-translation.js'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..')
 
@@ -43,6 +45,20 @@ async function mountWithSelected(lang: string, type: string, setup?: (store: any
 afterEach(() => {
   setLocale('zh-CN')
   document.body.replaceChildren()
+})
+
+describe('泰语常量与属性说明', () => {
+  it('模块级常量与属性说明按泰语 locale 取词', () => {
+    const noneTh = translateConstantLabel('无', 'th-TH')
+    expect(noneTh).not.toBe('无')
+    expect(noneTh.length).toBeGreaterThan(0)
+    expect(/[\u4e00-\u9fff]/.test(noneTh)).toBe(false)
+
+    const tipTh = localizedPropertyTip('ap-rotate', 'th-TH')
+    expect(tipTh).not.toBe(localizedPropertyTip('ap-rotate', 'en-US'))
+    expect(/[\u4e00-\u9fff]/.test(tipTh)).toBe(false)
+    expect(tipTh.length).toBeGreaterThan(0)
+  })
 })
 
 describe('设计器 shell 文案国际化', () => {
