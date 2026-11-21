@@ -6,6 +6,7 @@ import { discover } from './discover.js'
 import { buildTemplate } from './template.js'
 import { validatePack } from './validate.js'
 import { updatePack } from './update.js'
+import { buildComparisonMd } from './report.js'
 
 export interface RunDeps {
   cwd?: string
@@ -18,6 +19,7 @@ const USAGE = `用法: worm-print-i18n <命令> [参数]
   template [-o <文件>] [--dir <项目根>]   导出扁平点号键翻译骨架
   validate <文件> [--strict] [--dir <项目根>]  校验语言包
   update   <文件> [--prune] [--dir <项目根>]  按最新骨架增量更新
+  report   <语言包文件> [-o <md>] [--dir <项目根>]  生成中文在最左的多语对照表（含使用位置、按模块分组）
 
 退出码: 0 成功 / 1 校验失败 / 2 用法错误`
 
@@ -89,6 +91,26 @@ export function run(argv: string[], deps: RunDeps = {}): number {
     out(`已更新 ${file}：新增 ${added.length} 键${removed.length ? `，删除 ${removed.length} 键` : ''}`)
     for (const key of added) out(`  + ${key}`)
     for (const key of removed) out(`  - ${key}`)
+    return 0
+  }
+
+  if (command === 'report') {
+    const file = positional(rest, ['-o', '--dir'])
+    if (!file) { out('用法错误：report 需要目标语言包文件路径'); return 2 }
+    const outputFile = (() => { const i = rest.indexOf('-o'); return i >= 0 ? rest[i + 1] : undefined })()
+    let messages: Record<string, string>
+    try {
+      const raw: unknown = JSON.parse(readFileSync(resolve(cwd, file), 'utf8'))
+      if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error('语言包必须是扁平对象')
+      messages = raw as Record<string, string>
+    } catch (err) {
+      out(`读取语言包失败：${file}: ${(err as Error).message}`)
+      return 1
+    }
+    const locale = file.split(/[\\/]/).pop()!.replace(/\.json$/i, '')
+    const md = buildComparisonMd(discover(dir ?? cwd), { locale, messages }, { cwd: dir ?? cwd })
+    if (outputFile) writeFileSync(resolve(cwd, outputFile), md, 'utf8')
+    else out(md.trimEnd())
     return 0
   }
 

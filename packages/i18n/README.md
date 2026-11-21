@@ -12,11 +12,13 @@ npx @worm-print-platform/i18n <命令>
 worm-print-i18n template [-o <文件>] [--dir <项目根>]
 worm-print-i18n validate <文件> [--strict] [--dir <项目根>]
 worm-print-i18n update   <文件> [--prune] [--dir <项目根>]
+worm-print-i18n report   <语言包文件> [-o <md>] [--dir <项目根>]
 ```
 
 - `template`：导出扁平点号键 JSON 骨架。排序 core → constants → propertyTips → 插件 id 字母序，同组内按键字母序；2 空格缩进 + 末尾换行。
 - `validate`：以当前项目资源生成的骨架为基准校验。缺键 / 空值 / 占位符不一致 = error；多余键 = warn（`--strict` 转 error）；`_meta` 与嵌套对象 = error。
 - `update`：保留已有译文，补新增键为空串；`--prune` 删除多余键；写回前按骨架顺序排序。
+- `report`：生成人工审核用 Markdown 对照表。**中文列在最左**，其后 en-US / th-TH / 目标语言，最后一列是「使用位置」（`相对路径:行号`，源码优先，最多 3 处）；按模块分组：core 按 key 首段、常量与属性说明独立成组、插件按 `<id> / <第二段>`（如 `echarts / panel`）。
 
 退出码：0 成功 / 1 校验失败 / 2 用法错误。
 

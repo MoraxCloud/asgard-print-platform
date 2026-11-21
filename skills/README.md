@@ -1,11 +1,12 @@
 # worm-print-platform 使用技能
 
-仓库分发以下两个技能：
+仓库分发以下三个技能：
 
 | 技能 | 用途 |
 | --- | --- |
 | `worm-print-platform-integration` | 全形态宿主集成：NPM 宿主的跨框架 Custom Element 契约 + **Vue 3 组件写法**（`canvas/vue3` 正式门面，兼容原 `@worm-vue3-print/canvas` 用法，迁移零业务改动）、浏览器直挂 / 无打包器（jQuery、原生 JS）与 Vue 2 / React 等非 Vue 3 宿主（`window.WormPrintCanvas` 全局、框架生命周期）、三条打印链路、全栈宿主最小清单、宿主 MCP 实时画布 |
 | `worm-print-platform-mcp` | 桌面 MCP 工具：实时画布模板生成、校验、视觉回读、参考图比对与会话写回 |
+| `worm-print-platform-i18n` | 自定义语言包：从已 npm 安装的项目导出全量骨架、翻译与 `validate`/`update` 校验，三端注入方式，并生成中文在最左、含使用位置、按模块分组的多语对照表 |
 
 设计器权威实现是 `@worm-print-platform/canvas`（零框架 Custom Elements + Shadow DOM），
 设计器契约的机器可读单一真源在 `packages/canvas/src/host-contract.ts`。**Vue 3 宿主是一等支持路径**：
