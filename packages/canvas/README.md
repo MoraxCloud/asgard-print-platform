@@ -60,6 +60,8 @@ el.loadTemplate(json)
 
 > 完整宿主接入代码见根 README「快速开始」章节与各框架文档：[docs/vue3.md](../../docs/vue3.md) · [docs/vue2.md](../../docs/vue2.md) · [docs/react.md](../../docs/react.md) · [docs/jquery.md](../../docs/jquery.md)。可运行工程：`demos/apps/{vue3,vue2,react,jquery}`。
 
+> 多语言（宿主 `lang`/`messages`、自定义语言文件、插件接入）：[docs/i18n.md](../../docs/i18n.md)。
+
 ## /vue3 兼容门面
 
 Vue 3 宿主用 `/vue3` 门面即可沿用组件写法（props / 事件 / `ref`），底层复用零框架的本包，模板、事件回调、`ref` 方法调用一行不动。原本消费 `@worm-vue3-print/canvas` 的项目只需改依赖名：

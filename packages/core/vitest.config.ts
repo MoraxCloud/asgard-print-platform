@@ -4,5 +4,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    setupFiles: ['./src/i18n/__tests__/setup.ts'],
   },
 })

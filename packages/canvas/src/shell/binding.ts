@@ -2,6 +2,9 @@
 // + ImageContentUpload.vue。
 // 每项由 core 的绑定注册表声明（getElementBindings / getTableCellBindings），
 // 输入框双击打开表达式编辑器，写回统一走 parsePath → 路径末段赋值（与 Vue 3 轨同实现）。
+import { tr } from './controls.js'
+import { getLocale } from '@worm-print-platform/core/i18n'
+import { translateConstantLabel } from './label-translation.js'
 import { getElementBindings, getTableCellBindings } from '@worm-print-platform/core/designer'
 import type { BindingDescriptor, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h, render } from '../core/h'
@@ -71,7 +74,7 @@ function imageUpload(ctx: ShellCtx, el: RuntimeElement): HTMLElement {
   render(h('svg', { class: 'pd-icon', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, [
     h('path', { fill: 'currentColor', d: 'M12 3l4 4h-3v7h-2V7H8zm-7 12h14v5H5Z' }),
   ]), label)
-  const textNode = document.createTextNode('上传图片')
+  const textNode = document.createTextNode(tr(ctx, 'binding.k1'))
   const input = document.createElement('input')
   input.className = 'visually-hidden'
   input.type = 'file'
@@ -87,26 +90,26 @@ function imageUpload(ctx: ShellCtx, el: RuntimeElement): HTMLElement {
     const file = input.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      alert('仅支持上传图片文件')
+      alert(tr(ctx, 'binding.k2'))
       input.value = ''
       return
     }
     const upload = ctx.host.uploadImage
     if (!upload) {
-      alert('图片上传能力未配置')
+      alert(tr(ctx, 'binding.k3'))
       input.value = ''
       return
     }
     setDisabled(true)
-    textNode.textContent = '上传中...'
+    textNode.textContent = tr(ctx, 'binding.k4')
     try {
       const url = await upload(file)
       if (url) writeBindingValue(ctx.store, el, 'options.src', url)
-      else alert('图片上传失败')
+      else alert(tr(ctx, 'binding.k5'))
     } catch (err) {
-      alert(err instanceof Error ? err.message : '图片上传失败')
+      alert(err instanceof Error ? err.message : tr(ctx, 'binding.k6'))
     } finally {
-      textNode.textContent = '上传图片'
+      textNode.textContent = tr(ctx, 'binding.k7')
       setDisabled(!ctx.host.uploadImage)
       input.value = ''
     }
@@ -117,7 +120,7 @@ function imageUpload(ctx: ShellCtx, el: RuntimeElement): HTMLElement {
   wrap.className = 'image-content-upload'
   const tip = document.createElement('p')
   tip.className = 'upload-tip'
-  tip.textContent = '支持 jpg/png/gif/bmp/webp/svg 等图片，上传后填入相对路径'
+  tip.textContent = tr(ctx, 'binding.k8')
   wrap.append(label, tip)
   return wrap
 }
@@ -130,14 +133,14 @@ export function bindingGroup(ctx: ShellCtx, el: RuntimeElement) {
   })
 
   // Vue 3 轨的「内容」分组把 BindingControl 列表直接放进 .group-content（没有 form.pd-form 壳）
-  return group(ctx, 'binding', '内容', 'Document', [
+  return group(ctx, 'binding', tr(ctx, 'binding.k9'), 'Document', [
     ...bindingDescriptorsFor(ctx, el).map(d => field(
-      d.label,
+      translateConstantLabel(d.label, ctx.lang ?? getLocale()),
       h('input', {
         class: 'pd-input',
         type: 'text',
         value: readBindingValue(el, d.targetPath),
-        placeholder: d.placeholder || '输入内容，支持 {字段} 表达式',
+        placeholder: d.placeholder || tr(ctx, 'binding.k10'),
         // Vue 3 轨用 @input 实时写回；本包整体重绘会打断输入，改为 change（提交时机不同，结果一致）
         onChange: (ev: Event) => writeBindingValue(ctx.store, el, d.targetPath, (ev.target as HTMLInputElement).value),
         onDblclick: () => openEditor(d),

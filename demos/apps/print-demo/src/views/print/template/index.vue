@@ -141,6 +141,8 @@ async function loadData() {
     } else {
       ElMessage.error(res.msg || '列表加载失败')
     }
+  } catch {
+    // post() 已统一提示网络/HTTP 错误，这里避免未捕获的 rejection 中断加载链路
   } finally {
     loading.value = false
   }
@@ -214,14 +216,23 @@ async function handlePreview(row: PrintTemplate) {
   previewVisible.value = true
 }
 
-onMounted(async () => {
-  const res = await listTypes()
-  if (res.ret) {
-    typeOptions.value = res.data
-  } else {
-    ElMessage.error(res.msg || '类型加载失败')
+async function loadTypes() {
+  try {
+    const res = await listTypes()
+    if (res.ret) {
+      typeOptions.value = res.data
+    } else {
+      ElMessage.error(res.msg || '类型加载失败')
+    }
+  } catch {
+    // post() 已统一提示网络/HTTP 错误
   }
-  await loadData()
+}
+
+onMounted(() => {
+  // 类型字典与列表互不依赖：任一请求失败都不能拖垮另一条加载链
+  void loadTypes()
+  void loadData()
 })
 </script>
 

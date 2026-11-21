@@ -127,6 +127,8 @@ export default {
       showPreview: true,
       showSave: true,
       themeMode: 'auto',
+      // 设计器界面语言：auto 跟随系统 / zh-CN / en-US / th-TH
+      langMode: 'auto',
     }
   },
   computed: {
@@ -179,10 +181,11 @@ export default {
       this.refreshRenderStatus()
       this.connectPrintClient()
     },
-    // 按钮显隐与主题预设写回设计器（统一走 property）
+    // 按钮显隐、主题与语言写回设计器（统一走 property）
     showPreview: 'applyDisplayConfig',
     showSave: 'applyDisplayConfig',
     themeMode: 'applyDisplayConfig',
+    langMode: 'applyDisplayConfig',
   },
   created() {
     // 打印客户端实例无需响应式化，挂在实例普通属性上
@@ -222,13 +225,14 @@ export default {
     this.aiSession.stop()
   },
   methods: {
-    /** 把按钮显隐与主题预设写回设计器：统一走 property，避免自定义元素属性字符串化 */
+    /** 把按钮显隐、主题与语言写回设计器：统一走 property，避免自定义元素属性字符串化 */
     applyDisplayConfig() {
       const el = this.$refs.designer
       if (!el) return
       el.showPreview = this.showPreview
       el.showSave = this.showSave
       el.theme = this.themeMode
+      el.lang = this.langMode === 'auto' ? undefined : this.langMode
     },
     // ────────────────── 设计器：属性注入与宿主回调 ──────────────────
     // <print-designer> 是原生自定义元素：`:fields="..."` 这类绑定会走 setAttribute，
@@ -885,6 +889,25 @@ export default {
             <label class="config-row">
               <input v-model="themeMode" type="radio" name="config-theme" value="auto" />
               <span>跟随系统</span>
+            </label>
+          </section>
+          <section class="config-section">
+            <div class="config-label">语言</div>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="auto" />
+              <span>跟随系统</span>
+            </label>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="zh-CN" />
+              <span>简体中文</span>
+            </label>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="en-US" />
+              <span>English</span>
+            </label>
+            <label class="config-row">
+              <input v-model="langMode" type="radio" name="config-lang" value="th-TH" />
+              <span>ไทย (泰语)</span>
             </label>
           </section>
         </div>

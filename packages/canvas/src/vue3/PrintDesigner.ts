@@ -12,6 +12,7 @@ import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import { definePrintDesigner } from '@worm-print-platform/canvas'
 import type { PrintFontDeclaration } from '@worm-print-platform/core'
+import type { CustomLocaleMessages } from '@worm-print-platform/core/i18n'
 import type {
   MultiPageTemplateData, PrintBusinessField, RuntimeElement, TemplateData,
   UploadDesignBackgroundFn, UploadImageFn,
@@ -92,6 +93,10 @@ const component = defineComponent({
     theme: { type: String as PropType<PrintDesignerThemeMode>, default: undefined },
     /** 主题色值覆盖：传参优先于预设、系统与 CSS 令牌；只影响外壳，画布纸张不受影响 */
     themeConfig: { type: Object as PropType<PrintDesignerThemeConfig>, default: undefined },
+    /** 界面语言（BCP47，如 en-US）；未传时跟随全局 locale */
+    lang: { type: String, default: undefined },
+    /** 自定义语言包（对象注入），覆盖内置与插件译文 */
+    messages: { type: Object as PropType<CustomLocaleMessages>, default: undefined },
   },
   emits: {
     preview: () => true,
@@ -132,6 +137,8 @@ const component = defineComponent({
       if (props.showSave !== undefined) el.showSave = props.showSave
       if (props.theme !== undefined) el.theme = props.theme
       if (props.themeConfig !== undefined) el.themeConfig = props.themeConfig
+      if (props.lang !== undefined) el.lang = props.lang
+      if (props.messages !== undefined) el.messages = props.messages
     }
 
     onMounted(() => {
@@ -165,6 +172,8 @@ const component = defineComponent({
     watch(() => props.showSave, v => { const el = elRef.value; if (el && v !== undefined) el.showSave = v })
     watch(() => props.theme, v => { const el = elRef.value; if (el && v !== undefined) el.theme = v })
     watch(() => props.themeConfig, v => { const el = elRef.value; if (el && v !== undefined) el.themeConfig = v })
+    watch(() => props.lang, v => { const el = elRef.value; if (el && v !== undefined) el.lang = v })
+    watch(() => props.messages, v => { const el = elRef.value; if (el && v !== undefined) el.messages = v })
 
     const api: PrintDesignerExpose = {
       getTemplateJson() {

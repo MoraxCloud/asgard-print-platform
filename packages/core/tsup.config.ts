@@ -13,7 +13,7 @@ const banner = `/*!
 
 export default defineConfig([
   {
-    entry: ['src/index.ts', 'src/designer/index.ts', 'src/browser/index.ts', 'src/node/index.ts', 'src/client/index.ts'],
+    entry: ['src/index.ts', 'src/designer/index.ts', 'src/browser/index.ts', 'src/node/index.ts', 'src/client/index.ts', 'src/i18n/index.ts'],
     format: ['esm', 'cjs'],
     dts: true,
     banner: { js: banner },

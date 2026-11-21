@@ -30,6 +30,7 @@
 // renderTableContextMenu(store, fire, menu)（不可见时它返回 '' 但仍会登记 menu 引用，
 // 之后单元格右键直接改写这份状态，外层无需再接开启/关闭动作），
 // 返回值非空时渲染进 shadow 内即可（.table-ctx-menu 为 position: fixed，按视口定位）。
+import { tr, trG } from './controls.js'
 import JsBarcode from 'jsbarcode'
 import { browserCodeRenderer } from '@worm-print-platform/core/browser'
 import type {
@@ -53,15 +54,15 @@ export interface TableFire { (action: string, arg?: unknown): void }
 /** 表格右键菜单可见状态：由外层持有并逐帧传给 renderTableContextMenu */
 export interface TableMenuState { visible: boolean; x: number; y: number }
 
-const ROW_TYPE_BADGE: Record<TableRowType, string> = {
-  header: '题', data: '数', subtotal: '小', summary: '汇',
+const ROW_TYPE_BADGE_KEYS: Record<TableRowType, string> = {
+  header: 'table.k450', data: 'table.k451', subtotal: 'table.k452', summary: 'table.k453',
 }
 
-const ROW_TYPES: { value: TableRowType; label: string }[] = [
-  { value: 'header', label: '标题行' },
-  { value: 'data', label: '数据行' },
-  { value: 'subtotal', label: '小计行' },
-  { value: 'summary', label: '汇总行' },
+const ROW_TYPES: { value: TableRowType; labelKey: string }[] = [
+  { value: 'header', labelKey: 'table.k454' },
+  { value: 'data', labelKey: 'table.k455' },
+  { value: 'subtotal', labelKey: 'table.k456' },
+  { value: 'summary', labelKey: 'table.k457' },
 ]
 
 /** 96dpi 下 1mm ≈ 3.78px（与 Vue 3 轨 TableElement / 渲染端测量遍同一常量） */
@@ -111,6 +112,8 @@ interface TableCtx {
   maxTableWidth: number
   /** 宿主注入的设计态示例数据；图片等单元格表达式据此求值 */
   designData?: readonly Record<string, unknown>[]
+  /** 当前 locale 的翻译函数（缺省走全局 t） */
+  t?: import('@worm-print-platform/core/i18n').Translate
 }
 
 function findRealElement(store: DesignerStore, id: string): RuntimeElement | null {
@@ -332,7 +335,7 @@ function cellCodeNode(ctx: TableCtx, ri: number, ci: number, cell: TableCell): H
       svg.style.display = 'none'
       const fallback = document.createElement('span')
       fallback.className = 'cell-barcode-fallback'
-      fallback.textContent = value || '条码'
+      fallback.textContent = value || tr(ctx, 'table.k458')
       holder.appendChild(fallback)
       return holder
     }
@@ -376,7 +379,7 @@ function cellCodeNode(ctx: TableCtx, ri: number, ci: number, cell: TableCell): H
 function cellPlaceholder(): HTMLElement {
   const box = document.createElement('div')
   box.className = 'image-placeholder'
-  box.textContent = '图片'
+  box.textContent = trG( 'table.k459')
   return box
 }
 
@@ -507,7 +510,7 @@ function openCellMenu(ctx: TableCtx, r: number, c: number, ev: MouseEvent) {
 function colWidthLimitError(colWidths: number[], index: number, maxW: number): string | null {
   const totalW = colWidths.reduce((s, w) => s + w, 0) + (colWidths[index] ?? 0)
   if (totalW > maxW) {
-    return `插入后表格总宽 ${Math.round(totalW * 10) / 10}mm 超过打印范围宽度 ${maxW}mm，请先缩小列宽`
+    return trG( 'table.k460', { v0: Math.round(totalW * 10) / 10, v1: maxW })
   }
   return null
 }
@@ -568,7 +571,7 @@ function onMenuAction(ctx: TableCtx, name: MatrixAction, type?: TableRowType) {
     case 'merge': run = rs => { mergeCells(rs, s); return null }; break
     case 'split': run = rs => { splitCells(rs, s); return null }; break
     case 'set-row-type':
-      run = rs => (type ? setRowType(rs, s.r1, type) : '未指定行类型')
+      run = rs => (type ? setRowType(rs, s.r1, type) : tr(ctx, 'table.k461'))
       break
   }
   if (run && executeMatrix(ctx, run)) {
@@ -607,9 +610,9 @@ function toggleMergeSameValue(ctx: TableCtx): void {
 /** 按值合并菜单项的可用性：仅数据行（选区覆盖行全为 data）可 toggle */
 function mergeSameValueDisabledReason(ctx: TableCtx): string | null {
   const s = ctx.selection
-  if (!s) return '未选择单元格'
+  if (!s) return tr(ctx, 'table.k462')
   for (let r = s.r1; r <= s.r2; r++) {
-    if (ctx.rows[r]?.type !== 'data') return '仅数据行（明细行）支持按值合并'
+    if (ctx.rows[r]?.type !== 'data') return tr(ctx, 'table.k463')
   }
   return null
 }
@@ -617,8 +620,8 @@ function mergeSameValueDisabledReason(ctx: TableCtx): string | null {
 /** 行类型禁用原因：在深拷贝上试算（Vue 3 轨 同口径，避免污染真实数据） */
 function rowTypeReason(ctx: TableCtx, t: TableRowType): string | null {
   const s = ctx.selection
-  if (!s) return '未选择单元格'
-  if (s.r1 !== s.r2) return '行类型仅支持单行设置'
+  if (!s) return tr(ctx, 'table.k464')
+  if (s.r1 !== s.r2) return tr(ctx, 'table.k465')
   return setRowType(clone(ctx.rows), s.r1, t)
 }
 
@@ -646,24 +649,24 @@ export function renderTableContextMenu(
   if (!el || el.printElementType.type !== 'table') return ''
   const ctx = makeCtx(store, fire, el)
   if (!ctx) return ''
-  const mergeReason = ctx.selection ? canMergeReason(ctx.rows, ctx.selection) : '未选择单元格'
+  const mergeReason = ctx.selection ? canMergeReason(ctx.rows, ctx.selection) : tr(ctx, 'table.k466')
   const currentRowType = ctx.selection ? ctx.rows[ctx.selection.r1]?.type ?? null : null
   return h('div', {
     class: 'table-ctx-menu',
     style: { left: menu.x + 'px', top: menu.y + 'px' },
     onMousedown: (ev: Event) => ev.stopPropagation(),
   }, [
-    menuItem('在上方插入行', () => onMenuAction(ctx, 'insert-row-above')),
-    menuItem('在下方插入行', () => onMenuAction(ctx, 'insert-row-below')),
-    menuItem('删除行', () => onMenuAction(ctx, 'delete-row'), { disabled: ctx.rows.length <= 1 }),
+    menuItem(tr(ctx, 'table.k467'), () => onMenuAction(ctx, 'insert-row-above')),
+    menuItem(tr(ctx, 'table.k468'), () => onMenuAction(ctx, 'insert-row-below')),
+    menuItem(tr(ctx, 'table.k469'), () => onMenuAction(ctx, 'delete-row'), { disabled: ctx.rows.length <= 1 }),
     MENU_DIVIDER(),
-    menuItem('在左侧插入列', () => onMenuAction(ctx, 'insert-col-left')),
-    menuItem('在右侧插入列', () => onMenuAction(ctx, 'insert-col-right')),
-    menuItem('删除列', () => onMenuAction(ctx, 'delete-col'), { disabled: ctx.colWidths.length <= 1 }),
+    menuItem(tr(ctx, 'table.k470'), () => onMenuAction(ctx, 'insert-col-left')),
+    menuItem(tr(ctx, 'table.k471'), () => onMenuAction(ctx, 'insert-col-right')),
+    menuItem(tr(ctx, 'table.k472'), () => onMenuAction(ctx, 'delete-col'), { disabled: ctx.colWidths.length <= 1 }),
     MENU_DIVIDER(),
-    menuItem('合并单元格', () => onMenuAction(ctx, 'merge'), { disabled: !!mergeReason, title: mergeReason || '' }),
-    menuItem('拆分单元格', () => onMenuAction(ctx, 'split'), { disabled: !canSplitSelection(ctx) }),
-    menuItem('按值合并', () => toggleMergeSameValue(ctx), {
+    menuItem(tr(ctx, 'table.k473'), () => onMenuAction(ctx, 'merge'), { disabled: !!mergeReason, title: mergeReason || '' }),
+    menuItem(tr(ctx, 'table.k474'), () => onMenuAction(ctx, 'split'), { disabled: !canSplitSelection(ctx) }),
+    menuItem(tr(ctx, 'table.k475'), () => toggleMergeSameValue(ctx), {
       disabled: !!mergeSameValueDisabledReason(ctx),
       title: mergeSameValueDisabledReason(ctx) || '',
       active: (() => {
@@ -674,8 +677,8 @@ export function renderTableContextMenu(
       })(),
     }),
     MENU_DIVIDER(),
-    h('div', { class: 'menu-group-title', text: '行类型' }),
-    ...ROW_TYPES.map(t => menuItem(t.label, () => onMenuAction(ctx, 'set-row-type', t.value), {
+    h('div', { class: 'menu-group-title', text: tr(ctx, 'table.k476') }),
+    ...ROW_TYPES.map(t => menuItem(trG(t.labelKey), () => onMenuAction(ctx, 'set-row-type', t.value), {
       disabled: !!rowTypeReason(ctx, t.value),
       title: rowTypeReason(ctx, t.value) || '',
       active: currentRowType === t.value,
@@ -879,7 +882,7 @@ export function renderTable(el: RuntimeElement, store: DesignerStore, fire: Tabl
     children.push(h('div', { class: 'col-resize-layer' }, colResizeBoundaries(ctx).map(i => h('div', {
       class: 'col-resize-handle',
       role: 'separator',
-      'aria-label': `列宽手柄${i}`,
+      'aria-label': tr(ctx, 'table.k477', { v0: i }),
       style: { left: colBoundaryLeftMm(ctx, i) + 'mm' },
       onMousedown: (ev: Event) => {
         ev.stopPropagation()
@@ -892,7 +895,7 @@ export function renderTable(el: RuntimeElement, store: DesignerStore, fire: Tabl
     children.push(h('div', { class: 'row-badges' }, ctx.rows.map((row, ri) => h('span', {
       class: 'row-badge',
       style: { top: badgeTopMm(ctx, ri) + 'mm', height: badgeHeightMm(ctx, ri) + 'mm' },
-      text: ROW_TYPE_BADGE[row.type],
+      text: trG(ROW_TYPE_BADGE_KEYS[row.type]),
     }))))
   }
   children.push(measureProbe(store, el.id))

@@ -2,6 +2,7 @@
 // 多页面模板（固定顺序版式组合）：归一化校验 + 字体合并 + 整份文档组合
 // 核心业务逻辑，纯字符串/纯类型，不依赖 DOM——可脱离浏览器单测
 
+import { t as tr } from '../i18n/index.js'
 import type {
   TemplateData,
   PageLayout,
@@ -22,7 +23,7 @@ import type { PrintFontDeclaration } from './fonts.js'
 
 /** 页面名用于错误上下文：`第 N 页「封面」` */
 function pageLabel(p: TemplateData, index: number): string {
-  return p.name ? `第 ${index + 1} 页「${p.name}」` : `第 ${index + 1} 页`
+  return p.name ? tr('diagnostic.multiTemplate.pageLabelNamed', { index: index + 1, name: p.name }) : tr('diagnostic.multiTemplate.pageLabelPlain', { index: index + 1 })
 }
 
 /**
@@ -41,17 +42,17 @@ export function normalizeTemplate(
     : [templateJson]
 
   if (pages.length === 0) {
-    throw new Error('多页面模板至少需要一页')
+    throw new Error(tr('diagnostic.multiTemplate.emptyPages'))
   }
   if (pages.length === 1) return pages
 
   const firstPaper = getPaperDimensions(pages[0]!)
   pages.forEach((p, i) => {
     if (isContinuousPaper(p)) {
-      throw new Error(`多页面模板不支持连续纸（${pageLabel(p, i)}）`)
+      throw new Error(tr('diagnostic.multiTemplate.continuous', { page: pageLabel(p, i) }))
     }
     if (p.tiling?.enabled === true) {
-      throw new Error(`多页面模板不支持标签拼版（${pageLabel(p, i)}）`)
+      throw new Error(tr('diagnostic.multiTemplate.tiling', { page: pageLabel(p, i) }))
     }
     const d = getPaperDimensions(p)
     // 同一纸型允许横纵向互换（A4 纵 210×297 / 横 297×210），逐页方向可在一份文档中混排。
@@ -60,7 +61,7 @@ export function normalizeTemplate(
     const rotatedSize = d.width === firstPaper.height && d.height === firstPaper.width
     if (!sameSize && !rotatedSize) {
       throw new Error(
-        `多页面模板各页纸张尺寸必须一致（${pageLabel(p, i)} ${d.width}×${d.height}mm 与首页 ${firstPaper.width}×${firstPaper.height}mm 不同）`,
+        tr('diagnostic.multiTemplate.paperMismatch', { page: pageLabel(p, i), width: d.width, height: d.height, firstWidth: firstPaper.width, firstHeight: firstPaper.height }),
       )
     }
   })
@@ -129,7 +130,7 @@ export function composeMultiPageDocument(
   copies: MultiPageCopyInput[],
 ): MultiPageDocument {
   if (copies.length === 0) {
-    throw new Error('多页面模板至少需要一份数据')
+    throw new Error(tr('diagnostic.multiTemplate.emptyData'))
   }
   const templates = copies[0]!.boundPages
 

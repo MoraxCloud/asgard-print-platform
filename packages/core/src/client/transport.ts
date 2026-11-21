@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n/index.js'
 import {
   DEFAULT_PORT,
   PORT_SCAN_LIMIT,
@@ -98,7 +99,7 @@ export class WsTransport {
       this.opts.ports ?? Array.from({ length: PORT_SCAN_LIMIT }, (_, i) => DEFAULT_PORT + i)
 
     for (const port of ports) {
-      if (signal?.aborted) throw new WormPrintError('CLIENT_NOT_RUNNING', '连接已取消')
+      if (signal?.aborted) throw new WormPrintError('CLIENT_NOT_RUNNING', tr('client.cancelled'))
       try {
         this.hello = await this.tryPort(port, signal)
         this.manualClose = false
@@ -110,7 +111,7 @@ export class WsTransport {
           this.setStatus('disconnected')
           throw new WormPrintError(
             'UNAUTHORIZED',
-            err.message || '配对 token 无效或来源未授权',
+            err.message || tr('client.invalidToken'),
           )
         }
         // 该端口无客户端，继续探测下一个
@@ -119,21 +120,21 @@ export class WsTransport {
     this.setStatus('disconnected')
     throw new WormPrintError(
       'CLIENT_NOT_RUNNING',
-      '未发现运行中的打印客户端（已探测默认端口区间），请确认客户端已启动',
+      tr('client.notRunning'),
     )
   }
 
   /** 发送请求并等待同 id 响应 */
   request<T>(type: string, payload: unknown, timeoutMs?: number): Promise<T> {
     if (this.status_ !== 'connected' || !this.ws) {
-      return Promise.reject(new WormPrintError('CLIENT_NOT_RUNNING', '打印客户端未连接'))
+      return Promise.reject(new WormPrintError('CLIENT_NOT_RUNNING', tr('client.notConnected')))
     }
     const raw = encodeRequest(type, payload)
     const frame = JSON.parse(raw) as ClientRequest
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pendings.delete(frame.id)
-        reject(new WormPrintError('CLIENT_TIMEOUT', `请求 ${type} 超时未响应`))
+        reject(new WormPrintError('CLIENT_TIMEOUT', tr('client.timeout', { type })))
       }, timeoutMs ?? this.defaultTimeout)
       this.pendings.set(frame.id, {
         resolve: resolve as (p: unknown) => void,
@@ -149,7 +150,7 @@ export class WsTransport {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     this.reconnectTimer = null
     this.ws?.close()
-    this.failAllPendings(new WormPrintError('CLIENT_NOT_RUNNING', '连接已关闭'))
+    this.failAllPendings(new WormPrintError('CLIENT_NOT_RUNNING', tr('client.closed')))
     this.setStatus('disconnected')
   }
 
@@ -215,7 +216,7 @@ export class WsTransport {
       this.handleIncoming(ws, String(ev.data))
     }
     ws.onclose = () => {
-      this.failAllPendings(new WormPrintError('CLIENT_NOT_RUNNING', '与客户端的连接中断'))
+      this.failAllPendings(new WormPrintError('CLIENT_NOT_RUNNING', tr('client.disconnected')))
       this.hello = null
       this.ws = null
       if (!this.manualClose) this.scheduleReconnect()
@@ -254,7 +255,7 @@ export class WsTransport {
   private dispatchServerRequest(ws: WebSocket, frame: ClientRequest): void {
     const handler = this.requestHandler
     if (!handler) {
-      this.safeSend(ws, frame.id, false, undefined, 'INVALID_REQUEST', '桌面端请求未注册处理器')
+      this.safeSend(ws, frame.id, false, undefined, 'INVALID_REQUEST', tr('client.unregisteredHandler'))
       return
     }
     Promise.resolve()
@@ -280,7 +281,7 @@ export class WsTransport {
       JSON.stringify(
         ok
           ? { id, ok, payload }
-          : { id, ok, error: { code: errorCode ?? 'INTERNAL', message: errorMessage ?? '内部错误' } },
+          : { id, ok, error: { code: errorCode ?? 'INTERNAL', message: errorMessage ?? tr('client.internalError') } },
       ),
     )
   }

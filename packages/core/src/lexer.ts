@@ -1,4 +1,5 @@
 // packages/print-core/src/lexer.ts
+import { t as tr } from './i18n/index.js'
 import type { Token } from './types.js'
 
 const DANGEROUS_PROPS = new Set([
@@ -48,7 +49,7 @@ export function tokenize(input: string): Token[] {
           j++
         }
       }
-      if (j >= n) throw new Error('字符串未闭合')
+      if (j >= n) throw new Error(tr('diagnostic.lexer.unterminatedString'))
       tokens.push({ type: 'str', value: s, position: i })
       i = j + 1
       continue
@@ -63,10 +64,10 @@ export function tokenize(input: string): Token[] {
       const word = input.slice(i, j)
 
       if (RESERVED_WORDS.has(word)) {
-        throw new Error(`不允许使用关键字: ${word}`)
+        throw new Error(tr('diagnostic.lexer.keyword', { word }))
       }
       if (DANGEROUS_PROPS.has(word)) {
-        throw new Error(`禁止访问: ${word}`)
+        throw new Error(tr('diagnostic.lexer.forbidden', { word }))
       }
 
       // true/false 作为 bool
@@ -88,7 +89,7 @@ export function tokenize(input: string): Token[] {
     }
 
     const two = input.slice(i, i + 2)
-    if (two === '=>') throw new Error('不允许函数定义')
+    if (two === '=>') throw new Error(tr('diagnostic.lexer.noFunctionDef'))
     if (['==', '!=', '<=', '>=', '&&', '||'].includes(two)) {
       tokens.push({ type: 'punc', value: two, position: i })
       i += 2
@@ -96,15 +97,15 @@ export function tokenize(input: string): Token[] {
     }
 
     // 单字符
-    if (ch === '=') throw new Error('不允许赋值')
-    if (ch === ';') throw new Error('不允许多条语句')
+    if (ch === '=') throw new Error(tr('diagnostic.lexer.noAssignment'))
+    if (ch === ';') throw new Error(tr('diagnostic.lexer.noMultipleStatements'))
     if ('+-*/%()[]{},:.?!<>'.includes(ch)) {
       tokens.push({ type: 'punc', value: ch, position: i })
       i++
       continue
     }
 
-    throw new Error(`非法字符: ${ch}`)
+    throw new Error(tr('diagnostic.lexer.invalidChar', { ch }))
   }
 
   return tokens

@@ -5,6 +5,7 @@
 //
 // 重要：本文件不得 import 任何 Vue SFC —— src/node.ts 由 tsup 单独打包成 Node 入口，
 // 走纯 TS 链路。设计器组件由 src/index.ts 调 registerChartDesigner 补充注册。
+import { t } from '@worm-print-platform/core/i18n'
 import {
   defineElementPlugin,
   getElementPluginById,
@@ -26,16 +27,16 @@ export { CHART_PLUGIN_ID } from './constants.js'
 
 /** 十类图表元素共享的数据契约（strict 校验与 AI 提示词共用） */
 const CHART_OPTION_META = {
-  chartOption: { kind: 'object' as const, label: '图表 option' },
-  chartDataSource: { kind: 'text' as const, label: '数据源' },
-  chartCategoryField: { kind: 'text' as const, label: '类目字段' },
-  chartValueFields: { kind: 'object' as const, label: '数值字段' },
-  chartSeriesField: { kind: 'text' as const, label: '系列拆分字段' },
+  chartOption: { kind: 'object' as const, label: t('echarts.meta.chartOption') },
+  chartDataSource: { kind: 'text' as const, label: t('echarts.meta.dataSource') },
+  chartCategoryField: { kind: 'text' as const, label: t('echarts.meta.categoryField') },
+  chartValueFields: { kind: 'object' as const, label: t('echarts.meta.valueFields') },
+  chartSeriesField: { kind: 'text' as const, label: t('echarts.meta.seriesField') },
 }
 
 const SCATTER_OPTION_META = {
   ...CHART_OPTION_META,
-  chartBubble: { kind: 'bool' as const, label: '气泡大小' },
+  chartBubble: { kind: 'bool' as const, label: t('echarts.meta.bubbleSize') },
 }
 
 export const CHART_PLUGIN: PrintElementPlugin = defineElementPlugin({
@@ -43,11 +44,13 @@ export const CHART_PLUGIN: PrintElementPlugin = defineElementPlugin({
   version: CHART_EXECUTOR_VERSION,
   kinds: CHART_KIND_DEFINITIONS.map(def => ({
     type: def.type,
-    label: def.label,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get label() { return t(def.labelKey) },
     icon: def.icon,
     fixedHeight: true,
     requiredOptionKeys: def.requiredOptionKeys,
-    notes: def.notes,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get notes() { return t(def.notesKey) },
     optionMeta: def.type === 'scatterChart' ? SCATTER_OPTION_META : CHART_OPTION_META,
     defaultOptions: partial => chartFactoryDefaults(def.type, partial as Record<string, unknown> | undefined),
     binding: { bind: (options, data) => bindChartData(def.type, options, data) },

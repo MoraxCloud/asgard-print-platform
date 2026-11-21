@@ -2,6 +2,7 @@
 // 顶部工具栏自适应收纳（print-common 侧）：与 print-Vue 3 轨的 useToolbarOverflow 同一判定、
 // 同一优先级链、同一落位形态，验收口径逐条对照 Vue 3 轨 的 ToolbarOverflowWiring.spec.ts。
 import { describe, it, expect } from 'vitest'
+import { createTranslator } from '@worm-print-platform/core/i18n'
 import { DesignerStore } from '../../core/store'
 import { FormatToolbar } from '../../core/format'
 import { render } from '../../core/h'
@@ -38,13 +39,14 @@ function stubLayout(tb: HTMLElement, available: number) {
   }
 }
 
-function paint(available: number | null) {
+function paint(available: number | null, lang?: string) {
   const store = new DesignerStore()
   store.addElement('text', { left: 10, top: 10, width: 40, height: 10 })
   store.selectOne(store.elements[0]!.id)
   const ctx: ShellCtx = {
     store, format: new FormatToolbar(store), state: makeState(),
     repaint: () => {}, fire: () => {}, showHelp: true, isEdit: false,
+    t: lang ? createTranslator(lang) : undefined, lang,
     host: { fonts: [] },
   }
   const host = document.createElement('div')
@@ -59,6 +61,14 @@ function paint(available: number | null) {
 const movedIdsNow = (host: ParentNode) => Array
   .from(host.querySelectorAll('.tb-more-slot > .tb-ou'))
   .map(e => (e as HTMLElement).dataset.unit ?? '')
+
+describe('print-common 工具栏收纳：分组标题跟随实例语言', () => {
+  it('「更多」菜单的分组标题按实例 locale 取词，不冻结在模块加载时的语言', () => {
+    const { host } = paint(null, 'en-US')
+    const item = host.querySelector('.tb-more-item[data-unit="clipboard"]')
+    expect(item?.querySelector('.tb-menu-label')?.textContent).toBe('Clipboard')
+  })
+})
 
 describe('print-common 工具栏收纳：单元与落位槽声明齐备', () => {
   it('9 个收纳单元按声明注册，且面板为每个单元预留落位槽', () => {

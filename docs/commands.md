@@ -43,11 +43,11 @@ npm run dev:client                 # 桌面客户端（electron-vite dev）
 
 ### 示例工程（demos）
 
-四个宿主示例是彼此独立的 npm 工程，`file:` 依赖指向本仓 `packages/`。
+五个宿主示例是彼此独立的 npm 工程，`file:` 依赖指向本仓 `packages/`。
 
 ```bash
 npm run install:demos:all          # 逐个子工程安装依赖
-npm run dev:demos:all              # 五进程并行：三个包 watch + 四个 demo + :9300 总览页
+npm run dev:demos:all              # 六进程并行：五个 demo + :9300 总览页
 npm run dev:demos:nav              # 仅起 :9300 总览导航页
 
 npm run dev:demos:vue3             # 单独起某个宿主（vue3 :9331 / vue2 :9332 / jquery :9334 / react :9335）
@@ -212,4 +212,4 @@ docker run -p 3001:3001 \
 | `publish-npm.yml` | 按 tag 发布 4 个代码包（支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true` |
 | `npm-dist-tag.yml` | 运维 dist-tag（rm / add） | `gh workflow run npm-dist-tag.yml ...` |
 | `create-gitee-release.yml` | 在 Gitee 创建同名 release | `gh workflow run create-gitee-release.yml -f tag=v1.6.0` |
-| `deploy-pages.yml` | 四个宿主 demo 的 GitHub Pages 静态演示 | `gh workflow run deploy-pages.yml` |
+| `deploy-pages.yml` | 五个宿主 demo 的 GitHub Pages 静态演示 | `gh workflow run deploy-pages.yml` |

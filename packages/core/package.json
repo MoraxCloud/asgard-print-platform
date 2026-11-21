@@ -33,6 +33,11 @@
       "import": "./dist/client/index.js",
       "require": "./dist/client/index.cjs"
     },
+    "./i18n": {
+      "types": "./dist/i18n/index.d.ts",
+      "import": "./dist/i18n/index.js",
+      "require": "./dist/i18n/index.cjs"
+    },
     "./styles/designer.css": "./dist/styles/designer.css",
     "./styles/theme.css": "./dist/styles/theme.css",
     "./styles/icon-manifest.json": "./dist/styles/icon-manifest.json"
@@ -57,8 +62,10 @@
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup && node scripts/copy-styles.mjs && node ../../scripts/inject-license-banner.mjs dist",
-    "test": "vitest run",
+    "build": "npm run i18n:keys && tsup && node scripts/copy-styles.mjs && node ../../scripts/inject-license-banner.mjs dist",
+    "test": "npm run i18n:check && vitest run",
+    "i18n:keys": "node scripts/gen-locale-keys.mjs",
+    "i18n:check": "node scripts/gen-locale-keys.mjs --check",
     "test:watch": "vitest"
   },
   "devDependencies": {
@@ -69,6 +76,7 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "i18next": "^27.2.2",
     "jsbarcode": "^3.12.3",
     "qrcode": "^1.5.4"
   }

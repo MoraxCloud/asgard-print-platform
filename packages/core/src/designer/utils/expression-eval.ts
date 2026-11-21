@@ -1,6 +1,7 @@
 // web/src/components/print/utils/expression-eval.ts
 // 包装共享引擎，保持原有 API 兼容
 
+import { formatNumber, getLocale } from '../../i18n/index.js'
 import { engine } from './engine.js'
 import {
   formatMoney,
@@ -29,7 +30,7 @@ export const EXTENDED_FUNCTIONS = {
   IF: ifFn,
   FORMAT: (value: any) => {
     if (typeof value !== 'number') return String(value)
-    return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return formatNumber(value, getLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   },
   SUBSTR: (str: string, start: number, len?: number) => String(str).slice(start, len ? start + len : undefined),
   LEN: (str: string) => String(str).length,

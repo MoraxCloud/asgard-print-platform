@@ -95,6 +95,8 @@ export interface GenerateOptions {
   pageHeightMm?: number
   /** 实际总页数：逐页截取场景只生成单页 HTML 时传真实值，避免页码表达式 {totalPages} 失真为 1 */
   totalPageCount?: number
+  /** 生成文档的 lang 属性；默认 zh-CN，不随 UI 语言自动变化（内容语言属于模板数据） */
+  documentLang?: string
 }
 
 /**
@@ -120,9 +122,9 @@ export function generateHtml(
   }
 
   if (isMeasure) {
-    return generateMeasurementHtml(template, css, ctx, printData)
+    return generateMeasurementHtml(template, css, ctx, printData, options?.documentLang)
   }
-  return generateFinalHtml(template, pageLayouts, css, totalPages, ctx, printData)
+  return generateFinalHtml(template, pageLayouts, css, totalPages, ctx, printData, options?.documentLang)
 }
 
 // ─── 第一遍：测量模式 ───
@@ -132,6 +134,7 @@ function generateMeasurementHtml(
   css: string,
   ctx: RenderCtx,
   printData?: Record<string, any> | Record<string, any>[],
+  documentLang?: string,
 ): string {
   const paper = getPaperDims(template)
   const contentWidth = paper.width - template.margins.left - template.margins.right
@@ -151,7 +154,7 @@ function generateMeasurementHtml(
   )
 
   let html = `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="${documentLang ?? 'zh-CN'}">
 <head>
 <meta charset="UTF-8">
 <style>${css}</style>
@@ -202,9 +205,14 @@ export function renderFinalPages(
 }
 
 /** 套上完整 HTML 文档外壳（含系统变量注入） */
-export function wrapHtmlDocument(css: string, bodyInnerHtml: string, bodyClass?: string): string {
+export function wrapHtmlDocument(
+  css: string,
+  bodyInnerHtml: string,
+  bodyClass?: string,
+  documentLang?: string,
+): string {
   const html = `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="${documentLang ?? 'zh-CN'}">
 <head>
 <meta charset="UTF-8">
 <style>${css}</style>
@@ -223,6 +231,7 @@ function generateFinalHtml(
   totalPages: number,
   ctx: RenderCtx,
   printData?: Record<string, any> | Record<string, any>[],
+  documentLang?: string,
 ): string {
   // totalPages 必须显式下传（含 generateHtml 的 totalPageCount 覆盖），否则单页截取时页码失真
   const bodyInner = renderFinalPages(template, pageLayouts, printData ?? {}, ctx, { totalPages })
@@ -230,6 +239,7 @@ function generateFinalHtml(
     css,
     bodyInner,
     isContinuousPaper(template) ? 'continuous' : undefined,
+    documentLang,
   )
 }
 

@@ -11,5 +11,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   shims: true,
-  external: ['@worm-print-platform/core', '@worm-print-platform/core/designer'],
+  external: ['@worm-print-platform/core', '@worm-print-platform/core/designer', '@worm-print-platform/core/i18n'],
 })

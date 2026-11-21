@@ -1,6 +1,7 @@
 // print.submit / print.submitHtml payload 校验：边界在进入打印引擎前收敛，错误一律 INVALID_REQUEST。
 import type { PrintOptions } from '@worm-print-platform/core/client'
 import { MAX_BATCH_COPIES } from '@worm-print-platform/core'
+import { t } from '@worm-print-platform/core/i18n'
 import { ProtocolFailure } from './protocol-error.js'
 
 /** print.submit 校验后的模板渲染任务（原 shared/render-protocol.ts 的 RenderJobSpec） */
@@ -53,18 +54,18 @@ function parsePrintData(
   value: unknown,
 ): Record<string, unknown> | Array<Record<string, unknown>> {
   if (Array.isArray(value)) {
-    if (value.length === 0) invalid('批量打印数据必须是非空对象数组')
+    if (value.length === 0) invalid(t('service.printData.emptyArray'))
     if (value.length > MAX_BATCH_COPIES) {
-      invalid(`批量打印最多支持 ${MAX_BATCH_COPIES} 份，当前 ${value.length} 份`)
+      invalid(t('service.printData.tooMany', { max: MAX_BATCH_COPIES, count: value.length }))
     }
     for (let i = 0; i < value.length; i++) {
       if (!isRecord(value[i]) || Array.isArray(value[i])) {
-        invalid(`批量打印数据第 ${i + 1} 项必须是对象`)
+        invalid(t('service.printData.itemNotObject', { index: i + 1 }))
       }
     }
     return value as Array<Record<string, unknown>>
   }
-  if (!isRecord(value)) invalid('printData 必须是对象或数组')
+  if (!isRecord(value)) invalid(t('service.printData.notObjectOrArray'))
   return value
 }
 

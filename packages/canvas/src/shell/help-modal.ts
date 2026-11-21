@@ -12,7 +12,8 @@
 //   本包：外壳是整体重绘模型，弹窗必须挂在 shadow root 上（.designer-container 的兄弟节点），
 //         由 print-designer.ts 的 helpVisible + syncHelp() 决定 DOM 存在与否（同表达式编辑器范式）；
 //         mountHelpModal 登记一次性 document keydown，卸载即摘；无进出场过渡（见 PARITY §八）。
-import { helpSections } from './help-content'
+import { createTranslator } from '@worm-print-platform/core/i18n'
+import { getHelpSections } from './help-content'
 import { h, render } from '../core/h'
 import type { El } from '../core/h'
 
@@ -23,15 +24,17 @@ const DEFAULT_TAB = 'getting-started'
 export interface HelpModalOptions {
   /** 首次打开的页签（Vue 3 轨 的 initialTab，默认「快速入门」） */
   initialTab?: string
+  /** 语言包标识；en-* 显示英文帮助，其余中文 */
+  locale?: string
   onClose: () => void
 }
 
-function knownTab(id: string | null | undefined): string {
-  return helpSections.some(s => s.id === id) ? String(id) : ''
+function knownTab(sections: ReturnType<typeof getHelpSections>, id: string | null | undefined): string {
+  return sections.some(s => s.id === id) ? String(id) : ''
 }
 
 /** 显式指定页签优先；未指定时沿用上次页签（与 Vue 3 轨的打开口径一致） */
-function resolveTab(initial?: string): string {
+function resolveTab(sections: ReturnType<typeof getHelpSections>, initial?: string): string {
   let saved: string | null = null
   try {
     // 显式 window. 前缀：happy-dom 下 localStorage 不挂在 globalThis 上，浏览器行为一致
@@ -39,12 +42,14 @@ function resolveTab(initial?: string): string {
   } catch {
     saved = null // 隐私模式或存储不可用：回落到 initialTab
   }
-  return knownTab(initial) || knownTab(saved) || DEFAULT_TAB
+  return knownTab(sections, initial) || knownTab(sections, saved) || DEFAULT_TAB
 }
 
 /** 渲染帮助弹窗（调用方负责挂到 shadow root 上） */
 export function renderHelpModal(opts: HelpModalOptions): El {
-  const active = resolveTab(opts.initialTab)
+  const sections = getHelpSections(opts.locale)
+  const t = createTranslator(opts.locale ?? 'zh-CN')
+  const active = resolveTab(sections, opts.initialTab)
 
   /** 切页签：canvas 由响应式重算 currentContent，这里只定点改高亮与正文，不重建弹窗 */
   const switchTab = (ev: Event, tabId: string) => {
@@ -55,7 +60,7 @@ export function renderHelpModal(opts: HelpModalOptions): El {
       tab.classList.toggle('active', tab === btn)
     }
     const body = dialog.querySelector<HTMLElement>('.help-content')
-    if (body) body.innerHTML = helpSections.find(s => s.id === tabId)?.content ?? ''
+    if (body) body.innerHTML = sections.find(s => s.id === tabId)?.content ?? ''
     try {
       window.localStorage.setItem(STORAGE_KEY, tabId)
     } catch {
@@ -73,16 +78,16 @@ export function renderHelpModal(opts: HelpModalOptions): El {
     h('div', { class: 'help-modal' }, [
       h('div', { class: 'help-modal-header' }, [
         h('div', { class: 'help-modal-title-wrap' }, [
-          h('h2', { class: 'help-modal-title', text: '帮助文档' }),
+          h('h2', { class: 'help-modal-title', text: t('helpModal.k101') }),
           h('span', { class: 'help-modal-project', text: 'worm-print-platform' }),
         ]),
         h('button', {
-          type: 'button', class: 'help-modal-close', title: '关闭', text: '×',
+          type: 'button', class: 'help-modal-close', title: t('helpModal.k102'), text: '×',
           onClick: () => opts.onClose(),
         }),
       ]),
       h('div', { class: 'help-modal-body' }, [
-        h('div', { class: 'help-modal-sidebar' }, helpSections.map(item => h('button', {
+        h('div', { class: 'help-modal-sidebar' }, sections.map(item => h('button', {
           type: 'button',
           class: `help-tab${item.id === active ? ' active' : ''}`,
           text: item.title,
@@ -91,7 +96,7 @@ export function renderHelpModal(opts: HelpModalOptions): El {
         h('div', { class: 'help-modal-content' }, [
           h('div', {
             class: 'help-content',
-            html: helpSections.find(s => s.id === active)?.content ?? '',
+            html: sections.find(s => s.id === active)?.content ?? '',
           }),
         ]),
       ]),

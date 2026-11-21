@@ -4,6 +4,11 @@
 import { beforeAll } from 'vitest'
 import { BrowserPool } from './src/browser-pool.js'
 
+// 锁定中文基线：Node 22+ 自带 navigator.language='en-US'，诊断文案断言基于中文源文本
+try {
+  Object.defineProperty(navigator, 'language', { get: () => 'zh-CN', configurable: true })
+} catch { /* 无 navigator 的环境忽略 */ }
+
 beforeAll(async () => {
   const pool = BrowserPool.getInstance()
   const page = await pool.acquire()

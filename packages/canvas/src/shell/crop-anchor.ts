@@ -3,18 +3,20 @@
 //  内部同为 .pd-field>.pd-label(+button.pd-help) + select.pd-select / .pd-stepper /
 //  .pd-crop-note / .pd-crop-preview>img.pd-crop-thumb+div.pd-crop-win）。
 // 判轴、档位表、行模型、提示文案全部取自 core 的 crop-anchor，两端不再各写一遍。
+import { tr } from './controls.js'
+import { getLocale } from '@worm-print-platform/core/i18n'
+import { localizedPropertyTip } from './property-tip-translation.js'
 import {
   buildCropAnchor,
-  CROP_SCALE_LABEL,
+  cropScaleLabel,
   CROP_SCALE_MAX,
   CROP_SCALE_MIN,
-  CROP_SAMPLE_NOTE,
+  cropSampleNote,
   cropAxisFields,
   cropAxisNote,
   cropPresetOptions,
   cropWindow,
   parseCropAnchor,
-  propertyTip,
   resolveCropPreview,
   resolveCropTravel,
 } from '@worm-print-platform/core/designer'
@@ -84,7 +86,7 @@ export function cropAnchorField(ctx: ShellCtx, o: CropAnchorOpts) {
   if (keepRaw) {
     const opt = document.createElement('option')
     opt.value = 'custom'
-    opt.textContent = '自定义（保留原值）'
+    opt.textContent = tr(ctx, 'cropAnchor.k37')
     select.appendChild(opt)
   }
   select.value = keepRaw ? 'custom' : `${x},${y}`
@@ -95,16 +97,16 @@ export function cropAnchorField(ctx: ShellCtx, o: CropAnchorOpts) {
     o.onCommit(buildCropAnchor(nx, ny))
   })
 
-  const tip = propertyTip(o.fieldKey)
+  const tip = localizedPropertyTip(o.fieldKey, ctx.lang ?? getLocale())
   const rows: unknown[] = [h('div', { class: 'pd-field', dataset: { field: o.fieldKey } }, [
     h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [o.label, labelHelp(tip)]), o.resetAnchor ?? ''].filter(Boolean)),
     select,
   ])]
   // 放大比例排在两框之前：先推大画面才有多出来的边，两框报的可挪量按推大后的尺寸结算
   rows.push(h('div', { class: 'pd-field', dataset: { field: 'ap-img-fit-scale' } }, [
-    h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [CROP_SCALE_LABEL, labelHelp(propertyTip('ap-img-fit-scale'))]), o.resetScale ?? ''].filter(Boolean)),
+    h('span', { class: 'pd-label' }, [h('span', { class: 'pd-label-t' }, [cropScaleLabel(), labelHelp(localizedPropertyTip('ap-img-fit-scale', ctx.lang ?? getLocale()))]), o.resetScale ?? ''].filter(Boolean)),
     stepper({
-      value: o.scale, min: CROP_SCALE_MIN, max: CROP_SCALE_MAX, step: 5, placeholder: '默认 100',
+      value: o.scale, min: CROP_SCALE_MIN, max: CROP_SCALE_MAX, step: 5, placeholder: tr(ctx, 'cropAnchor.k38'),
       onCommit: v => o.onScaleCommit(v > CROP_SCALE_MIN ? v : undefined),
     }),
   ]))
@@ -121,11 +123,11 @@ export function cropAnchorField(ctx: ShellCtx, o: CropAnchorOpts) {
   const note = cropAxisNote(travel, keepRaw)
   if (note) rows.push(h('p', { class: 'pd-crop-note', text: note }))
 
-  if (preview.isSample) rows.push(h('p', { class: 'pd-crop-note', text: CROP_SAMPLE_NOTE }))
+  if (preview.isSample) rows.push(h('p', { class: 'pd-crop-note', text: cropSampleNote() }))
 
   rows.push(h('div', { class: 'pd-crop-preview' }, [
     h('img', {
-      class: 'pd-crop-thumb', src: preview.src, alt: preview.isSample ? '示例图' : '原图',
+      class: 'pd-crop-thumb', src: preview.src, alt: preview.isSample ? tr(ctx, 'cropAnchor.k39') : tr(ctx, 'cropAnchor.k40'),
       onLoad: (ev: Event) => {
         const img = ev.target as HTMLImageElement
         if (!(img.naturalWidth > 0 && img.naturalHeight > 0)) return

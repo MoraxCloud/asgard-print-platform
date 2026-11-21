@@ -3,6 +3,7 @@
 // common 的设计器是「状态变更即整树重建」：每次 paint 都 clear + render，
 // 所以收纳不靠搬运历史节点，而是每次重绘后按同一判定把内联节点放入落位槽。
 // 判定本身复用 @worm-print-platform/core/designer 的 resolveToolbarOverflow，两宿主同链同序。
+import { tr } from './controls.js'
 import { h } from '../core/h'
 import { iconSvg } from '../core/icons'
 import { resolveToolbarOverflow } from '@worm-print-platform/core/designer'
@@ -16,21 +17,21 @@ export interface ToolbarUnitDef {
   id: string
   /** 数值小者先被收进「更多」 */
   order: number
-  /** 面板内分组标题 */
-  label: string
+  /** 面板内分组标题的语言包 key：渲染时按实例 locale 取词，避免模块级常量冻结语言 */
+  labelKey: string
 }
 
 /** 收纳优先级链：与 Vue 3 轨的 DesignerToolbar / FormatToolbar 声明逐条对应 */
 export const TOOLBAR_UNITS: ToolbarUnitDef[] = [
-  { id: 'clipboard', order: 1, label: '剪贴板' },
-  { id: 'painter', order: 2, label: '格式刷' },
-  { id: 'zoom', order: 3, label: '缩放' },
-  { id: 'arrange-view', order: 4, label: '排列 / 视图' },
-  { id: 'border', order: 5, label: '边框' },
-  { id: 'color', order: 6, label: '颜色' },
-  { id: 'align', order: 7, label: '对齐' },
-  { id: 'style', order: 8, label: '文字样式' },
-  { id: 'font', order: 9, label: '字体与字号' },
+  { id: 'clipboard', order: 1, labelKey: 'toolbarOverflow.k478' },
+  { id: 'painter', order: 2, labelKey: 'toolbarOverflow.k479' },
+  { id: 'zoom', order: 3, labelKey: 'toolbarOverflow.k480' },
+  { id: 'arrange-view', order: 4, labelKey: 'toolbarOverflow.k481' },
+  { id: 'border', order: 5, labelKey: 'toolbarOverflow.k482' },
+  { id: 'color', order: 6, labelKey: 'toolbarOverflow.k483' },
+  { id: 'align', order: 7, labelKey: 'toolbarOverflow.k484' },
+  { id: 'style', order: 8, labelKey: 'toolbarOverflow.k485' },
+  { id: 'font', order: 9, labelKey: 'toolbarOverflow.k486' },
 ]
 
 /**
@@ -47,7 +48,7 @@ export function renderMoreGroup(ctx: ShellCtx) {
       dataset: { unit: unit.id },
       style: { display: 'none' },
     }, [
-      h('div', { class: 'tb-menu-label', text: unit.label }),
+      h('div', { class: 'tb-menu-label', text: tr(ctx, unit.labelKey) }),
       h('div', {
         class: 'tb-more-slot',
         id: `tb-more-slot-${unit.id}`,
@@ -60,12 +61,12 @@ export function renderMoreGroup(ctx: ShellCtx) {
       h('button', {
         type: 'button',
         class: `tb-dd-trigger${open ? ' on' : ''}`,
-        dataset: { test: 'more-dd', tip: '更多' },
+        dataset: { test: 'more-dd', tip: tr(ctx, 'toolbarOverflow.k487') },
         onClick: () => {
           ctx.state.openMore = !open
           ctx.repaint()
         },
-        html: `${iconSvg('Ellipsis', 15)}<span class="tb-btn-text">更多</span>${iconSvg('ChevronDown', 12, 'tb-dd-arrow')}`,
+        html: tr(ctx, 'toolbarOverflow.k488', { v0: iconSvg('Ellipsis', 15), v1: iconSvg('ChevronDown', 12, 'tb-dd-arrow') }),
       }),
       h('div', { class: `tb-dd-panel tb-more-panel${open ? '' : ' is-hidden'}` },
         [h('div', { class: 'tb-menu tb-more-menu' }, items)]),

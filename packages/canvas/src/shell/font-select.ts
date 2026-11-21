@@ -8,6 +8,7 @@
 // · 输入与过滤只重写本控件的 <ul> 子树，不触发外壳重绘（Vue 3 轨 同理：状态在组件内部），
 //   因此连续输入与中文输入法组合不会被整体重绘打断。
 // · 候选整理与模糊匹配都直接调 core 的 print/fonts.ts 导出，canvas 与本包同一份实现（不再有第二套目录算法）。
+import { trG } from './controls.js'
 import {
   filterFontOptions, findFontOption, fontOptionLabel, normalizeFontCatalog, normalizeFontQuery,
 } from '@worm-print-platform/core'
@@ -62,7 +63,7 @@ export function renderFontSelect(opts: FontSelectOptions): HTMLElement {
   // 候选只来自宿主声明的模板字体（随模板分发、三端一致）；设计器不内置字体名档位。
   // 整理与匹配算法全在 core 的 print/fonts.ts，与 Vue 3 轨的 useFontCatalog 同一份实现。
   const catalog = normalizeFontCatalog(opts.fonts)
-  const placeholder = opts.placeholder ?? '默认'
+  const placeholder = opts.placeholder ?? trG( 'fontSelect.k51')
   const listId = `font-select-list-${opts.id}`
 
   /** 展示名：宿主声明了 label 的字体在输入框里显示 label，写入模板的始终是族名 */
@@ -94,7 +95,7 @@ export function renderFontSelect(opts: FontSelectOptions): HTMLElement {
     if (!typed) {
       const out: FontRow[] = [make('clear', '__clear__', placeholder)]
       const unknown = unknownFamily()
-      if (unknown) out.push(make('unknown', '__unknown__', `${unknown}（未知）`, unknown))
+      if (unknown) out.push(make('unknown', '__unknown__', trG( 'fontSelect.k52', { v0: unknown }), unknown))
       for (const font of catalog) out.push(make('font', font.family, fontOptionLabel(font), font.family))
       return out
     }
@@ -103,7 +104,7 @@ export function renderFontSelect(opts: FontSelectOptions): HTMLElement {
     // 清单外字体名可直接录入：一条都没命中时才补「使用「xxx」」，有命中项时补只会成为噪音
     if (!matched.length) {
       const family = resolveTypedFamily(typed)
-      matched.push(make('free', '__free__', `使用「${family}」`, family))
+      matched.push(make('free', '__free__', trG( 'fontSelect.k53', { v0: family }), family))
     }
     return matched
   }

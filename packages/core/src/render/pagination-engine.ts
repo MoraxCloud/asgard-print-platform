@@ -4,6 +4,8 @@
 // 同页多锚点让位：第二/第三张可切片锚点（表格 / 动态 flowList）不再钉死设计 top，
 // 同列上方内容长高时按「与设计前沿的设计间隙」被实际内容下推，避免叠压。
 
+import { t as tr } from '../i18n/index.js'
+import { formatNumber, getLocale } from '../i18n/index.js'
 import type {
   TemplateData,
   TemplateElement,
@@ -476,7 +478,7 @@ export function paginate(
     : paper.height - mt - mb - headerH - footerH
   if (!continuous && contentHeight <= 0) {
     throw new Error(
-      `页面可用高度不足: paper=${paper.height}mm, margins=${mt + mb}mm, header=${headerH}mm, footer=${footerH}mm`,
+      tr('diagnostic.pagination.insufficientHeight', { paper: paper.height, margins: mt + mb, header: headerH, footer: footerH }),
     )
   }
 
@@ -652,7 +654,7 @@ export function paginate(
   function noteTopWarning(el: TemplateElement, rot: number, amount: number): void {
     if (amount <= 0) return
     pendingWarnings.push(
-      `元素 ${el.id} 旋转 ${rot}° 后顶部超出页首 ${Math.round(amount * 100) / 100}mm，打印将被裁切`,
+      tr('diagnostic.pagination.overflowTop', { id: el.id, rot, amount: formatNumber(Math.round(amount * 100) / 100, getLocale()) }),
     )
   }
 
@@ -724,7 +726,7 @@ export function paginate(
           noteTopWarning(target, rot, amount)
         } else if (amount > 0) {
           firstPage.warnings = [...(firstPage.warnings ?? []),
-            `元素 ${target.id} 旋转 ${rot}° 后顶部超出页首 ${Math.round(amount * 100) / 100}mm，打印将被裁切`]
+            tr('diagnostic.pagination.overflowTop', { id: target.id, rot, amount: formatNumber(Math.round(amount * 100) / 100, getLocale()) })]
         }
       }
       if (unit) {
@@ -813,7 +815,7 @@ export function paginate(
       if (settle.rot !== undefined && settle.top + offset < 0) {
         const amount = Math.round(-(settle.top + offset) * 100) / 100
         page.warnings = [...(page.warnings ?? []),
-          `元素 ${el.id} 旋转 ${settle.rot}° 后顶部超出页首 ${amount}mm，打印将被裁切`]
+          tr('diagnostic.pagination.overflowTop', { id: el.id, rot: settle.rot, amount: formatNumber(amount, getLocale()) })]
       }
     }
   }
@@ -842,9 +844,9 @@ export function paginate(
         const rightOver = xLeft + width - paper.width
         const leftOver = -xLeft
         if (rightOver > 0.01) {
-          hits.push(`元素 ${el.id} 超出纸面右侧 ${Math.round(rightOver * 100) / 100}mm，打印将被裁切`)
+          hits.push(tr('diagnostic.pagination.overflowRight', { id: el.id, amount: formatNumber(Math.round(rightOver * 100) / 100, getLocale()) }))
         } else if (leftOver > 0.01) {
-          hits.push(`元素 ${el.id} 超出纸面左侧 ${Math.round(leftOver * 100) / 100}mm，打印将被裁切`)
+          hits.push(tr('diagnostic.pagination.overflowLeft', { id: el.id, amount: formatNumber(Math.round(leftOver * 100) / 100, getLocale()) }))
         }
       }
       if (hits.length > 0) page.warnings = [...(page.warnings ?? []), ...hits]
@@ -1042,7 +1044,7 @@ export function paginate(
     // 边界：重复表头段高度 > 整页可用高度 → 报错
     if (repeatH > freshAvail) {
       throw new Error(
-        `表格 ${el.id} 的重复表头高度 (${repeatH.toFixed(1)}mm) 超过页面可用高度 (${freshAvail.toFixed(1)}mm)，请减少重复表头行`,
+        tr('diagnostic.pagination.repeatHeaderOverflow', { id: el.id, repeat: formatNumber(repeatH, getLocale()), avail: formatNumber(freshAvail, getLocale()) }),
       )
     }
 

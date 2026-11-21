@@ -5,19 +5,23 @@ import express from 'express'
 import { renderPdf } from './pdf-render.js'
 import { BrowserPool } from './browser-pool.js'
 import { MAX_BATCH_COPIES } from '@worm-print-platform/core'
+import { normalizeLocale, setLocale, t } from '@worm-print-platform/core/i18n'
 import type { RenderRequest, PrintTemplateData as TemplateData } from '@worm-print-platform/core'
+
+// 渲染服务的诊断语言：默认中文，可用 WORM_PRINT_LOCALE 覆盖
+setLocale(normalizeLocale(process.env.WORM_PRINT_LOCALE ?? 'zh-CN'))
 
 /** 校验 printData：对象放行；数组检查非空、上限与每项类型。返回错误信息或 null（与 core 文案一致） */
 function validatePrintData(printData: unknown): string | null {
   if (printData === undefined || !Array.isArray(printData)) return null
-  if (printData.length === 0) return '批量打印数据必须是非空对象数组'
+  if (printData.length === 0) return t('service.printData.emptyArray')
   if (printData.length > MAX_BATCH_COPIES) {
-    return `批量打印最多支持 ${MAX_BATCH_COPIES} 份，当前 ${printData.length} 份`
+    return t('service.printData.tooMany', { max: MAX_BATCH_COPIES, count: printData.length })
   }
   for (let i = 0; i < printData.length; i++) {
     const item = printData[i]
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
-      return `批量打印数据第 ${i + 1} 项必须是对象`
+      return t('service.printData.itemNotObject', { index: i + 1 })
     }
   }
   return null

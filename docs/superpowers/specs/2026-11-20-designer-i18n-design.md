@@ -78,3 +78,19 @@
 
 - 本次一并产出首版 en-US 译文（UI 文案 + 诊断 + 约 511 行帮助文档），未译键回退中文，后续人工精修。
 - 用户/插件作者文档：如何写自己的语言文件、键名清单在哪、如何覆盖插件文案。
+
+## 11. 先行验证结论（Task 0）
+
+执行日期：2026-11-20。门禁结论：**4/4 PASS，可进入实施**。
+
+| 验证点 | 结论 | 证据 |
+|---|---|---|
+| 模板字面量类型强制插件键前缀 | PASS | 宽松 `Record<string,string>` 下两个 `@ts-expect-error` 报 TS2578（RED）；`PluginLocaleMessages<Id extends string> = { [K in \`${Id}.${string}\`]: string }` 下隔离 tsc EXIT=0（GREEN） |
+| 语言包键解析正则 | PASS | 样本解析得 3 键，注释键与嵌套键均未混入 |
+| 硬编码中文扫描精度 | PASS | 扫描 `canvas/src/shell`（排除 `help-content/` 与测试）：20 文件、397 行字面量，命中样本均为真实 UI 文案 |
+| 跨 bundle 注册表与 locale 探测 | PASS | 两个独立模块经 `Symbol.for` 拿到同一状态实例；当前 Node v22.23.2 存在 `navigator`，`language=zh-CN` |
+
+对实现的约束修正：
+- `getLocale()` 不得假设 Node 环境无 `navigator`，须做防御性检测（`typeof navigator !== 'undefined' && typeof navigator.language === 'string'`）；Node 22 实测 `language=zh-CN`，默认中文行为成立。
+- 硬编码中文扫描排除 `help-content/`（由帮助文档按语言拆模块的任务单独保证），JSDoc 注释行需跳过。
+- 全仓 `tsc -p packages/core/tsconfig.json` 存在与本次无关的既有类型错误，类型契约验证改用隔离编译（见计划台账裁定）。

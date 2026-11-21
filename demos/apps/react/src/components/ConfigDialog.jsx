@@ -1,8 +1,9 @@
-// 显示配置弹窗：预览/保存按钮显隐 + 主题预设。只作用于设计器外壳与工具栏，不影响出图业务。
+// 显示配置弹窗：预览/保存按钮显隐 + 主题预设 + 设计器界面语言。只作用于设计器外壳与工具栏，不影响出图业务。
 export default function ConfigDialog({
   visible, onClose,
   showPreview, setShowPreview, showSave, setShowSave,
   themeMode, setThemeMode,
+  langMode, setLangMode,
 }) {
   if (!visible) return null
 
@@ -38,6 +39,25 @@ export default function ConfigDialog({
             <label className="config-row">
               <input type="radio" name="config-theme" value="auto" checked={themeMode === 'auto'} onChange={() => setThemeMode('auto')} />
               <span>跟随系统</span>
+            </label>
+          </section>
+          <section className="config-section">
+            <div className="config-label">语言</div>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="auto" checked={langMode === 'auto'} onChange={() => setLangMode('auto')} />
+              <span>跟随系统</span>
+            </label>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="zh-CN" checked={langMode === 'zh-CN'} onChange={() => setLangMode('zh-CN')} />
+              <span>简体中文</span>
+            </label>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="en-US" checked={langMode === 'en-US'} onChange={() => setLangMode('en-US')} />
+              <span>English</span>
+            </label>
+            <label className="config-row">
+              <input type="radio" name="config-lang" value="th-TH" checked={langMode === 'th-TH'} onChange={() => setLangMode('th-TH')} />
+              <span>ไทย (泰语)</span>
             </label>
           </section>
         </div>

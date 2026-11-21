@@ -2,6 +2,7 @@
 // .canvas-area > .canvas-scroll > .paper-wrapper > .hiprint-printPaper > .hiprint-printPaper-content
 //   > .design-background? / .grid-bg? / .watermark-layer? / .zone-layer×3 / .adsorb-guide×n / .manual-guide×n
 // 缩放口径：wrapper 用缩放后像素尺寸占位，纸张本体 width/height 用 mm + transform: scale(s)。
+import { tr, trG } from './controls.js'
 import { getPaperDimensions, mmToPx, resolveWatermarkLayout, collectFollowMemberIds } from '@worm-print-platform/core'
 import type { AlignLine, RuntimeElement, TemplateData } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -87,7 +88,7 @@ function zoneLayer(ctx: ShellCtx, ui: CanvasUI, zone: 'header' | 'content' | 'fo
   paper: { width: number; height: number }) {
   const s = ctx.store
   const children: unknown[] = []
-  if (zone !== 'content') children.push(h('span', { class: 'zone-label', text: zone === 'header' ? '页眉' : '页脚' }))
+  if (zone !== 'content') children.push(h('span', { class: 'zone-label', text: zone === 'header' ? tr(ctx, 'canvas.k11') : tr(ctx, 'canvas.k12') }))
   // 跟随区成员（core 单点判据）：内容区一次算好下发，成员的元素级旋转出纸被忽略，画布同步不转
   const followMemberIds = zone === 'content' ? collectFollowMemberIds(els) : undefined
   children.push(...els.map(el => renderDesignElement(ctx, el, followMemberIds)))
@@ -132,7 +133,7 @@ function syncDropHint(e: DragEvent) {
   if (!hasField && !hasElement) { area.querySelector('.drop-hint')?.remove(); return }
   // 元素类拖起件不读修饰键（Ctrl 不改变其语义），仅字段区分取值绑定 vs 静态文本
   if (hasField && (e.ctrlKey || e.metaKey)) area.dataset.dropLabelIntent = '1'
-  const text = hasElement ? '＋ 元素' : area.dataset.dropLabelIntent ? '＋ 静态文本' : '＋ 取值字段'
+  const text = hasElement ? trG( 'canvas.k13') : area.dataset.dropLabelIntent ? trG( 'canvas.k14') : trG( 'canvas.k15')
   let badge = area.querySelector<HTMLElement>('.drop-hint')
   if (!badge) {
     badge = document.createElement('div')
@@ -275,20 +276,20 @@ export function renderCanvasArea(ctx: ShellCtx, ui: CanvasUI) {
       style: { left: `${ui.contextMenu.x + ui.contextMenu.flipX}px`, top: `${ui.contextMenu.y + ui.contextMenu.flipY}px` },
     }, ui.contextMenu.targetId
       ? [
-        menuItem(ctx, menu, '复制', 'copy'),
-        menuItem(ctx, menu, '剪切', 'cut'),
-        menuItem(ctx, menu, '粘贴', 'paste', !s.hasClipboard),
-        menuItem(ctx, menu, '删除', 'delete'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k16'), 'copy'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k17'), 'cut'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k18'), 'paste', !s.hasClipboard),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k19'), 'delete'),
         h('div', { class: 'context-menu-sep' }),
-        menuItem(ctx, menu, '置顶', 'move-layer', false, 'top'),
-        menuItem(ctx, menu, '上移', 'move-layer', false, 'up'),
-        menuItem(ctx, menu, '下移', 'move-layer', false, 'down'),
-        menuItem(ctx, menu, '置底', 'move-layer', false, 'bottom'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k20'), 'move-layer', false, 'top'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k21'), 'move-layer', false, 'up'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k22'), 'move-layer', false, 'down'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k23'), 'move-layer', false, 'bottom'),
       ]
       : [
-        menuItem(ctx, menu, '粘贴', 'paste-at', !s.hasClipboard),
-        menuItem(ctx, menu, '全选', 'select-all'),
-        menuItem(ctx, menu, '取消选择', 'clear-selection'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k24'), 'paste-at', !s.hasClipboard),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k25'), 'select-all'),
+        menuItem(ctx, menu, tr(ctx, 'canvas.k26'), 'clear-selection'),
       ]))
   }
 

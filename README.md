@@ -35,7 +35,7 @@
 
 ## 在线演示
 
-四个宿主工程的静态演示页（同一套设计器、同一套示例库）：
+五个宿主工程的静态演示页（同一套设计器、同一套示例库）：
 
 👉 <https://worm-longliu.github.io/worm-print-platform/>
 
@@ -90,7 +90,7 @@ npm install
 npm run build          # 按依赖序构建全部 workspace
 npm test               # 全量测试（Playwright 集成测试需 npx playwright install chromium）
 
-npm run dev:demos:all  # 四个宿主 demo + :9300 总览页（改 packages/*/src 自动热更新）
+npm run dev:demos:all  # 五个宿主 demo + :9300 总览页
 npm run dev:core       # 仅 core 包 watch 构建
 npm run dev:render     # 服务端 PDF 渲染微服务（:3001）
 npm run dev:client     # Electron 静默打印客户端
@@ -165,7 +165,7 @@ marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 | jQuery / 原生 JS | [docs/jquery.md](./docs/jquery.md) | UMD 直挂 `window.WormPrintCanvas` | `demos/apps/jquery` | 9334 |
 
 - 老用户迁移：[docs/migration-worm-vue3-print.md](./docs/migration-worm-vue3-print.md)
-- 四个 demo 的总览页在 `:9300`，一条命令拉起：`npm run dev:demos:all`
+- 五个 demo 的总览页在 `:9300`，一条命令拉起：`npm run dev:demos:all`
 
 ## 插件化自定义元素
 

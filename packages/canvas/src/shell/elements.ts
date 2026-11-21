@@ -1,6 +1,7 @@
 // 元素渲染：与 print-Vue 3 轨的 elements/*.vue 同名结构、同口径样式。
 // 元素层样式（.print-element / .print-text / .print-line / .print-shape / .print-image …）
 // 来自派生 CSS，因此这里的类名与内联样式必须与 Vue 版一致才能出同样的纸面效果。
+import { trG } from './controls.js'
 import DOMPurify from 'dompurify'
 import {
   cropStyleDeclarations,
@@ -192,7 +193,7 @@ const BUILTIN_CONTENT_RENDERERS: Readonly<Record<string, ElementContentRenderer>
     // 设计态显示原始表达式（与 Vue 3 轨的 displayText 口径一致），不做数据求值
     return h('div', {
       class: 'print-text', style, dataset: fitDataset(el),
-      text: String(o.testData || o.formatter || '') || '文本',
+      text: String(o.testData || o.formatter || '') || trG( 'elements.k41'),
     })
   },
   longText: (el) => {
@@ -201,7 +202,7 @@ const BUILTIN_CONTENT_RENDERERS: Readonly<Record<string, ElementContentRenderer>
     return h('div', {
       class: 'print-longtext', style, dataset: fitDataset(el),
       // Vue 3 轨的长文本设计态只看 formatter，占位文案是「长文本内容」
-      text: String(o.formatter || '') || '长文本内容',
+      text: String(o.formatter || '') || trG( 'elements.k42'),
     })
   },
   hline: (el) => h('div', { class: 'print-line', style: lineStyle(el) }),
@@ -218,7 +219,7 @@ const BUILTIN_CONTENT_RENDERERS: Readonly<Record<string, ElementContentRenderer>
     return h('div', { class: 'print-image' }, [
       src
         ? h('img', { src, style: imageStyle(el) })
-        : h('div', { class: 'image-placeholder', text: '图片' }),
+        : h('div', { class: 'image-placeholder', text: trG( 'elements.k43') }),
     ])
   },
   qrcode: (el) => renderQrcode(el),

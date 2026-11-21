@@ -1,6 +1,7 @@
 // 流式列表元素的内容层（对应 Vue 3 轨 的 FlowListElement.vue）。
 // 设计台按「一列一格」铺，不预演跨列：画布不运行出纸的跨列测量与分页，
 // 预演只能靠估算，画布与出纸就会出现两套栏数（口径见 specs 第八节第 7 项）。
+import { trG } from './controls.js'
 import {
   DEFAULT_DEMO_DATA,
   detectFlowListKey,
@@ -15,11 +16,16 @@ import type { RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
 import type { DesignerStore } from '../core/store'
 
-/** 与 Vue 3 轨 FlowListElement 的 DESIGN_FALLBACK_ITEMS 逐字一致：新拖入的元素也要看得见形状 */
-export const FLOW_LIST_DEMO_ITEMS = [
-  '黄芪 20g', '当归尾 15g', '赤芍 10g', '川芎 10g',
-  '地龙 10g', '桃仁 10g', '红花 10g',
+/** 与 Vue 3 轨 FlowListElement 的 DESIGN_FALLBACK_ITEMS 对应的语言包 key：新拖入的元素也要看得见形状 */
+const FLOW_LIST_DEMO_ITEM_KEYS = [
+  'flowList.k44', 'flowList.k45', 'flowList.k46', 'flowList.k47',
+  'flowList.k48', 'flowList.k49', 'flowList.k50',
 ]
+
+/** 按当前渲染语言取示例文案（模块加载时不能冻结，否则切语言后仍是旧文案） */
+function demoItems(): string[] {
+  return FLOW_LIST_DEMO_ITEM_KEYS.map(key => trG(key))
+}
 
 function asList(source: unknown): Record<string, any>[] {
   return Array.isArray(source) && source.length > 0 ? source as Record<string, any>[] : []
@@ -39,7 +45,7 @@ export function flowListCells(el: RuntimeElement, data?: Record<string, any>[]):
   const template = typeof o.formatter === 'string' ? o.formatter : ''
   const record = asList(data)[0]
   const list = resolveItems(template, record)
-  if (list.length === 0) return [...FLOW_LIST_DEMO_ITEMS]
+  if (list.length === 0) return demoItems()
   if (!template) return list.map(item => String(item?.name ?? JSON.stringify(item)))
   const rec = record ?? {}
   const key = detectFlowListKey(template, rec) ?? Object.keys(rec).find(k => Array.isArray(rec[k]))
