@@ -4,6 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { DesignerStore } from '../core/store'
 import { PrintDesignerElement, definePrintDesigner } from '../print-designer'
+import { registerElementDefinition } from '../core/element-definitions'
 
 /** happy-dom 该版本未实现 Storage：面板折叠态读写需要 localStorage */
 function stubStorage() {
@@ -65,5 +66,21 @@ describe('print-designer 素材台两列栅格（对照 Vue 3 轨）', () => {
     expect(labels.slice(labels.indexOf('表格'), labels.indexOf('表格') + 3)).toEqual(['表格', '长文', '流式列表'])
     expect(labels).not.toContain('HTML')
     expect(root.querySelector('[data-test="material-html"]')).toBeNull()
+  })
+
+  it('插件语言包未注册时不显示裸 key，回退到定义的 label', async () => {
+    // barChart 在 ELEMENT_LABEL_KEYS 里映射到 echarts.kinds.k84；
+    // 本测试环境未注册 echarts 语言包，tr(key) 会返回 key 本身。
+    const release = registerElementDefinition({
+      type: 'barChart', label: '自定义柱状图', icon: 'ChartColumn', material: true,
+      propertyGroup: 'general',
+    })
+    try {
+      const { root } = await mountDesigner()
+      const node = root.querySelector('[data-test="material-barChart"] .material-label')
+      expect(node?.textContent).toBe('自定义柱状图')
+    } finally {
+      release()
+    }
   })
 })

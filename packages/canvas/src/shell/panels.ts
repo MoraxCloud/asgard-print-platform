@@ -123,8 +123,10 @@ function elementsPane(ctx: ShellCtx): unknown[] {
     }
     if (group) prevGroup = group
     // 内置类型与图表插件都按 type → 语言包 key 取译文（key 映射见 ELEMENT_LABEL_KEYS）
+    // 插件语言包未注册时 t(key) 会返回 key 本身，此时回退到定义自带的 label，避免素材台显示裸 key
     const labelKey = ELEMENT_LABEL_KEYS[item.type]
-    const translated = labelKey ? tr(ctx, labelKey) : undefined
+    const candidate = labelKey ? tr(ctx, labelKey) : undefined
+    const translated = candidate && candidate !== labelKey ? candidate : undefined
     cards.push(materialCard(item.type, item.label, item.icon, translated))
   }
   return [h('div', { class: 'panel-title', text: tr(ctx, 'panels.k146') }), ...cards]

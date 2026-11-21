@@ -6,6 +6,7 @@
  */
 
 // src/plugin.ts
+import { t } from "@worm-print-platform/core/i18n";
 import {
   defineElementPlugin,
   getElementPluginById,
@@ -20,6 +21,7 @@ var CHART_KIND_DEFINITIONS = [
   {
     type: "barChart",
     label: "\u67F1\u72B6\u56FE",
+    labelKey: "echarts.kinds.k84",
     icon: "ChartColumn",
     seriesType: "bar",
     orientation: "vertical",
@@ -27,11 +29,13 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight"
+    notes: "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight",
+    notesKey: "echarts.notes.k146"
   },
   {
     type: "barHChart",
     label: "\u6761\u5F62\u56FE",
+    labelKey: "echarts.kinds.k86",
     icon: "ChartBar",
     seriesType: "bar",
     orientation: "horizontal",
@@ -39,95 +43,112 @@ var CHART_KIND_DEFINITIONS = [
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D"
+    notes: "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D",
+    notesKey: "echarts.notes.k147"
   },
   {
     type: "lineChart",
     label: "\u6298\u7EBF\u56FE",
+    labelKey: "echarts.kinds.k88",
     icon: "ChartLine",
     seriesType: "line",
     fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle"
+    notes: "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle",
+    notesKey: "echarts.notes.k148"
   },
   {
     type: "areaChart",
     label: "\u9762\u79EF\u56FE",
+    labelKey: "echarts.kinds.k90",
     icon: "ChartArea",
     seriesType: "line",
     fields: [...DATA_FIELDS, ...STYLE_FIELDS, "stack", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 100,
     defaultHeight: 60,
-    notes: "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE"
+    notes: "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE",
+    notesKey: "echarts.notes.k149"
   },
   {
     type: "pieChart",
     label: "\u997C\u56FE",
+    labelKey: "echarts.kinds.k92",
     icon: "ChartPie",
     seriesType: "pie",
     fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5"
+    notes: "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5",
+    notesKey: "echarts.notes.k150"
   },
   {
     type: "doughnutChart",
     label: "\u73AF\u5F62\u56FE",
+    labelKey: "echarts.kinds.k94",
     icon: "Donut",
     seriesType: "pie",
     fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "innerRadius", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E"
+    notes: "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E",
+    notesKey: "echarts.notes.k151"
   },
   {
     type: "scatterChart",
     label: "\u6563\u70B9\u56FE",
+    labelKey: "echarts.kinds.k96",
     icon: "ChartScatter",
     seriesType: "scatter",
     fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "bubble", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 80,
     defaultHeight: 60,
-    notes: "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F"
+    notes: "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F",
+    notesKey: "echarts.notes.k152"
   },
   {
     type: "radarChart",
     label: "\u96F7\u8FBE\u56FE",
+    labelKey: "echarts.kinds.k98",
     icon: "Radar",
     seriesType: "radar",
     fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "radius", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 70,
     defaultHeight: 60,
-    notes: "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09"
+    notes: "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09",
+    notesKey: "echarts.notes.k153"
   },
   {
     type: "funnelChart",
     label: "\u6F0F\u6597\u56FE",
+    labelKey: "echarts.kinds.k100",
     icon: "Funnel",
     seriesType: "funnel",
     fields: ["dataSource", "categoryField", "valueFields", ...STYLE_FIELDS, "padding", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09"
+    notes: "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09",
+    notesKey: "echarts.notes.k154"
   },
   {
     type: "gaugeChart",
     label: "\u4EEA\u8868\u76D8",
+    labelKey: "echarts.kinds.k102",
     icon: "Gauge",
     seriesType: "gauge",
     fields: ["dataSource", "valueFields", ...STYLE_FIELDS, "gaugeRange", "label"],
     requiredOptionKeys: BASE_REQUIRED,
     defaultWidth: 60,
     defaultHeight: 60,
-    notes: "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max"
+    notes: "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max",
+    notesKey: "echarts.notes.k155"
   }
 ];
 var CHART_KINDS = CHART_KIND_DEFINITIONS.map((def) => def.type);
@@ -474,201 +495,12 @@ function applyExtraComponents() {
   for (const item of fresh) appliedComponents.add(item);
 }
 
-// src/normalize.ts
-function asArray(value) {
-  if (Array.isArray(value)) return value.map((item) => ({ ...item }));
-  return [];
-}
-function normalizeCategoryAxis(axis, horizontal) {
-  const next = { ...axis, type: horizontal ? "value" : "category" };
-  if (horizontal) delete next.data;
-  else if (!Array.isArray(next.data)) next.data = ["$data"];
-  return next;
-}
-function normalizeValueAxis(axis, horizontal) {
-  const next = { ...axis, type: horizontal ? "category" : "value" };
-  if (horizontal && !Array.isArray(next.data)) next.data = ["$data"];
-  if (!horizontal) delete next.data;
-  return next;
-}
-function mapAxes(value, fn) {
-  if (Array.isArray(value)) return value.map((item) => fn({ ...item }));
-  if (value && typeof value === "object") return fn({ ...value });
-  return fn({});
-}
-function normalizeChartOption(type, option) {
-  const def = getChartKindDefinition(type);
-  if (!def) return option;
-  const next = structuredClone(option);
-  const series = asArray(next.series);
-  if (series.length === 0) return next;
-  if (def.seriesType === "pie") {
-    next.series = series.map((item) => ({
-      ...item,
-      type: "pie",
-      ...type === "doughnutChart" ? { radius: item.radius ?? ["40%", "70%"] } : {}
-    }));
-    delete next.xAxis;
-    delete next.yAxis;
-    return next;
-  }
-  if (def.seriesType === "scatter") {
-    next.series = series.map((item) => ({ ...item, type: "scatter" }));
-    next.xAxis = mapAxes(next.xAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
-    next.yAxis = mapAxes(next.yAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
-    return next;
-  }
-  if (def.seriesType === "radar") {
-    next.series = series.map((item) => ({ ...item, type: "radar" }));
-    return next;
-  }
-  if (def.seriesType === "funnel") {
-    next.series = series.map((item) => ({ ...item, type: "funnel", sort: "descending" }));
-    return next;
-  }
-  if (def.seriesType === "gauge") {
-    next.series = series.map((item) => ({ ...item, type: "gauge" }));
-    return next;
-  }
-  const horizontal = def.orientation === "horizontal";
-  const seriesType = def.seriesType === "line" ? "line" : "bar";
-  next.xAxis = mapAxes(next.xAxis, (axis) => normalizeCategoryAxis(axis, horizontal));
-  next.yAxis = mapAxes(next.yAxis, (axis) => normalizeValueAxis(axis, horizontal));
-  next.series = series.map((item) => {
-    const shape = { ...item, type: seriesType };
-    if (type === "areaChart") shape.areaStyle = item.areaStyle ?? {};
-    else delete shape.areaStyle;
-    return shape;
-  });
-  return next;
-}
-
 // src/units.ts
 var PX_PER_MM = 96 / 25.4;
 function mmToChartPx(mm) {
   const value = Number.isFinite(mm) ? mm : 0;
   return Math.max(1, Math.round(value * PX_PER_MM));
 }
-
-// src/renderer.ts
-function fitSvgRoot(svg, widthPx, heightPx) {
-  const match = /<svg\b[^>]*>/i.exec(svg);
-  if (!match) return svg;
-  const rootTag = match[0];
-  const rawAttrs = rootTag.slice("<svg".length, -1);
-  const styleMatch = /\sstyle\s*=\s*"([^"]*)"/i.exec(rawAttrs);
-  const keptStyle = (styleMatch?.[1] ?? "").split(";").map((decl) => decl.trim()).filter((decl) => decl && !/^(width|height|display)\s*:/i.test(decl)).join(";");
-  const attrs = rawAttrs.replace(/\s(width|height|style|viewBox)\s*=\s*"[^"]*"/gi, "").trimEnd();
-  const style = ["display:block", "width:100%", "height:100%", keptStyle].filter(Boolean).join(";");
-  const nextTag = `<svg${attrs} width="100%" height="100%" viewBox="0 0 ${widthPx} ${heightPx}" style="${style}">`;
-  return svg.slice(0, match.index) + nextTag + svg.slice(match.index + rootTag.length);
-}
-function renderChartToSvg(spec) {
-  applyExtraComponents();
-  const option = normalizeChartOption(spec.type, spec.option);
-  if (!option || typeof option !== "object" || Array.isArray(option)) {
-    throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
-  }
-  const width = mmToChartPx(spec.widthMm);
-  const height = mmToChartPx(spec.heightMm);
-  const chart = echarts.init(null, null, { renderer: "svg", ssr: true, width, height });
-  try {
-    const userTextStyle = option.textStyle && typeof option.textStyle === "object" && !Array.isArray(option.textStyle) ? option.textStyle : void 0;
-    const textStyle = {
-      ...spec.fontFamily ? { fontFamily: spec.fontFamily } : {},
-      ...userTextStyle ?? {}
-    };
-    chart.setOption({
-      animation: false,
-      ...option,
-      ...Object.keys(textStyle).length > 0 ? { textStyle } : {}
-    });
-    return fitSvgRoot(chart.renderToSVGString(), width, height);
-  } finally {
-    chart.dispose();
-  }
-}
-function escapeHtml(value) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-function renderChartElement(spec) {
-  const option = spec._chartOption ?? spec.chartOption;
-  const placeholder = `<span>${escapeHtml(String(spec.title ?? "\u56FE\u8868"))}</span>`;
-  if (!option || typeof option !== "object" || Array.isArray(option)) return placeholder;
-  try {
-    return renderChartToSvg({
-      key: String(spec.key ?? ""),
-      type: String(spec.type ?? ""),
-      option,
-      widthMm: Number(spec.widthMm ?? 0),
-      heightMm: Number(spec.heightMm ?? 0),
-      fontFamily: typeof spec.fontFamily === "string" ? spec.fontFamily : void 0
-    });
-  } catch {
-    return placeholder;
-  }
-}
-
-// src/version.ts
-var CHART_EXECUTOR_VERSION = "2";
-
-// src/plugin.ts
-var CHART_OPTION_META = {
-  chartOption: { kind: "object", label: "\u56FE\u8868 option" },
-  chartDataSource: { kind: "text", label: "\u6570\u636E\u6E90" },
-  chartCategoryField: { kind: "text", label: "\u7C7B\u76EE\u5B57\u6BB5" },
-  chartValueFields: { kind: "object", label: "\u6570\u503C\u5B57\u6BB5" },
-  chartSeriesField: { kind: "text", label: "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5" }
-};
-var SCATTER_OPTION_META = {
-  ...CHART_OPTION_META,
-  chartBubble: { kind: "bool", label: "\u6C14\u6CE1\u5927\u5C0F" }
-};
-var CHART_PLUGIN = defineElementPlugin({
-  id: CHART_PLUGIN_ID,
-  version: CHART_EXECUTOR_VERSION,
-  kinds: CHART_KIND_DEFINITIONS.map((def) => ({
-    type: def.type,
-    label: def.label,
-    icon: def.icon,
-    fixedHeight: true,
-    requiredOptionKeys: def.requiredOptionKeys,
-    notes: def.notes,
-    optionMeta: def.type === "scatterChart" ? SCATTER_OPTION_META : CHART_OPTION_META,
-    defaultOptions: (partial) => chartFactoryDefaults(def.type, partial),
-    binding: { bind: (options, data) => bindChartData(def.type, options, data) }
-  })),
-  render: {
-    html: renderChartElement,
-    createRenderer: () => ({ render: renderChartElement })
-  }
-});
-var disposeHandle;
-function registerChartPlugin(designer, extraRender) {
-  const current = getElementPluginById(CHART_PLUGIN_ID);
-  if (!designer && !extraRender) {
-    const dispose2 = registerElementPlugin(CHART_PLUGIN);
-    disposeHandle = dispose2;
-    return dispose2;
-  }
-  const merged = {
-    ...CHART_PLUGIN,
-    designer: designer ?? current?.designer ?? CHART_PLUGIN.designer,
-    render: { ...CHART_PLUGIN.render, ...current?.render, ...extraRender }
-  };
-  const dispose = registerElementPlugin(merged);
-  disposeHandle = dispose;
-  return dispose;
-}
-registerChartPlugin();
-
-// src/index.ts
-registerChartPlugin();
-
-// src/ui.ts
-import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
-import { render } from "@worm-print-platform/plugin-kit/dom";
-import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
 
 // src/option-utils.ts
 var SAMPLE_VALUES = [12, 20, 15];
@@ -816,55 +648,55 @@ function writeRadarRadius(option, percent) {
 
 // src/label.ts
 var LABEL_PRESETS = [
-  { key: "value", label: "\u6570\u503C", formatter: "{c}" },
-  { key: "name-value", label: "\u540D\u79F0: \u6570\u503C", formatter: "{b}: {c}" },
-  { key: "name", label: "\u540D\u79F0", formatter: "{b}" },
-  { key: "percent", label: "\u767E\u5206\u6BD4", formatter: "{d}%" }
+  { key: "value", label: "\u6570\u503C", labelKey: "echarts.label.k104", formatter: "{c}" },
+  { key: "name-value", label: "\u540D\u79F0: \u6570\u503C", labelKey: "echarts.label.k105", formatter: "{b}: {c}" },
+  { key: "name", label: "\u540D\u79F0", labelKey: "echarts.label.k106", formatter: "{b}" },
+  { key: "percent", label: "\u767E\u5206\u6BD4", labelKey: "echarts.label.k107", formatter: "{d}%" }
 ];
 var LABEL_POSITIONS = {
   bar: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "inside", label: "\u5185\u90E8" },
-    { value: "insideTop", label: "\u5185\u90E8\u9876\u7AEF" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "insideBottom", label: "\u5185\u90E8\u5E95\u7AEF" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "middle", label: "\u5C45\u4E2D" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k108" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k109" },
+    { value: "insideTop", label: "\u5185\u90E8\u9876\u7AEF", labelKey: "echarts.label.k110" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k111" },
+    { value: "insideBottom", label: "\u5185\u90E8\u5E95\u7AEF", labelKey: "echarts.label.k112" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k113" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k114" },
+    { value: "middle", label: "\u5C45\u4E2D", labelKey: "echarts.label.k115" }
   ],
   line: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "inside", label: "\u5185\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k116" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k117" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k118" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k119" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k120" }
   ],
   pie: [
-    { value: "outside", label: "\u5916\u4FA7" },
-    { value: "inside", label: "\u5185\u90E8" },
-    { value: "center", label: "\u4E2D\u5FC3" }
+    { value: "outside", label: "\u5916\u4FA7", labelKey: "echarts.label.k121" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k122" },
+    { value: "center", label: "\u4E2D\u5FC3", labelKey: "echarts.label.k123" }
   ],
   scatter: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "inside", label: "\u5185\u90E8" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k124" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k125" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k126" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k127" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k128" }
   ],
   radar: [
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "inside", label: "\u5185\u90E8" }
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k129" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k130" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k131" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k132" },
+    { value: "inside", label: "\u5185\u90E8", labelKey: "echarts.label.k133" }
   ],
   funnel: [
-    { value: "outer", label: "\u5916\u4FA7" },
-    { value: "inner", label: "\u5185\u90E8" },
-    { value: "left", label: "\u5DE6\u4FA7" },
-    { value: "right", label: "\u53F3\u4FA7" },
-    { value: "top", label: "\u9876\u90E8" },
-    { value: "bottom", label: "\u5E95\u90E8" }
+    { value: "outer", label: "\u5916\u4FA7", labelKey: "echarts.label.k134" },
+    { value: "inner", label: "\u5185\u90E8", labelKey: "echarts.label.k135" },
+    { value: "left", label: "\u5DE6\u4FA7", labelKey: "echarts.label.k136" },
+    { value: "right", label: "\u53F3\u4FA7", labelKey: "echarts.label.k137" },
+    { value: "top", label: "\u9876\u90E8", labelKey: "echarts.label.k138" },
+    { value: "bottom", label: "\u5E95\u90E8", labelKey: "echarts.label.k139" }
   ],
   gauge: []
 };
@@ -895,8 +727,7 @@ var FIELDS_BY_SERIES = {
     "overflow",
     "position",
     "rotate",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -911,8 +742,7 @@ var FIELDS_BY_SERIES = {
     "overflow",
     "position",
     "rotate",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -927,8 +757,7 @@ var FIELDS_BY_SERIES = {
     "overflow",
     "position",
     "distance",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -948,8 +777,7 @@ var FIELDS_BY_SERIES = {
     "position",
     "distance",
     "rotate",
-    "offsetX",
-    "offsetY",
+    "offset",
     "fontSize",
     "fontWeight",
     "color",
@@ -972,7 +800,7 @@ var FIELDS_BY_SERIES = {
     "labelLine.length",
     "labelLine.smooth"
   ],
-  gauge: ["formatter", "fontSize", "fontWeight", "color", "offsetX", "offsetY"]
+  gauge: ["formatter", "fontSize", "fontWeight", "color", "offset"]
 };
 var VALUE_KEYS = [
   "formatter",
@@ -980,8 +808,7 @@ var VALUE_KEYS = [
   "position",
   "distance",
   "rotate",
-  "offsetX",
-  "offsetY",
+  "offset",
   "fontSize",
   "fontWeight",
   "color",
@@ -998,6 +825,17 @@ function seriesOf2(option) {
 function asRecord(node) {
   return node && typeof node === "object" && !Array.isArray(node) ? { ...node } : {};
 }
+function normalizeLabelOffsetInPlace(target) {
+  if (typeof target.offsetX !== "number" && typeof target.offsetY !== "number") return;
+  if (!Array.isArray(target.offset)) {
+    target.offset = [
+      typeof target.offsetX === "number" ? target.offsetX : 0,
+      typeof target.offsetY === "number" ? target.offsetY : 0
+    ];
+  }
+  delete target.offsetX;
+  delete target.offsetY;
+}
 function labelTargetOf(type) {
   return getChartKindDefinition(type)?.seriesType === "gauge" ? "detail" : "label";
 }
@@ -1009,6 +847,7 @@ function readChartLabel(option, type) {
   const def = getChartKindDefinition(type);
   const series = seriesOf2(option);
   const target = asRecord(series[0]?.[labelTargetOf(type)]);
+  normalizeLabelOffsetInPlace(target);
   const state = {
     show: typeof target.show === "boolean" ? target.show : def ? NATIVE_SHOW[def.seriesType] : false,
     // labelLine 在 ECharts 里是 series 顶层键（与 label 平级），不是 label 的子键
@@ -1016,7 +855,12 @@ function readChartLabel(option, type) {
   };
   for (const key of VALUE_KEYS) {
     const value = target[key];
+    if (key === "offset") continue;
     if (typeof value === "string" || typeof value === "number") state[key] = value;
+  }
+  const offset = target.offset;
+  if (Array.isArray(offset) && typeof offset[0] === "number" && typeof offset[1] === "number") {
+    state.offset = [offset[0], offset[1]];
   }
   return state;
 }
@@ -1038,6 +882,7 @@ function updateChartLabel(option, type, patch) {
   for (const item of series) {
     if (!item || typeof item !== "object") continue;
     const current = asRecord(item[targetKey]);
+    normalizeLabelOffsetInPlace(current);
     if (enabled === true) {
       Object.assign(current, { ...defaultSetOf(type), ...current, show: true });
     } else if (enabled === false) {
@@ -1060,7 +905,662 @@ function updateChartLabel(option, type, patch) {
   return next;
 }
 
+// src/normalize.ts
+function asArray(value) {
+  if (Array.isArray(value)) return value.map((item) => ({ ...item }));
+  return [];
+}
+function normalizeCategoryAxis(axis, horizontal) {
+  const next = { ...axis, type: horizontal ? "value" : "category" };
+  if (horizontal) delete next.data;
+  else if (!Array.isArray(next.data)) next.data = ["$data"];
+  return next;
+}
+function normalizeValueAxis(axis, horizontal) {
+  const next = { ...axis, type: horizontal ? "category" : "value" };
+  if (horizontal && !Array.isArray(next.data)) next.data = ["$data"];
+  if (!horizontal) delete next.data;
+  return next;
+}
+function mapAxes(value, fn) {
+  if (Array.isArray(value)) return value.map((item) => fn({ ...item }));
+  if (value && typeof value === "object") return fn({ ...value });
+  return fn({});
+}
+function normalizeChartOption(type, option) {
+  const def = getChartKindDefinition(type);
+  if (!def) return option;
+  const next = structuredClone(option);
+  const series = asArray(next.series);
+  if (series.length === 0) return next;
+  const labelKey = labelTargetOf(type);
+  for (const item of series) {
+    const label = item[labelKey];
+    if (label && typeof label === "object" && !Array.isArray(label)) {
+      const nextLabel = { ...label };
+      normalizeLabelOffsetInPlace(nextLabel);
+      item[labelKey] = nextLabel;
+    }
+  }
+  if (def.seriesType === "pie") {
+    next.series = series.map((item) => ({
+      ...item,
+      type: "pie",
+      ...type === "doughnutChart" ? { radius: item.radius ?? ["40%", "70%"] } : {}
+    }));
+    delete next.xAxis;
+    delete next.yAxis;
+    return next;
+  }
+  if (def.seriesType === "scatter") {
+    next.series = series.map((item) => ({ ...item, type: "scatter" }));
+    next.xAxis = mapAxes(next.xAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
+    next.yAxis = mapAxes(next.yAxis, (axis) => ({ ...axis, type: "value", data: void 0 }));
+    return next;
+  }
+  if (def.seriesType === "radar") {
+    next.series = series.map((item) => ({ ...item, type: "radar" }));
+    return next;
+  }
+  if (def.seriesType === "funnel") {
+    next.series = series.map((item) => ({ ...item, type: "funnel", sort: "descending" }));
+    return next;
+  }
+  if (def.seriesType === "gauge") {
+    next.series = series.map((item) => ({ ...item, type: "gauge" }));
+    return next;
+  }
+  const horizontal = def.orientation === "horizontal";
+  const seriesType = def.seriesType === "line" ? "line" : "bar";
+  next.xAxis = mapAxes(next.xAxis, (axis) => normalizeCategoryAxis(axis, horizontal));
+  next.yAxis = mapAxes(next.yAxis, (axis) => normalizeValueAxis(axis, horizontal));
+  next.series = series.map((item) => {
+    const shape = { ...item, type: seriesType };
+    if (type === "areaChart") shape.areaStyle = item.areaStyle ?? {};
+    else delete shape.areaStyle;
+    return shape;
+  });
+  return next;
+}
+
+// src/renderer.ts
+function fitSvgRoot(svg, widthPx, heightPx) {
+  const match = /<svg\b[^>]*>/i.exec(svg);
+  if (!match) return svg;
+  const rootTag = match[0];
+  const rawAttrs = rootTag.slice("<svg".length, -1);
+  const styleMatch = /\sstyle\s*=\s*"([^"]*)"/i.exec(rawAttrs);
+  const keptStyle = (styleMatch?.[1] ?? "").split(";").map((decl) => decl.trim()).filter((decl) => decl && !/^(width|height|display)\s*:/i.test(decl)).join(";");
+  const attrs = rawAttrs.replace(/\s(width|height|style|viewBox)\s*=\s*"[^"]*"/gi, "").trimEnd();
+  const style = ["display:block", "width:100%", "height:100%", keptStyle].filter(Boolean).join(";");
+  const nextTag = `<svg${attrs} width="100%" height="100%" viewBox="0 0 ${widthPx} ${heightPx}" style="${style}">`;
+  return svg.slice(0, match.index) + nextTag + svg.slice(match.index + rootTag.length);
+}
+function renderChartToSvg(spec) {
+  applyExtraComponents();
+  const option = normalizeChartOption(spec.type, spec.option);
+  if (!option || typeof option !== "object" || Array.isArray(option)) {
+    throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
+  }
+  const width = mmToChartPx(spec.widthMm);
+  const height = mmToChartPx(spec.heightMm);
+  const chart = echarts.init(null, null, { renderer: "svg", ssr: true, width, height });
+  try {
+    const userTextStyle = option.textStyle && typeof option.textStyle === "object" && !Array.isArray(option.textStyle) ? option.textStyle : void 0;
+    const textStyle = {
+      ...spec.fontFamily ? { fontFamily: spec.fontFamily } : {},
+      ...userTextStyle ?? {}
+    };
+    chart.setOption({
+      animation: false,
+      ...option,
+      ...Object.keys(textStyle).length > 0 ? { textStyle } : {}
+    });
+    return fitSvgRoot(chart.renderToSVGString(), width, height);
+  } finally {
+    chart.dispose();
+  }
+}
+function escapeHtml(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function renderChartElement(spec) {
+  const option = spec._chartOption ?? spec.chartOption;
+  const placeholder = `<span>${escapeHtml(String(spec.title ?? "\u56FE\u8868"))}</span>`;
+  if (!option || typeof option !== "object" || Array.isArray(option)) return placeholder;
+  try {
+    return renderChartToSvg({
+      key: String(spec.key ?? ""),
+      type: String(spec.type ?? ""),
+      option,
+      widthMm: Number(spec.widthMm ?? 0),
+      heightMm: Number(spec.heightMm ?? 0),
+      fontFamily: typeof spec.fontFamily === "string" ? spec.fontFamily : void 0
+    });
+  } catch {
+    return placeholder;
+  }
+}
+
+// src/version.ts
+var CHART_EXECUTOR_VERSION = "2";
+
+// src/plugin.ts
+var CHART_OPTION_META = {
+  chartOption: { kind: "object", label: t("echarts.plugin.k140") },
+  chartDataSource: { kind: "text", label: t("echarts.plugin.k141") },
+  chartCategoryField: { kind: "text", label: t("echarts.plugin.k142") },
+  chartValueFields: { kind: "object", label: t("echarts.plugin.k143") },
+  chartSeriesField: { kind: "text", label: t("echarts.plugin.k144") }
+};
+var SCATTER_OPTION_META = {
+  ...CHART_OPTION_META,
+  chartBubble: { kind: "bool", label: t("echarts.plugin.k145") }
+};
+var CHART_PLUGIN = defineElementPlugin({
+  id: CHART_PLUGIN_ID,
+  version: CHART_EXECUTOR_VERSION,
+  kinds: CHART_KIND_DEFINITIONS.map((def) => ({
+    type: def.type,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get label() {
+      return t(def.labelKey);
+    },
+    icon: def.icon,
+    fixedHeight: true,
+    requiredOptionKeys: def.requiredOptionKeys,
+    // getter：每次读取按当前实例语言取词，避免模块加载期冻结为单一语言
+    get notes() {
+      return t(def.notesKey);
+    },
+    optionMeta: def.type === "scatterChart" ? SCATTER_OPTION_META : CHART_OPTION_META,
+    defaultOptions: (partial) => chartFactoryDefaults(def.type, partial),
+    binding: { bind: (options, data) => bindChartData(def.type, options, data) }
+  })),
+  render: {
+    html: renderChartElement,
+    createRenderer: () => ({ render: renderChartElement })
+  }
+});
+var disposeHandle;
+function registerChartPlugin(designer, extraRender) {
+  const current = getElementPluginById(CHART_PLUGIN_ID);
+  if (!designer && !extraRender) {
+    const dispose2 = registerElementPlugin(CHART_PLUGIN);
+    disposeHandle = dispose2;
+    return dispose2;
+  }
+  const merged = {
+    ...CHART_PLUGIN,
+    designer: designer ?? current?.designer ?? CHART_PLUGIN.designer,
+    render: { ...CHART_PLUGIN.render, ...current?.render, ...extraRender }
+  };
+  const dispose = registerElementPlugin(merged);
+  disposeHandle = dispose;
+  return dispose;
+}
+registerChartPlugin();
+
+// src/index.ts
+registerChartPlugin();
+
 // src/ui.ts
+import { t as t2 } from "@worm-print-platform/core/i18n";
+
+// src/i18n/zh-CN.ts
+var echartsZhCN = {
+  "echarts.ui.k1": "\u56FE\u8868",
+  "echarts.ui.k2": "\u914D\u7F6E",
+  "echarts.ui.k3": "\u6570\u636E\u6E90",
+  "echarts.ui.k4": "\u7C7B\u76EE",
+  "echarts.ui.k5": "\u6570\u503C",
+  "echarts.ui.k6": "\u7CFB\u5217",
+  "echarts.ui.k7": "\u67F1\u72B6",
+  "echarts.ui.k8": "\u6761\u5F62",
+  "echarts.ui.k9": "\u6298\u7EBF",
+  "echarts.ui.k10": "\u9762\u79EF",
+  "echarts.ui.k11": "\u997C",
+  "echarts.ui.k12": "\u73AF\u5F62",
+  "echarts.ui.k13": "\u6563\u70B9",
+  "echarts.ui.k14": "\u96F7\u8FBE",
+  "echarts.ui.k15": "\u6F0F\u6597",
+  "echarts.ui.k16": "\u4EEA\u8868",
+  "echarts.ui.k17": "\u6570\u636E\u6807\u7B7E",
+  "echarts.ui.k18": "\u6570\u503C\u6807\u7B7E",
+  "echarts.ui.k19": "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002",
+  "echarts.ui.k20": "\u7EF4\u5EA6\u5B57\u6BB5\uFF08\u6BCF\u4E2A\u5B57\u6BB5\u4E00\u4E2A\u7EF4\u5EA6\uFF09",
+  "echarts.ui.k21": "\u6570\u503C\u5B57\u6BB5",
+  "echarts.ui.k22": "\u6570\u503C\u5B57\u6BB5\uFF08\u591A\u503C\u591A\u7CFB\u5217\uFF09",
+  "echarts.ui.k23": "\uFF08\u9ED8\u8BA4\uFF09",
+  "echarts.ui.k24": "\uFF08\u5F53\u524D\uFF09",
+  "echarts.ui.k25": "\uFF08\u9ED8\u8BA4\uFF1A\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09",
+  "echarts.ui.k26": "\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61",
+  "echarts.ui.k27": "\u56FE\u8868",
+  "echarts.ui.k28": "\uFF08\u9ED8\u8BA4\uFF09",
+  "echarts.ui.k29": "\u9ED8\u8BA4",
+  "echarts.ui.k30": "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09",
+  "echarts.ui.k31": "\u622A\u65AD",
+  "echarts.ui.k32": "\u6362\u884C",
+  "echarts.ui.k33": "\u9ED8\u8BA4",
+  "echarts.ui.k34": "\u5E38\u89C4",
+  "echarts.ui.k35": "\u52A0\u7C97",
+  "echarts.ui.k36": "\u8DDD\u79BB",
+  "echarts.ui.k37": "\u65CB\u8F6C\uFF08\u5EA6\uFF09",
+  "echarts.ui.k38": "\u5B57\u53F7",
+  "echarts.ui.k39": "\u5B57\u91CD",
+  "echarts.ui.k40": "\u6587\u5B57\u989C\u8272",
+  "echarts.ui.k41": "\u80CC\u666F\u8272",
+  "echarts.ui.k42": "\u8FB9\u6846\u8272",
+  "echarts.ui.k43": "\u8FB9\u6846\u5BBD\u5EA6",
+  "echarts.ui.k44": "\u5706\u89D2",
+  "echarts.ui.k45": "\u5185\u8FB9\u8DDD",
+  "echarts.ui.k46": "\u663E\u793A\u6570\u636E\u6807\u7B7E",
+  "echarts.ui.k47": "\u5185\u5BB9",
+  "echarts.ui.k48": "\u6570\u636E\u6807\u7B7E\u5185\u5BB9",
+  "echarts.ui.k49": "\u81EA\u5B9A\u4E49 / \u9ED8\u8BA4",
+  "echarts.ui.k50": "\u5982 {b}: {c}",
+  "echarts.ui.k51": "\u6EA2\u51FA\u5904\u7406",
+  "echarts.ui.k52": "\u4F4D\u7F6E",
+  "echarts.ui.k53": "\u6807\u7B7E\u4F4D\u7F6E",
+  "echarts.ui.k54": "\u9ED8\u8BA4",
+  "echarts.ui.k55": "\u504F\u79FB X / Y",
+  "echarts.ui.k56": "\u6837\u5F0F",
+  "echarts.ui.k57": "\u5B57\u91CD",
+  "echarts.ui.k58": "\u5F15\u5BFC\u7EBF",
+  "echarts.ui.k59": "\u663E\u793A\u5F15\u5BFC\u7EBF",
+  "echarts.ui.k60": "\u5F15\u5BFC\u7EBF\u957F\u5EA6",
+  "echarts.ui.k61": "\u7B2C\u4E8C\u6BB5\u957F\u5EA6",
+  "echarts.ui.k62": "\u5E73\u6ED1\u5F15\u5BFC\u7EBF",
+  "echarts.ui.k63": "\u6570\u636E\u6E90",
+  "echarts.ui.k64": "\u7C7B\u76EE\u5B57\u6BB5",
+  "echarts.ui.k65": "\u5220\u9664\u8BE5\u5B57\u6BB5",
+  "echarts.ui.k66": "+ \u6DFB\u52A0\u5B57\u6BB5",
+  "echarts.ui.k67": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
+  "echarts.ui.k68": "\u53EF\u9009\uFF0C\u5982 region\uFF08\u6309\u503C\u62C6\u6210\u591A\u7CFB\u5217\uFF09",
+  "echarts.ui.k69": "\u6C14\u6CE1\u5927\u5C0F",
+  "echarts.ui.k70": "\u56FE\u8868\u6807\u9898",
+  "echarts.ui.k71": "\u7559\u7A7A\u4E0D\u663E\u793A\u6807\u9898",
+  "echarts.ui.k72": "\u663E\u793A\u56FE\u4F8B",
+  "echarts.ui.k73": "\u914D\u8272",
+  "echarts.ui.k74": "\u5806\u53E0\u663E\u793A",
+  "echarts.ui.k75": "\u5185\u5F84\uFF08%\uFF09",
+  "echarts.ui.k76": "\u5185\u8FB9\u8DDD \u4E0A/\u53F3/\u4E0B/\u5DE6 (%)",
+  "echarts.ui.k77": "\u4E0A\u8FB9\u8DDD",
+  "echarts.ui.k78": "\u53F3\u8FB9\u8DDD\uFF08\u7559\u5916\u7F6E\u6807\u7B7E\uFF09",
+  "echarts.ui.k79": "\u4E0B\u8FB9\u8DDD",
+  "echarts.ui.k80": "\u5DE6\u8FB9\u8DDD",
+  "echarts.ui.k81": "\u534A\u5F84\uFF08%\uFF09",
+  "echarts.ui.k82": "\u6700\u5C0F / \u6700\u5927\u503C",
+  "echarts.ui.k83": "\u56FE\u8868",
+  "echarts.kinds.k84": "\u67F1\u72B6\u56FE",
+  "echarts.kinds.k86": "\u6761\u5F62\u56FE",
+  "echarts.kinds.k88": "\u6298\u7EBF\u56FE",
+  "echarts.kinds.k90": "\u9762\u79EF\u56FE",
+  "echarts.kinds.k92": "\u997C\u56FE",
+  "echarts.kinds.k94": "\u73AF\u5F62\u56FE",
+  "echarts.kinds.k96": "\u6563\u70B9\u56FE",
+  "echarts.kinds.k98": "\u96F7\u8FBE\u56FE",
+  "echarts.kinds.k100": "\u6F0F\u6597\u56FE",
+  "echarts.kinds.k102": "\u4EEA\u8868\u76D8",
+  "echarts.label.k104": "\u6570\u503C",
+  "echarts.label.k105": "\u540D\u79F0: \u6570\u503C",
+  "echarts.label.k106": "\u540D\u79F0",
+  "echarts.label.k107": "\u767E\u5206\u6BD4",
+  "echarts.label.k108": "\u9876\u90E8",
+  "echarts.label.k109": "\u5185\u90E8",
+  "echarts.label.k110": "\u5185\u90E8\u9876\u7AEF",
+  "echarts.label.k111": "\u5E95\u90E8",
+  "echarts.label.k112": "\u5185\u90E8\u5E95\u7AEF",
+  "echarts.label.k113": "\u53F3\u4FA7",
+  "echarts.label.k114": "\u5DE6\u4FA7",
+  "echarts.label.k115": "\u5C45\u4E2D",
+  "echarts.label.k116": "\u9876\u90E8",
+  "echarts.label.k117": "\u5E95\u90E8",
+  "echarts.label.k118": "\u5185\u90E8",
+  "echarts.label.k119": "\u5DE6\u4FA7",
+  "echarts.label.k120": "\u53F3\u4FA7",
+  "echarts.label.k121": "\u5916\u4FA7",
+  "echarts.label.k122": "\u5185\u90E8",
+  "echarts.label.k123": "\u4E2D\u5FC3",
+  "echarts.label.k124": "\u9876\u90E8",
+  "echarts.label.k125": "\u5E95\u90E8",
+  "echarts.label.k126": "\u5DE6\u4FA7",
+  "echarts.label.k127": "\u53F3\u4FA7",
+  "echarts.label.k128": "\u5185\u90E8",
+  "echarts.label.k129": "\u9876\u90E8",
+  "echarts.label.k130": "\u5E95\u90E8",
+  "echarts.label.k131": "\u5DE6\u4FA7",
+  "echarts.label.k132": "\u53F3\u4FA7",
+  "echarts.label.k133": "\u5185\u90E8",
+  "echarts.label.k134": "\u5916\u4FA7",
+  "echarts.label.k135": "\u5185\u90E8",
+  "echarts.label.k136": "\u5DE6\u4FA7",
+  "echarts.label.k137": "\u53F3\u4FA7",
+  "echarts.label.k138": "\u9876\u90E8",
+  "echarts.label.k139": "\u5E95\u90E8",
+  "echarts.plugin.k140": "\u56FE\u8868 option",
+  "echarts.plugin.k141": "\u6570\u636E\u6E90",
+  "echarts.plugin.k142": "\u7C7B\u76EE\u5B57\u6BB5",
+  "echarts.plugin.k143": "\u6570\u503C\u5B57\u6BB5",
+  "echarts.plugin.k144": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
+  "echarts.plugin.k145": "\u6C14\u6CE1\u5927\u5C0F",
+  // 十类图表的 AI 提示说明（notes），键顺序对应 CHART_KIND_DEFINITIONS
+  "echarts.notes.k146": "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight",
+  "echarts.notes.k147": "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D",
+  "echarts.notes.k148": "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle",
+  "echarts.notes.k149": "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE",
+  "echarts.notes.k150": "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5",
+  "echarts.notes.k151": "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E",
+  "echarts.notes.k152": "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F",
+  "echarts.notes.k153": "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09",
+  "echarts.notes.k154": "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09",
+  "echarts.notes.k155": "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max"
+};
+
+// src/i18n/en-US.ts
+var echartsEnUS = {
+  "echarts.ui.k1": "Chart",
+  "echarts.ui.k2": "Config",
+  "echarts.ui.k3": "Data source",
+  "echarts.ui.k4": "Category",
+  "echarts.ui.k5": "Value",
+  "echarts.ui.k6": "Series",
+  "echarts.ui.k7": "Bar",
+  "echarts.ui.k8": "Horizontal bar",
+  "echarts.ui.k9": "Line",
+  "echarts.ui.k10": "Area",
+  "echarts.ui.k11": "Pie",
+  "echarts.ui.k12": "Doughnut",
+  "echarts.ui.k13": "Scatter",
+  "echarts.ui.k14": "Radar",
+  "echarts.ui.k15": "Funnel",
+  "echarts.ui.k16": "Gauge",
+  "echarts.ui.k17": "Data label",
+  "echarts.ui.k18": "Value label",
+  "echarts.ui.k19": "Data is injected at template binding; keep the `$data` placeholder in series/xAxis data; advanced styles can be written in chartOption in the template JSON.",
+  "echarts.ui.k20": "Dimension fields (one per dimension)",
+  "echarts.ui.k21": "Value fields",
+  "echarts.ui.k22": "Value fields (multiple values, multiple series)",
+  "echarts.ui.k23": "(default)",
+  "echarts.ui.k24": "(current)",
+  "echarts.ui.k25": "(default: first top-level array)",
+  "echarts.ui.k26": "Invalid chart option: expected an object",
+  "echarts.ui.k27": "Chart",
+  "echarts.ui.k28": "(default)",
+  "echarts.ui.k29": "Default",
+  "echarts.ui.k30": "None (show full)",
+  "echarts.ui.k31": "Truncate",
+  "echarts.ui.k32": "Wrap",
+  "echarts.ui.k33": "Default",
+  "echarts.ui.k34": "Regular",
+  "echarts.ui.k35": "Bold",
+  "echarts.ui.k36": "Distance",
+  "echarts.ui.k37": "Rotation (deg)",
+  "echarts.ui.k38": "Font size",
+  "echarts.ui.k39": "Font weight",
+  "echarts.ui.k40": "Text color",
+  "echarts.ui.k41": "Background color",
+  "echarts.ui.k42": "Border color",
+  "echarts.ui.k43": "Border width",
+  "echarts.ui.k44": "Radius",
+  "echarts.ui.k45": "Padding",
+  "echarts.ui.k46": "Show data labels",
+  "echarts.ui.k47": "Content",
+  "echarts.ui.k48": "Data label content",
+  "echarts.ui.k49": "Custom / Default",
+  "echarts.ui.k50": "e.g. {b}: {c}",
+  "echarts.ui.k51": "Overflow",
+  "echarts.ui.k52": "Position",
+  "echarts.ui.k53": "Label position",
+  "echarts.ui.k54": "Default",
+  "echarts.ui.k55": "Offset X / Y",
+  "echarts.ui.k56": "Style",
+  "echarts.ui.k57": "Font weight",
+  "echarts.ui.k58": "Label line",
+  "echarts.ui.k59": "Show label line",
+  "echarts.ui.k60": "Label line length",
+  "echarts.ui.k61": "Second segment length",
+  "echarts.ui.k62": "Smooth label line",
+  "echarts.ui.k63": "Data source",
+  "echarts.ui.k64": "Category field",
+  "echarts.ui.k65": "Remove this field",
+  "echarts.ui.k66": "+ Add field",
+  "echarts.ui.k67": "Series split field",
+  "echarts.ui.k68": "Optional, e.g. region (splits into series by value)",
+  "echarts.ui.k69": "Bubble size",
+  "echarts.ui.k70": "Chart title",
+  "echarts.ui.k71": "Leave empty to hide the title",
+  "echarts.ui.k72": "Show legend",
+  "echarts.ui.k73": "Color palette",
+  "echarts.ui.k74": "Stacked",
+  "echarts.ui.k75": "Inner radius (%)",
+  "echarts.ui.k76": "Padding top/right/bottom/left (%)",
+  "echarts.ui.k77": "Top padding",
+  "echarts.ui.k78": "Right padding (for outer labels)",
+  "echarts.ui.k79": "Bottom padding",
+  "echarts.ui.k80": "Left padding",
+  "echarts.ui.k81": "Radius (%)",
+  "echarts.ui.k82": "Min / max",
+  "echarts.ui.k83": "Chart",
+  "echarts.kinds.k84": "Bar chart",
+  "echarts.kinds.k86": "Horizontal bar chart",
+  "echarts.kinds.k88": "Line chart",
+  "echarts.kinds.k90": "Area chart",
+  "echarts.kinds.k92": "Pie chart",
+  "echarts.kinds.k94": "Doughnut chart",
+  "echarts.kinds.k96": "Scatter chart",
+  "echarts.kinds.k98": "Radar chart",
+  "echarts.kinds.k100": "Funnel chart",
+  "echarts.kinds.k102": "Gauge chart",
+  "echarts.label.k104": "Value",
+  "echarts.label.k105": "Name: Value",
+  "echarts.label.k106": "Name",
+  "echarts.label.k107": "Percentage",
+  "echarts.label.k108": "Top",
+  "echarts.label.k109": "Inside",
+  "echarts.label.k110": "Inside top",
+  "echarts.label.k111": "Bottom",
+  "echarts.label.k112": "Inside bottom",
+  "echarts.label.k113": "Right",
+  "echarts.label.k114": "Left",
+  "echarts.label.k115": "Center",
+  "echarts.label.k116": "Top",
+  "echarts.label.k117": "Bottom",
+  "echarts.label.k118": "Inside",
+  "echarts.label.k119": "Left",
+  "echarts.label.k120": "Right",
+  "echarts.label.k121": "Outside",
+  "echarts.label.k122": "Inside",
+  "echarts.label.k123": "Center",
+  "echarts.label.k124": "Top",
+  "echarts.label.k125": "Bottom",
+  "echarts.label.k126": "Left",
+  "echarts.label.k127": "Right",
+  "echarts.label.k128": "Inside",
+  "echarts.label.k129": "Top",
+  "echarts.label.k130": "Bottom",
+  "echarts.label.k131": "Left",
+  "echarts.label.k132": "Right",
+  "echarts.label.k133": "Inside",
+  "echarts.label.k134": "Outside",
+  "echarts.label.k135": "Inside",
+  "echarts.label.k136": "Left",
+  "echarts.label.k137": "Right",
+  "echarts.label.k138": "Top",
+  "echarts.label.k139": "Bottom",
+  "echarts.plugin.k140": "Chart option",
+  "echarts.plugin.k141": "Data source",
+  "echarts.plugin.k142": "Category field",
+  "echarts.plugin.k143": "Value fields",
+  "echarts.plugin.k144": "Series split field",
+  "echarts.plugin.k145": "Bubble size",
+  // AI hints for the ten chart kinds (notes), order matches CHART_KIND_DEFINITIONS
+  "echarts.notes.k146": "Bar chart: category + multiple value fields, one series per field; write the $data placeholder in series[].data; fixed height, autoHeight is forbidden",
+  "echarts.notes.k147": "Horizontal bar: xAxis is the value axis, yAxis is the category axis; write the $data placeholder in yAxis.data for categories",
+  "echarts.notes.k148": "Line chart: category + multiple value fields; do not write areaStyle",
+  "echarts.notes.k149": "Area chart: line + series[].areaStyle; otherwise same as the line chart",
+  "echarts.notes.k150": "Pie chart: category + the first value field produce { name, value }; only one value field is needed",
+  "echarts.notes.k151": "Doughnut: pie + radius:[inner, outer]; the inner radius is configured in the panel",
+  "echarts.notes.k152": "Scatter: the category field is x, the first value field is y; when chartBubble is on, the second value field is the point size",
+  "echarts.notes.k153": "Radar: each value field is a dimension (radar.indicator), each data row is a series (the category field is the series name); the radius is written by the panel to radar.radius (%, default 75)",
+  "echarts.notes.k154": "Funnel: category + the first value field, sorted descending; the four insets are written by the panel to series.left/right/top/bottom (%, reserve room on the right for outer labels)",
+  "echarts.notes.k155": "Gauge: the first value field of the first data row is the pointer value; min/max are written by the panel to series[0].min/max"
+};
+
+// src/i18n/th-TH.ts
+var echartsThTH = {
+  "echarts.ui.k1": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+  "echarts.ui.k2": "\u0E01\u0E32\u0E23\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E04\u0E48\u0E32",
+  "echarts.ui.k3": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k4": "\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+  "echarts.ui.k5": "\u0E04\u0E48\u0E32",
+  "echarts.ui.k6": "\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k7": "\u0E41\u0E17\u0E48\u0E07",
+  "echarts.ui.k8": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
+  "echarts.ui.k9": "\u0E40\u0E2A\u0E49\u0E19",
+  "echarts.ui.k10": "\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48",
+  "echarts.ui.k11": "\u0E27\u0E07\u0E01\u0E25\u0E21",
+  "echarts.ui.k12": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19",
+  "echarts.ui.k13": "\u0E08\u0E38\u0E14\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22",
+  "echarts.ui.k14": "\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C",
+  "echarts.ui.k15": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07",
+  "echarts.ui.k16": "\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14",
+  "echarts.ui.k17": "\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k18": "\u0E1B\u0E49\u0E32\u0E22\u0E04\u0E48\u0E32",
+  "echarts.ui.k19": "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E16\u0E39\u0E01\u0E41\u0E17\u0E23\u0E01\u0E15\u0E2D\u0E19\u0E1C\u0E39\u0E01\u0E40\u0E17\u0E21\u0E40\u0E1E\u0E25\u0E15; \u0E04\u0E07\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 `$data` \u0E44\u0E27\u0E49\u0E43\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 series/xAxis; \u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E40\u0E02\u0E35\u0E22\u0E19\u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E43\u0E19 chartOption \u0E02\u0E2D\u0E07 JSON \u0E40\u0E17\u0E21\u0E40\u0E1E\u0E25\u0E15\u0E44\u0E14\u0E49",
+  "echarts.ui.k20": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E21\u0E34\u0E15\u0E34 (\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34)",
+  "echarts.ui.k21": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+  "echarts.ui.k22": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32 (\u0E2B\u0E25\u0E32\u0E22\u0E04\u0E48\u0E32 \u0E2B\u0E25\u0E32\u0E22\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25)",
+  "echarts.ui.k23": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19)",
+  "echarts.ui.k24": "(\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19)",
+  "echarts.ui.k25": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19: \u0E2D\u0E32\u0E23\u0E4C\u0E40\u0E23\u0E22\u0E4C\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01)",
+  "echarts.ui.k26": "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E32\u0E14\u0E27\u0E48\u0E32\u0E40\u0E1B\u0E47\u0E19\u0E2D\u0E47\u0E2D\u0E1A\u0E40\u0E08\u0E01\u0E15\u0E4C",
+  "echarts.ui.k27": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+  "echarts.ui.k28": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19)",
+  "echarts.ui.k29": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+  "echarts.ui.k30": "\u0E44\u0E21\u0E48\u0E21\u0E35 (\u0E41\u0E2A\u0E14\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14)",
+  "echarts.ui.k31": "\u0E15\u0E31\u0E14\u0E17\u0E34\u0E49\u0E07",
+  "echarts.ui.k32": "\u0E15\u0E31\u0E14\u0E04\u0E33",
+  "echarts.ui.k33": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+  "echarts.ui.k34": "\u0E1B\u0E01\u0E15\u0E34",
+  "echarts.ui.k35": "\u0E2B\u0E19\u0E32",
+  "echarts.ui.k36": "\u0E23\u0E30\u0E22\u0E30\u0E2B\u0E48\u0E32\u0E07",
+  "echarts.ui.k37": "\u0E01\u0E32\u0E23\u0E2B\u0E21\u0E38\u0E19 (\u0E2D\u0E07\u0E28\u0E32)",
+  "echarts.ui.k38": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
+  "echarts.ui.k39": "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
+  "echarts.ui.k40": "\u0E2A\u0E35\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21",
+  "echarts.ui.k41": "\u0E2A\u0E35\u0E1E\u0E37\u0E49\u0E19\u0E2B\u0E25\u0E31\u0E07",
+  "echarts.ui.k42": "\u0E2A\u0E35\u0E40\u0E2A\u0E49\u0E19\u0E02\u0E2D\u0E1A",
+  "echarts.ui.k43": "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E40\u0E2A\u0E49\u0E19\u0E02\u0E2D\u0E1A",
+  "echarts.ui.k44": "\u0E23\u0E31\u0E28\u0E21\u0E35",
+  "echarts.ui.k45": "\u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19",
+  "echarts.ui.k46": "\u0E41\u0E2A\u0E14\u0E07\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k47": "\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32",
+  "echarts.ui.k48": "\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k49": "\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07 / \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+  "echarts.ui.k50": "\u0E40\u0E0A\u0E48\u0E19 {b}: {c}",
+  "echarts.ui.k51": "\u0E25\u0E49\u0E19",
+  "echarts.ui.k52": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07",
+  "echarts.ui.k53": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07\u0E1B\u0E49\u0E32\u0E22",
+  "echarts.ui.k54": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+  "echarts.ui.k55": "\u0E2D\u0E2D\u0E1F\u0E40\u0E0B\u0E47\u0E15 X / Y",
+  "echarts.ui.k56": "\u0E2A\u0E44\u0E15\u0E25\u0E4C",
+  "echarts.ui.k57": "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
+  "echarts.ui.k58": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
+  "echarts.ui.k59": "\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
+  "echarts.ui.k60": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
+  "echarts.ui.k61": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E17\u0E48\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07",
+  "echarts.ui.k62": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07",
+  "echarts.ui.k63": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k64": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+  "echarts.ui.k65": "\u0E25\u0E1A\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E19\u0E35\u0E49",
+  "echarts.ui.k66": "+ \u0E40\u0E1E\u0E34\u0E48\u0E21\u0E1F\u0E34\u0E25\u0E14\u0E4C",
+  "echarts.ui.k67": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.ui.k68": "\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A \u0E40\u0E0A\u0E48\u0E19 region (\u0E41\u0E22\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32)",
+  "echarts.ui.k69": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
+  "echarts.ui.k70": "\u0E0A\u0E37\u0E48\u0E2D\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+  "echarts.ui.k71": "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E0B\u0E48\u0E2D\u0E19\u0E0A\u0E37\u0E48\u0E2D",
+  "echarts.ui.k72": "\u0E41\u0E2A\u0E14\u0E07\u0E04\u0E33\u0E2D\u0E18\u0E34\u0E1A\u0E32\u0E22",
+  "echarts.ui.k73": "\u0E0A\u0E38\u0E14\u0E2A\u0E35",
+  "echarts.ui.k74": "\u0E0B\u0E49\u0E2D\u0E19\u0E01\u0E31\u0E19",
+  "echarts.ui.k75": "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19 (%)",
+  "echarts.ui.k76": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19/\u0E02\u0E27\u0E32/\u0E25\u0E48\u0E32\u0E07/\u0E0B\u0E49\u0E32\u0E22 (%)",
+  "echarts.ui.k77": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19",
+  "echarts.ui.k78": "\u0E23\u0E30\u0E22\u0E30\u0E02\u0E27\u0E32 (\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
+  "echarts.ui.k79": "\u0E23\u0E30\u0E22\u0E30\u0E25\u0E48\u0E32\u0E07",
+  "echarts.ui.k80": "\u0E23\u0E30\u0E22\u0E30\u0E0B\u0E49\u0E32\u0E22",
+  "echarts.ui.k81": "\u0E23\u0E31\u0E28\u0E21\u0E35 (%)",
+  "echarts.ui.k82": "\u0E15\u0E48\u0E33\u0E2A\u0E38\u0E14 / \u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14",
+  "echarts.ui.k83": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+  "echarts.kinds.k84": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07",
+  "echarts.kinds.k86": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
+  "echarts.kinds.k88": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
+  "echarts.kinds.k90": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48",
+  "echarts.kinds.k92": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21",
+  "echarts.kinds.k94": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19",
+  "echarts.kinds.k96": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22",
+  "echarts.kinds.k98": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C",
+  "echarts.kinds.k100": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07",
+  "echarts.kinds.k102": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14",
+  "echarts.label.k104": "\u0E04\u0E48\u0E32",
+  "echarts.label.k105": "\u0E0A\u0E37\u0E48\u0E2D: \u0E04\u0E48\u0E32",
+  "echarts.label.k106": "\u0E0A\u0E37\u0E48\u0E2D",
+  "echarts.label.k107": "\u0E40\u0E1B\u0E2D\u0E23\u0E4C\u0E40\u0E0B\u0E47\u0E19\u0E15\u0E4C",
+  "echarts.label.k108": "\u0E1A\u0E19",
+  "echarts.label.k109": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+  "echarts.label.k110": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19\u0E1A\u0E19",
+  "echarts.label.k111": "\u0E25\u0E48\u0E32\u0E07",
+  "echarts.label.k112": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19\u0E25\u0E48\u0E32\u0E07",
+  "echarts.label.k113": "\u0E02\u0E27\u0E32",
+  "echarts.label.k114": "\u0E0B\u0E49\u0E32\u0E22",
+  "echarts.label.k115": "\u0E01\u0E25\u0E32\u0E07",
+  "echarts.label.k116": "\u0E1A\u0E19",
+  "echarts.label.k117": "\u0E25\u0E48\u0E32\u0E07",
+  "echarts.label.k118": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+  "echarts.label.k119": "\u0E0B\u0E49\u0E32\u0E22",
+  "echarts.label.k120": "\u0E02\u0E27\u0E32",
+  "echarts.label.k121": "\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01",
+  "echarts.label.k122": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+  "echarts.label.k123": "\u0E01\u0E25\u0E32\u0E07",
+  "echarts.label.k124": "\u0E1A\u0E19",
+  "echarts.label.k125": "\u0E25\u0E48\u0E32\u0E07",
+  "echarts.label.k126": "\u0E0B\u0E49\u0E32\u0E22",
+  "echarts.label.k127": "\u0E02\u0E27\u0E32",
+  "echarts.label.k128": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+  "echarts.label.k129": "\u0E1A\u0E19",
+  "echarts.label.k130": "\u0E25\u0E48\u0E32\u0E07",
+  "echarts.label.k131": "\u0E0B\u0E49\u0E32\u0E22",
+  "echarts.label.k132": "\u0E02\u0E27\u0E32",
+  "echarts.label.k133": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+  "echarts.label.k134": "\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01",
+  "echarts.label.k135": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+  "echarts.label.k136": "\u0E0B\u0E49\u0E32\u0E22",
+  "echarts.label.k137": "\u0E02\u0E27\u0E32",
+  "echarts.label.k138": "\u0E1A\u0E19",
+  "echarts.label.k139": "\u0E25\u0E48\u0E32\u0E07",
+  "echarts.plugin.k140": "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+  "echarts.plugin.k141": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.plugin.k142": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+  "echarts.plugin.k143": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+  "echarts.plugin.k144": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+  "echarts.plugin.k145": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
+  // คำแนะนำ AI สำหรับแผนภูมิทั้งสิบประเภท (notes) ลำดับตรงกับ CHART_KIND_DEFINITIONS
+  "echarts.notes.k146": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27 \u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 series[].data; \u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E04\u0E07\u0E17\u0E35\u0E48 \u0E2B\u0E49\u0E32\u0E21\u0E43\u0E0A\u0E49 autoHeight",
+  "echarts.notes.k147": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19: xAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E04\u0E48\u0E32 yAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 yAxis.data \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+  "echarts.notes.k148": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27; \u0E44\u0E21\u0E48\u0E40\u0E02\u0E35\u0E22\u0E19 areaStyle",
+  "echarts.notes.k149": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48: \u0E40\u0E2A\u0E49\u0E19 + series[].areaStyle; \u0E19\u0E2D\u0E01\u0E19\u0E31\u0E49\u0E19\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
+  "echarts.notes.k150": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E2A\u0E23\u0E49\u0E32\u0E07 { name, value }; \u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E1E\u0E35\u0E22\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+  "echarts.notes.k151": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19: \u0E27\u0E07\u0E01\u0E25\u0E21 + radius:[\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19, \u0E23\u0E31\u0E28\u0E21\u0E35\u0E19\u0E2D\u0E01]; \u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E43\u0E19\u0E41\u0E1C\u0E07",
+  "echarts.notes.k152": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19 x \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19 y; \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14 chartBubble \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E19\u0E32\u0E14\u0E08\u0E38\u0E14",
+  "echarts.notes.k153": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E17\u0E38\u0E01\u0E15\u0E31\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34 (radar.indicator) \u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E15\u0E48\u0E25\u0E30\u0E41\u0E16\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series (\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E37\u0E48\u0E2D series); \u0E23\u0E31\u0E28\u0E21\u0E35\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 radar.radius (%, \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19 75)",
+  "echarts.notes.k154": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01 \u0E40\u0E23\u0E35\u0E22\u0E07\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32\u0E25\u0E07\u0E21\u0E32; \u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19\u0E2A\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series.left/right/top/bottom (%, \u0E40\u0E1C\u0E37\u0E48\u0E2D\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E02\u0E27\u0E32\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
+  "echarts.notes.k155": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E02\u0E2D\u0E07\u0E41\u0E16\u0E27\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E04\u0E48\u0E32\u0E1C\u0E25\u0E31\u0E01\u0E14\u0E31\u0E19; min/max \u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series[0].min/max"
+};
+
+// src/ui.ts
+import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
+import { render } from "@worm-print-platform/plugin-kit/dom";
+import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
@@ -1113,7 +1613,7 @@ var SEARCH_KEYWORDS = [
   "\u6570\u503C\u6807\u7B7E",
   "label"
 ];
-var PANEL_HINT = "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002";
+var panelHint = () => t2("echarts.ui.k19");
 function escapeHtml2(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -1154,8 +1654,8 @@ function maxValueFields(def) {
   }
 }
 function valueFieldsLabel(def, limit) {
-  if (def?.seriesType === "radar") return "\u7EF4\u5EA6\u5B57\u6BB5\uFF08\u6BCF\u4E2A\u5B57\u6BB5\u4E00\u4E2A\u7EF4\u5EA6\uFF09";
-  return limit === 1 ? "\u6570\u503C\u5B57\u6BB5" : "\u6570\u503C\u5B57\u6BB5\uFF08\u591A\u503C\u591A\u7CFB\u5217\uFF09";
+  if (def?.seriesType === "radar") return t2("echarts.ui.k20");
+  return limit === 1 ? t2("echarts.ui.k21") : t2("echarts.ui.k22");
 }
 function dataSourceCandidates(data) {
   const first = data?.[0];
@@ -1178,15 +1678,15 @@ function fieldLabelMap(fields) {
   return map;
 }
 function optionLabel(value, labels, fallbackSuffix) {
-  if (!value) return fallbackSuffix ?? "\uFF08\u9ED8\u8BA4\uFF09";
+  if (!value) return fallbackSuffix ?? t2("echarts.ui.k23");
   const name = labels.get(value);
   const base = name ? `${name}\uFF08${value}\uFF09` : value;
   return fallbackSuffix ? `${base}${fallbackSuffix}` : base;
 }
 function dropdownOptions(candidates, current, labels = /* @__PURE__ */ new Map()) {
   const opts = candidates.map((value) => ({ value, label: optionLabel(value, labels) }));
-  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, "\uFF08\u5F53\u524D\uFF09") });
-  if (!current) opts.unshift({ value: "", label: "\uFF08\u9ED8\u8BA4\uFF1A\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09" });
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t2("echarts.ui.k24")) });
+  if (!current) opts.unshift({ value: "", label: t2("echarts.ui.k25") });
   return opts;
 }
 function seriesList(option) {
@@ -1213,12 +1713,12 @@ function renderCanvas(ctx) {
   try {
     const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption(type));
     const option = normalizeChartOption(type, preview);
-    if (!option || typeof option !== "object" || Array.isArray(option)) throw new Error("\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61");
+    if (!option || typeof option !== "object" || Array.isArray(option)) throw new Error(t2("echarts.ui.k26"));
     const fontFamily = typeof options.fontFamily === "string" && options.fontFamily ? options.fontFamily : void 0;
     const svg = renderChartToSvg({ key: element.id, type, option, widthMm, heightMm, fontFamily });
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${svg}</div>`;
   } catch {
-    const title = typeof options.title === "string" && options.title.trim() ? options.title : getChartKindDefinition(type)?.label ?? "\u56FE\u8868";
+    const title = typeof options.title === "string" && options.title.trim() ? options.title : getChartKindDefinition(type)?.label ?? t2("echarts.ui.k27");
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${escapeHtml2(title)}</div>`;
   }
 }
@@ -1273,7 +1773,7 @@ function composedPathOf(ev) {
   return composed.length ? composed : [ev.target];
 }
 function dropdownSelect(options, value, onCommit) {
-  const current = options.find((item) => item.value === value) ?? { value, label: value || "\uFF08\u9ED8\u8BA4\uFF09" };
+  const current = options.find((item) => item.value === value) ?? { value, label: value || t2("echarts.ui.k28") };
   const trigger = el("button", "echarts-dropdown-trigger");
   trigger.type = "button";
   trigger.setAttribute("aria-haspopup", "listbox");
@@ -1346,27 +1846,27 @@ function dropdownSelect(options, value, onCommit) {
   return trigger;
 }
 var OVERFLOW_OPTIONS = [
-  { value: "", label: "\u9ED8\u8BA4" },
-  { value: "none", label: "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09" },
-  { value: "truncate", label: "\u622A\u65AD" },
-  { value: "break", label: "\u6362\u884C" }
+  { value: "", label: t2("echarts.ui.k29") },
+  { value: "none", label: t2("echarts.ui.k30") },
+  { value: "truncate", label: t2("echarts.ui.k31") },
+  { value: "break", label: t2("echarts.ui.k32") }
 ];
 var FONT_WEIGHT_OPTIONS = [
-  { value: "", label: "\u9ED8\u8BA4" },
-  { value: "normal", label: "\u5E38\u89C4" },
-  { value: "bold", label: "\u52A0\u7C97" }
+  { value: "", label: t2("echarts.ui.k33") },
+  { value: "normal", label: t2("echarts.ui.k34") },
+  { value: "bold", label: t2("echarts.ui.k35") }
 ];
 var STYLE_FIELD_LABELS = {
-  distance: "\u8DDD\u79BB",
-  rotate: "\u65CB\u8F6C\uFF08\u5EA6\uFF09",
-  fontSize: "\u5B57\u53F7",
-  fontWeight: "\u5B57\u91CD",
-  color: "\u6587\u5B57\u989C\u8272",
-  backgroundColor: "\u80CC\u666F\u8272",
-  borderColor: "\u8FB9\u6846\u8272",
-  borderWidth: "\u8FB9\u6846\u5BBD\u5EA6",
-  borderRadius: "\u5706\u89D2",
-  padding: "\u5185\u8FB9\u8DDD"
+  distance: t2("echarts.ui.k36"),
+  rotate: t2("echarts.ui.k37"),
+  fontSize: t2("echarts.ui.k38"),
+  fontWeight: t2("echarts.ui.k39"),
+  color: t2("echarts.ui.k40"),
+  backgroundColor: t2("echarts.ui.k41"),
+  borderColor: t2("echarts.ui.k42"),
+  borderWidth: t2("echarts.ui.k43"),
+  borderRadius: t2("echarts.ui.k44"),
+  padding: t2("echarts.ui.k45")
 };
 function renderLabelGroup(ctx, type) {
   const element = ctx.element;
@@ -1410,63 +1910,72 @@ function renderLabelGroup(ctx, type) {
   const group = el("details", "echarts-label-group");
   group.open = state.show;
   const summary = el("summary", "echarts-label-summary");
-  const toggle = checkboxField("\u663E\u793A\u6570\u636E\u6807\u7B7E", state.show, (checked) => commit({ enabled: checked }));
+  const toggle = checkboxField(t2("echarts.ui.k46"), state.show, (checked) => commit({ enabled: checked }));
   toggle.querySelector("input")?.addEventListener("click", (event) => event.stopPropagation());
   summary.appendChild(toggle);
   group.appendChild(summary);
   if (has("formatter") || has("overflow")) {
-    group.appendChild(el("div", "echarts-label-sub", "\u5185\u5BB9"));
+    group.appendChild(el("div", "echarts-label-sub", t2("echarts.ui.k47")));
     if (has("formatter")) {
-      const wrap = field("\u6570\u636E\u6807\u7B7E\u5185\u5BB9");
+      const wrap = field(t2("echarts.ui.k48"));
       wrap.appendChild(
         selectInput(
-          [{ value: "", label: "\u81EA\u5B9A\u4E49 / \u9ED8\u8BA4" }, ...LABEL_PRESETS.map((preset) => ({ value: preset.formatter, label: preset.label }))],
+          [{ value: "", label: t2("echarts.ui.k49") }, ...LABEL_PRESETS.map((preset) => ({ value: preset.formatter, label: t2(preset.labelKey) }))],
           state.formatter ?? "",
           (value) => commit({ formatter: value })
         )
       );
       wrap.appendChild(
-        textInput({ value: state.formatter ?? "", placeholder: "\u5982 {b}: {c}" }, (value) => commit({ formatter: value }))
+        textInput({ value: state.formatter ?? "", placeholder: t2("echarts.ui.k50") }, (value) => commit({ formatter: value }))
       );
       group.appendChild(wrap);
     }
     if (has("overflow")) {
-      const wrap = field("\u6EA2\u51FA\u5904\u7406");
+      const wrap = field(t2("echarts.ui.k51"));
       wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? "", (value) => commit({ overflow: value })));
       group.appendChild(wrap);
     }
   }
-  if (has("position") || has("distance") || has("rotate") || has("offsetX")) {
-    group.appendChild(el("div", "echarts-label-sub", "\u4F4D\u7F6E"));
+  if (has("position") || has("distance") || has("rotate") || has("offset")) {
+    group.appendChild(el("div", "echarts-label-sub", t2("echarts.ui.k52")));
     if (has("position")) {
-      const wrap = field("\u6807\u7B7E\u4F4D\u7F6E");
+      const wrap = field(t2("echarts.ui.k53"));
       const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : [];
       wrap.appendChild(
-        selectInput([{ value: "", label: "\u9ED8\u8BA4" }, ...positions], state.position ?? "", (value) => commit({ position: value }))
+        selectInput([{ value: "", label: t2("echarts.ui.k54") }, ...positions.map((p) => ({ value: p.value, label: t2(p.labelKey) }))], state.position ?? "", (value) => commit({ position: value }))
       );
       group.appendChild(wrap);
     }
     if (has("distance")) group.appendChild(numberField("distance", state.distance));
     if (has("rotate")) group.appendChild(numberField("rotate", state.rotate));
-    if (has("offsetX") || has("offsetY")) {
-      const wrap = field("\u504F\u79FB X / Y");
+    if (has("offset")) {
+      let commitOffset2 = function() {
+        const parse = (input, fallback) => {
+          const text = input.value.trim();
+          if (text === "") return 0;
+          const value = Number(text);
+          return Number.isFinite(value) ? value : fallback;
+        };
+        commit({ offset: [parse(inputX, current[0] ?? 0), parse(inputY, current[1] ?? 0)] });
+      };
+      var commitOffset = commitOffset2;
+      const wrap = field(t2("echarts.ui.k55"));
       const row = el("div", "echarts-field-row");
-      row.appendChild(
-        textInput({ value: state.offsetX === void 0 ? "" : String(state.offsetX), type: "number" }, (raw) => commitNumber("offsetX", raw))
-      );
-      row.appendChild(
-        textInput({ value: state.offsetY === void 0 ? "" : String(state.offsetY), type: "number" }, (raw) => commitNumber("offsetY", raw))
-      );
+      const current = state.offset ?? [0, 0];
+      const inputX = textInput({ value: String(current[0] ?? 0), type: "number" }, () => commitOffset2());
+      const inputY = textInput({ value: String(current[1] ?? 0), type: "number" }, () => commitOffset2());
+      row.appendChild(inputX);
+      row.appendChild(inputY);
       wrap.appendChild(row);
       group.appendChild(wrap);
     }
   }
   const styleKeys = ["fontSize", "fontWeight", "color", "backgroundColor", "borderColor", "borderWidth", "borderRadius", "padding"];
   if (styleKeys.some(has)) {
-    group.appendChild(el("div", "echarts-label-sub", "\u6837\u5F0F"));
+    group.appendChild(el("div", "echarts-label-sub", t2("echarts.ui.k56")));
     if (has("fontSize")) group.appendChild(numberField("fontSize", state.fontSize));
     if (has("fontWeight")) {
-      const wrap = field("\u5B57\u91CD");
+      const wrap = field(t2("echarts.ui.k57"));
       wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
       group.appendChild(wrap);
     }
@@ -1478,12 +1987,12 @@ function renderLabelGroup(ctx, type) {
     }
   }
   if (has("labelLine.show")) {
-    group.appendChild(el("div", "echarts-label-sub", "\u5F15\u5BFC\u7EBF"));
+    group.appendChild(el("div", "echarts-label-sub", t2("echarts.ui.k58")));
     group.appendChild(
-      checkboxField("\u663E\u793A\u5F15\u5BFC\u7EBF", state.labelLine.show === true, (checked) => commit({ labelLine: { show: checked } }))
+      checkboxField(t2("echarts.ui.k59"), state.labelLine.show === true, (checked) => commit({ labelLine: { show: checked } }))
     );
     if (has("labelLine.length")) {
-      const wrap = field("\u5F15\u5BFC\u7EBF\u957F\u5EA6");
+      const wrap = field(t2("echarts.ui.k60"));
       wrap.appendChild(
         textInput(
           { value: state.labelLine.length === void 0 ? "" : String(state.labelLine.length), type: "number" },
@@ -1493,7 +2002,7 @@ function renderLabelGroup(ctx, type) {
       group.appendChild(wrap);
     }
     if (has("labelLine.length2")) {
-      const wrap = field("\u7B2C\u4E8C\u6BB5\u957F\u5EA6");
+      const wrap = field(t2("echarts.ui.k61"));
       wrap.appendChild(
         textInput(
           { value: state.labelLine.length2 === void 0 ? "" : String(state.labelLine.length2), type: "number" },
@@ -1504,7 +2013,7 @@ function renderLabelGroup(ctx, type) {
     }
     if (has("labelLine.smooth")) {
       group.appendChild(
-        checkboxField("\u5E73\u6ED1\u5F15\u5BFC\u7EBF", state.labelLine.smooth === true, (checked) => commit({ labelLine: { smooth: checked } }))
+        checkboxField(t2("echarts.ui.k62"), state.labelLine.smooth === true, (checked) => commit({ labelLine: { smooth: checked } }))
       );
     }
   }
@@ -1527,7 +2036,7 @@ function renderProperty(ctx) {
   form.addEventListener("submit", (event) => event.preventDefault());
   root.appendChild(form);
   if (has("dataSource")) {
-    const wrap = field("\u6570\u636E\u6E90");
+    const wrap = field(t2("echarts.ui.k63"));
     const current = String(options.chartDataSource ?? "");
     wrap.appendChild(
       dropdownSelect(
@@ -1539,7 +2048,7 @@ function renderProperty(ctx) {
     form.appendChild(wrap);
   }
   if (has("categoryField")) {
-    const wrap = field("\u7C7B\u76EE\u5B57\u6BB5");
+    const wrap = field(t2("echarts.ui.k64"));
     const current = String(options.chartCategoryField ?? "");
     wrap.appendChild(
       dropdownSelect(
@@ -1569,14 +2078,14 @@ function renderProperty(ctx) {
       if (fieldsNow.length > 1) {
         const remove = el("button", "pd-button small", "\u2212");
         remove.type = "button";
-        remove.title = "\u5220\u9664\u8BE5\u5B57\u6BB5";
+        remove.title = t2("echarts.ui.k65");
         remove.addEventListener("click", () => syncValueFields(ctx, type, readValueFields(element).filter((_, i) => i !== index)));
         row.appendChild(remove);
       }
       wrap.appendChild(row);
     });
     if (fieldsNow.length < limit) {
-      const add = el("button", "pd-button small", "+ \u6DFB\u52A0\u5B57\u6BB5");
+      const add = el("button", "pd-button small", t2("echarts.ui.k66"));
       add.type = "button";
       add.addEventListener("click", () => syncValueFields(ctx, type, [...readValueFields(element), ""]));
       wrap.appendChild(add);
@@ -1584,10 +2093,10 @@ function renderProperty(ctx) {
     form.appendChild(wrap);
   }
   if (has("seriesField")) {
-    const wrap = field("\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5");
+    const wrap = field(t2("echarts.ui.k67"));
     wrap.appendChild(
       textInput(
-        { value: String(options.chartSeriesField ?? ""), placeholder: "\u53EF\u9009\uFF0C\u5982 region\uFF08\u6309\u503C\u62C6\u6210\u591A\u7CFB\u5217\uFF09" },
+        { value: String(options.chartSeriesField ?? ""), placeholder: t2("echarts.ui.k68") },
         (value) => commitOption(ctx, type, panelOption(element), { chartSeriesField: value })
       )
     );
@@ -1595,16 +2104,16 @@ function renderProperty(ctx) {
   }
   if (has("bubble")) {
     form.appendChild(
-      checkboxField("\u6C14\u6CE1\u5927\u5C0F", options.chartBubble === true, (checked) => {
+      checkboxField(t2("echarts.ui.k69"), options.chartBubble === true, (checked) => {
         commitOption(ctx, type, panelOption(element), { chartBubble: checked });
       })
     );
   }
   if (has("title")) {
-    const wrap = field("\u56FE\u8868\u6807\u9898");
+    const wrap = field(t2("echarts.ui.k70"));
     wrap.appendChild(
       textInput(
-        { value: String(asObject(panelOption(element).title).text ?? ""), placeholder: "\u7559\u7A7A\u4E0D\u663E\u793A\u6807\u9898" },
+        { value: String(asObject(panelOption(element).title).text ?? ""), placeholder: t2("echarts.ui.k71") },
         (value) => {
           const next = panelOption(element);
           next.title = { ...asObject(next.title), text: value };
@@ -1617,7 +2126,7 @@ function renderProperty(ctx) {
   if (has("legend")) {
     const show = asObject(panelOption(element).legend).show !== false;
     form.appendChild(
-      checkboxField("\u663E\u793A\u56FE\u4F8B", show, (checked) => {
+      checkboxField(t2("echarts.ui.k72"), show, (checked) => {
         const next = panelOption(element);
         next.legend = { ...asObject(next.legend), show: checked };
         commitOption(ctx, type, next);
@@ -1625,7 +2134,7 @@ function renderProperty(ctx) {
     );
   }
   if (has("palette")) {
-    const wrap = field("\u914D\u8272");
+    const wrap = field(t2("echarts.ui.k73"));
     const select = el("select", "pd-select");
     for (const palette of palettes) {
       const optionEl = el("option");
@@ -1650,7 +2159,7 @@ function renderProperty(ctx) {
     const series = seriesList(panelOption(element));
     const stacked = series.some((item) => item.stack !== void 0 && item.stack !== null && item.stack !== "");
     form.appendChild(
-      checkboxField("\u5806\u53E0\u663E\u793A", stacked, (checked) => {
+      checkboxField(t2("echarts.ui.k74"), stacked, (checked) => {
         const next = panelOption(element);
         for (const item of seriesList(next)) {
           if (checked) item.stack = "total";
@@ -1661,7 +2170,7 @@ function renderProperty(ctx) {
     );
   }
   if (has("innerRadius")) {
-    const wrap = field("\u5185\u5F84\uFF08%\uFF09");
+    const wrap = field(t2("echarts.ui.k75"));
     const radius = seriesList(panelOption(element))[0]?.radius;
     const inner = Array.isArray(radius) ? Number(String(radius[0] ?? "40%").replace("%", "")) || 40 : 40;
     wrap.appendChild(
@@ -1675,14 +2184,14 @@ function renderProperty(ctx) {
     form.appendChild(wrap);
   }
   if (has("padding")) {
-    const wrap = field("\u5185\u8FB9\u8DDD \u4E0A/\u53F3/\u4E0B/\u5DE6 (%)");
+    const wrap = field(t2("echarts.ui.k76"));
     const padding = readFunnelPadding(panelOption(element), widthMm, heightMm);
     const row = el("div", "echarts-field-row");
     const sides = [
-      { side: "top", title: "\u4E0A\u8FB9\u8DDD" },
-      { side: "right", title: "\u53F3\u8FB9\u8DDD\uFF08\u7559\u5916\u7F6E\u6807\u7B7E\uFF09" },
-      { side: "bottom", title: "\u4E0B\u8FB9\u8DDD" },
-      { side: "left", title: "\u5DE6\u8FB9\u8DDD" }
+      { side: "top", title: t2("echarts.ui.k77") },
+      { side: "right", title: t2("echarts.ui.k78") },
+      { side: "bottom", title: t2("echarts.ui.k79") },
+      { side: "left", title: t2("echarts.ui.k80") }
     ];
     for (const { side, title } of sides) {
       row.appendChild(
@@ -1699,7 +2208,7 @@ function renderProperty(ctx) {
     form.appendChild(wrap);
   }
   if (has("radius")) {
-    const wrap = field("\u534A\u5F84\uFF08%\uFF09");
+    const wrap = field(t2("echarts.ui.k81"));
     wrap.appendChild(
       textInput(
         { value: String(readRadarRadius(panelOption(element), widthMm, heightMm)), type: "number", min: 20, max: 100 },
@@ -1713,7 +2222,7 @@ function renderProperty(ctx) {
     form.appendChild(wrap);
   }
   if (has("gaugeRange")) {
-    const wrap = field("\u6700\u5C0F / \u6700\u5927\u503C");
+    const wrap = field(t2("echarts.ui.k82"));
     const series = seriesList(panelOption(element));
     const row = el("div", "echarts-field-row");
     row.appendChild(
@@ -1735,7 +2244,7 @@ function renderProperty(ctx) {
     wrap.appendChild(row);
     form.appendChild(wrap);
   }
-  form.appendChild(el("p", "pd-hint", PANEL_HINT));
+  form.appendChild(el("p", "pd-hint", panelHint()));
   return root;
 }
 var CHART_ELEMENT_UI = defineElementUI({
@@ -1743,9 +2252,11 @@ var CHART_ELEMENT_UI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: "\u56FE\u8868",
+  group: t2("echarts.ui.k83"),
   searchKeywords: SEARCH_KEYWORDS,
-  styles: STYLES
+  styles: STYLES,
+  i18nId: "echarts",
+  locales: { "zh-CN": echartsZhCN, "en-US": echartsEnUS, "th-TH": echartsThTH }
 });
 var disposeHandle2;
 function installChartCommonUI() {
