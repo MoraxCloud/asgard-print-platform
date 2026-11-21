@@ -1,0 +1,30 @@
+# 迁移与故障排查附录
+
+## 6.1 从 @worm-vue3-print 迁移（摘要）
+
+老仓库 `@worm-vue3-print` 的用户迁移目标是**业务代码零改动**，只换依赖与 import。核心包名映射：
+
+| 旧（worm-vue3-print） | 新（worm-print-platform） |
+| --- | --- |
+| `@worm-vue3-print/core` | `@worm-print-platform/core`（子路径 `/designer` `/browser` `/client` 保持，另增 `/node`） |
+| `@worm-vue3-print/canvas`（Vue 3 组件） | `@worm-print-platform/canvas/vue3`（模板、事件、ref、业务逻辑一行不动；样式内置，删掉 `style.css` 的 import） |
+| `@worm-vue3-print/common`（零框架） | `@worm-print-platform/canvas`（UMD 由 `common.js/common.css` 改为 `canvas.js/canvas.css`，全局 `window.WormPrintCommon` → `window.WormPrintCanvas`） |
+| `@worm-vue3-print/echarts` + `echarts-common` | `@worm-print-platform/echarts`（一行 `import '@worm-print-platform/echarts/ui'` 替代两步） |
+| `@worm-vue3-print/plugin-kit` | `@worm-print-platform/plugin-kit`（契约与注册表同名同形） |
+
+三条迁移路径：
+
+- **路径 A · Vue 3 组件用户**：换依赖 → import 与类型来源集中到 `/vue3` 子路径 → 换可选图表扩展包。
+- **路径 B · 零框架用户**：NPM 接入改包名；UMD 直挂替换两份静态文件并改全局名；依赖 `<print-designer>` / property 注入 / CustomEvent 的业务代码不动。
+- **路径 C · 源码 / 工作区引入用户**：`plugin-kit` / `echarts` 全部改为 npm 正式包，删掉 Vite `resolve.alias` 与 `tsconfig.paths` 的旧别名。
+
+完整映射表、逐条 diff、行为差异 15 条清单与 AI 迁移提示词见 [migration-worm-vue3-print.md](../migration-worm-vue3-print.md)。
+
+## 6.2 故障排查 FAQ
+
+- **插件装了不生效**：确认 `dist/` 已预构建、入口副作用模块已被 `import`（静态 import 或按清单动态加载），构建工具对 `@worm-print-platform/core` 与 `@worm-print-platform/plugin-kit` 做了 `dedupe`；CLI 重装副本后旧副本可能残留，需带 `--force` 重装。
+- **切换语言后译文不更新**：不要在模块加载期把译文求值成常量——那会冻结为当时的语言。控件文本在渲染时调 `t()`；导出常量存 key、用 getter 每次读取取词。
+- **跨副本注册失效**：core 与 plugin-kit 用 `Symbol.for` 全局注册表保证单实例；若出现"注册了却找不到"，检查是否打包出多份 core / plugin-kit，并做 `dedupe`。
+- **打印不出纸**：按三条链路分别排查——浏览器打印确认 iframe 已加载且调用 `contentWindow.print()`；服务端 PDF 确认 `services/render` 已部署且后端持密钥代理；静默打印确认本机客户端已启动且监听 `127.0.0.1:17521`。
+
+更完整的诊断步骤、常见报错与环境检查见 integration 技能的 [troubleshooting.md](../../skills/worm-print-platform-integration/references/troubleshooting.md)；服务端 PDF 与静默打印分别见同目录的 `server-render.md` 与 `silent-print.md`。
