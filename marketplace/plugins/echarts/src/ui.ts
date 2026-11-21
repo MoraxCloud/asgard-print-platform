@@ -87,7 +87,7 @@ const SEARCH_KEYWORDS = [
 ] as const
 
 // 语言包在文件底部 installChartCommonUI() 时才注册，模块加载期不能求值 t()；改为渲染时求值
-const panelHint = () => t('echarts.ui.k19')
+const panelHint = () => t('echarts.panel.hint.dataBinding')
 
 function escapeHtml(value: string): string {
   return value
@@ -151,8 +151,8 @@ function maxValueFields(def: ChartKindDefinition | undefined): number {
 }
 
 function valueFieldsLabel(def: ChartKindDefinition | undefined, limit: number): string {
-  if (def?.seriesType === 'radar') return t('echarts.ui.k20')
-  return limit === 1 ? t('echarts.ui.k21') : t('echarts.ui.k22')
+  if (def?.seriesType === 'radar') return t('echarts.panel.field.dimension')
+  return limit === 1 ? t('echarts.panel.field.value') : t('echarts.panel.field.valueMulti')
 }
 
 /** 数据源候选：设计态示例数据里取「数组值」的顶层键 */
@@ -186,7 +186,7 @@ function fieldLabelMap(fields: readonly { fieldKey: string; fieldLabel?: string 
 
 /** 选项展示文案：有中文名则「中文名（键）」，否则仅键 */
 function optionLabel(value: string, labels: FieldLabelMap, fallbackSuffix?: string): string {
-  if (!value) return fallbackSuffix ?? t('echarts.ui.k23')
+  if (!value) return fallbackSuffix ?? t('echarts.panel.default')
   const name = labels.get(value)
   const base = name ? `${name}（${value}）` : value
   return fallbackSuffix ? `${base}${fallbackSuffix}` : base
@@ -199,8 +199,8 @@ function dropdownOptions(
   labels: FieldLabelMap = new Map(),
 ): { value: string; label: string }[] {
   const opts = candidates.map(value => ({ value, label: optionLabel(value, labels) }))
-  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t('echarts.ui.k24')) })
-  if (!current) opts.unshift({ value: '', label: t('echarts.ui.k25') })
+  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t('echarts.panel.current')) })
+  if (!current) opts.unshift({ value: '', label: t('echarts.panel.defaultFirstArray') })
   return opts
 }
 
@@ -233,14 +233,14 @@ function renderCanvas(ctx: ElementUICanvasContext): ElementUIRenderResult {
     // 预览按 kind 生成合法示例形态再归一，避免雷达/散点等没有绑定数据时空白
     const preview = previewChartOption(type, rawChartOption(element) ?? createDefaultChartOption(type))
     const option = normalizeChartOption(type, preview)
-    if (!option || typeof option !== 'object' || Array.isArray(option)) throw new Error(t('echarts.ui.k26'))
+    if (!option || typeof option !== 'object' || Array.isArray(option)) throw new Error(t('echarts.panel.error.invalidOption'))
     const fontFamily = typeof options.fontFamily === 'string' && options.fontFamily ? options.fontFamily : undefined
     const svg = renderChartToSvg({ key: element.id, type, option, widthMm, heightMm, fontFamily })
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${svg}</div>`
   } catch {
     const title = typeof options.title === 'string' && options.title.trim()
       ? options.title
-      : getChartKindDefinition(type)?.label ?? t('echarts.ui.k27')
+      : getChartKindDefinition(type)?.label ?? t('echarts.panel.chartFallback')
     return `<div class="echarts-canvas-element" style="${CANVAS_STYLE}">${escapeHtml(title)}</div>`
   }
 }
@@ -333,7 +333,7 @@ function dropdownSelect(
   value: string,
   onCommit: (value: string) => void,
 ): HTMLElement {
-  const current = options.find(item => item.value === value) ?? { value, label: value || t('echarts.ui.k28') }
+  const current = options.find(item => item.value === value) ?? { value, label: value || t('echarts.panel.optionDefault') }
   const trigger = el('button', 'echarts-dropdown-trigger')
   trigger.type = 'button'
   trigger.setAttribute('aria-haspopup', 'listbox')
@@ -411,29 +411,29 @@ function dropdownSelect(
 }
 
 const OVERFLOW_OPTIONS = [
-  { value: '', label: t('echarts.ui.k29') },
-  { value: 'none', label: t('echarts.ui.k30') },
-  { value: 'truncate', label: t('echarts.ui.k31') },
-  { value: 'break', label: t('echarts.ui.k32') },
+  { value: '', label: t('echarts.panel.overflow.default') },
+  { value: 'none', label: t('echarts.panel.overflow.none') },
+  { value: 'truncate', label: t('echarts.panel.overflow.truncate') },
+  { value: 'break', label: t('echarts.panel.overflow.break') },
 ] as const
 
 const FONT_WEIGHT_OPTIONS = [
-  { value: '', label: t('echarts.ui.k33') },
-  { value: 'normal', label: t('echarts.ui.k34') },
-  { value: 'bold', label: t('echarts.ui.k35') },
+  { value: '', label: t('echarts.panel.fontWeight.default') },
+  { value: 'normal', label: t('echarts.panel.fontWeight.normal') },
+  { value: 'bold', label: t('echarts.panel.fontWeight.bold') },
 ] as const
 
 const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
-  distance: t('echarts.ui.k36'),
-  rotate: t('echarts.ui.k37'),
-  fontSize: t('echarts.ui.k38'),
-  fontWeight: t('echarts.ui.k39'),
-  color: t('echarts.ui.k40'),
-  backgroundColor: t('echarts.ui.k41'),
-  borderColor: t('echarts.ui.k42'),
-  borderWidth: t('echarts.ui.k43'),
-  borderRadius: t('echarts.ui.k44'),
-  padding: t('echarts.ui.k45'),
+  distance: t('echarts.panel.label.distance'),
+  rotate: t('echarts.panel.label.rotate'),
+  fontSize: t('echarts.panel.label.fontSize'),
+  fontWeight: t('echarts.panel.label.fontWeight'),
+  color: t('echarts.panel.label.color'),
+  backgroundColor: t('echarts.panel.label.backgroundColor'),
+  borderColor: t('echarts.panel.label.borderColor'),
+  borderWidth: t('echarts.panel.label.borderWidth'),
+  borderRadius: t('echarts.panel.label.borderRadius'),
+  padding: t('echarts.panel.label.padding'),
 }
 
 /** 数据标签分组：一个可折叠 details，内部按「内容 / 位置 / 样式 / 引导线」分块 */
@@ -482,49 +482,49 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   group.open = state.show
   // 总开关必须放在 summary 里：关闭标签时 details 折叠，若开关在内容区用户就再也点不到它
   const summary = el('summary', 'echarts-label-summary')
-  const toggle = checkboxField(t('echarts.ui.k46'), state.show, checked => commit({ enabled: checked }))
+  const toggle = checkboxField(t('echarts.panel.label.show'), state.show, checked => commit({ enabled: checked }))
   // 点击开关本身不应连带折叠 details
   toggle.querySelector('input')?.addEventListener('click', event => event.stopPropagation())
   summary.appendChild(toggle)
   group.appendChild(summary)
 
   if (has('formatter') || has('overflow')) {
-    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k47')))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.panel.label.content')))
     if (has('formatter')) {
-      const wrap = field(t('echarts.ui.k48'))
+      const wrap = field(t('echarts.panel.label.formatterTitle'))
       wrap.appendChild(
         selectInput(
-          [{ value: '', label: t('echarts.ui.k49') }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: t(preset.labelKey) }))],
+          [{ value: '', label: t('echarts.panel.label.formatterCustom') }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: t(preset.labelKey) }))],
           state.formatter ?? '',
           value => commit({ formatter: value }),
         ),
       )
       wrap.appendChild(
-        textInput({ value: state.formatter ?? '', placeholder: t('echarts.ui.k50') }, value => commit({ formatter: value })),
+        textInput({ value: state.formatter ?? '', placeholder: t('echarts.panel.label.formatterPlaceholder') }, value => commit({ formatter: value })),
       )
       group.appendChild(wrap)
     }
     if (has('overflow')) {
-      const wrap = field(t('echarts.ui.k51'))
+      const wrap = field(t('echarts.panel.label.overflow'))
       wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? '', value => commit({ overflow: value })))
       group.appendChild(wrap)
     }
   }
 
   if (has('position') || has('distance') || has('rotate') || has('offset')) {
-    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k52')))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.panel.label.position')))
     if (has('position')) {
-      const wrap = field(t('echarts.ui.k53'))
+      const wrap = field(t('echarts.panel.label.positionTitle'))
       const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : []
       wrap.appendChild(
-        selectInput([{ value: '', label: t('echarts.ui.k54') }, ...positions.map(p => ({ value: p.value, label: t(p.labelKey) }))], state.position ?? '', value => commit({ position: value })),
+        selectInput([{ value: '', label: t('echarts.panel.label.positionDefault') }, ...positions.map(p => ({ value: p.value, label: t(p.labelKey) }))], state.position ?? '', value => commit({ position: value })),
       )
       group.appendChild(wrap)
     }
     if (has('distance')) group.appendChild(numberField('distance', state.distance))
     if (has('rotate')) group.appendChild(numberField('rotate', state.rotate))
     if (has('offset')) {
-      const wrap = field(t('echarts.ui.k55'))
+      const wrap = field(t('echarts.panel.label.offset'))
       const row = el('div', 'echarts-field-row')
       const current: [number, number] = state.offset ?? [0, 0]
       // ECharts 只认 offset: [x, y]；从两个输入框实时取值整对写回，空输入按 0 处理
@@ -548,10 +548,10 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
 
   const styleKeys: LabelFieldKey[] = ['fontSize', 'fontWeight', 'color', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding']
   if (styleKeys.some(has)) {
-    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k56')))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.panel.label.style')))
     if (has('fontSize')) group.appendChild(numberField('fontSize', state.fontSize))
     if (has('fontWeight')) {
-      const wrap = field(t('echarts.ui.k57'))
+      const wrap = field(t('echarts.panel.labelLine.fontWeight'))
       wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? '', value => commit({ fontWeight: value })))
       group.appendChild(wrap)
     }
@@ -564,12 +564,12 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   }
 
   if (has('labelLine.show')) {
-    group.appendChild(el('div', 'echarts-label-sub', t('echarts.ui.k58')))
+    group.appendChild(el('div', 'echarts-label-sub', t('echarts.panel.labelLine')))
     group.appendChild(
-      checkboxField(t('echarts.ui.k59'), state.labelLine.show === true, checked => commit({ labelLine: { show: checked } })),
+      checkboxField(t('echarts.panel.labelLine.show'), state.labelLine.show === true, checked => commit({ labelLine: { show: checked } })),
     )
     if (has('labelLine.length')) {
-      const wrap = field(t('echarts.ui.k60'))
+      const wrap = field(t('echarts.panel.labelLine.length'))
       wrap.appendChild(
         textInput(
           { value: state.labelLine.length === undefined ? '' : String(state.labelLine.length), type: 'number' },
@@ -579,7 +579,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
       group.appendChild(wrap)
     }
     if (has('labelLine.length2')) {
-      const wrap = field(t('echarts.ui.k61'))
+      const wrap = field(t('echarts.panel.labelLine.length2'))
       wrap.appendChild(
         textInput(
           { value: state.labelLine.length2 === undefined ? '' : String(state.labelLine.length2), type: 'number' },
@@ -590,7 +590,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     }
     if (has('labelLine.smooth')) {
       group.appendChild(
-        checkboxField(t('echarts.ui.k62'), state.labelLine.smooth === true, checked => commit({ labelLine: { smooth: checked } })),
+        checkboxField(t('echarts.panel.labelLine.smooth'), state.labelLine.smooth === true, checked => commit({ labelLine: { smooth: checked } })),
       )
     }
   }
@@ -618,7 +618,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   root.appendChild(form)
 
   if (has('dataSource')) {
-    const wrap = field(t('echarts.ui.k63'))
+    const wrap = field(t('echarts.panel.dataSourceTitle'))
     const current = String(options.chartDataSource ?? '')
     wrap.appendChild(
       dropdownSelect(
@@ -631,7 +631,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('categoryField')) {
-    const wrap = field(t('echarts.ui.k64'))
+    const wrap = field(t('echarts.panel.categoryField'))
     const current = String(options.chartCategoryField ?? '')
     wrap.appendChild(
       dropdownSelect(
@@ -662,14 +662,14 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
       if (fieldsNow.length > 1) {
         const remove = el('button', 'pd-button small', '−')
         remove.type = 'button'
-        remove.title = t('echarts.ui.k65')
+        remove.title = t('echarts.panel.removeField')
         remove.addEventListener('click', () => syncValueFields(ctx, type, readValueFields(element).filter((_, i) => i !== index)))
         row.appendChild(remove)
       }
       wrap.appendChild(row)
     })
     if (fieldsNow.length < limit) {
-      const add = el('button', 'pd-button small', t('echarts.ui.k66'))
+      const add = el('button', 'pd-button small', t('echarts.panel.addField'))
       add.type = 'button'
       add.addEventListener('click', () => syncValueFields(ctx, type, [...readValueFields(element), '']))
       wrap.appendChild(add)
@@ -678,10 +678,10 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('seriesField')) {
-    const wrap = field(t('echarts.ui.k67'))
+    const wrap = field(t('echarts.panel.seriesField'))
     wrap.appendChild(
       textInput(
-        { value: String(options.chartSeriesField ?? ''), placeholder: t('echarts.ui.k68') },
+        { value: String(options.chartSeriesField ?? ''), placeholder: t('echarts.panel.seriesFieldHint') },
         value => commitOption(ctx, type, panelOption(element), { chartSeriesField: value }),
       ),
     )
@@ -690,17 +690,17 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
 
   if (has('bubble')) {
     form.appendChild(
-      checkboxField(t('echarts.ui.k69'), options.chartBubble === true, checked => {
+      checkboxField(t('echarts.panel.bubbleSize'), options.chartBubble === true, checked => {
         commitOption(ctx, type, panelOption(element), { chartBubble: checked })
       }),
     )
   }
 
   if (has('title')) {
-    const wrap = field(t('echarts.ui.k70'))
+    const wrap = field(t('echarts.panel.title'))
     wrap.appendChild(
       textInput(
-        { value: String(asObject(panelOption(element).title).text ?? ''), placeholder: t('echarts.ui.k71') },
+        { value: String(asObject(panelOption(element).title).text ?? ''), placeholder: t('echarts.panel.titleHint') },
         value => {
           const next = panelOption(element)
           next.title = { ...asObject(next.title), text: value }
@@ -714,7 +714,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   if (has('legend')) {
     const show = asObject(panelOption(element).legend).show !== false
     form.appendChild(
-      checkboxField(t('echarts.ui.k72'), show, checked => {
+      checkboxField(t('echarts.panel.legend'), show, checked => {
         const next = panelOption(element)
         next.legend = { ...asObject(next.legend), show: checked }
         commitOption(ctx, type, next)
@@ -723,7 +723,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('palette')) {
-    const wrap = field(t('echarts.ui.k73'))
+    const wrap = field(t('echarts.panel.palette'))
     const select = el('select', 'pd-select')
     for (const palette of palettes) {
       const optionEl = el('option')
@@ -750,7 +750,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     const series = seriesList(panelOption(element))
     const stacked = series.some(item => item.stack !== undefined && item.stack !== null && item.stack !== '')
     form.appendChild(
-      checkboxField(t('echarts.ui.k74'), stacked, checked => {
+      checkboxField(t('echarts.panel.stack'), stacked, checked => {
         const next = panelOption(element)
         for (const item of seriesList(next)) {
           if (checked) item.stack = 'total'
@@ -762,7 +762,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('innerRadius')) {
-    const wrap = field(t('echarts.ui.k75'))
+    const wrap = field(t('echarts.panel.innerRadius'))
     const radius = seriesList(panelOption(element))[0]?.radius
     const inner = Array.isArray(radius) ? Number(String(radius[0] ?? '40%').replace('%', '')) || 40 : 40
     wrap.appendChild(
@@ -777,14 +777,14 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('padding')) {
-    const wrap = field(t('echarts.ui.k76'))
+    const wrap = field(t('echarts.panel.paddingTRBL'))
     const padding = readFunnelPadding(panelOption(element), widthMm, heightMm)
     const row = el('div', 'echarts-field-row')
     const sides: { side: keyof FunnelPadding; title: string }[] = [
-      { side: 'top', title: t('echarts.ui.k77') },
-      { side: 'right', title: t('echarts.ui.k78') },
-      { side: 'bottom', title: t('echarts.ui.k79') },
-      { side: 'left', title: t('echarts.ui.k80') },
+      { side: 'top', title: t('echarts.panel.paddingTop') },
+      { side: 'right', title: t('echarts.panel.paddingRight') },
+      { side: 'bottom', title: t('echarts.panel.paddingBottom') },
+      { side: 'left', title: t('echarts.panel.paddingLeft') },
     ]
     for (const { side, title } of sides) {
       row.appendChild(
@@ -802,7 +802,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('radius')) {
-    const wrap = field(t('echarts.ui.k81'))
+    const wrap = field(t('echarts.panel.radius'))
     wrap.appendChild(
       textInput(
         { value: String(readRadarRadius(panelOption(element), widthMm, heightMm)), type: 'number', min: 20, max: 100 },
@@ -817,7 +817,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
   }
 
   if (has('gaugeRange')) {
-    const wrap = field(t('echarts.ui.k82'))
+    const wrap = field(t('echarts.panel.minMax'))
     const series = seriesList(panelOption(element))
     const row = el('div', 'echarts-field-row')
     row.appendChild(
@@ -849,7 +849,7 @@ export const CHART_ELEMENT_UI: ElementUI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: t('echarts.ui.k83'),
+  group: t('echarts.panel.group'),
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: 'echarts',

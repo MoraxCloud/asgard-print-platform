@@ -27,16 +27,16 @@ export { CHART_PLUGIN_ID } from './constants.js'
 
 /** 十类图表元素共享的数据契约（strict 校验与 AI 提示词共用） */
 const CHART_OPTION_META = {
-  chartOption: { kind: 'object' as const, label: t('echarts.plugin.k140') },
-  chartDataSource: { kind: 'text' as const, label: t('echarts.plugin.k141') },
-  chartCategoryField: { kind: 'text' as const, label: t('echarts.plugin.k142') },
-  chartValueFields: { kind: 'object' as const, label: t('echarts.plugin.k143') },
-  chartSeriesField: { kind: 'text' as const, label: t('echarts.plugin.k144') },
+  chartOption: { kind: 'object' as const, label: t('echarts.meta.chartOption') },
+  chartDataSource: { kind: 'text' as const, label: t('echarts.meta.dataSource') },
+  chartCategoryField: { kind: 'text' as const, label: t('echarts.meta.categoryField') },
+  chartValueFields: { kind: 'object' as const, label: t('echarts.meta.valueFields') },
+  chartSeriesField: { kind: 'text' as const, label: t('echarts.meta.seriesField') },
 }
 
 const SCATTER_OPTION_META = {
   ...CHART_OPTION_META,
-  chartBubble: { kind: 'bool' as const, label: t('echarts.plugin.k145') },
+  chartBubble: { kind: 'bool' as const, label: t('echarts.meta.bubbleSize') },
 }
 
 export const CHART_PLUGIN: PrintElementPlugin = defineElementPlugin({

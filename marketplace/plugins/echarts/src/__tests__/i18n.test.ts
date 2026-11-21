@@ -26,14 +26,18 @@ describe('echarts 插件语言包', () => {
     expect(zhKeys.sort()).toEqual(enKeys.sort())
     expect(zhKeys.sort()).toEqual(thKeys.sort())
     expect(zhKeys.every(k => k.startsWith('echarts.'))).toBe(true)
-    // 135 基础键 + 10 notes 键 = 145；notes 与 label 键三语种齐全
+    // 所有 key 必须语义化：不允许纯数字编号后缀
+    expect(zhKeys.filter(k => /\.k\d+$/.test(k))).toEqual([])
+    // 145 键数量不变（一一对应，仅重命名）
     expect(zhKeys).toHaveLength(145)
-    for (const n of Array.from({ length: 10 }, (_, i) => `echarts.notes.k${146 + i}`)) {
-      expect(zhKeys).toContain(n)
-    }
-    for (const n of Array.from({ length: 36 }, (_, i) => `echarts.label.k${104 + i}`)) {
-      expect(zhKeys).toContain(n)
-    }
+    // 关键语义 key 存在（对齐百度 ECharts 的 series.typeNames 等命名）
+    expect(zhKeys).toContain('echarts.series.typeNames.bar')
+    expect(zhKeys).toContain('echarts.series.typeNames.gauge')
+    expect(zhKeys).toContain('echarts.notes.bar')
+    expect(zhKeys).toContain('echarts.label.formatter.value')
+    expect(zhKeys).toContain('echarts.label.position.bar.top')
+    expect(zhKeys).toContain('echarts.meta.chartOption')
+    expect(zhKeys).toContain('echarts.panel.hint.dataBinding')
   })
 
   it('切泰语后 engine 能解析插件键', () => {
