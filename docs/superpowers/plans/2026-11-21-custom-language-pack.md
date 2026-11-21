@@ -26,7 +26,7 @@
 
 - PR① 引擎与资源：Task 1–5
 - PR② CLI 与市场同步：Task 6–9
-- PR③ 三端加载与文档：Task 10–12
+- PR③ 三端加载与文档：Task 10–13
 
 ## File Structure
 
@@ -1367,11 +1367,10 @@ for (const token of [
 
 - [ ] **Step 5: 全量验收**
 
-Run: `npm run build`
-Run: `npm test`
+Run: `npm run verify:i18n:full`
+Expected: build + 全量 test + bundle + 验证脚本全部通过。
 Run: `npm run i18n:check -w @worm-print-platform/core`
-Run: `npm run i18n:bundle`
-Expected: 全部成功；根 `dist/i18n/resources.json` 含 `core/help/constants/propertyTips/echarts`。
+Expected: 退出码 0。
 
 - [ ] **Step 6: 提交**
 
@@ -1379,3 +1378,182 @@ Expected: 全部成功；根 `dist/i18n/resources.json` 含 `core/help/constants
 git add docs packages/i18n/README.md package.json AGENTS.md packages/core/src/i18n/__tests__
 git commit -m "docs(i18n): 补充外挂语言包工作流与三端加载说明"
 ```
+
+---
+
+### Task 13: 测试夹具与一键验证脚本
+
+**Files:**
+- Create: `fixtures/i18n/fr-FR.json`
+- Create: `scripts/verify-i18n.mjs`
+- Modify: `package.json`（`verify:i18n` / `verify:i18n:full`）
+- Test: 运行脚本本身
+
+**Interfaces:**
+- Produces: `npm run verify:i18n`（假定已 build）、`npm run verify:i18n:full`（build + test + 校验），失败退出码 1，逐项打印 ✓/✗。
+
+- [ ] **Step 1: 写夹具**
+
+`fixtures/i18n/fr-FR.json`（覆盖 core / constants / propertyTips / 插件四类，并带一个占位符）：
+
+```json
+{
+  "toolbar.save": "Enregistrer",
+  "diagnostic.position": "Position {pos}",
+  "constants.borderStyle.solid": "Trait plein",
+  "propertyTips.ap-img-fit": "Ajustement de l'image dans la zone",
+  "echarts.panel.chart": "Graphique"
+}
+```
+
+- [ ] **Step 2: 写验证脚本**
+
+`scripts/verify-i18n.mjs`：
+
+```js
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+
+const root = resolve(import.meta.dirname, '..')
+const cli = join(root, 'packages/i18n/dist/cli.js')
+const failures = []
+
+const check = (name, fn) => {
+  try { fn(); console.log(`✓ ${name}`) }
+  catch (err) { console.error(`✗ ${name}: ${err.message}`); failures.push(name) }
+}
+const runCli = (args) => execFileSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' })
+const expectExit = (args, code) => {
+  try { runCli(args) } catch (err) { if (err.status === code) return }
+  throw new Error(`期望退出码 ${code}：${args.join(' ')}`)
+}
+
+check('构建产物齐全', () => {
+  for (const file of [
+    'packages/core/dist/i18n/zh-CN.json',
+    'packages/core/dist/i18n/en-US.json',
+    'packages/core/dist/i18n/th-TH.json',
+    'marketplace/plugins/echarts/dist/i18n/zh-CN.json',
+    'packages/echarts/dist/i18n/zh-CN.json',
+    'dist/i18n/resources.json',
+  ]) if (!existsSync(join(root, file))) throw new Error(`缺少 ${file}`)
+})
+
+const dir = mkdtempSync(join(tmpdir(), 'verify-i18n-'))
+const templateFile = join(dir, 'template.json')
+runCli(['template', '-o', templateFile])
+const template = JSON.parse(readFileSync(templateFile, 'utf8'))
+const fixture = JSON.parse(readFileSync(join(root, 'fixtures/i18n/fr-FR.json'), 'utf8'))
+const pack = { ...template, ...fixture }
+const packFile = join(dir, 'fr-FR.json')
+writeFileSync(packFile, JSON.stringify(pack, null, 2) + '\n')
+
+check('template 覆盖四类键', () => {
+  for (const key of Object.keys(fixture)) if (!(key in template)) throw new Error(`template 缺少 ${key}`)
+})
+check('合法包 validate 通过', () => { runCli(['validate', packFile, '--strict']) })
+check('缺键被拦截', () => {
+  const bad = { ...pack }; delete bad['toolbar.save']
+  writeFileSync(join(dir, 'missing.json'), JSON.stringify(bad)); expectExit(['validate', join(dir, 'missing.json')], 1)
+})
+check('多余键 --strict 被拦截', () => {
+  const bad = { ...pack, 'extra.key': 'x' }
+  writeFileSync(join(dir, 'extra.json'), JSON.stringify(bad)); expectExit(['validate', '--strict', join(dir, 'extra.json')], 1)
+})
+check('空值被拦截', () => {
+  const bad = { ...pack, 'toolbar.save': '' }
+  writeFileSync(join(dir, 'empty.json'), JSON.stringify(bad)); expectExit(['validate', join(dir, 'empty.json')], 1)
+})
+check('占位符丢失被拦截', () => {
+  const bad = { ...pack, 'diagnostic.position': 'Position' }
+  writeFileSync(join(dir, 'placeholder.json'), JSON.stringify(bad)); expectExit(['validate', join(dir, 'placeholder.json')], 1)
+})
+check('嵌套/_meta 被拦截', () => {
+  const bad = { ...pack, nested: { a: 'b' } }
+  writeFileSync(join(dir, 'nested.json'), JSON.stringify(bad)); expectExit(['validate', join(dir, 'nested.json')], 1)
+  const meta = { ...pack, _meta: { x: 1 } }
+  writeFileSync(join(dir, 'meta.json'), JSON.stringify(meta)); expectExit(['validate', join(dir, 'meta.json')], 1)
+})
+check('bundle 结构含五个命名空间', () => {
+  const bundle = JSON.parse(readFileSync(join(root, 'dist/i18n/resources.json'), 'utf8'))
+  for (const ns of ['core', 'help', 'constants', 'propertyTips', 'echarts']) {
+    if (!bundle['zh-CN']?.[ns]) throw new Error(`resources.json 缺少 zh-CN.${ns}`)
+  }
+})
+
+const suites = [
+  ['@worm-print-platform/core', 'src/i18n/__tests__/namespaces.spec.ts'],
+  ['@worm-print-platform/core', 'src/i18n/__tests__/engine.spec.ts'],
+  ['@worm-print-platform/canvas', 'src/shell/__tests__/i18n-shell.spec.ts'],
+  ['@worm-print-platform/canvas', 'src/__tests__/messages-isolation.spec.ts'],
+  ['@worm-print-platform/render', 'src/i18n.test.ts'],
+  ['@worm-print-platform/client', 'src/main/locale-pack.test.ts'],
+  ['@worm-print-platform/marketplace', 'src/install.test.ts'],
+  ['@worm-print-platform/i18n', ''],
+]
+for (const [pkg, file] of suites) {
+  check(`${pkg} ${file || '全部'}`, () => {
+    execFileSync('npm', ['test', '-w', pkg, '--', '--run', ...(file ? [file] : [])], { cwd: root, stdio: 'inherit' })
+  })
+}
+
+if (failures.length) { console.error(`\n验证失败：${failures.length} 项`); process.exit(1) }
+console.log('\n语言包验证全部通过')
+```
+
+- [ ] **Step 3: 接入 npm 脚本**
+
+根 `package.json`：
+
+```json
+"verify:i18n": "node scripts/verify-i18n.mjs",
+"verify:i18n:full": "npm run build && npm test && npm run i18n:bundle && node scripts/verify-i18n.mjs"
+```
+
+- [ ] **Step 4: 运行**
+
+Run: `npm run verify:i18n:full`
+Expected: 全部 ✓，退出码 0。
+
+- [ ] **Step 5: 提交**
+
+```bash
+git add fixtures scripts/verify-i18n.mjs package.json
+git commit -m "test(i18n): 新增语言包夹具与一键验证脚本"
+```
+
+---
+
+## 测试验证方案
+
+### 分层
+
+| 层 | 内容 | 位置 / 命令 |
+|---|---|---|
+| L1 单元 | 命名空间、scoped translator、CLI 三个子命令、常量/属性说明取词、help 回退、messages 隔离、marketplace 同步、render/client 加载器 | 各包 `vitest`，文件见各 Task |
+| L2 构建/契约 | `dist/i18n` 产物存在、`i18n:check` 三语 parity、bundle 五命名空间结构 | `npm run build`、`npm run i18n:check -w @worm-print-platform/core`、`npm run i18n:bundle` |
+| L3 端到端（进程内） | 浏览器 happy-dom 属性台法语 + 帮助正文中文；render 诊断法语 + 非法文件降级；client config/内置 locales 两条路径 | Task 2/3/10/11 的测试文件 |
+| L4 打包/人工 | `electron-builder --dir` 后 `out/locales` 存在；Docker render 挂载语言包；demo 手动切语言（可选） | `npm run pack:client:dir`、人工 |
+
+### 回归矩阵
+
+| 场景 | 命令 / 用例 | 期望 |
+|---|---|---|
+| 内置三语不回归 | `npm run i18n:check -w @worm-print-platform/core` | 退出码 0 |
+| 帮助仍中文 | `getHelpSections('fr-FR')` 断言 | 正文含中文 |
+| 多实例隔离 | `messages-isolation.spec.ts` | 全局 t 不变；两个 translator 各自命中 |
+| 空串回退 | `createTranslator('fr-FR', {'toolbar.save':''})` | 返回全局 zh-CN 文案 |
+| 旧市场安装 | `.worm-print/plugins.json` 无 i18n 条目 | CLI 输出重装提示，不阻断 |
+| 插件缺 zh-CN | 临时包声明 en-US only | template 报错并列出该包 |
+| 客户端无 locales/ | `copy-locales.mjs` | 打印跳过，退出 0 |
+| bundle 破坏式变化 | `verify-i18n.mjs` 五命名空间断言 | 通过 |
+| 打印文档语言不受影响 | 全量 `npm test`（render parity） | 通过 |
+
+### 验收证据（DoD）
+
+1. `npm run verify:i18n:full` 全绿（含 build + 全量 test + bundle + 脚本校验）。
+2. `fixtures/i18n/fr-FR.json` 走完 template → 合并 → validate --strict 流程。
+3. 三端冒烟测试文件在 CI 中各有 1 条以上断言。
+4. 手工项（打包/ Docker）在 PR 描述里贴命令与输出摘要；无则为未完成，不得宣称「三端完成」。

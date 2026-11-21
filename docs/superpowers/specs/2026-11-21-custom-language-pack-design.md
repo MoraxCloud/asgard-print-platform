@@ -244,6 +244,7 @@ const el = document.querySelector('print-designer'); el.lang = 'fr-FR'; el.messa
 - CLI：夹具覆盖缺失/多余/空值/占位符缺失/`_meta`/嵌套对象/非字符串/排序稳定性/update 保留译文与 `--prune`。
 - 文档测试：`docs.spec.ts` 关键词随 06-i18n.md 更新；`help-i18n.spec.ts` 不变；跨端 parity 不涉及。
 - 验收：三端（浏览器/render/client）除帮助正文外法语零中文；`validate` 全绿；内置 zh/en/th 零回归。
+- 分层验证矩阵、夹具与一键脚本见实施计划 `docs/superpowers/plans/2026-11-21-custom-language-pack.md` 的「测试验证方案」与 Task 13。
 
 ### 11. 文档、发布与 PR 切分
 
