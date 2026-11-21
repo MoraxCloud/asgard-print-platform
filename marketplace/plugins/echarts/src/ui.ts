@@ -494,7 +494,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
       const wrap = field(t('echarts.ui.k48'))
       wrap.appendChild(
         selectInput(
-          [{ value: '', label: t('echarts.ui.k49') }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: preset.label }))],
+          [{ value: '', label: t('echarts.ui.k49') }, ...LABEL_PRESETS.map(preset => ({ value: preset.formatter, label: t(preset.labelKey) }))],
           state.formatter ?? '',
           value => commit({ formatter: value }),
         ),
@@ -517,7 +517,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
       const wrap = field(t('echarts.ui.k53'))
       const positions = def ? LABEL_POSITIONS[def.seriesType] ?? [] : []
       wrap.appendChild(
-        selectInput([{ value: '', label: t('echarts.ui.k54') }, ...positions], state.position ?? '', value => commit({ position: value })),
+        selectInput([{ value: '', label: t('echarts.ui.k54') }, ...positions.map(p => ({ value: p.value, label: t(p.labelKey) }))], state.position ?? '', value => commit({ position: value })),
       )
       group.appendChild(wrap)
     }

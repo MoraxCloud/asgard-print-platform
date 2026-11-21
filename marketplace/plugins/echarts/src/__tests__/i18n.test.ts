@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { resetLocale, setLocale, t } from '@worm-print-platform/core/i18n'
 import { CHART_ELEMENT_UI, installChartCommonUI, uninstallChartCommonUI } from '../ui.js'
 import { CHART_KIND_DEFINITIONS, CHART_KINDS } from '../kinds.js'
+import { LABEL_POSITIONS, LABEL_PRESETS } from '../label.js'
 import { getElementUI } from '@worm-print-platform/plugin-kit'
 import type { RuntimeElement } from '@worm-print-platform/core/designer'
 
@@ -30,6 +31,21 @@ describe('echarts 插件语言包', () => {
     const firstKey = Object.keys(CHART_ELEMENT_UI.locales!['en-US']!)[0]!
     setLocale('th-TH')
     expect(t(firstKey)).toBe(CHART_ELEMENT_UI.locales!['th-TH']![firstKey])
+  })
+
+  it('标签预设与位置选项按语言取词', () => {
+    setLocale('en-US')
+    expect(t(LABEL_PRESETS[0]!.labelKey!)).toBe('Value')
+    expect(t(LABEL_POSITIONS.bar[0]!.labelKey!)).toBe('Top')
+    setLocale('th-TH')
+    expect(t(LABEL_PRESETS[0]!.labelKey!)).not.toBe('数值')
+    setLocale('zh-CN')
+    expect(t(LABEL_PRESETS[0]!.labelKey!)).toBe('数值')
+  })
+
+  it('常量保留中文 label 源字段', () => {
+    expect(LABEL_PRESETS[0]!.label).toBe('数值')
+    expect(LABEL_POSITIONS.bar[0]!.label).toBe('顶部')
   })
 
   it('十类图表 id/type 不变，labelKey 指向语言包', () => {
