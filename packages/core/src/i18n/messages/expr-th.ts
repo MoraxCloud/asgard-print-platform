@@ -21,7 +21,7 @@ export const exprTh: Record<string, string> = {
   'expression.fnRoundBank': "ปัดเศษแบบธนาคาร",
   'expression.fnMoney': "จัดรูปแบบจำนวนเงิน",
   'expression.fnDate': "จัดรูปแบบวันที่",
-  'expression.fnUpper': "จำนวนเป็นตัวอักษร",
+  'expression.fnUpper': "จำนวนเงินเป็นตัวอักษร",
   'expression.fnIf': "เงื่อนไข",
   'expression.varPageIndex': "หน้าปัจจุบัน",
   'expression.varTotalPages': "จำนวนหน้าทั้งหมด",
