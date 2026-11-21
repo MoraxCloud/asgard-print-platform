@@ -23,6 +23,19 @@ describe('echarts 插件语言包', () => {
     for (const key of Object.keys(zh.echarts)) expect(key.startsWith('echarts.')).toBe(true)
   })
 
+  it('源码引用的语义键在三语资源中齐全（含中文配置）', () => {
+    const pluginDir = process.cwd()
+    const sources = ['src/ui.ts', 'src/constants.ts', 'src/label.ts', 'src/kinds.ts', 'src/plugin.ts']
+      .map(rel => readFileSync(resolve(pluginDir, rel), 'utf8')).join('\n')
+    const keys = new Set<string>()
+    for (const m of sources.matchAll(/\bt\('([^']+)'\)/g)) keys.add(m[1])
+    for (const m of sources.matchAll(/labelKey:\s*'([^']+)'/g)) keys.add(m[1])
+    for (const locale of ['zh-CN', 'en-US', 'th-TH']) {
+      const messages = JSON.parse(readFileSync(resolve(pluginDir, `src/i18n/${locale}.json`), 'utf8')).echarts
+      for (const key of keys) expect(messages[key], `${locale} 缺少 ${key}`).toBeTruthy()
+    }
+  })
+
   it('主包与兼容包都声明 wormPrint.i18n', () => {
     const root = resolve(process.cwd(), '../../..')
     for (const rel of ['marketplace/plugins/echarts/package.json', 'packages/echarts/package.json']) {
