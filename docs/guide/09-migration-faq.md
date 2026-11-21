@@ -1,6 +1,6 @@
 # 迁移与故障排查附录
 
-[← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md)
+[← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md) | 下一篇：[数据格式转换](./10-data-transform.md) →
 
 
 ## 6.1 从 @worm-vue3-print 迁移（摘要）
@@ -34,4 +34,4 @@
 
 ---
 
-[← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md)
+[← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md) | 下一篇：[数据格式转换](./10-data-transform.md) →
