@@ -1,17 +1,23 @@
 ---
 name: worm-print-platform-i18n
-description: Use when 用户要为一个已 npm 安装 @worm-print-platform 包的项目生成/补齐目标语言整包 JSON、校验译文、做人工审核对照表，或排查设计器里中英混杂、裸 key、缺键回退中文等语言包问题。
+description: Use when 用户要为一个已 npm 安装 @worm-print-platform 包的项目生成/补齐目标语言整包 JSON、校验译文、做人工审核对照表，把语言包接入浏览器设计器/render/client 并验证切换，或排查设计器里中英混杂、裸 key、缺键回退中文等语言包问题。
 ---
 
 # worm-print-platform 自定义语言包工作流
 
 一套扁平点号键 JSON 就能给浏览器设计器、render 服务与桌面客户端提供完整自定义语言（帮助正文除外）。**先导出骨架、再翻译、再校验**，不要手写键；**任何语言包必须来自当前项目实际安装的资源**，不要凭记忆造键。
 
+## 0. 与用户文档 / 复制提示词的分工
+
+- 本技能供已安装技能的 AI 工具直接读写项目文件、跑 CLI、配置三端；人读口径见 `docs/guide/06-i18n.md`。
+- 未装技能的工具可复制该文档末尾的「AI 工具集成提示词」；其第 0 步门控降级为完整阅读本文件后再动手。
+- 两者口径必须一致：骨架来自 `template`、`validate --strict` 退出码 0、对照表需人工审核、三端只选一种接入方式（全局 vs 实例级）。
+
 ## 1. 适用场景与边界
 
 - 用户已有 npm 安装的项目（`node_modules/@worm-print-platform/*`），或仓库内有 `.worm-print/i18n/<id>/` 市场安装目录。
 - 目标语言可以是 `fr-FR`、`ja-JP` 等任意 BCP47；内置三语是 `zh-CN`（源）、`en-US`、`th-TH`。
-- 外挂语言包**不进** `dist/i18n/resources.json`（bundle 只含内置三语）；缺键运行时回退 `zh-CN`。
+- 外挂语言包**不进** `dist/i18n/resources.json`（bundle 只含内置三语）；已登记键缺值/空值运行时回退 `zh-CN`，**未登记的全新 key 最终返回 key 本身**（开发态 warn），必须用 `template` + `validate` 拦截。
 - 帮助弹窗正文与页签仍是静态中文（已接受的 D17 限制）；模板数据（页面名、示例单元格）不是 UI 文案，不翻译。
 
 ## 2. 快速参考：脚本位置
@@ -27,6 +33,8 @@ description: Use when 用户要为一个已 npm 安装 @worm-print-platform 包�
 | 一键校验 / 全量门禁 | `npm run verify:i18n` / `verify:i18n:full` | `scripts/verify-i18n.mjs` |
 | bundle 导出 | `npm run i18n:bundle` | `scripts/export-locale-bundle.mjs` → `dist/i18n/resources.json` |
 | 硬编码中文扫描 | `node scripts/check-hardcoded-zh.mjs <dir...>` | `scripts/check-hardcoded-zh.mjs` |
+
+`npx @worm-print-platform/i18n` 依赖包已发布到 npm；包未发布或网络受限时，仓库根目录用 `node packages/i18n/dist/cli.js <命令>` 替代，或项目 `node_modules` 已装该包时用 `npx --no-install @worm-print-platform/i18n <命令>`。
 
 发现顺序：`.worm-print/i18n/<id>/<locale>.json`（市场安装，优先）→ `node_modules` 下声明 `wormPrint.i18n` 的包。`canvas`/`plugin-kit` 不产出语言资源，不要找它们要 JSON。骨架排序：core → constants → propertyTips → 插件 id 字母序。
 
@@ -52,12 +60,20 @@ npx @worm-print-platform/i18n validate fr-FR.json --strict --dir .
 - `{pos}`、`{value}` 等占位符的数量与名称必须与中文一致；文案里的 HTML 原样保留。
 - 中文文案只存资源 JSON；不要往 core 常量里再写一份中文（会双真源漂移）。
 - `validate --strict` 把多余键也当错误；`update` 后立即 `validate` 报新增空值是预期，提示待翻译项。
+- 骨架的 value 是中文源文，`validate --strict` **只查格式，不查是否已翻译**；未译完前不要交付，用第 4 节对照表做人工审核。
 
 配置到三端（生成 JSON 之后）：
 
 - 浏览器（多实例共享）：`registerLocale('fr-FR', frPack); setLocale('fr-FR')`；单实例隔离：`el.lang='fr-FR'; el.messages=frPack`（`el.messages` 不写全局）。
 - render：环境变量 `WORM_PRINT_LOCALE=fr-FR` + `WORM_PRINT_LOCALE_FILE=<绝对路径>`，加载失败 warn 并回退内置语言。
 - client：`userData/config.json` 的 `locale` / `localePack`（相对 userData 或绝对路径），或把 JSON 放到仓库根 `locales/` 后运行 `node clients/client/scripts/copy-locales.mjs` 重新打包。
+
+### 接入后验证（配置完成必做）
+
+- 浏览器：切换 `setLocale(<locale>)` 或 `el.lang`，确认 `t('toolbar.save')` 命中目标译文、`getMissingKeys()` 无新增缺键，界面不出现 `echarts.panel.overflow.default` 之类裸 key。
+- 多实例：`el.messages` 不污染其他实例或全局 `t()`；需要共享时用全局 `registerLocale`。
+- render / client：分别用 `WORM_PRINT_LOCALE` + `WORM_PRINT_LOCALE_FILE`、`config.json` 的 `locale` / `localePack` 生效；加载失败只 warn 并回退内置语言，不阻塞启动。
+- 不算缺陷的已知边界：帮助正文与页签、模板数据、人民币大写、`documentLang` 不随语言变化；未使用 `ctx.t` 的第三方插件 UI 只跟随全局 locale。
 
 ## 4. 生成人工审核用对照表
 
@@ -90,5 +106,6 @@ npx @worm-print-platform/i18n report fr-FR.json -o fr-FR-comparison.md --dir .
 - [ ] 骨架来自当前项目的 `template` 输出，不是手写键列表。
 - [ ] `validate --strict` 退出码 0。
 - [ ] 对照表中文列非空、目标语言列无未翻译中文、使用位置与模块分组正确。
-- [ ] 三端注入方式与目标一致（全局 vs 实例级）。
+- [ ] 三端注入方式与目标一致（全局 vs 实例级），未混用全局与实例级配置。
+- [ ] 接入后切换已验证：命中译文、无裸 key、实例 messages 不污染全局。
 - [ ] 帮助正文中文与模板数据中文未被误判为缺陷。

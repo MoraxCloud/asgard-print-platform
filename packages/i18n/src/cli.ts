@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { discover } from './discover.js'
@@ -120,6 +120,16 @@ export function run(argv: string[], deps: RunDeps = {}): number {
   return 2
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+/** 判断是否直接执行本 CLI；经 npm bin 软链调用时 argv[1] 是链接路径，需先归一。 */
+export function isCliEntry(argv1: string | undefined, moduleUrl: string): boolean {
+  if (!argv1) return false
+  try {
+    return pathToFileURL(realpathSync(argv1)).href === moduleUrl
+  } catch {
+    return false
+  }
+}
+
+if (isCliEntry(process.argv[1], import.meta.url)) {
   process.exit(run(process.argv.slice(2)))
 }
