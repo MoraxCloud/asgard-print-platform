@@ -22,7 +22,7 @@ import {
   resolveVersion,
   upsertManifestEntry,
   writeManifest
-} from "./chunk-UPDBW5PR.js";
+} from "./chunk-EUYKASVQ.js";
 export {
   BUNDLED_CATALOG,
   DEFAULT_GITEE_REPO,

@@ -3,6 +3,18 @@ export default {
   id: 'changelog',
   title: 'Release Notes',
   content: `
+<h2>V1.6.1<small>(2026-11-22)</small></h2>
+
+<h3>Added</h3>
+<ul>
+  <li><strong>Custom language packs</strong>: designer shell text can be replaced with custom language resources, with a CLI to export skeletons, validate translations and apply incremental updates.</li>
+</ul>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Rendering and designer details</strong>: fixes for dot-matrix barcodes, full-page rotation, watermarks, image borders and crop anchors; property search and table matrices are more reliable.</li>
+</ul>
+
 <h2>V1.6.0<small>(2026-11-19)</small></h2>
 <h3>Added</h3>
 <ul>

@@ -8,7 +8,7 @@ import { MarketError, type InstallOptions, type MarketIndex, type MarketSource }
 declare const PLUGIN_MARKETPLACE_VERSION: string
 const VERSION = typeof PLUGIN_MARKETPLACE_VERSION !== 'undefined'
   ? PLUGIN_MARKETPLACE_VERSION
-  : '1.6.0'
+  : '1.6.1'
 
 const SOURCES = new Set(['npm', 'github', 'gitee', 'auto', 'local'])
 const USAGE = `用法: worm-print-marketplace <命令> [选项]

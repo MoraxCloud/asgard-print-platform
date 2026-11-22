@@ -1,5 +1,13 @@
 # 更新日志
 
+## V1.6.1(2026-11-22)
+
+- **多语言能力全面升级**：新增 `@worm-print-platform/i18n` 语言包 CLI（`template` / `validate` / `update`）与配套 AI 技能；core / canvas / client / render / echarts 接入自定义语言资源，语言包支持设计器、服务端 PDF 与桌面客户端切换，新增多语对照表与校验脚本。
+- **桌面客户端改进**：设置窗口新增活跃设计器页签，统一会话 ID 为 6 位，补齐模板会话与协议处理回归测试。
+- **渲染与设计器修复**：条码点阵、旋转、水印、图片边框、裁剪锚点、表格矩阵与属性搜索等细节修复；设计器消息隔离与语言常量回归测试补齐。
+- **文档升级**：`docs/guide` 面向接入用户与 AI agent 全面重写，新增数据转换章节与自定义语言包实施计划。
+- **版本载体对齐至 `1.6.1`**：各工作区包、demos、MCP / canvas 版本常量、文档示例与徽章同步；四个代码包 `core` / `plugin-kit` / `canvas` / `echarts` 同号同批发版。
+
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。版本号以 `1.5.x` 主线持续维护迭代，
 `core` / `plugin-kit` / `canvas` / `echarts` / `skills` 等正式包同号同批发版；
 `contract` / `mcp` 随桌面客户端打包，不单独发布到 npm。
