@@ -1,31 +1,31 @@
-# jQuery / 原生 JS 接入
+# jQuery / 原生 JS 接入（No-Bundler Integration）
 
 [← 返回目录](./README.md) | ← 上一篇：[React 18 接入](./04-react.md) | 下一篇：[多语言配置与自定义](./06-i18n.md) →
 
+> 目标：在无打包器的静态页面里用 UMD 产物直挂 `<print-designer>`，接出「设计器 → 预览 → 打印」。
+> 可运行完整示例：`demos/apps/jquery`（9334，无打包器）。业务代码用 `window.WormPrintCanvas` 全局 + jQuery 操作 DOM。
 
-> 操作方法 + AI 集成提示词。可运行完整示例：`demos/apps/jquery`（9334，无打包器）。
-> 直挂形态：插件不进 `import`，页面挂一个 `<link>` + 一个 `<script>`，
-> 业务代码用 `window.WormPrintCanvas` 全局 + jQuery 操作 DOM。
+## 1. 前置条件（Prerequisites）
 
-### 1. 安装（拷两份静态文件）
+- 已完成 [01](./01-getting-started.md)；一个可运行的静态站点（无打包器、无 bare import）。
+- 能从 npm 包取出 UMD 产物并放到站点静态目录（等价于从制品库取件）。
 
-无打包器 ⇒ 无 bare import。从 `@worm-print-platform/canvas/browser` 对应的产物拿
-`canvas.js` 与 `canvas.css` 放进宿主静态目录（真实项目等价于「从制品库下载这两个文件」）：
+## 2. 步骤（Steps）
+
+### 2.1 拷两份静态文件
 
 ```bash
 npm install @worm-print-platform/canvas
+# UMD 脚本与 CSS 都来自 canvas 包 dist：./browser 导出 dist/canvas.js，./style.css 导出 dist/canvas.css
 cp node_modules/@worm-print-platform/canvas/dist/canvas.js  static/vendor/worm-print-canvas.js
 cp node_modules/@worm-print-platform/canvas/dist/canvas.css static/vendor/worm-print-canvas.css
 ```
 
-`canvas.js` 是 UMD，已内联 core 与码制库，挂出全局 `window.WormPrintCanvas`，除
-`registerAll / createDefaultTemplate / PrintDesignerElement` 外还带
-`renderHtmlPages / browserCodeRenderer / PrintClient / WormPrintError /
-getPaperDimensions / getByPath` 等出纸与缩略图入口——直挂宿主所有能力都从这个全局取。
+> 路径口径（以 `packages/canvas/package.json` 的 `exports` 为准）：`canvas.js` 是 `./browser` 子路径的 UMD 产物（也是包根 `default`），`canvas.css` 是 `./style.css` 导出指向的 `dist/canvas.css`。不要凭子路径去猜 CSS 文件名；产物名以安装版本的实际 `dist/` 内容为准。
 
-### 2. 最小接入
+`canvas.js` 是 UMD，已内联 core 与码制库，挂出全局 `window.WormPrintCanvas`；除 `registerAll / createDefaultTemplate / PrintDesignerElement` 外还带 `renderHtmlPages / browserCodeRenderer / PrintClient / WormPrintError / getPaperDimensions / getByPath` 等出纸与几何入口——直挂宿主所有能力都从这个全局取。
 
-**head / body 引用（顺序即加载顺序）**
+### 2.2 页面引用（顺序即加载顺序）
 
 ```html
 <link rel="stylesheet" href="/static/vendor/worm-print-canvas.css" />
@@ -34,7 +34,7 @@ getPaperDimensions / getByPath` 等出纸与缩略图入口——直挂宿主所
 <script src="/src/app.js"></script>
 ```
 
-**注册元素、挂载、注入、听事件（`src/app.js`）**
+### 2.3 注册、挂载、注入、监听（`src/app.js`，可直接复制运行）
 
 ```js
 WormPrintCanvas.registerAll() // 全局只调用一次
@@ -48,11 +48,17 @@ el.fields = [
   { fieldKey: 'order.no', fieldLabel: '单号', fieldType: 'string', sortOrder: 1 },
   { fieldKey: 'goods', fieldLabel: '商品明细', fieldType: 'list', sortOrder: 2 },
 ]
-el.template = template           // 对象；读回当前画布用 el.getTemplateJson()
-el.uploadImage = file => upload(file)
+el.template = WormPrintCanvas.createDefaultTemplate() // 保存后回填时换成你的模板对象
+el.uploadImage = async file => {
+  // TODO: 换成你的上传接口，返回可访问 URL；此处用本地 URL 占位
+  return URL.createObjectURL(file)
+}
 
 // jQuery 包了一层事件对象：e.detail 是 undefined，必须取 e.originalEvent.detail
-$(el).on('save', e => persist(JSON.parse(e.originalEvent.detail)))
+$(el).on('save', e => {
+  const elements = JSON.parse(e.originalEvent.detail)
+  // TODO: 提交 elements 到你的模板接口，元信息分开存储
+})
 ```
 
 **样式**：`print-designer` 默认 `display:inline`，不给块级宽高设计器整体塌陷：
@@ -63,80 +69,52 @@ $(el).on('save', e => persist(JSON.parse(e.originalEvent.detail)))
 
 Shadow DOM 不需要外链 CSS；`worm-print-canvas.css` 是 light DOM 兜底与 `:host` 基线，照抄时一并引入无害。
 
-### 3. 出纸
+### 2.4 出纸（Printing）
 
 ```js
 // A 浏览器打印：全局自带同构渲染（core 执行器已内联）
 const rendered = await WormPrintCanvas.renderHtmlPages(
-  JSON.parse(el.getTemplateJson()), data, location.origin, WormPrintCanvas.browserCodeRenderer)
-const doc = frame.contentWindow.document   // 写进预览 iframe（doc.open/write/close）
-doc.open()
-doc.write(rendered.html)
-doc.close()
+  JSON.parse(el.getTemplateJson()), printData, location.origin, WormPrintCanvas.browserCodeRenderer)
+const frame = document.getElementById('preview-frame')
+const doc = frame.contentWindow.document   // 写进预览 iframe
+doc.open(); doc.write(rendered.html); doc.close()
 frame.contentWindow.print()
 
 // C 静默打印：直送本机客户端（127.0.0.1，与浏览器同机；BUSY 由宿主排队重试）
 new WormPrintCanvas.PrintClient({ timeoutMs: 20000 }).printHtml(rendered)
 ```
 
-B 服务端 PDF：同源 `/render-api/*` 由宿主后端代理到 `services/render` 并注入密钥，
-前端不持密钥。
+B 服务端 PDF：同源 `/render-api/*` 由宿主后端代理到 `services/render` 并注入密钥，前端不持密钥（见 01）。
 
-### 4. 直挂必知约定（漏了必踩坑）
+## 3. 验证（Verification）
 
-1. 自定义元素默认 `display:inline`：不给块级宽高会塌陷，务必带上面的 CSS。
-2. `fields` 没有 getter，读回看 `el.store.fields`；`el.template` getter 返回当前画布 JSON。
-3. jQuery 事件对象要取 `e.originalEvent.detail`；原生 `addEventListener` 则是 `e.detail`。
-4. 弹层显隐用 `hidden` 属性时，若宿主样式把遮罩写成 `display:flex`，作者样式会盖掉
-   `[hidden]` 的 UA 规则——切 `hidden` 的同时同步一行内联 `display`。
-5. 无打包器 ⇒ `src/*.js` 只能相对路径互引，npm 包名一律不出现，能力全从 `WormPrintCanvas` 取。
-6. 页面销毁时 `removeEventListener` 并关闭 `PrintClient`。
-7. 事件 `detail` 口径：`save`/`preview` 是模板 JSON 字符串（需 `JSON.parse`）；
-   `dblclick-element` 的 detail 是元素 id 字符串本身、`dblclick-cell` 是
-   `{ elementId, r, c, cellId }` 对象，均不要 parse。
-8. `getTemplateJson()` 绕过拼版校验，保存/导出前先 `el.validateTemplate()`。
+- 页面无需构建直接打开可用：设计器渲染、块级宽高正常、无控制台报错。
+- 保存 → 重新打开回填 → 预览渲染真实数据 → 浏览器打印；B/C 按 01 验收点追加。
 
-### 5. AI 工具集成提示词（复制给 AI 编程工具即可）
+## 4. 排错（Troubleshooting）
 
-对应技能：**`worm-print-platform-integration`**（安装方法见 [README](01-getting-started.md)）。
+| 症状 | 原因 / 处理 |
+| --- | --- |
+| 设计器塌陷 / 看不到 | 自定义元素默认 `display:inline`，补块级宽高 CSS |
+| 读不到 fields | `fields` 没有 getter，读回看 `el.store.fields`；`el.template` getter 返回当前画布 JSON |
+| `e.detail` 是 undefined | jQuery 事件取 `e.originalEvent.detail`；原生 `addEventListener` 才是 `e.detail` |
+| `[hidden]` 不生效 | 宿主样式把遮罩写成 `display:flex` 会盖掉 `[hidden]` 的 UA 规则；切换 `hidden` 时同步一行内联 `display` |
+| 报 bare import / 模块解析错 | 无打包器 ⇒ `src/*.js` 只能相对路径互引，能力全从 `WormPrintCanvas` 全局取，npm 包名不得出现在业务代码 |
+| 事件 detail 解析错 | `save`/`preview` 的 detail 是 JSON 字符串需 parse；`dblclick-*` 不要 parse |
+| 保存后未回填 | 用新 template 对象赋 `el.template`；导出前先 `el.validateTemplate()` |
+
+## 5. AI 工具集成提示词（场景差异）
+
+通用门控/安装/验收模板见 [01 §5](./01-getting-started.md#5-ai-提示词模板唯一模板源)，本场景额外约束：
 
 ```text
-【第 0 步 · 门控：未完成禁止改代码】
-1. 安装接入技能：从 https://github.com/worm-longliu/worm-print-platform 仓库取
-   skills/worm-print-platform-integration 整个目录，复制到你的技能目录并重载
-   （Qoder：~/.qoder/skills/；Claude Code：~/.claude/skills/；或项目级同名目录）。
-   无法安装时降级：完整阅读该目录下 SKILL.md 与 references/ 全部文档后再动手。
-2. 完成后输出「已读规范确认」：逐个列出文件路径 + 与本任务相关的 3 条以上约束。
-3. 阅读本项目的目录结构与部署方式（静态目录 / 反向代理 / 模板引擎），确认无打包器直挂形态。
-4. 任一文档缺失或读不懂，先提问，禁止臆测 API。
-
-【集成要求】
-- 宿主形态：jQuery / 原生 JS 浏览器直挂，无打包器，无 bare import。
-- 从 @worm-print-platform/canvas/browser 产物取 canvas.js + canvas.css 拷进宿主静态目录
-  （或按项目惯例从制品库取件），页面 <link> + <script> 引入，能力全部从
-  window.WormPrintCanvas 全局取，npm 包名不得出现在业务代码里。
-- WormPrintCanvas.registerAll() 全局一次；对象/函数入参一律赋 property，
-  字符串开关（is-edit="true" 等）写 attribute。
+【宿主形态】jQuery / 原生 JS 浏览器直挂，无打包器，无 bare import。
+- 从 @worm-print-platform/canvas 主入口产物取 canvas.js + 包导出 style.css 拷进静态目录；
+  页面 <link> + <script> 引入，能力全部从 window.WormPrintCanvas 全局取，业务代码不出现 npm 包名。
+- WormPrintCanvas.registerAll() 全局一次；对象/函数入参赋 property，字符串开关写 attribute。
 - jQuery 事件用 $(el).on(...) 且取 e.originalEvent.detail；原生监听用 e.detail。
-- 自定义元素补块级宽高 CSS（默认 display:inline 会塌陷）。
-- 业务字段按 PrintBusinessField 契约（fieldKey/fieldLabel/fieldType/sortOrder）
-  由【后端接口 / 页面常量】提供；模板 JSON 与元信息分开存储。
-- 复用项目现有请求封装与样式风格，不引入构建器与额外 UI 依赖。
-- 打印链路：A WormPrintCanvas.renderHtmlPages 渲染进 iframe 后
-  contentWindow.print()（默认）；C 静默打印用 WormPrintCanvas.PrintClient.printHtml；
-  B 服务端 PDF 只请求同源代理路径，密钥由后端注入，前端不保存密钥。
-
-【验收标准】
-- 页面无构建直接打开可用；设计器保存模板 JSON 后再次打开能回填。
-- 最小链路跑通：设计 → 保存 → 预览渲染真实业务数据 → 浏览器打印。
-- 只使用全局 WormPrintCanvas 上真实存在的入口与 <print-designer> 真实契约，
-  不虚构 API（不存在 setTemplateMeta、back 事件；fields 无 getter，读回用
-  el.store.fields；jQuery 侧必须取 originalEvent.detail）。
+- 自定义元素补块级宽高 CSS。
+【验收】页面无构建直接打开可用；保存→回填→预览→打印链路跑通；不虚构 API（无 setTemplateMeta、back；fields 读回用 el.store.fields）。
 ```
-
-
----
-
----
 
 [← 返回目录](./README.md) | ← 上一篇：[React 18 接入](./04-react.md) | 下一篇：[多语言配置与自定义](./06-i18n.md) →

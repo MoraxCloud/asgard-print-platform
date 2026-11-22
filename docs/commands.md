@@ -66,25 +66,26 @@ node demos/scripts/verify-business-scenarios.mjs http://localhost:9331/ --quick 
 
 ## npm 发布
 
-发布到 npm 的包共 5 个：`core`、`plugin-kit`、`canvas`、`echarts`、`skills`。
+发布到 npm 的包共 8 个：`core`、`plugin-kit`、`canvas`、`echarts`、`plugin-echarts`、`skills`、`marketplace`、`i18n`。
 `contract` / `mcp` / `render` / `client` 为私有包，不发布（随客户端打包分发）。
+正式发布用 `npm run publish:npm`；canvas 单独补发用 `npm run publish:canvas`。
 
 ### 发布前版本同步
 
 仓库没有版本号自动递增脚本，发布前手动完成：
 
-1. 将 `packages/{core,plugin-kit,canvas,echarts,skills}/package.json` 的 `version` 统一改为目标版本；
+1. 将以下包的 `package.json#version` 统一改为目标版本：`packages/{core,plugin-kit,canvas,echarts,skills,marketplace,i18n}` 与 `marketplace/plugins/echarts`（`plugin-echarts` 主包）；
 2. 同步根 `package.json` 的 `version`；
 3. 执行 `npm install` 刷新 `package-lock.json` 中的 workspace 版本；
 4. 更新 `CHANGELOG.md`，提交并打 tag（`v<版本>`）推送到远端。
 
-`publish-npm.yml` 会校验 `core` / `plugin-kit` / `canvas` / `echarts` 四个包与 tag 版本一致；漏发任一包会导致宿主安装 404。
+`publish-npm.yml` 会校验发布包与 tag 版本一致；漏发任一包会导致宿主安装 404。各包实际发布清单以根 `package.json` 的 `publish:npm` 脚本为准。
 
 ### 本地发布
 
 ```bash
 npm run publish:dry-run            # 干跑：build + test + 逐包 publish --dry-run
-npm run publish:npm                # 正式发布：build + test，按 core → plugin-kit → canvas → echarts → skills 顺序发布
+npm run publish:npm                # 正式发布：build + test，按 core → plugin-kit → canvas → echarts → skills → marketplace → i18n → plugin-echarts 顺序发布
 
 npm run publish:local              # 本地联调：build 后 yalc push core（需已安装 yalc：npm i -g yalc）
 ```
@@ -209,7 +210,7 @@ docker run -p 3001:3001 \
 | Workflow | 用途 | 触发方式 |
 | --- | --- | --- |
 | `ci.yml` | 全量 build + test，render 分页集成用例单独 job | `gh workflow run ci.yml` |
-| `publish-npm.yml` | 按 tag 发布 4 个代码包（支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true` |
+| `publish-npm.yml` | 按 tag 发布 8 个 npm 包（支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true` |
 | `npm-dist-tag.yml` | 运维 dist-tag（rm / add） | `gh workflow run npm-dist-tag.yml ...` |
 | `create-gitee-release.yml` | 在 Gitee 创建同名 release | `gh workflow run create-gitee-release.yml -f tag=v1.6.0` |
 | `deploy-pages.yml` | 五个宿主 demo 的 GitHub Pages 静态演示 | `gh workflow run deploy-pages.yml` |

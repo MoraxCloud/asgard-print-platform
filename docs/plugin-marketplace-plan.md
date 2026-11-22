@@ -168,8 +168,7 @@ export interface ExportResult {
 - 注册：core 新增 `export-plugin-registry.ts`，提供 `defineExportPlugin` / `registerExportPlugin` /
   `getExportPlugins` / `getExportPluginByFormat`，注册表键
   `Symbol.for('worm-print-platform.export-plugin-registry.v1')`。
-- **宿主接入**：设计器工具栏 / 宿主 UI 按已注册 `formats` 自动生成「导出 Excel」「导出 Word」菜单项；
-  点击取当前 `pages` + `template` + `printData` 调 `plugin.export()`，拿到 `blob` 触发浏览器下载。
+- **宿主接入（规划中，尚未实现）**：设计器工具栏 / 宿主 UI 按已注册 `formats` 自动生成「导出 Excel」「导出 Word」菜单项的方案见 `docs/proposals/05-export-plugins.html`（P2 待增功能）；当前已落地的是导出插件注册契约，宿主导出菜单与下载入口尚未实现。实现后点击取当前 `pages` + `template` + `printData` 调 `plugin.export()`，拿到 `blob` 触发浏览器下载。
 - **能力边界（用户已确认接受）**：渲染结果导出是「所见即所得」但**结构化差**——HTML 表格转 xlsx
   单元格的列对齐、docx 排版还原均由插件自身负责，主体不保证保真；大文件性能也由插件自行优化。
 - contract 联动：`packages/contract/src/kinds.ts:52-58` 的 strict 校验（MISSING_PLUGIN /

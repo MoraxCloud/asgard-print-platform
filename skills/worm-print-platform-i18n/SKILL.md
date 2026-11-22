@@ -34,7 +34,7 @@ description: Use when 用户要为一个已 npm 安装 @worm-print-platform 包�
 | bundle 导出 | `npm run i18n:bundle` | `scripts/export-locale-bundle.mjs` → `dist/i18n/resources.json` |
 | 硬编码中文扫描 | `node scripts/check-hardcoded-zh.mjs <dir...>` | `scripts/check-hardcoded-zh.mjs` |
 
-`npx @worm-print-platform/i18n` 依赖包已发布到 npm；包未发布或网络受限时，仓库根目录用 `node packages/i18n/dist/cli.js <命令>` 替代，或项目 `node_modules` 已装该包时用 `npx --no-install @worm-print-platform/i18n <命令>`。
+`npx @worm-print-platform/i18n` 依赖 `@worm-print-platform/i18n`（正式发布包之一），但 npx 可能因「镜像源未同步 / 网络受限 / 本地未安装」返回 404。按顺序排查：① 确认 registry；② 项目已装该包时用 `npx --no-install @worm-print-platform/i18n <命令>`；③ 仍失败则在仓库根目录用源码 CLI `node packages/i18n/dist/cli.js <命令>` 替代。404 不等于命令写错，先判因再回退。人读口径与回退说明见 `docs/guide/06-i18n.md`。
 
 发现顺序：`.worm-print/i18n/<id>/<locale>.json`（市场安装，优先）→ `node_modules` 下声明 `wormPrint.i18n` 的包。`canvas`/`plugin-kit` 不产出语言资源，不要找它们要 JSON。骨架排序：core → constants → propertyTips → 插件 id 字母序。
 
