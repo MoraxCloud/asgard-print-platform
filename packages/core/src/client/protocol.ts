@@ -219,7 +219,7 @@ export type IncomingServerMessage =
 
 /** template.attach 请求 payload（浏览器 → 桌面端） */
 export interface TemplateAttachRequest {
-  /** 页内 16–128 位 [A-Za-z0-9_-] 随机串（sessionStorage 保存，重连复用） */
+  /** 页内 6 位 [a-z0-9] 随机串（sessionStorage 保存，重连复用） */
   sessionId: string
   /** 页面展示名，桌面端截断到 120 字符 */
   name: string

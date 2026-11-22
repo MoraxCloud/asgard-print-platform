@@ -43,6 +43,24 @@ export const MCP_PROMPT_SCENARIOS = [
 
 export type McpPromptScenario = (typeof MCP_PROMPT_SCENARIOS)[number]['id']
 
+/** 基础信息提示词所需的最小会话字段（不依赖主进程类型） */
+export interface SessionBasicInfo {
+  sessionId: string
+  name: string
+  url: string
+  templateName?: string
+}
+
+/** 单个设计器会话的基础信息提示词：不含 MCP 服务地址与 Bearer token */
+export function buildSessionBasicInfoPrompt(session: SessionBasicInfo): string {
+  const templateName = session.templateName?.trim() || session.name || '未命名模板'
+  return `请基于当前打印模板设计器会话进行调整。
+会话 ID：${session.sessionId}
+模板名称：${templateName}
+设计器地址：${session.url}
+请使用 worm-print-platform mcp 的 print_get_open_template 工具，按此 sessionId 读取模板后再调整。`
+}
+
 export function buildMcpAgentPrompt(
   url: string,
   pairingToken: string,

@@ -271,3 +271,63 @@ td {
   font-size: 12px;
   color: var(--muted, #555);
 }
+
+/* 顶部：所有页签可见的 MCP 接入提示词复制入口 */
+.tabs-top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tab-count {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(127, 127, 127, 0.18);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* 活跃设计器页签 */
+.designer-limit {
+  margin-bottom: 12px;
+}
+.designers-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.designers-table th,
+.designers-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--divider, #eee);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.designers-table th {
+  color: var(--muted, #666);
+  font-weight: 600;
+}
+.designers-table td:last-child {
+  overflow: visible;
+}
+.designers-table .link-btn + .link-btn {
+  margin-left: 10px;
+}
+.session-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.designer-empty,
+.designer-copy-msg {
+  margin-top: 12px;
+  font-size: 12px;
+}
+.designer-copy-msg:empty {
+  display: none;
+}

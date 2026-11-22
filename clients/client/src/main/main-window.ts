@@ -32,7 +32,7 @@ function describeMcpState(deps: MainWindowDeps): {
   enabled: boolean
   url: string
   tokenReady: boolean
-  sessions: Array<{ sessionId: string; name: string; url: string; templateName?: string; lastActiveAt: number }>
+  sessions: Array<{ sessionId: string; name: string; url: string; templateName?: string; createdAt: number; lastActiveAt: number }>
 } {
   const port = deps.getPort()
   const cfg = deps.configStore.current
