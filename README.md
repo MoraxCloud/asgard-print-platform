@@ -247,7 +247,47 @@ npx @worm-print-platform/skills worm-print-platform-integration \
 npx @worm-print-platform/skills worm-print-platform-integration --dir .claude/skills --force
 ```
 
-**给 AI Agent 的提示词片段**（可整段复制）：
+### 一句话最小化接入提示词（可整段复制给 AI Agent）
+
+把下面这整段粘给 AI Agent，它会**先探索当前项目技术栈、列给你确认接入范围（含是否安装官方技能），再按你的选择读取对应规范、最后最小化改动**完成接入；无需 clone 本仓。
+
+```
+请帮我最小化接入 worm-print-platform。严格按以下阶段执行，我确认前不要改任何代码。
+
+【第 1 步 · 探索当前项目技术栈（只读，不改）】
+检查当前项目：package.json 的 dependencies / devDependencies、构建配置（vite / webpack / rsbuild 等）、
+源码目录结构与现有代码风格、是否已安装 @worm-print-platform/* 及版本。
+据此判断：宿主框架与版本（Vue 3 / Vue 2.7 / React 18 / jQuery 或原生 JS）、构建器、包管理器。
+探测不到或不确定就标注「未知」，不要猜测。
+
+【第 2 步 · 与我确认接入范围】
+先把第 1 步的探测结果列出来让我确认（不对的地方我会纠正），再问我：
+1) 宿主框架（以探测结果为默认）；
+2) 打印链路（A 浏览器打印 / B 服务端 PDF / C 桌面静默打印，可多选）；
+3) 插件需求（安装现成插件如 echarts / 开发自定义插件 / 都不要）；
+4) 是否需要自定义界面语言（多语言）；
+5) 是否安装对应的官方技能（推荐安装：集成 → worm-print-platform-integration，多语言 → worm-print-platform-i18n，AI 实时读写画布 → worm-print-platform-mcp；也可选「不装，直接读文档」）。
+等我确认后再继续。
+
+【第 3 步 · 按确认结果读规范】
+若第 2 步选择安装技能：先在当前项目根目录执行
+`npx @worm-print-platform/skills <技能名> --force`（默认 GitHub→Gitee 回退；npx 404 时按 01-getting-started.md 回退源码安装），
+再完整阅读装好的 `.agents/skills/<技能名>/SKILL.md` 及 references/ 中相关文档，作为主要规范来源。
+若选择不装技能，或用 WebFetch 补充：读取 Gitee 对应文档（根路径 https://gitee.com/liulong_oschina/worm-print-platform/raw/master/）：
+- 必读 docs/guide/AGENTS.md（文档地图与任务路线）；
+- 框架选读：Vue 3 → docs/guide/02-vue3.md，Vue 2.7 → 03-vue2.md，React → 04-react.md，jQuery/原生 → 05-jquery.md；
+- 插件安装 → docs/guide/07-plugin-install.md，自定义插件 → docs/guide/08-plugin-dev.md；
+- 多语言 → docs/guide/06-i18n.md；打印链路与宿主最小清单 → docs/guide/01-getting-started.md。
+
+【第 4 步 · 最小化实现与验收】
+先输出「已读规范确认」（列出读过的路径 + 3 条相关约束）；只按文档列出的 API/CLI 操作，
+不臆测接口；命令标注执行目录，失败先区分环境限制与文档缺口；改动最小化，复用项目探测到的现有请求封装与 UI 风格。
+验收：类型检查/构建通过；设计器保存模板 JSON 后重开能回填；最小链路跑通；装插件则设计器出现对应元素。
+```
+
+> 上述路径均来自 Gitee 镜像的 `master` 分支 raw 文件；如需 GitHub 源，把域名换成 `https://raw.githubusercontent.com/worm-longliu/worm-print-platform/master/`。
+
+**给 AI Agent 的提示词片段**（安装官方技能版，可整段复制）：
 
 ```
 请先在项目根目录执行以下命令安装 worm-print-platform 的官方技能规范，再开始接入开发：
