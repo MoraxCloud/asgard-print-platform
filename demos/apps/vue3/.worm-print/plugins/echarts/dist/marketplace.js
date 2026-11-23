@@ -1,5 +1,5 @@
 /*!
- * @worm-print-platform/plugin-echarts v1.1.0
+ * @worm-print-platform/plugin-echarts v1.6.2
  * Copyright (c) 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-FileCopyrightText: 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-License-Identifier: MIT
