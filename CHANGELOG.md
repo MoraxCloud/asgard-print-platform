@@ -1,5 +1,13 @@
 # 更新日志
 
+## V1.6.2(2026-11-23)
+
+- **插件市场 CLI 修复**：修复入口守卫不识别 npm bin 软链导致 `npx @worm-print-platform/marketplace` 全部命令静默空转（退出码 0）的问题；入口按 realpath 归一，并补软链回归测试。
+- **图表插件安装修复**：`dist/i18n` 语言资源入库，修复 `plugin-echarts` 停发 npm 后 Git 源稀疏检出缺语言资源、`install echarts` 报 `INVALID_PLUGIN` 的问题；本地源与 Git 源安装均实测三语资源齐全。
+- **插件市场增强**：`list` 支持类型 / 分类 / 标签 / 关键词筛选与 `--index` 指定索引；新增索引校验器 `validate`、静态插件目录页生成器与多语言文本回退函数；索引新增 `type` / `uniqueId` / `versions` 字段；`auto` 源顺序调整为 npm → Gitee → GitHub。
+- **发布链扩展**：npm 发布链扩展至七个正式包（core / plugin-kit / canvas / echarts / skills / marketplace / i18n）；百度图表插件经插件市场分发，兼容镜像随主线发版。
+- **版本载体对齐至 `1.6.2`**：各工作区包、demos、MCP / canvas 版本常量、文档示例与徽章同步；桌面客户端源码无变更，沿用 v1.6.1 安装包。
+
 ## V1.6.1(2026-11-22)
 
 - **多语言能力全面升级**：新增 `@worm-print-platform/i18n` 语言包 CLI（`template` / `validate` / `update`）与配套 AI 技能；core / canvas / client / render / echarts 接入自定义语言资源，语言包支持设计器、服务端 PDF 与桌面客户端切换，新增多语对照表与校验脚本。

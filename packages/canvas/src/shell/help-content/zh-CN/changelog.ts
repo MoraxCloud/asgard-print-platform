@@ -4,6 +4,13 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
+<h2>V1.6.2<small>(2026-11-23)</small></h2>
+
+<h3>修复</h3>
+<ul>
+  <li><strong>图表插件安装</strong>：修复插件市场命令行经 npx 调用静默空转、Git 源安装图表插件因缺语言资源失败的问题；经市场安装百度图表插件恢复可用。</li>
+</ul>
+
 <h2>V1.6.1<small>(2026-11-22)</small></h2>
 
 <h3>新增</h3>

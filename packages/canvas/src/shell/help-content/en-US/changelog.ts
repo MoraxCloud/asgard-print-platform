@@ -3,6 +3,13 @@ export default {
   id: 'changelog',
   title: 'Release Notes',
   content: `
+<h2>V1.6.2<small>(2026-11-23)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Chart plugin installation</strong>: fixed the marketplace CLI silently doing nothing when invoked via npx, and chart plugin installs from Git sources failing due to missing language resources; installing the Baidu chart plugin via the marketplace works again.</li>
+</ul>
+
 <h2>V1.6.1<small>(2026-11-22)</small></h2>
 
 <h3>Added</h3>
