@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Worm 插件市场</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1f2430;--muted:#6b7280;--accent:#165dff;--border:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{max-width:1040px;margin:0 auto;padding:32px 20px 12px}h1{margin:0 0 6px;font-size:24px}p.sub{margin:0;color:var(--muted)}
+.notice{max-width:1040px;margin:12px auto;padding:10px 14px;background:#fff7e6;border:1px solid #ffd591;border-radius:8px;color:#874d00;font-size:12px}
+.toolbar{max-width:1040px;margin:16px auto;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar select,.toolbar input{padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);font:inherit;color:inherit}
+.toolbar input{flex:1;min-width:180px}
+main{max-width:1040px;margin:0 auto;padding:8px 20px 48px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.card h2{margin:0;font-size:16px}.badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2ff;color:var(--accent);font-size:12px;width:fit-content}
+.card p{margin:0;color:var(--muted);font-size:13px}.meta{font-size:12px;color:var(--muted);margin-top:auto}
+code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<header><h1>Worm 插件市场</h1>
+<p class="sub"> worm-print-platform 插件索引 · 来源：marketplace/marketplace.json（仓库内置索引）</p></header>
+<div class="notice">索引为第三方内容：客户端只校验格式，不背书标题、作者与来源声明。安装前请核对来源。</div>
+<div class="toolbar">
+  <select data-market-filter="type" aria-label="类型"><option value="">全部类型</option><option value="element">元素插件</option><option value="functional">功能插件</option><option value="export">导出插件</option></select>
+  <select data-market-filter="category" aria-label="分类"><option value="">全部分类</option></select>
+  <input data-market-search type="search" placeholder="搜索插件名称、标识、描述…" aria-label="搜索">
+</div>
+<main id="market-list"></main>
+<script id="market-data" type="application/json">{"title":{"zh-CN":"Worm 插件市场","en":"Worm Plugin Market"},"metadata":{"categories":{"element":{"title":{"zh-CN":"元素插件","en":"Element"}},"functional":{"title":{"zh-CN":"功能插件","en":"Functional"}},"export":{"title":{"zh-CN":"导出插件","en":"Export"}}},"labels":{"official":{"title":{"zh-CN":"官方","en":"Official"}}},"sortKeys":{"publishedAt":{"title":{"zh-CN":"发布时间","en":"Published"},"order":"desc"}}},"plugins":[{"uniqueId":"worm-echarts","type":"element","category":"element","labels":["official"],"title":{"zh-CN":"百度图表元素","en":"ECharts Charts"},"description":{"zh-CN":"基于 ECharts 的十类打印图表元素，浏览器与服务端同构出图。本插件通过插件市场 CLI 分发，不再单独发布 npm；兼容库 @worm-print-platform/echarts 继续独立发布。","en":"Ten print chart elements based on ECharts, rendered isomorphically in browser and server. Distributed via the plugin marketplace CLI."},"version":"1.6.1","npmName":"@worm-print-platform/plugin-echarts","engine":">=1.5.2 \u003c2","sortKeys":{"publishedAt":1763800000}},{"uniqueId":"worm-data-preview","type":"functional","category":"functional","labels":["official"],"title":{"zh-CN":"数据源预览","en":"Data Source Preview"},"description":{"zh-CN":"把 designData 按 JSON 形态解析为多 tab 表单/表格预览，由宿主按需挂载入口。","en":"Parses designData as JSON into multi-tab form/table previews; the host mounts the entry point."},"version":"0.1.0","npmName":"@worm-print-platform/plugin-data-preview","engine":">=1.5.3 \u003c2","sortKeys":{"publishedAt":1763700000}}]}</script>
+<script>
+(function(){
+  const data=JSON.parse(document.getElementById('market-data').textContent);
+  const list=document.getElementById('market-list');
+  const typeSel=document.querySelector('[data-market-filter="type"]');
+  const catSel=document.querySelector('[data-market-filter="category"]');
+  const search=document.querySelector('[data-market-search]');
+  const loc=(text)=>{if(text==null)return'';if(typeof text==='string')return text;return text['zh-CN']||Object.values(text)[0]||''};
+  const cats=[...new Set(data.plugins.map(p=>p.category).filter(Boolean))];
+  for(const c of cats){const o=document.createElement('option');o.value=c;o.textContent=(data.metadata&&data.metadata.categories&&data.metadata.categories[c]&&loc(data.metadata.categories[c].title))||c;catSel.appendChild(o)}
+  function render(){
+    const q=(search.value||'').toLowerCase();
+    const rows=data.plugins.filter(p=>(!typeSel.value||p.type===typeSel.value)&&(!catSel.value||p.category===catSel.value)&&(!q||JSON.stringify(p).toLowerCase().includes(q)));
+    list.innerHTML=rows.map(p=>'<article class="card"><span class="badge">'+esc(p.type)+'</span><h2>'+esc(loc(p.title))+'</h2><p>'+esc(loc(p.description))+'</p><p class="meta"><code>'+esc(p.npmName)+'</code> · v'+esc(p.version)+(p.engine?' · core '+esc(p.engine):'')+'</p></article>').join('')||'<p>没有匹配的插件</p>';
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+  typeSel.addEventListener('change',render);catSel.addEventListener('change',render);search.addEventListener('input',render);render();
+})();
+</script>
+</body>
+</html>

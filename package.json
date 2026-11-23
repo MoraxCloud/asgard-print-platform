@@ -25,6 +25,8 @@
     "dev:demos:jquery": "npm run dev --prefix demos/apps/jquery",
     "dev:demos:print": "npm run dev --prefix demos/apps/print-demo",
     "i18n:bundle": "node scripts/export-locale-bundle.mjs",
+    "market:site": "node packages/marketplace/scripts/gen-market-site.mjs",
+    "market:validate": "node packages/marketplace/dist/cli.js validate",
     "verify:i18n": "node scripts/verify-i18n.mjs",
     "verify:i18n:full": "npm run build && npm test && npm run i18n:bundle && node scripts/verify-i18n.mjs",
     "install:demos:all": "node demos/scripts/install-all.mjs",
