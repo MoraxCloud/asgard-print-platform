@@ -1,5 +1,5 @@
-import { M as MarketIndex, a as MarketSource, R as RepoSource, P as PluginsManifest, b as ManifestEntry } from './install-OnUueX3N.js';
-export { C as CommandResult, G as GitExecutor, I as IndexIssue, c as InstallOptions, d as InstallResult, L as LocalizedText, e as MarketError, f as MarketErrorCode, g as MarketIndexEntry, h as MarketMetadataDecl, j as MarketVersionEntry, N as NpmExecutor, k as PluginJsonEntry, l as PluginType, m as RemoveOptions, W as WormPrintMeta, n as defaultGitExecutor, o as defaultNpmExecutor, i as installPlugin, r as removePlugin } from './install-OnUueX3N.js';
+import { M as MarketIndex, a as MarketSource, R as RepoSource, d as PluginsManifest, e as ManifestEntry, L as LocalizedText, I as IndexIssue } from './install-GAO58ijj.js';
+export { C as CommandResult, G as GitExecutor, f as InstallOptions, g as InstallResult, h as MarketError, j as MarketErrorCode, b as MarketIndexEntry, c as MarketMetadataDecl, k as MarketVersionEntry, N as NpmExecutor, l as PluginJsonEntry, P as PluginType, m as RemoveOptions, W as WormPrintMeta, n as defaultGitExecutor, o as defaultNpmExecutor, i as installPlugin, r as removePlugin } from './install-GAO58ijj.js';
 
 interface ParsedSemver {
     major: number;
@@ -43,6 +43,15 @@ declare function writeManifest(dir: string, manifest: PluginsManifest, cwd?: str
 declare function upsertManifestEntry(dir: string, id: string, entry: ManifestEntry, cwd?: string): void;
 declare function removeManifestEntry(dir: string, id: string, cwd?: string): void;
 
+/**
+ * 取多语言文本的当前语言值。回退链：精确 locale → 语言前缀 → zh-CN → 空串。
+ * 字符串形式视为已是目标文本，原样返回。
+ */
+declare function localize(text: LocalizedText | undefined, locale: string): string;
+
+/** 校验一份市场索引，返回全部问题；合法索引返回空数组。 */
+declare function validateIndex(index: MarketIndex): IndexIssue[];
+
 declare const BUNDLED_CATALOG: MarketIndex;
 
-export { BUNDLED_CATALOG, DEFAULT_GITEE_REPO, DEFAULT_GITHUB_REPO, ManifestEntry, MarketIndex, MarketSource, type ParsedSemver, PluginsManifest, RepoSource, buildGitTag, compareStable, extractVersion, isStableVersion, latestStable, manifestPath, parseRepoUrl, parseSemver, readManifest, removeManifestEntry, resolveGitSource, resolvePluginName, resolveVersion, upsertManifestEntry, writeManifest };
+export { BUNDLED_CATALOG, DEFAULT_GITEE_REPO, DEFAULT_GITHUB_REPO, IndexIssue, LocalizedText, ManifestEntry, MarketIndex, MarketSource, type ParsedSemver, PluginsManifest, RepoSource, buildGitTag, compareStable, extractVersion, isStableVersion, latestStable, localize, manifestPath, parseRepoUrl, parseSemver, readManifest, removeManifestEntry, resolveGitSource, resolvePluginName, resolveVersion, upsertManifestEntry, validateIndex, writeManifest };

@@ -170,6 +170,7 @@ export type MarketErrorCode =
   | 'NOT_FOUND'
   | 'VERSION_NOT_FOUND'
   | 'INVALID_PLUGIN'
+  | 'INVALID_INDEX'
   | 'NPM_FAILED'
   | 'CLONE_FAILED'
   | 'GIT_MISSING'
