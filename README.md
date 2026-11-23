@@ -107,7 +107,7 @@ marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 | `packages/core` | `@worm-print-platform/core` | ✅ npm | 表达式引擎 + 同构渲染管线 + 框架无关设计器内核 |
 | `packages/plugin-kit` | `@worm-print-platform/plugin-kit` | ✅ npm | 插件设计器 UI 契约与注册表（纯 TS/DOM） |
 | `packages/canvas` | `@worm-print-platform/canvas` | ✅ npm | 设计器权威实现（Custom Elements + Shadow DOM） |
-| `marketplace/plugins/echarts` | `@worm-print-platform/plugin-echarts` | ✅ npm | 百度图表插件唯一源码真源（市场主口径） |
+| `marketplace/plugins/echarts` | `@worm-print-platform/plugin-echarts` | ❌ 市场分发 | 百度图表插件唯一源码真源（不再单独发 npm，走市场 CLI） |
 | `packages/echarts` | `@worm-print-platform/echarts` | ✅ npm | 同一源码生成的兼容镜像包（十类 kind，存量依赖零改动） |
 | `packages/skills` | `@worm-print-platform/skills` | ✅ npm | 命令行技能安装器（bin：`worm-print-skills`） |
 | `packages/marketplace` | `@worm-print-platform/marketplace` | ✅ npm | 插件市场 CLI（bin：`worm-print-marketplace`，三源安装） |
@@ -250,40 +250,49 @@ npx @worm-print-platform/skills worm-print-platform-integration --dir .claude/sk
 
 ### 一句话最小化接入提示词（可整段复制给 AI Agent）
 
-把下面这整段粘给 AI Agent，它会**先探索当前项目技术栈、列给你确认接入范围（含是否安装官方技能），再按你的选择读取对应规范、最后最小化改动**完成接入；无需 clone 本仓。
+把下面这整段粘给 AI Agent，它会**先只读探测技术栈并列出让你确认，再依次询问接入范围，确认后按规范装技能、读文档、最小化改动**完成接入；无需 clone 本仓。四个范围问题（图表 / 国际化 / 数据源预览 / 模板管理）原样保留，并补齐了仓库要求的门控与包名口径。
 
 ```
-请帮我最小化接入 worm-print-platform。严格按以下阶段执行，我确认前不要改任何代码。
+请帮我接入 worm-print-platform（仓库：https://gitee.com/liulong_oschina/worm-print-platform）。严格按以下阶段执行，我逐项确认前不要改任何代码；提问一次只问一个问题。
 
-【第 1 步 · 探索当前项目技术栈（只读，不改）】
-检查当前项目：package.json 的 dependencies / devDependencies、构建配置（vite / webpack / rsbuild 等）、
-源码目录结构与现有代码风格、是否已安装 @worm-print-platform/* 及版本。
+【第 1 步 · 只读探测当前项目技术栈（不改代码）】
+检查 package.json 的 dependencies / devDependencies、构建配置（vite / webpack / rsbuild 等）、
+源码目录与现有代码风格、是否已装 @worm-print-platform/* 及版本、现有请求封装与 UI 组件库。
 据此判断：宿主框架与版本（Vue 3 / Vue 2.7 / React 18 / jQuery 或原生 JS）、构建器、包管理器。
-探测不到或不确定就标注「未知」，不要猜测。
+探测不到标「未知」不要猜测；先把探测结果列出来让我确认，不对的地方我会纠正。
 
-【第 2 步 · 与我确认接入范围】
-先把第 1 步的探测结果列出来让我确认（不对的地方我会纠正），再问我：
-1) 宿主框架（以探测结果为默认）；
-2) 打印链路（A 浏览器打印 / B 服务端 PDF / C 桌面静默打印，可多选）；
-3) 插件需求（安装现成插件如 echarts / 开发自定义插件 / 都不要）；
-4) 是否需要自定义界面语言（多语言）；
-5) 是否安装对应的官方技能（推荐安装：集成 → worm-print-platform-integration，多语言 → worm-print-platform-i18n，AI 实时读写画布 → worm-print-platform-mcp；也可选「不装，直接读文档」）。
-等我确认后再继续。
+【第 2 步 · 依次确认接入范围（确认前不要动手）】
+探测结果确认后，按顺序逐个问我以下四个问题：
+1) 是否需要百度图表插件，用于图表打印？
+2) 是否需要国际化配置，用于切换多语言？
+3) 是否需要数据源预览功能？
+4) 是否创建或者修改现有的打印模板管理功能（打印模板的增删改查）？
+另需一并确认打印链路：A 浏览器打印 / B 服务端 PDF / C 桌面静默打印（可多选，交互式默认 A）。
+我的回答决定后续装哪些包、技能与文档，未确认不要开始实现。
 
-【第 3 步 · 按确认结果读规范】
-若第 2 步选择安装技能：先在当前项目根目录执行
-`npx @worm-print-platform/skills <技能名> --force`（默认 GitHub→Gitee 回退；npx 404 时按 01-getting-started.md 回退源码安装），
-再完整阅读装好的 `.agents/skills/<技能名>/SKILL.md` 及 references/ 中相关文档，作为主要规范来源。
-若选择不装技能，或用 WebFetch 补充：读取 Gitee 对应文档（根路径 https://gitee.com/liulong_oschina/worm-print-platform/raw/master/）：
-- 必读 docs/guide/AGENTS.md（文档地图与任务路线）；
-- 框架选读：Vue 3 → docs/guide/02-vue3.md，Vue 2.7 → 03-vue2.md，React → 04-react.md，jQuery/原生 → 05-jquery.md；
-- 插件安装 → docs/guide/07-plugin-install.md，自定义插件 → docs/guide/08-plugin-dev.md；
-- 多语言 → docs/guide/06-i18n.md；打印链路与宿主最小清单 → docs/guide/01-getting-started.md。
+【第 3 步 · 确认后装技能、读规范（门控）】
+1) 在当前项目根目录安装官方技能（默认 GitHub→Gitee 回退，npx 404 时按仓库 skills/<技能名>/ 源码回退）：
+   npx @worm-print-platform/skills worm-print-platform-integration --force
+   需要国际化再加 worm-print-platform-i18n；需要 AI 实时读写画布再加 worm-print-platform-mcp。
+2) 完整阅读装好的 .agents/skills/<技能名>/SKILL.md 与 references/ 相关文档；
+   必读 docs/guide/AGENTS.md（文档地图与硬性约束）、docs/guide/01-getting-started.md（链路选型与包清单）。
+   按我的回答补读：框架篇 docs/guide/02-vue3.md / 03-vue2.md / 04-react.md / 05-jquery.md；
+   图表与数据源预览 → 07-plugin-install.md；国际化 → 06-i18n.md；
+   模板管理 → demos/apps/print-demo 的 README.md 与 PROMPT.md。
+   以上路径均在 https://gitee.com/liulong_oschina/worm-print-platform/raw/master/ 下。
+3) 先输出「已读规范确认」：逐个列出文件路径 + 与本任务相关的 3 条以上约束；
+   任一文档缺失或读不懂先提问，禁止臆测 API。
 
-【第 4 步 · 最小化实现与验收】
-先输出「已读规范确认」（列出读过的路径 + 3 条相关约束）；只按文档列出的 API/CLI 操作，
-不臆测接口；命令标注执行目录，失败先区分环境限制与文档缺口；改动最小化，复用项目探测到的现有请求封装与 UI 风格。
-验收：类型检查/构建通过；设计器保存模板 JSON 后重开能回填；最小链路跑通；装插件则设计器出现对应元素。
+【第 4 步 · 按选择映射依赖（注意包名口径）】
+- 必选 core + canvas + plugin-kit 同号同批安装并提交锁文件，npm ls 核对；Vue 3 优先用 @worm-print-platform/canvas/vue3 门面，其余宿主用 <print-designer> 原生元素。
+- 百度图表：装 npm 兼容镜像 @worm-print-platform/echarts 并从 @worm-print-platform/echarts/ui import 即注册；@worm-print-platform/plugin-echarts 已不在 npm 发布，不要按该名字 npm install（市场分发用 npx @worm-print-platform/marketplace install echarts）。
+- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm，且市场 CLI 安装会因仓库未提交 dist/index.js 而报「插件入口文件不存在」；直接取仓库 marketplace/plugins/data-preview 源码，`npm install && npm run build` 后本地引用。它只提供 openDataPreview() API，入口由宿主挂载。
+- 国际化：按 06-i18n.md 生成、校验语言包并三端接入。
+- 模板管理：参考 https://gitee.com/liulong_oschina/worm-print-platform/tree/master/demos/apps/print-demo。它是参考而非直接复制：其 file:../../../packages/canvas 依赖换成 npm 同号包，MSW + localStorage 模拟后端换成项目真实接口，demo 仅实现链路 A；模板 JSON（elements）与宿主元信息分开存储。
+
+【第 5 步 · 最小化实现与验收】
+复用项目现有请求封装、UI 组件库与代码风格，不引额外 UI 依赖；库不内置业务后端，按「宿主最小清单」实现前端片段与后端契约；不使用文档之外的组件方法/事件（如 back、setTemplateMeta）。
+验收：类型检查/构建通过；设计器保存模板 JSON 后重开能回填；最小链路跑通（保存 → 预览渲染真实业务数据 → 打印）；勾选图表则图表元素可见，勾选数据源预览则入口可打开；命令标注 cwd，失败先区分环境限制与文档缺口。
 ```
 
 > 上述路径均来自 Gitee 镜像的 `master` 分支 raw 文件；如需 GitHub 源，把域名换成 `https://raw.githubusercontent.com/worm-longliu/worm-print-platform/master/`。

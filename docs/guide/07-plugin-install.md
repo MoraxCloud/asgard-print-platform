@@ -38,11 +38,11 @@ npx @worm-print-platform/marketplace remove echarts
 
 ### 2.2 版本规则
 
-- `<名称>` 可为索引短 id（如 `echarts`）或完整 npm spec（如 `@worm-print-platform/plugin-echarts@1.1.0`）。示例版本以 `list` / 索引为准，本文档不固定具体版本号。
+- `<名称>` 可为索引短 id（如 `echarts`、`data-preview`），也支持带版本的 npm spec（`<包名>@<版本>`，仅当该插件确实发布在 npm 时可用；官方插件当前均未发 npm，见下方特例）。版本以 `list` / 索引为准，本文档不固定具体版本号。
 - 未带 `@版本` 取**最新稳定版**：npm 源取 `dist-tags.latest`（预发布则改取最高非预发布）；GitHub/Gitee 源列 `refs/tags/plugins/<id>/v*`，无 tag 回退默认分支并标记非稳定。
 - 预发布（`-rc` / `-beta` 等）不会被当作最新稳定版。
 - 确定性错误（插件不存在、版本不存在、元数据不一致）**不换源**；仅网络/克隆失败才回退。
-- **百度图表插件特例**：`@worm-print-platform/plugin-echarts` 未发布到 npm（404），默认 `auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；显式 `--source gitee` 可直接指定来源。
+- **官方插件特例**：`@worm-print-platform/plugin-echarts` 未发布到 npm（404），默认 `auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；显式 `--source gitee` 可直接指定来源。数据源预览 `@worm-print-platform/plugin-data-preview` 同样未发 npm，且仓库未提交 `dist/index.js`，`install data-preview` 会报「插件入口文件不存在」；按仓库 `marketplace/plugins/data-preview` 源码 `npm install && npm run build` 后本地引用。
 
 ### 2.3 安装结果与语言资源
 

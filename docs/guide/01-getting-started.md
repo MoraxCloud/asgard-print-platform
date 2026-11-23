@@ -36,7 +36,7 @@
 | 服务端 PDF | 仓库内 `services/render`（私有，不发布 npm） | 按 `server-render.md` 部署 |
 | 桌面静默打印 | `@worm-print-platform/core/client` + 仓库内 `clients/client`（私有） | core 子路径，无需另装 SDK |
 
-> `contract` / `mcp` / `render` / `client` 不发布 npm；发布到 npm 的是 `core`、`plugin-kit`、`canvas`、`echarts`、`plugin-echarts`、`skills`、`marketplace`、`i18n` 八个包。
+> `contract` / `mcp` / `render` / `client` 不发布 npm；发布到 npm 的是 `core`、`plugin-kit`、`canvas`、`echarts`、`skills`、`marketplace`、`i18n` 七个包。百度图表插件 `@worm-print-platform/plugin-echarts` 不再单独发 npm，通过插件市场 CLI 分发；兼容镜像 `@worm-print-platform/echarts` 随主线发版。
 
 ### 3.2 官方技能（Skills）
 
@@ -96,36 +96,49 @@ npx @worm-print-platform/skills worm-print-platform-integration \
 
 ## 5. AI 提示词模板（唯一模板源）
 
-下方是技能安装 + 门控的通用模板；各框架篇（02–05）与专篇（06–08）只补齐各自场景差异，不再重复完整模板。把 `<宿主框架>`、`<打印链路>` 等占位替换为实际值。
+下方是 AI Agent 接入提示词模板，与根目录 README「一句话最小化接入提示词」同源，修改需同步两处；各框架篇（02–05）与专篇（06–08）只补齐各自场景差异，不再重复完整模板。整段复制给 AI Agent 即可，无需替换占位符——它会先探测项目技术栈，再逐项与你确认。
 
 ```text
-第 0 步（门控，未完成禁止改代码）：
-1. 在项目根目录安装官方技能规范：
+请帮我接入 worm-print-platform（仓库：https://gitee.com/liulong_oschina/worm-print-platform）。严格按以下阶段执行，我逐项确认前不要改任何代码；提问一次只问一个问题。
+
+【第 1 步 · 只读探测当前项目技术栈（不改代码）】
+检查 package.json 的 dependencies / devDependencies、构建配置（vite / webpack / rsbuild 等）、
+源码目录与现有代码风格、是否已装 @worm-print-platform/* 及版本、现有请求封装与 UI 组件库。
+据此判断：宿主框架与版本（Vue 3 / Vue 2.7 / React 18 / jQuery 或原生 JS）、构建器、包管理器。
+探测不到标「未知」不要猜测；先把探测结果列出来让我确认，不对的地方我会纠正。
+
+【第 2 步 · 依次确认接入范围（确认前不要动手）】
+探测结果确认后，按顺序逐个问我以下四个问题：
+1) 是否需要百度图表插件，用于图表打印？
+2) 是否需要国际化配置，用于切换多语言？
+3) 是否需要数据源预览功能？
+4) 是否创建或者修改现有的打印模板管理功能（打印模板的增删改查）？
+另需一并确认打印链路：A 浏览器打印 / B 服务端 PDF / C 桌面静默打印（可多选，交互式默认 A）。
+我的回答决定后续装哪些包、技能与文档，未确认不要开始实现。
+
+【第 3 步 · 确认后装技能、读规范（门控）】
+1) 在当前项目根目录安装官方技能（默认 GitHub→Gitee 回退，npx 404 时按仓库 skills/<技能名>/ 源码回退）：
    npx @worm-print-platform/skills worm-print-platform-integration --force
-   （多语言任务再装 worm-print-platform-i18n；需要 AI 实时读写画布再装 worm-print-platform-mcp）
-   npx 404 时区分包未发布/镜像未同步/网络受限，并按仓库 skills/<技能名>/ 手动安装回退。
-2. 完整阅读所装技能的 SKILL.md，以及 references/ 下与任务相关的文档：
-   installation.md、integration-api.md、host-integration-guide.md
-   （链路 B 加 server-render.md；链路 C 加 silent-print.md；
-    宿主 MCP 加 mcp-host-integration.md；排错加 troubleshooting.md）。
-3. 先输出「已读规范确认」：逐个列出文件路径 + 与本任务相关的 3 条以上约束。
-4. 阅读本项目的 AGENTS.md / README / 构建配置，确认宿主框架、构建器与包管理器。
-5. 任一文档缺失或读不懂，先提问，禁止臆测 API。
+   需要国际化再加 worm-print-platform-i18n；需要 AI 实时读写画布再加 worm-print-platform-mcp。
+2) 完整阅读装好的 .agents/skills/<技能名>/SKILL.md 与 references/ 相关文档；
+   必读 docs/guide/AGENTS.md（文档地图与硬性约束）、docs/guide/01-getting-started.md（链路选型与包清单）。
+   按我的回答补读：框架篇 docs/guide/02-vue3.md / 03-vue2.md / 04-react.md / 05-jquery.md；
+   图表与数据源预览 → 07-plugin-install.md；国际化 → 06-i18n.md；
+   模板管理 → demos/apps/print-demo 的 README.md 与 PROMPT.md。
+   以上路径均在 https://gitee.com/liulong_oschina/worm-print-platform/raw/master/ 下。
+3) 先输出「已读规范确认」：逐个列出文件路径 + 与本任务相关的 3 条以上约束；
+   任一文档缺失或读不懂先提问，禁止臆测 API。
 
-集成要求：
-- 宿主形态：【Vue 3 门面 / 原生 print-designer / 无打包器直挂】；打印链路：【A / B / C / 并存】。
-- core/canvas/plugin-kit 同版本安装并提交锁文件；安装后 npm ls 核对。
-- 原生宿主：对象/函数（fields/template/fonts/uploadImage）赋 property，字符串开关用 attribute，
-  事件用原生 CustomEvent 监听；Vue 3 门面用组件 props/@save/ref。
-- 业务字段按 PrintBusinessField 契约由【后端接口/本地常量】提供。
-- 模板 JSON（elements）与宿主元信息分开存储。
-- 按「宿主最小清单」实现前端 5 片段与后端契约，复用项目现有请求封装/UI 库/代码风格。
+【第 4 步 · 按选择映射依赖（注意包名口径）】
+- 必选 core + canvas + plugin-kit 同号同批安装并提交锁文件，npm ls 核对；Vue 3 优先用 @worm-print-platform/canvas/vue3 门面，其余宿主用 <print-designer> 原生元素。
+- 百度图表：装 npm 兼容镜像 @worm-print-platform/echarts 并从 @worm-print-platform/echarts/ui import 即注册；@worm-print-platform/plugin-echarts 已不在 npm 发布，不要按该名字 npm install（市场分发用 npx @worm-print-platform/marketplace install echarts）。
+- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm，且市场 CLI 安装会因仓库未提交 dist/index.js 而报「插件入口文件不存在」；直接取仓库 marketplace/plugins/data-preview 源码，`npm install && npm run build` 后本地引用。它只提供 openDataPreview() API，入口由宿主挂载。
+- 国际化：按 06-i18n.md 生成、校验语言包并三端接入。
+- 模板管理：参考 https://gitee.com/liulong_oschina/worm-print-platform/tree/master/demos/apps/print-demo。它是参考而非直接复制：其 file:../../../packages/canvas 依赖换成 npm 同号包，MSW + localStorage 模拟后端换成项目真实接口，demo 仅实现链路 A；模板 JSON（elements）与宿主元信息分开存储。
 
-验收标准：
-- 类型检查/构建通过；设计器保存模板 JSON 后再次打开能回填。
-- 最小链路跑通：保存 → 预览渲染出含真实业务数据的页面 → 打印
-  （B：后端代理返回可下载 application/pdf；C：本机客户端静默出纸）。
-- 不使用文档之外的组件方法/事件（例如不存在 setTemplateMeta、back 事件）。
+【第 5 步 · 最小化实现与验收】
+复用项目现有请求封装、UI 组件库与代码风格，不引额外 UI 依赖；库不内置业务后端，按「宿主最小清单」实现前端片段与后端契约；不使用文档之外的组件方法/事件（如 back、setTemplateMeta）。
+验收：类型检查/构建通过；设计器保存模板 JSON 后重开能回填；最小链路跑通（保存 → 预览渲染真实业务数据 → 打印）；勾选图表则图表元素可见，勾选数据源预览则入口可打开；命令标注 cwd，失败先区分环境限制与文档缺口。
 ```
 
 ## 6. 排错（Troubleshooting）
