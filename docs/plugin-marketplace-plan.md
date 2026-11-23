@@ -12,7 +12,7 @@
 
 1. **目录常驻本仓**：`marketplace/` 永久留在当前 monorepo 顶层，**不创建任何独立索引仓**。
 2. **三源分发**：安装支持 `gitee` / `github` / `npm` 三种来源，可用 `--source` 指定；默认 `auto` 按
-   npm → GitHub → Gitee 顺序尝试。
+   npm → Gitee → GitHub 顺序尝试。
 3. **默认最新稳定版**：`install <name>[@<version>]`，未指定版本时解析为最新稳定版（详见 §4）。
 4. **新增导出插件类别**：除元素插件外，导出 Excel / Word 等打印内容也必须可用插件实现；用户选型为
    「接收渲染结果、浏览器侧生成文件并触发下载」（详见 §3.2）。
@@ -114,7 +114,7 @@ install <name>[@<version>] [--source npm|github|gitee|auto] [--dir ...] [--repo 
         └─ 6. 更新 .worm-print/plugins.json 清单
 ```
 
-- `auto` 模式：npm → GitHub → Gitee 依次尝试；**确定性错误**（NOT_FOUND / VERSION_NOT_FOUND /
+- `auto` 模式：npm → Gitee → GitHub 依次尝试；**确定性错误**（NOT_FOUND / VERSION_NOT_FOUND /
   INVALID_PLUGIN / BAD_PLUGIN_ID）不换源，仅网络/克隆失败才回退到下一源。
 - 指定 `--source` 时只走该源，失败即报错，不做回退。
 

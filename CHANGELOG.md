@@ -7,6 +7,7 @@
 - **渲染与设计器修复**：条码点阵、旋转、水印、图片边框、裁剪锚点、表格矩阵与属性搜索等细节修复；设计器消息隔离与语言常量回归测试补齐。
 - **文档升级**：`docs/guide` 面向接入用户与 AI agent 全面重写，新增数据转换章节与自定义语言包实施计划。
 - **版本载体对齐至 `1.6.1`**：各工作区包、demos、MCP / canvas 版本常量、文档示例与徽章同步；四个代码包 `core` / `plugin-kit` / `canvas` / `echarts` 同号同批发版。
+- **百度图表插件分发调整**：`@worm-print-platform/plugin-echarts` 不再单独发布 npm，后续版本通过插件市场 CLI 分发；兼容镜像 `@worm-print-platform/echarts` 继续随主线发版。
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。版本号以 `1.5.x` 主线持续维护迭代，
 `core` / `plugin-kit` / `canvas` / `echarts` / `skills` 等正式包同号同批发版；

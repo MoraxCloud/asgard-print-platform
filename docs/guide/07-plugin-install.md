@@ -18,7 +18,7 @@
 ```bash
 npx @worm-print-platform/marketplace list
 npx @worm-print-platform/marketplace install echarts              # 最新稳定版
-npx @worm-print-platform/marketplace install echarts@1.1.0 --source npm
+npx @worm-print-platform/marketplace install echarts --source gitee
 npx @worm-print-platform/marketplace remove echarts
 ```
 
@@ -30,7 +30,7 @@ npx @worm-print-platform/marketplace remove echarts
 
 | 选项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `--source npm\|github\|gitee\|auto\|local` | `auto` | 安装来源；`auto` 按 npm → GitHub → Gitee 顺序回退 |
+| `--source npm\|gitee\|github\|auto\|local` | `auto` | 安装来源；`auto` 按 npm → Gitee → GitHub 顺序回退 |
 | `--dir <路径>` | `.worm-print/plugins` | 插件落盘根目录 |
 | `--repo <路径或URL>` | — | 本地市场目录（离线开发）或自定义 git 仓库地址 |
 | `--force` | false | 目标已存在时覆盖安装 |
@@ -42,6 +42,7 @@ npx @worm-print-platform/marketplace remove echarts
 - 未带 `@版本` 取**最新稳定版**：npm 源取 `dist-tags.latest`（预发布则改取最高非预发布）；GitHub/Gitee 源列 `refs/tags/plugins/<id>/v*`，无 tag 回退默认分支并标记非稳定。
 - 预发布（`-rc` / `-beta` 等）不会被当作最新稳定版。
 - 确定性错误（插件不存在、版本不存在、元数据不一致）**不换源**；仅网络/克隆失败才回退。
+- **百度图表插件特例**：`@worm-print-platform/plugin-echarts` 已停发 npm，默认命令会装到 npm 存量 1.6.1；获取市场后续版本须显式 `--source gitee`（或 `--source github`），带版本号时同样需要。
 
 ### 2.3 安装结果与语言资源
 
