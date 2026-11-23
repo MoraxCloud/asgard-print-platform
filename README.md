@@ -150,7 +150,8 @@ import '@worm-print-platform/plugin-echarts/ui'
 自定义插件写法见 [packages/plugin-kit/README](./packages/plugin-kit/README.md)。
 
 插件市场（索引与插件源码常驻本仓 `marketplace/`，三源安装、缺省最新稳定版）见
-[用户使用文档 · 插件安装与配置](./docs/guide/07-plugin-install.md)。百度图表插件源码真源在
+[用户使用文档 · 插件安装与配置](./docs/guide/07-plugin-install.md)，索引格式与命名规范见
+[插件市场规范](./docs/plugin-market-spec.md)。百度图表插件源码真源在
 `marketplace/plugins/echarts/`，同一源码发布 `@worm-print-platform/plugin-echarts`（市场主口径）与
 `@worm-print-platform/echarts`（兼容镜像，存量依赖零改动），两者 README 统一为市场口径。
 

@@ -21,8 +21,11 @@
 | **npm 包名** | `@worm-print-platform/plugin-echarts` | `package.json.name`、`plugins.json.npmName`、市场索引 `npmName` |
 | **元素类型 type** | `barChart`、`lineChart` | `kinds[].type`、`ElementUI.types`、模板元素 `type` |
 | **i18n 命名空间** | `echarts` | 语言包顶层键与键前缀（`<id>.<语义键>`），等于插件逻辑 id |
+| **市场唯一标识 uniqueId** | `worm-echarts` | 市场索引 `uniqueId`、插件 `plugin.json.uniqueId` |
 
 > 关键：`i18nId = wormPrint.id = 语言包顶层命名空间 = 逻辑 id`；npm 包名是另一回事。模板 JSON 顶层 `plugins` 声明用的是**逻辑 id**（如 `echarts`），写成 npm 包名会被契约校验判为 `MISSING_PLUGIN`。
+>
+> `uniqueId` 是第五个标识：跨市场、跨作者的全局唯一标识（`作者代号-插件名`，如 `worm-echarts`），**不等于逻辑 id，也不等于 i18n 命名空间**。存量插件逻辑 id 不变，模板零改动。详见 [插件市场规范](../plugin-market-spec.md)。
 
 ## 3. 契约（Contracts）
 

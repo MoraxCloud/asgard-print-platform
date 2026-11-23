@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | **宿主接入者** | 把设计器 + 打印接进 Vue 3 / Vue 2 / React / jQuery 项目 | [01 开始之前](./01-getting-started.md) → 对应框架篇（02/03/04/05）→ [09 排错](./09-migration-faq.md) |
 | **插件使用者** | 安装现成插件（如 echarts）并让设计器加载 | [07 插件安装与配置](./07-plugin-install.md) |
-| **插件开发者** | 从零开发并发布自定义插件 | [08 插件开发](./08-plugin-dev.md)（前置 [01](./01-getting-started.md)、[07](./07-plugin-install.md)） |
+| **插件开发者** | 从零开发并发布自定义插件 | [08 插件开发](./08-plugin-dev.md)（前置 [01](./01-getting-started.md)、[07](./07-plugin-install.md)）；索引格式与命名见 [插件市场规范](../plugin-market-spec.md) |
 | **多语言定制者** | 生成/校验/接入自定义语言包 | [06 多语言配置与自定义](./06-i18n.md) |
 | **AI Agent** | 让 AI 按规范完成上述任务 | 先读 [AGENTS.md](./AGENTS.md)，再按其中任务路线取用文档 |
 
