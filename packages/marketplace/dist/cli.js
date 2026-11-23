@@ -4,7 +4,7 @@ import {
   MarketError,
   installPlugin,
   removePlugin
-} from "./chunk-EUYKASVQ.js";
+} from "./chunk-LBHT3SZ3.js";
 
 // src/cli.ts
 import { resolve } from "path";
@@ -19,7 +19,7 @@ var USAGE = `\u7528\u6CD5: worm-print-marketplace <\u547D\u4EE4> [\u9009\u9879]
   remove <\u540D\u79F0>              \u5378\u8F7D\u63D2\u4EF6
 
 \u9009\u9879:
-  --source npm|github|gitee|auto   \u5B89\u88C5\u6765\u6E90\uFF0C\u9ED8\u8BA4 auto\uFF08npm \u2192 GitHub \u2192 Gitee\uFF09
+  --source npm|gitee|github|auto   \u5B89\u88C5\u6765\u6E90\uFF0C\u9ED8\u8BA4 auto\uFF08npm \u2192 Gitee \u2192 GitHub\uFF09
   --dir <\u8DEF\u5F84>                     \u63D2\u4EF6\u6839\u76EE\u5F55\uFF0C\u9ED8\u8BA4 .worm-print/plugins
   --repo <\u8DEF\u5F84\u6216URL>               \u672C\u5730\u5E02\u573A\u76EE\u5F55\u6216\u81EA\u5B9A\u4E49 git \u4ED3\u5E93\u5730\u5740
   --force                         \u5DF2\u5B58\u5728\u65F6\u8986\u76D6\u5B89\u88C5

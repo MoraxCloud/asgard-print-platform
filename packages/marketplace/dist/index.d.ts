@@ -1,5 +1,5 @@
-import { M as MarketIndex, a as MarketSource, R as RepoSource, P as PluginsManifest, b as ManifestEntry } from './install-_nzKFo4K.js';
-export { C as CommandResult, G as GitExecutor, I as InstallOptions, c as InstallResult, d as MarketError, e as MarketErrorCode, f as MarketIndexEntry, N as NpmExecutor, g as PluginJsonEntry, h as RemoveOptions, W as WormPrintMeta, j as defaultGitExecutor, k as defaultNpmExecutor, i as installPlugin, r as removePlugin } from './install-_nzKFo4K.js';
+import { M as MarketIndex, a as MarketSource, R as RepoSource, P as PluginsManifest, b as ManifestEntry } from './install-JsknZ5Fp.js';
+export { C as CommandResult, G as GitExecutor, I as InstallOptions, c as InstallResult, d as MarketError, e as MarketErrorCode, f as MarketIndexEntry, N as NpmExecutor, g as PluginJsonEntry, h as RemoveOptions, W as WormPrintMeta, j as defaultGitExecutor, k as defaultNpmExecutor, i as installPlugin, r as removePlugin } from './install-JsknZ5Fp.js';
 
 interface ParsedSemver {
     major: number;

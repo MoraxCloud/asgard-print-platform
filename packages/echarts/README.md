@@ -2,11 +2,11 @@
 
 worm-print-platform 插件市场的百度图表插件：**十类 ECharts 图表元素 + 设计器 UI，import 即注册**。
 
-本目录 `marketplace/plugins/echarts/` 是图表插件的**唯一源码真源**。同一份源码构建出两个 npm 包：
+本目录 `marketplace/plugins/echarts/` 是图表插件的**唯一源码真源**。同一份源码构建出一个市场插件与一个兼容 npm 包：
 
 | 包名 | 定位 | 根入口行为 |
 | --- | --- | --- |
-| `@worm-print-platform/plugin-echarts` | 插件市场主口径（推荐） | 注册插件描述符 + 设计器 UI |
+| `@worm-print-platform/plugin-echarts` | 市场插件（不再单独发 npm） | 注册插件描述符 + 设计器 UI |
 | `@worm-print-platform/echarts` | 兼容镜像，供存量依赖方零改动使用 | 仅注册插件描述符（原行为） |
 
 ## 安装（插件市场口径，推荐）
@@ -14,6 +14,8 @@ worm-print-platform 插件市场的百度图表插件：**十类 ECharts 图表�
 ```bash
 npx @worm-print-platform/marketplace install echarts
 ```
+
+> 默认从 npm 安装存量 1.6.1；获取市场后续版本须加 `--source gitee`（或 `--source github`）。
 
 宿主按清单加载插件入口（import 即注册，无需额外调用）：
 
@@ -24,22 +26,9 @@ import '../.worm-print/plugins/echarts/dist/marketplace.js'
 插件安装后，素材台出现「图表」分组的十张卡片：柱状图、条形图、折线图、面积图、饼图、环形图、
 散点图、雷达图、漏斗图、仪表盘。
 
-## 作为 npm 包使用
+## 服务端与存量兼容
 
-```bash
-npm install @worm-print-platform/plugin-echarts
-```
-
-```js
-// 主入口：插件描述符 + 设计器 UI 一次注册完成
-import '@worm-print-platform/plugin-echarts'
-
-// 按需子路径
-import '@worm-print-platform/plugin-echarts/kit'  // 仅框架无关插件描述符（无 UI）
-import '@worm-print-platform/plugin-echarts/ui'   // 仅设计器 UI
-```
-
-服务端 PDF / Electron 静默打印使用 `@worm-print-platform/plugin-echarts/node` 与
+服务端 PDF / Electron 静默打印继续使用 `@worm-print-platform/echarts` 兼容镜像的 `/node` 与
 `/browser/executor.iife`（页面执行器），浏览器直挂使用 `/browser` UMD 产物。
 
 存量项目若仍依赖 `@worm-print-platform/echarts`，无需改动：兼容镜像保留全部原有子路径
@@ -85,14 +74,13 @@ chartOption: {
 不支持：`rich` 富文本、`emphasis.label`（SSR 导出只含 normal 态）、`labelLayout`
 （防重叠会改变存量观感，后续单独立项）。
 
-## 独立发布
+## 构建与发版
 
-两个包均可单独 `npm publish`，且从同一源码生成：
+主包不再单独 `npm publish`，仅兼容镜像随主线发版：
 
 ```bash
 cd marketplace/plugins/echarts
 npm run build          # vite + tsc + tsup + UMD + 兼容镜像同步
-npm publish --registry=https://registry.npmjs.org --access public
 # 根目录：npm publish -w @worm-print-platform/echarts（兼容镜像）
 ```
 
