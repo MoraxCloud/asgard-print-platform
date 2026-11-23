@@ -186,13 +186,24 @@ function errorCode(err) {
   }
   return 1;
 }
+async function loadIndex(path, fallback, err) {
+  if (!path) return fallback;
+  try {
+    const { readFileSync } = await import("fs");
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch (readErr) {
+    err(`\u8BFB\u53D6\u7D22\u5F15\u5931\u8D25\uFF1A${readErr instanceof Error ? readErr.message : String(readErr)}`);
+    return null;
+  }
+}
 async function main(argv, deps = {}) {
   const out = deps.out ?? console.log;
+  const err = deps.err ?? console.error;
   let parsed;
   try {
     parsed = parseArgs(argv);
-  } catch (err) {
-    out(err instanceof Error ? err.message : String(err));
+  } catch (err2) {
+    out(err2 instanceof Error ? err2.message : String(err2));
     return 1;
   }
   if (parsed.help) {
@@ -207,27 +218,18 @@ async function main(argv, deps = {}) {
     out(USAGE);
     return 1;
   }
-  const effectiveIndex = deps.index ?? BUNDLED_CATALOG;
-  if (parsed.command === "list") {
-    const entries = filterAndSortPlugins(effectiveIndex, parsed);
-    if (parsed.json) {
-      out(JSON.stringify(entries, null, 2));
-    } else {
-      out(formatPluginLines(entries, parsed.locale ?? "zh-CN", effectiveIndex.metadata?.categories) || "\uFF08\u7D22\u5F15\u4E3A\u7A7A\uFF09");
-    }
-    return 0;
-  }
-  if (parsed.command === "validate") {
-    const err = deps.err ?? console.error;
-    let target = effectiveIndex;
-    if (parsed.index) {
-      try {
-        const { readFileSync } = await import("fs");
-        target = JSON.parse(readFileSync(parsed.index, "utf8"));
-      } catch (readErr) {
-        err(`\u8BFB\u53D6\u7D22\u5F15\u5931\u8D25\uFF1A${readErr instanceof Error ? readErr.message : String(readErr)}`);
-        return 1;
+  const fallbackIndex = deps.index ?? BUNDLED_CATALOG;
+  if (parsed.command === "list" || parsed.command === "validate") {
+    const target = await loadIndex(parsed.index, fallbackIndex, err);
+    if (!target) return 1;
+    if (parsed.command === "list") {
+      const entries = filterAndSortPlugins(target, parsed);
+      if (parsed.json) {
+        out(JSON.stringify(entries, null, 2));
+      } else {
+        out(formatPluginLines(entries, parsed.locale ?? "zh-CN", target.metadata?.categories) || "\uFF08\u7D22\u5F15\u4E3A\u7A7A\uFF09");
       }
+      return 0;
     }
     const issues = validateIndex(target);
     if (issues.length) {
@@ -241,7 +243,7 @@ async function main(argv, deps = {}) {
     out("\u7F3A\u5C11\u63D2\u4EF6\u540D");
     return 1;
   }
-  const index = effectiveIndex;
+  const index = fallbackIndex;
   try {
     if (parsed.command === "install") {
       const options = {
@@ -264,9 +266,9 @@ async function main(argv, deps = {}) {
     });
     out(`\u5DF2\u5378\u8F7D ${parsed.name}`);
     return 0;
-  } catch (err) {
-    out(err instanceof Error ? err.message : String(err));
-    return errorCode(err);
+  } catch (err2) {
+    out(err2 instanceof Error ? err2.message : String(err2));
+    return errorCode(err2);
   }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { filterAndSortPlugins, formatPluginLines, main, parseArgs } from './cli.js'
 import type { InstallOptions, InstallResult, MarketIndex } from './types.js'
@@ -116,6 +119,22 @@ describe('CLI list 筛选与展示', () => {
     const parsed = JSON.parse(out.mock.calls[0][0] as string)
     expect(parsed[0]).toMatchObject({ uniqueId: 'worm-echarts', type: 'element' })
     expect(parsed[0].title).toMatchObject({ 'zh-CN': '百度图表' })
+  })
+
+  it('list --index 读取指定索引文件而非内置索引', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mp-cli-index-'))
+    const file = join(dir, 'index.json')
+    writeFileSync(file, JSON.stringify({
+      schemaVersion: 1,
+      plugins: [{
+        id: 'custom', uniqueId: 'worm-custom', type: 'functional', name: '自定义插件',
+        version: '1.0.0', npmName: '@x/custom', path: 'p', entry: 'e', kinds: [], exportFormats: [],
+      }],
+    }), 'utf8')
+    const out = vi.fn()
+    const code = await main(['list', '--index', file], { out })
+    expect(code).toBe(0)
+    expect(out.mock.calls[0][0]).toContain('worm-custom')
   })
 
   it('旧结构索引（缺可选字段）也能展示，回退 id 与内置类型名', () => {

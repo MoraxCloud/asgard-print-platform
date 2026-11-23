@@ -212,8 +212,21 @@ function errorCode(err: unknown): number {
   return 1
 }
 
+/** 解析 --index：指定则从文件读取，否则用注入/内置索引。 */
+async function loadIndex(path: string | undefined, fallback: MarketIndex, err: (m: string) => void): Promise<MarketIndex | null> {
+  if (!path) return fallback
+  try {
+    const { readFileSync } = await import('node:fs')
+    return JSON.parse(readFileSync(path, 'utf8')) as MarketIndex
+  } catch (readErr) {
+    err(`读取索引失败：${readErr instanceof Error ? readErr.message : String(readErr)}`)
+    return null
+  }
+}
+
 export async function main(argv: string[], deps: CliDeps = {}): Promise<number> {
   const out = deps.out ?? console.log
+  const err = deps.err ?? console.error
   let parsed: ParsedArgs
   try {
     parsed = parseArgs(argv)
@@ -225,27 +238,18 @@ export async function main(argv: string[], deps: CliDeps = {}): Promise<number> 
   if (parsed.helpVersion) { out(`@worm-print-platform/marketplace ${VERSION}`); return 0 }
   if (!parsed.command) { out(USAGE); return 1 }
 
-  const effectiveIndex = deps.index ?? BUNDLED_CATALOG
-  if (parsed.command === 'list') {
-    const entries = filterAndSortPlugins(effectiveIndex, parsed)
-    if (parsed.json) {
-      out(JSON.stringify(entries, null, 2))
-    } else {
-      out(formatPluginLines(entries, parsed.locale ?? 'zh-CN', effectiveIndex.metadata?.categories) || '（索引为空）')
-    }
-    return 0
-  }
-  if (parsed.command === 'validate') {
-    const err = deps.err ?? console.error
-    let target = effectiveIndex
-    if (parsed.index) {
-      try {
-        const { readFileSync } = await import('node:fs')
-        target = JSON.parse(readFileSync(parsed.index, 'utf8')) as MarketIndex
-      } catch (readErr) {
-        err(`读取索引失败：${readErr instanceof Error ? readErr.message : String(readErr)}`)
-        return 1
+  const fallbackIndex = deps.index ?? BUNDLED_CATALOG
+  if (parsed.command === 'list' || parsed.command === 'validate') {
+    const target = await loadIndex(parsed.index, fallbackIndex, err)
+    if (!target) return 1
+    if (parsed.command === 'list') {
+      const entries = filterAndSortPlugins(target, parsed)
+      if (parsed.json) {
+        out(JSON.stringify(entries, null, 2))
+      } else {
+        out(formatPluginLines(entries, parsed.locale ?? 'zh-CN', target.metadata?.categories) || '（索引为空）')
       }
+      return 0
     }
     const issues = validateIndex(target)
     if (issues.length) {
@@ -256,7 +260,7 @@ export async function main(argv: string[], deps: CliDeps = {}): Promise<number> 
     return 0
   }
   if (!parsed.name) { out('缺少插件名'); return 1 }
-  const index = effectiveIndex
+  const index = fallbackIndex
 
   try {
     if (parsed.command === 'install') {
