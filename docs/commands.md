@@ -210,7 +210,7 @@ docker run -p 3001:3001 \
 | Workflow | 用途 | 触发方式 |
 | --- | --- | --- |
 | `ci.yml` | 全量 build + test，render 分页集成用例单独 job | `gh workflow run ci.yml` |
-| `publish-npm.yml` | 按 tag 发布 4 个代码包（core / plugin-kit / canvas / echarts，支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.1 -f dry_run=true` |
+| `publish-npm.yml` | 按 tag 发布 7 个包（core / plugin-kit / canvas / echarts / skills / marketplace / i18n，支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.1 -f dry_run=true` |
 | `npm-dist-tag.yml` | 运维 dist-tag（rm / add） | `gh workflow run npm-dist-tag.yml ...` |
 | `create-gitee-release.yml` | 在 Gitee 创建同名 release | `gh workflow run create-gitee-release.yml -f tag=v1.6.1` |
 | `deploy-pages.yml` | 五个宿主 demo 的 GitHub Pages 静态演示 | `gh workflow run deploy-pages.yml` |
