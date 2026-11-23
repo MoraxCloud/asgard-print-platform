@@ -2,12 +2,9 @@
   "name": "@worm-print-platform/plugin-echarts",
   "version": "1.6.1",
   "type": "module",
-  "description": "百度图表插件（worm-print-platform 插件市场主口径）：十类 ECharts 图表元素 + 设计器 UI，import 即注册；源码唯一真源位于本目录，可单独发布 npm，也可由市场 CLI 安装。",
+  "description": "百度图表插件（worm-print-platform 插件市场主口径）：十类 ECharts 图表元素 + 设计器 UI，import 即注册；源码唯一真源位于本目录，通过市场 CLI 分发，不再单独发布 npm。",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
-  },
+  "private": true,
   "main": "./dist/marketplace.js",
   "module": "./dist/marketplace.js",
   "types": "./dist/index.d.ts",
