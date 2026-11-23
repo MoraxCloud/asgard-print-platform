@@ -1,19 +1,9 @@
 name: Publish npm
 
-# 仅手动触发：推 tag 不会自动发布。
-# 触发：Actions → Publish npm → Run workflow，或
-#   gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true
-# 首次验证用 dry_run=true；确认无误后再用 dry_run=false 真正上传。
-# 七个正式包按依赖顺序同批发布（百度图表主包 plugin-echarts 走插件市场，不在此列）：
-# core / plugin-kit / canvas / echarts / skills / marketplace / i18n。
-# echarts 内含 Web Components 适配层（./ui 子路径）。
-#
-# 认证：纯 Trusted Publishing（OIDC）。工作区不注入任何 npm token，
-# npm CLI 检测到 GitHub Actions 的 OIDC 环境后自动用短时身份令牌发布。
-# 前提：npmjs.com 各包 Settings → Trusted Publisher 已绑定本 workflow
-#   （Organization=user: worm-longliu / Repository: worm-print-platform /
-#    Workflow filename: publish-npm.yml / Environment 留空 /
-#    Allowed actions 勾选 npm publish）。
+# 临时补发 workflow（跑完即恢复原版）：
+# v1.6.2 首发链在 marketplace 处因缺 repository 字段 E422 中断，
+# core / plugin-kit / canvas / echarts / skills 已发成功。
+# 本版本从修复提交 0adb504 检出，只构建并发布 marketplace / i18n。
 on:
   workflow_dispatch:
     inputs:
@@ -28,20 +18,19 @@ on:
         type: boolean
 
 permissions:
-  id-token: write # Trusted Publishing（OIDC）必需：GitHub Actions 生成短时身份令牌
+  id-token: write
   contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: 检出代码
+      - name: 检出代码（临时固定到 repository 修复提交）
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: 0adb5047e8d008c3c8af7354dc18a318a984c089
 
       - name: 安装 Node.js
-        # Trusted Publishing 要求 npm CLI ≥ 11.5.1 且 Node ≥ 22.14.0，用 24 保证内置 npm 满足
         uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -51,15 +40,8 @@ jobs:
       - name: 安装依赖
         run: npm ci
 
-      # 构建顺序：core 是共享样式/能力表的载体，plugin-kit 是 canvas 的运行时依赖，
-      # echarts 依赖 core 与 plugin-kit（/kit、/ui 子路径产物），顺序不可调。
-      - name: 构建全量发布链（core → plugin-kit → canvas → echarts → skills → marketplace → i18n）
+      - name: 构建 marketplace 与 i18n
         run: |
-          npm run build -w @worm-print-platform/core
-          npm run build -w @worm-print-platform/plugin-kit
-          npm run build -w @worm-print-platform/canvas
-          npm run build -w @worm-print-platform/echarts
-          npm run build -w @worm-print-platform/skills
           npm run build -w @worm-print-platform/marketplace
           npm run build -w @worm-print-platform/i18n
 
@@ -67,9 +49,7 @@ jobs:
         run: |
           TAG="${{ inputs.tag }}"
           TAG="${TAG#v}"
-          # 七个正式包必须同号：canvas 依赖 plugin-kit，echarts 依赖 core 与 plugin-kit。
-          # 漏发任何一个，宿主安装都会 404。
-          PACKAGES="core plugin-kit canvas echarts skills marketplace i18n"
+          PACKAGES="marketplace i18n"
           for pkg in $PACKAGES; do
             VER=$(node -p "require('./packages/$pkg/package.json').version")
             if [ "$VER" != "$TAG" ]; then
@@ -77,45 +57,7 @@ jobs:
               exit 1
             fi
           done
-          echo "标签与全量发布链版本一致：$TAG"
-
-      # 纯 OIDC 认证：不注入 NODE_AUTH_TOKEN，避免 npm CLI 回退到 token 路径触发 2FA。
-      # echarts 依赖 core，必须先发 core。
-      - name: 发布 @worm-print-platform/core
-        working-directory: packages/core
-        run: |
-          EXTRA=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
-          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-
-      # plugin-kit 是 canvas 的 runtime dependency，必须先于 canvas 发布
-      - name: 发布 @worm-print-platform/plugin-kit
-        working-directory: packages/plugin-kit
-        run: |
-          EXTRA=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
-          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-
-      - name: 发布 @worm-print-platform/canvas（设计器权威实现）
-        working-directory: packages/canvas
-        run: |
-          EXTRA=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
-          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-
-      - name: 发布 @worm-print-platform/echarts（含 Web Components 适配层）
-        working-directory: packages/echarts
-        run: |
-          EXTRA=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
-          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
-
-      - name: 发布 @worm-print-platform/skills
-        working-directory: packages/skills
-        run: |
-          EXTRA=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then EXTRA="--dry-run"; fi
-          npm publish --access public --registry=https://registry.npmjs.org $EXTRA
+          echo "标签与补发包版本一致：$TAG"
 
       - name: 发布 @worm-print-platform/marketplace
         working-directory: packages/marketplace
