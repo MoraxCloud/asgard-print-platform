@@ -354,6 +354,7 @@ CI 发布走 `.github/workflows/publish-npm.yml`，认证优先 Trusted Publishi
 | <img src="./docs/images/douyin.svg" width="18" alt="抖音" /> | 天\*\*\*\*夜 | 赞赏 |
 | <img src="./docs/images/github.svg" width="18" alt="GitHub" /> | C\*\*\*\*g | 代码贡献（特别鸣谢：多次提交 PR） |
 | <img src="./docs/images/wechat.svg" width="18" alt="微信" /> | l\*\*\*\*n | 赞赏 |
+| <img src="./docs/images/wechat.svg" width="18" alt="微信" /> | 蚂\*\*\*\*象 | 赞赏 |
 
 ## License
 
