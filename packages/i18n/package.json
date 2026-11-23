@@ -4,6 +4,10 @@
   "type": "module",
   "description": "worm-print-platform 语言包工具：导出翻译骨架、校验与增量更新。",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/worm-longliu/worm-print-platform.git"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
