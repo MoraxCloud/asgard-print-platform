@@ -1,6 +1,35 @@
 /** 插件安装来源 */
 export type MarketSource = 'npm' | 'github' | 'gitee' | 'local'
 
+/** 多语言文本：字符串视为 zh-CN；对象必须含基准语言 zh-CN */
+export type LocalizedText = string | ({ 'zh-CN': string } & Record<string, string>)
+
+/** 插件类型：元素插件 / 功能插件 / 导出插件 */
+export type PluginType = 'element' | 'functional' | 'export'
+
+/** 索引里的精简版本条目 */
+export interface MarketVersionEntry {
+  version: string
+  publishTimestamp?: number
+  source?:
+    | { type: 'npm'; name?: string; registry?: string }
+    | { type: 'git'; url: string; commit: string; path?: string }
+  engines?: { core?: string }
+}
+
+/** 索引根级声明：分类 / 标签 / 排序键的 id → 多语言标题 */
+export interface MarketMetadataDecl {
+  categories?: Record<string, { title: LocalizedText }>
+  labels?: Record<string, { title: LocalizedText }>
+  sortKeys?: Record<string, { title: LocalizedText; order?: 'asc' | 'desc' }>
+}
+
+/** 索引校验问题 */
+export interface IndexIssue {
+  path: string
+  message: string
+}
+
 /** marketplace.json 中的一条插件索引 */
 export interface MarketIndexEntry {
   id: string
@@ -11,15 +40,31 @@ export interface MarketIndexEntry {
   entry: string
   kinds: readonly string[]
   exportFormats: readonly string[]
-  description?: string
+  description?: LocalizedText
   homepage?: string
   license?: string
   minCoreVersion?: string
+  /** 全局唯一标识，形如 worm-echarts；缺省时读取端回退 id */
+  uniqueId?: string
+  type?: PluginType
+  title?: LocalizedText
+  engines?: { core?: string }
+  publishTimestamp?: number
+  metadata?: {
+    category?: string
+    labels?: string[]
+    sortKeys?: Record<string, number | null>
+  }
+  versions?: readonly MarketVersionEntry[]
 }
 
 export interface MarketIndex {
   schemaVersion: number
   plugins: readonly MarketIndexEntry[]
+  format?: string
+  title?: LocalizedText
+  description?: LocalizedText
+  metadata?: MarketMetadataDecl
 }
 
 /** 插件目录内 plugin.json */

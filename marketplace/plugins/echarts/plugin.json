@@ -1,5 +1,6 @@
 {
   "id": "echarts",
+  "uniqueId": "worm-echarts",
   "version": "1.6.1",
   "name": "百度图表元素",
   "npmName": "@worm-print-platform/plugin-echarts",

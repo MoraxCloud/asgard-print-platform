@@ -3,11 +3,68 @@ import type { MarketIndex } from './types.js'
 
 export const BUNDLED_CATALOG: MarketIndex = {
   "schemaVersion": 1,
+  "format": "worm-market-v1",
+  "title": {
+    "zh-CN": "Worm 插件市场",
+    "en": "Worm Plugin Market"
+  },
+  "description": {
+    "zh-CN": "worm-print-platform 官方插件索引：元素、功能与导出插件。",
+    "en": "Official plugin index for worm-print-platform: element, functional and export plugins."
+  },
+  "metadata": {
+    "categories": {
+      "element": {
+        "title": {
+          "zh-CN": "元素插件",
+          "en": "Element"
+        }
+      },
+      "functional": {
+        "title": {
+          "zh-CN": "功能插件",
+          "en": "Functional"
+        }
+      },
+      "export": {
+        "title": {
+          "zh-CN": "导出插件",
+          "en": "Export"
+        }
+      }
+    },
+    "labels": {
+      "official": {
+        "title": {
+          "zh-CN": "官方",
+          "en": "Official"
+        }
+      }
+    },
+    "sortKeys": {
+      "publishedAt": {
+        "title": {
+          "zh-CN": "发布时间",
+          "en": "Published"
+        },
+        "order": "desc"
+      }
+    }
+  },
   "plugins": [
     {
       "id": "echarts",
+      "uniqueId": "worm-echarts",
+      "type": "element",
       "name": "百度图表元素",
-      "description": "基于 ECharts 的十类打印图表元素，浏览器与服务端同构出图。本插件通过插件市场 CLI 分发，不再单独发布 npm；兼容库 @worm-print-platform/echarts 继续独立发布。",
+      "title": {
+        "zh-CN": "百度图表元素",
+        "en": "ECharts Charts"
+      },
+      "description": {
+        "zh-CN": "基于 ECharts 的十类打印图表元素，浏览器与服务端同构出图。本插件通过插件市场 CLI 分发，不再单独发布 npm；兼容库 @worm-print-platform/echarts 继续独立发布。",
+        "en": "Ten print chart elements based on ECharts, rendered isomorphically in browser and server. Distributed via the plugin marketplace CLI."
+      },
       "version": "1.6.1",
       "npmName": "@worm-print-platform/plugin-echarts",
       "path": "plugins/echarts",
@@ -27,12 +84,47 @@ export const BUNDLED_CATALOG: MarketIndex = {
       "exportFormats": [],
       "homepage": "https://github.com/worm-longliu/worm-print-platform/tree/master/marketplace/plugins/echarts",
       "license": "MIT",
-      "minCoreVersion": "1.5.2"
+      "minCoreVersion": "1.5.2",
+      "engines": {
+        "core": ">=1.5.2 <2"
+      },
+      "publishTimestamp": 1763800000,
+      "metadata": {
+        "category": "element",
+        "labels": [
+          "official"
+        ],
+        "sortKeys": {
+          "publishedAt": 1763800000
+        }
+      },
+      "versions": [
+        {
+          "version": "1.6.1",
+          "publishTimestamp": 1763800000,
+          "source": {
+            "type": "npm",
+            "name": "@worm-print-platform/plugin-echarts"
+          },
+          "engines": {
+            "core": ">=1.5.2 <2"
+          }
+        }
+      ]
     },
     {
       "id": "data-preview",
+      "uniqueId": "worm-data-preview",
+      "type": "functional",
       "name": "数据源预览",
-      "description": "字段树父节点增加查看数据源按钮，把 designData 按 JSON 形态解析为多 tab 表单/表格（总览汇总表 + 子标签页跳转），第一版不分页。",
+      "title": {
+        "zh-CN": "数据源预览",
+        "en": "Data Source Preview"
+      },
+      "description": {
+        "zh-CN": "把 designData 按 JSON 形态解析为多 tab 表单/表格预览，由宿主按需挂载入口。",
+        "en": "Parses designData as JSON into multi-tab form/table previews; the host mounts the entry point."
+      },
       "version": "0.1.0",
       "npmName": "@worm-print-platform/plugin-data-preview",
       "path": "plugins/data-preview",
@@ -41,7 +133,33 @@ export const BUNDLED_CATALOG: MarketIndex = {
       "exportFormats": [],
       "homepage": "https://github.com/worm-longliu/worm-print-platform/tree/master/marketplace/plugins/data-preview",
       "license": "MIT",
-      "minCoreVersion": "1.5.3"
+      "minCoreVersion": "1.5.3",
+      "engines": {
+        "core": ">=1.5.3 <2"
+      },
+      "publishTimestamp": 1763700000,
+      "metadata": {
+        "category": "functional",
+        "labels": [
+          "official"
+        ],
+        "sortKeys": {
+          "publishedAt": 1763700000
+        }
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1763700000,
+          "source": {
+            "type": "npm",
+            "name": "@worm-print-platform/plugin-data-preview"
+          },
+          "engines": {
+            "core": ">=1.5.3 <2"
+          }
+        }
+      ]
     }
   ]
 }

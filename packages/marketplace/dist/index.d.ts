@@ -1,5 +1,5 @@
-import { M as MarketIndex, a as MarketSource, R as RepoSource, P as PluginsManifest, b as ManifestEntry } from './install-JsknZ5Fp.js';
-export { C as CommandResult, G as GitExecutor, I as InstallOptions, c as InstallResult, d as MarketError, e as MarketErrorCode, f as MarketIndexEntry, N as NpmExecutor, g as PluginJsonEntry, h as RemoveOptions, W as WormPrintMeta, j as defaultGitExecutor, k as defaultNpmExecutor, i as installPlugin, r as removePlugin } from './install-JsknZ5Fp.js';
+import { M as MarketIndex, a as MarketSource, R as RepoSource, P as PluginsManifest, b as ManifestEntry } from './install-OnUueX3N.js';
+export { C as CommandResult, G as GitExecutor, I as IndexIssue, c as InstallOptions, d as InstallResult, L as LocalizedText, e as MarketError, f as MarketErrorCode, g as MarketIndexEntry, h as MarketMetadataDecl, j as MarketVersionEntry, N as NpmExecutor, k as PluginJsonEntry, l as PluginType, m as RemoveOptions, W as WormPrintMeta, n as defaultGitExecutor, o as defaultNpmExecutor, i as installPlugin, r as removePlugin } from './install-OnUueX3N.js';
 
 interface ParsedSemver {
     major: number;
