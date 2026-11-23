@@ -9,8 +9,8 @@ import {
 } from "./chunk-NWKXSQAM.js";
 
 // src/cli.ts
-import { resolve } from "path";
-import { fileURLToPath } from "url";
+import { realpathSync } from "fs";
+import { pathToFileURL } from "url";
 var VERSION = true ? "1.6.1" : "1.6.1";
 var SOURCES = /* @__PURE__ */ new Set(["npm", "github", "gitee", "auto", "local"]);
 var PLUGIN_TYPES = /* @__PURE__ */ new Set(["element", "functional", "export"]);
@@ -271,7 +271,15 @@ async function main(argv, deps = {}) {
     return errorCode(err2);
   }
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+function isCliEntry(argv1, moduleUrl) {
+  if (!argv1) return false;
+  try {
+    return pathToFileURL(realpathSync(argv1)).href === moduleUrl;
+  } catch {
+    return false;
+  }
+}
+if (isCliEntry(process.argv[1], import.meta.url)) {
   main(process.argv.slice(2)).then((code) => {
     process.exitCode = code;
   });
@@ -279,6 +287,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
 export {
   filterAndSortPlugins,
   formatPluginLines,
+  isCliEntry,
   main,
   parseArgs
 };

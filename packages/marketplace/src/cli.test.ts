@@ -1,8 +1,9 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
-import { filterAndSortPlugins, formatPluginLines, main, parseArgs } from './cli.js'
+import { dirname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { afterAll, describe, expect, it, vi } from 'vitest'
+import { filterAndSortPlugins, formatPluginLines, isCliEntry, main, parseArgs } from './cli.js'
 import type { InstallOptions, InstallResult, MarketIndex } from './types.js'
 
 const fakeResult = (id: string): InstallResult => ({
@@ -31,6 +32,31 @@ describe('CLI 参数解析', () => {
 
   it('缺省 source 为 auto', () => {
     expect(parseArgs(['install', 'x']).source).toBe('auto')
+  })
+})
+
+const entryDir = mkdtempSync(join(tmpdir(), 'worm-print-marketplace-cli-'))
+const entryReal = join(entryDir, 'entry.js')
+const entryLink = join(entryDir, 'link.js')
+writeFileSync(entryReal, '')
+symlinkSync(entryReal, entryLink)
+// macOS 的 /var 会指向 /private/var，基准按 realpath 归一
+const entryModuleUrl = pathToFileURL(realpathSync(entryReal)).href
+afterAll(() => rmSync(entryDir, { recursive: true, force: true }))
+
+describe('CLI 入口判断', () => {
+  it('经 npm bin 软链调用时仍识别为入口', () => {
+    expect(isCliEntry(entryLink, entryModuleUrl)).toBe(true)
+  })
+
+  it('真实路径识别为入口', () => {
+    expect(isCliEntry(entryReal, entryModuleUrl)).toBe(true)
+  })
+
+  it('缺失路径、空 argv 与非入口不误触发', () => {
+    expect(isCliEntry(join(entryDir, 'missing.js'), entryModuleUrl)).toBe(false)
+    expect(isCliEntry(undefined, entryModuleUrl)).toBe(false)
+    expect(isCliEntry(entryReal, pathToFileURL(join(dirname(entryReal), 'other.js')).href)).toBe(false)
   })
 })
 

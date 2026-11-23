@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { realpathSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 import { installPlugin, removePlugin } from './install.js'
 import { BUNDLED_CATALOG } from './catalog.generated.js'
 import { localize } from './localize.js'
@@ -288,6 +288,16 @@ export async function main(argv: string[], deps: CliDeps = {}): Promise<number> 
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+/** 判断是否直接执行本 CLI；经 npm bin 软链调用时 argv[1] 是链接路径，需先归一。 */
+export function isCliEntry(argv1: string | undefined, moduleUrl: string): boolean {
+  if (!argv1) return false
+  try {
+    return pathToFileURL(realpathSync(argv1)).href === moduleUrl
+  } catch {
+    return false
+  }
+}
+
+if (isCliEntry(process.argv[1], import.meta.url)) {
   main(process.argv.slice(2)).then(code => { process.exitCode = code })
 }

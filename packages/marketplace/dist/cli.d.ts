@@ -41,5 +41,7 @@ interface CliDeps {
     err?: (message: string) => void;
 }
 declare function main(argv: string[], deps?: CliDeps): Promise<number>;
+/** 判断是否直接执行本 CLI；经 npm bin 软链调用时 argv[1] 是链接路径，需先归一。 */
+declare function isCliEntry(argv1: string | undefined, moduleUrl: string): boolean;
 
-export { type CliDeps, type ListOptions, type ParsedArgs, filterAndSortPlugins, formatPluginLines, main, parseArgs };
+export { type CliDeps, type ListOptions, type ParsedArgs, filterAndSortPlugins, formatPluginLines, isCliEntry, main, parseArgs };
