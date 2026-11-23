@@ -225,7 +225,7 @@ export async function installPlugin(options: InstallOptions): Promise<InstallRes
   const npmExecutor = options.npmExecutor ?? defaultNpmExecutor
   const gitExecutor = options.gitExecutor ?? defaultGitExecutor
   const sources: MarketSource[] = options.source === 'auto'
-    ? ['npm', 'github', 'gitee']
+    ? ['npm', 'gitee', 'github']
     : [options.source]
 
   let lastError: unknown

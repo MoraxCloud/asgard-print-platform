@@ -87,7 +87,7 @@ export interface InstallOptions {
   name: string
   /** 指定版本；缺省取最新稳定版 */
   version?: string
-  /** 安装来源；auto 按 npm → github → gitee 回退 */
+  /** 安装来源；auto 按 npm → gitee → github 回退 */
   source: MarketSource | 'auto'
   /** 目标插件根目录，默认 .worm-print/plugins */
   dir?: string

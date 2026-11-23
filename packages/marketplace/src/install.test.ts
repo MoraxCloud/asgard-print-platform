@@ -72,7 +72,7 @@ describe('三源安装引擎', () => {
     const result = await installPlugin({
       name: 'echarts', source: 'auto', repo, cwd, index: indexOf(repo), npmExecutor: npmFail,
     })
-    expect(result.source).toBe('github')
+    expect(result.source).toBe('gitee')
   })
 
   it('确定性错误不换源', async () => {

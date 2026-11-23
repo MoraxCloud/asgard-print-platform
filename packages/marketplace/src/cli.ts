@@ -19,7 +19,7 @@ const USAGE = `用法: worm-print-marketplace <命令> [选项]
   remove <名称>              卸载插件
 
 选项:
-  --source npm|github|gitee|auto   安装来源，默认 auto（npm → GitHub → Gitee）
+  --source npm|gitee|github|auto   安装来源，默认 auto（npm → Gitee → GitHub）
   --dir <路径>                     插件根目录，默认 .worm-print/plugins
   --repo <路径或URL>               本地市场目录或自定义 git 仓库地址
   --force                         已存在时覆盖安装
