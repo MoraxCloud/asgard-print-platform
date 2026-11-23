@@ -85,7 +85,7 @@ node demos/scripts/verify-business-scenarios.mjs http://localhost:9331/ --quick 
 
 ```bash
 npm run publish:dry-run            # 干跑：build + test + 逐包 publish --dry-run
-npm run publish:npm                # 正式发布：build + test，按 core → plugin-kit → canvas → echarts → skills → marketplace → i18n → plugin-echarts 顺序发布
+npm run publish:npm                # 正式发布：build + test，按 core → plugin-kit → canvas → echarts → skills → marketplace → i18n 顺序发布
 
 npm run publish:local              # 本地联调：build 后 yalc push core（需已安装 yalc：npm i -g yalc）
 ```

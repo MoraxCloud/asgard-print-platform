@@ -49,7 +49,7 @@
   - `packages/plugin-kit`（`@worm-print-platform/plugin-kit`）：框架无关的插件设计器 UI 契约与注册表（纯 TS/DOM）。
   - `packages/contract`（`@worm-print-platform/contract`）：模板 JSON 契约校验与诊断（不发布，随 client 打包）。
   - `packages/echarts`（`@worm-print-platform/echarts`）：ECharts 图表元素**兼容镜像包**；源码唯一真源在 `marketplace/plugins/echarts/`，本包由其构建脚本同步生成，保留原包名与全部子路径供存量依赖方零改动使用。
-  - `marketplace/plugins/echarts`（`@worm-print-platform/plugin-echarts`）：百度图表插件**唯一源码真源**（十类图表描述符、SSR 渲染器、设计器 UI 全部在此）；同一源码构建出市场主包与 `packages/echarts` 兼容镜像，二者均可单独发布，README 统一为市场口径。
+  - `marketplace/plugins/echarts`（`@worm-print-platform/plugin-echarts`）：百度图表插件**唯一源码真源**（十类图表描述符、SSR 渲染器、设计器 UI 全部在此）；同一源码构建出市场主包与 `packages/echarts` 兼容镜像；主包不再单独发布 npm，仅兼容镜像随主线发版，README 统一为市场口径。
   - `packages/marketplace`（`@worm-print-platform/marketplace`）：插件市场 CLI 安装器（bin：`worm-print-marketplace`），支持从 npm / GitHub / Gitee 三源安装单个插件，缺省取最新稳定版；索引与插件源码常驻顶层 `marketplace/`。
   - `packages/i18n`（`@worm-print-platform/i18n`）：语言包工具 CLI（bin：`worm-print-i18n`），零运行时依赖，提供 `template`/`validate`/`update`，导出骨架、校验与增量更新自定义语言包。
   - `packages/mcp`（`@worm-print-platform/mcp`）：桌面客户端 MCP 协议实现（不发布，随 client 打包）。
