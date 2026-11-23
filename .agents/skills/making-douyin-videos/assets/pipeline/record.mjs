@@ -79,6 +79,8 @@ async function main() {
     viewport: { width: SW, height: H },
     deviceScaleFactor: 1,
     acceptDownloads: true,
+    // 1.6.1 起设计器跟随浏览器语言；无头缺省 en-US 会让中文选择器全部失效
+    locale: 'zh-CN',
     ...(FAST ? {} : { recordVideo: { dir: join(OUT_DIR, 'raw'), size: { width: SW, height: H } } }),
   })
   page = await context.newPage()
