@@ -15,7 +15,7 @@ worm-print-platform 插件市场的百度图表插件：**十类 ECharts 图表�
 npx @worm-print-platform/marketplace install echarts
 ```
 
-> 默认从 npm 安装存量 1.6.1；获取市场后续版本须加 `--source gitee`（或 `--source github`）。
+> npm 上未发布该主包，`auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；也可显式 `--source gitee` 指定来源。
 
 宿主按清单加载插件入口（import 即注册，无需额外调用）：
 

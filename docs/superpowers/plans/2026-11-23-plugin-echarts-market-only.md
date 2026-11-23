@@ -14,7 +14,7 @@
 
 - 版本号维持 `1.6.1`，不改任何包版本。
 - 市场索引 `marketplace/marketplace.json` 中 echarts 条目的 `npmName` 字段**保留**（CLI 用它做短 id 映射）。
-- echarts **不**跳过 npm 源；用户接受"默认装 npm 存量 1.6.1，装市场新版需显式 `--source gitee`"的限制。
+- echarts **不**跳过 npm 源；用户接受该限制。经核实 npm 上主包为 404，`auto` 会在 npm 源失败后自动回退 Gitee。
 - 不打 `plugins/echarts/vX.Y.Z` tag，不改 tag 策略。
 - 不改 CHANGELOG 历史条目，只在 V1.6.1 条目追加一条说明。
 - 所有提交信息与回复用简体中文。
@@ -24,7 +24,7 @@
 - `auto` 源首个来源网络失败后应回退 **gitee**（而非 github）——由 Task 1 的测试断言固定。
 - 确定性错误（如 `VERSION_NOT_FOUND`）仍不换源——现有 `确定性错误不换源` 测试须保持通过。
 - `publish:dry-run` / `publish:npm` 脚本文本中不得再出现 `plugin-echarts`——Task 4 文本检查。
-- 默认 `install echarts` 仍命中 npm 冻结版是**已接受的预期行为**，不是缺陷——文档须写明，勿"修复"。
+- 默认 `install echarts` 在 npm 源 404 后自动回退 Gitee 是**符合预期的行为**，不是缺陷——文档须写明，勿"修复"。
 - 兼容镜像 `@worm-print-platform/echarts` 必须仍在发布清单中——Task 2/4 检查。
 
 ---
@@ -110,13 +110,13 @@
 - Produces: 无代码接口；用户可见的安装命令与源顺序说明。
 
 - [ ] **Step 1: 改写主包 README**
-  删除「作为 npm 包使用」整段（含 `npm install @worm-print-platform/plugin-echarts` 与子路径 import 示例）和 `npm publish` 命令块；把「安装（插件市场口径，推荐）」段的命令保留 `npx @worm-print-platform/marketplace install echarts`，并补一行说明：默认走 npm 存量 1.6.1，安装市场新版用 `--source gitee`。表格中主包定位改为"市场插件（不再单独发 npm）"。
+  删除「作为 npm 包使用」整段（含 `npm install @worm-print-platform/plugin-echarts` 与子路径 import 示例）和 `npm publish` 命令块；把「安装（插件市场口径，推荐）」段的命令保留 `npx @worm-print-platform/marketplace install echarts`，并补一行说明：npm 上未发布主包，`auto` 会在 npm 源失败后自动回退 Gitee，也可显式 `--source gitee`。表格中主包定位改为"市场插件（不再单独发 npm）"。
 
 - [ ] **Step 2: 更新市场索引描述**
   `marketplace/marketplace.json` 的 echarts 条目 `description` 改为市场唯一分发口径；`npmName` 与 `version` 字段保持原值不动。
 
 - [ ] **Step 3: 更新用户文档**
-  `docs/guide/07-plugin-install.md`：选项表 `--source` 顺序改为 `npm|gitee|github|auto|local` 并更新说明文本为 `npm → Gitee → GitHub`；示例 `install echarts@1.1.0 --source npm` 改为不带 npm 的示例（或 `--source gitee`）；补一条说明：echarts 主包已停发 npm，默认命令会装到 1.6.1，获取市场新版须带 `--source gitee`（指定版本时同样需带）。`docs/plugin-marketplace-plan.md` 中 `auto` 顺序描述同步为 npm → Gitee → GitHub。
+  `docs/guide/07-plugin-install.md`：选项表 `--source` 顺序改为 `npm|gitee|github|auto|local` 并更新说明文本为 `npm → Gitee → GitHub`；示例 `install echarts@1.1.0 --source npm` 改为不带 npm 的示例（或 `--source gitee`）；补一条说明：echarts 主包未发布到 npm（404），默认 `auto` 会在 npm 源失败后自动回退 Gitee，显式 `--source gitee` 可直接指定来源。`docs/plugin-marketplace-plan.md` 中 `auto` 顺序描述同步为 npm → Gitee → GitHub。
 
 - [ ] **Step 4: CHANGELOG 追加说明**
   在 `CHANGELOG.md` 的 `## V1.6.1(2026-11-22)` 条目末尾追加一条：百度图表插件 `@worm-print-platform/plugin-echarts` 不再单独发布 npm，后续版本通过插件市场分发；兼容镜像 `@worm-print-platform/echarts` 继续随主线发版。

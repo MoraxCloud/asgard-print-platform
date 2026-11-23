@@ -21,7 +21,7 @@
 ## 约束与已接受的限制
 
 - 市场索引保留 echarts 的 `npmName`：CLI 用它做短 id → 插件身份映射，`list` 也展示它；移除会破坏 `resolvePluginName` 与清单契约。
-- 全局顺序仍以 npm 为首选，因此 `npx @worm-print-platform/marketplace install echarts` 默认会命中 npm 上冻结的 1.6.1。要装市场新版，用户必须显式 `--source gitee`（或 `--source github`）。此限制已由用户确认接受。
+- 全局顺序仍以 npm 为首选；经核实 npm 上 `@worm-print-platform/plugin-echarts` 为 404（从未发布），因此默认 `install echarts` 会在 npm 源失败后自动回退 Gitee（其次 GitHub）。不跳过 npm 源的限制已由用户确认接受。
 - `resolveVersion` 对"指定版本在 npm 不存在"抛确定性错误 `VERSION_NOT_FOUND` 且不换源，因此装市场新版时显式带版本号也必须带 `--source gitee`。文档需写明。
 - 仓库当前没有 `plugins/echarts/v*` tag，Git 源无版本时回退主干并标记非稳定；本次不打 tag、不改 tag 策略。
 
@@ -31,7 +31,7 @@
 
 被放弃的备选：
 - **索引按插件配置源偏好**：影响精确但要改 CLI、类型、索引、生成产物与单测；用户选择不跳过 npm，无需引入。
-- **仅改文档**：默认命令仍命中 npm 冻结版，且源顺序偏好未落地。
+- **仅改文档**：源顺序偏好未落地。
 
 ## 具体改动
 
@@ -56,7 +56,7 @@
 
 1. `npm run build` 与 `npm test` 全绿。
 2. `npm run publish:dry-run` 的脚本文本中不再出现 `plugin-echarts`。
-3. `npx @worm-print-platform/marketplace install echarts --source gitee` 能解析到市场源码；默认 `install echarts` 仍可命中 npm 存量 1.6.1（符合已接受限制）。
+3. `npx @worm-print-platform/marketplace install echarts --source gitee` 能解析到市场源码；默认 `install echarts` 在 npm 源 404 后自动回退 Gitee（符合已接受限制）。
 4. `git diff` 审查：仅上述文件，无无关重构。
 
 ## 待办（不在本次改动）

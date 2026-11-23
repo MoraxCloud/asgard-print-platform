@@ -42,7 +42,7 @@ npx @worm-print-platform/marketplace remove echarts
 - 未带 `@版本` 取**最新稳定版**：npm 源取 `dist-tags.latest`（预发布则改取最高非预发布）；GitHub/Gitee 源列 `refs/tags/plugins/<id>/v*`，无 tag 回退默认分支并标记非稳定。
 - 预发布（`-rc` / `-beta` 等）不会被当作最新稳定版。
 - 确定性错误（插件不存在、版本不存在、元数据不一致）**不换源**；仅网络/克隆失败才回退。
-- **百度图表插件特例**：`@worm-print-platform/plugin-echarts` 已停发 npm，默认命令会装到 npm 存量 1.6.1；获取市场后续版本须显式 `--source gitee`（或 `--source github`），带版本号时同样需要。
+- **百度图表插件特例**：`@worm-print-platform/plugin-echarts` 未发布到 npm（404），默认 `auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；显式 `--source gitee` 可直接指定来源。
 
 ### 2.3 安装结果与语言资源
 
