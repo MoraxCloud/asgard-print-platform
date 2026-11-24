@@ -311,6 +311,20 @@ describe('数据源/字段下拉选择', () => {
     expect(valWrap.querySelector('.echarts-dropdown-trigger')).toBeTruthy()
   })
 
+  it('绑定的数据源不在示例数据里时，字段下拉不混入其它数据源的字段', () => {
+    const { root } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'wbc', chartCategoryField: 'name', chartValueFields: ['value'],
+    }, chartData)
+    expect(openOptions(fieldTrigger(root, '类目字段'))).toEqual(['name（当前）'])
+  })
+
+  it('示例数据缺数据源时，数据源下拉仍列出业务字段清单里的列表字段', () => {
+    const { root } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'wbc', chartCategoryField: 'name', chartValueFields: ['value'],
+    }, chartData, [{ fieldKey: 'wbc', fieldLabel: '白细胞', fieldType: 'list', sortOrder: 1 }])
+    expect(openOptions(fieldTrigger(root, '数据源'))).toContain('白细胞（wbc）')
+  })
+
   it('不在候选里的已有值保留为选项，不丢失', () => {
     const { root } = renderProperty('barChart', {
       chartOption: option(), chartDataSource: 'legacySource', chartCategoryField: 'legacyField',

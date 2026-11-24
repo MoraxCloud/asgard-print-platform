@@ -34,10 +34,15 @@ function hasDataPlaceholder(series: Record<string, unknown>): boolean {
   return Array.isArray(series.data) && (series.data as unknown[]).includes('$data')
 }
 
-/** 与表格/流式列表同口径的数据源解析：显式 dataSource → 顶层第一个数组 */
+/**
+ * 数据源解析：显式绑定的 chartDataSource（或旧模板的 dataSource）在数据中缺失时
+ * 绝不回退到顶层第一个数组，否则会串用用户未绑定的数据源；仅未绑定时才按老口径取第一个数组。
+ */
 function resolveListSource(options: Record<string, unknown>, data: Record<string, unknown>): Record<string, any>[] {
-  const explicit = options.dataSource
-  if (typeof explicit === 'string' && Array.isArray(data[explicit])) return data[explicit] as Record<string, any>[]
+  const chartSource = typeof options.chartDataSource === 'string' ? options.chartDataSource : ''
+  const legacySource = typeof options.dataSource === 'string' ? options.dataSource : ''
+  const explicit = chartSource || legacySource
+  if (explicit) return Array.isArray(data[explicit]) ? data[explicit] as Record<string, any>[] : []
   for (const value of Object.values(data)) {
     if (Array.isArray(value)) return value as Record<string, any>[]
   }
@@ -209,7 +214,7 @@ export function bindChartData(
   const option = evaluateChartOption(raw, data) as Record<string, any>
   const valueFields = asFieldList(options.chartValueFields)
   if (valueFields.length === 0) return { _chartOption: option }
-  const list = resolveListSource({ ...options, dataSource: options.chartDataSource ?? options.dataSource }, data)
+  const list = resolveListSource(options, data)
   if (list.length === 0) return { _chartOption: option }
 
   const categoryField = asString(options.chartCategoryField)

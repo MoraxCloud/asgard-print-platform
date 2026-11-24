@@ -186,8 +186,10 @@ function hasDataPlaceholder(series) {
   return Array.isArray(series.data) && series.data.includes("$data");
 }
 function resolveListSource(options, data) {
-  const explicit = options.dataSource;
-  if (typeof explicit === "string" && Array.isArray(data[explicit])) return data[explicit];
+  const chartSource = typeof options.chartDataSource === "string" ? options.chartDataSource : "";
+  const legacySource = typeof options.dataSource === "string" ? options.dataSource : "";
+  const explicit = chartSource || legacySource;
+  if (explicit) return Array.isArray(data[explicit]) ? data[explicit] : [];
   for (const value of Object.values(data)) {
     if (Array.isArray(value)) return value;
   }
@@ -311,7 +313,7 @@ function bindChartData(type, options, data) {
   const option = evaluateChartOption(raw, data);
   const valueFields = asFieldList(options.chartValueFields);
   if (valueFields.length === 0) return { _chartOption: option };
-  const list = resolveListSource({ ...options, dataSource: options.chartDataSource ?? options.dataSource }, data);
+  const list = resolveListSource(options, data);
   if (list.length === 0) return { _chartOption: option };
   const categoryField = asString(options.chartCategoryField);
   const def = getChartKindDefinition(type);
@@ -1683,15 +1685,18 @@ function valueFieldsLabel(def, limit) {
   if (def?.seriesType === "radar") return t2("echarts.panel.field.dimension");
   return limit === 1 ? t2("echarts.panel.field.value") : t2("echarts.panel.field.valueMulti");
 }
-function dataSourceCandidates(data) {
+function dataSourceCandidates(data, fields) {
   const first = data?.[0];
-  if (!first) return [];
-  return Object.keys(first).filter((key) => Array.isArray(first[key]));
+  const keys = first ? Object.keys(first).filter((key) => Array.isArray(first[key])) : [];
+  for (const field2 of fields ?? []) {
+    if (field2.fieldType === "list" && field2.fieldKey && !keys.includes(field2.fieldKey)) keys.push(field2.fieldKey);
+  }
+  return keys;
 }
 function dataRowFields(data, dataSource) {
   const first = data?.[0];
   if (!first) return [];
-  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find((k) => Array.isArray(first[k]));
+  const key = dataSource ? Array.isArray(first[dataSource]) ? dataSource : "" : Object.keys(first).find((k) => Array.isArray(first[k]));
   if (!key) return [];
   const rows = first[key];
   return rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null ? Object.keys(rows[0]) : [];
@@ -2072,7 +2077,7 @@ function renderPropertyInner(ctx) {
     const current = String(options.chartDataSource ?? "");
     wrap.appendChild(
       dropdownSelect(
-        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
+        dropdownOptions(dataSourceCandidates(ctx.data, ctx.fields), current, fieldLabels),
         current,
         (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value })
       )

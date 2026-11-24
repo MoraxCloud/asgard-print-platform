@@ -172,18 +172,30 @@ function valueFieldsLabel(def: ChartKindDefinition | undefined, limit: number): 
   return limit === 1 ? t('echarts.panel.field.value') : t('echarts.panel.field.valueMulti')
 }
 
-/** 数据源候选：设计态示例数据里取「数组值」的顶层键 */
-function dataSourceCandidates(data?: readonly Record<string, unknown>[]): string[] {
+/** 数据源候选：示例数据里的数组键 + 业务字段清单里的列表字段（契约要求优先用 fields） */
+function dataSourceCandidates(
+  data: readonly Record<string, unknown>[] | undefined,
+  fields: readonly { fieldKey: string; fieldType: string }[] | undefined,
+): string[] {
   const first = data?.[0]
-  if (!first) return []
-  return Object.keys(first).filter(key => Array.isArray(first[key]))
+  const keys = first ? Object.keys(first).filter(key => Array.isArray(first[key])) : []
+  for (const field of fields ?? []) {
+    if (field.fieldType === 'list' && field.fieldKey && !keys.includes(field.fieldKey)) keys.push(field.fieldKey)
+  }
+  return keys
 }
 
-/** 行字段候选：取指定数据源数组首行的键，供类目/数值字段下拉；无数据源时取顶层第一个数组 */
+/**
+ * 行字段候选：显式数据源在示例数据里存在时取其行字段；数据源缺失时不回退到别的数组，
+ * 否则示例数据（如内置 demo 的 goods）的字段会混进用户绑定的字段下拉。
+ * 仅未绑定数据源时才按老口径取顶层第一个数组。
+ */
 function dataRowFields(data: readonly Record<string, unknown>[] | undefined, dataSource: string): string[] {
   const first = data?.[0]
   if (!first) return []
-  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find(k => Array.isArray(first[k]))
+  const key = dataSource
+    ? (Array.isArray(first[dataSource]) ? dataSource : '')
+    : Object.keys(first).find(k => Array.isArray(first[k]))
   if (!key) return []
   const rows = first[key] as Record<string, unknown>[]
   return rows.length > 0 && typeof rows[0] === 'object' && rows[0] !== null
@@ -648,7 +660,7 @@ function renderPropertyInner(ctx: ElementUIPropertyContext): ElementUIRenderResu
     const current = String(options.chartDataSource ?? '')
     wrap.appendChild(
       dropdownSelect(
-        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
+        dropdownOptions(dataSourceCandidates(ctx.data, ctx.fields), current, fieldLabels),
         current,
         value => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
       ),
