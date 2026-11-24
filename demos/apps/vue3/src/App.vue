@@ -324,6 +324,8 @@
         </div>
       </div>
     </div>
+
+    <AutoShowOverlay :auto-show="autoShow" />
   </div>
 </template>
 <script setup>
@@ -337,6 +339,8 @@ import { openDataPreview } from '@worm-print-platform/plugin-data-preview'
 import { PrintClient, WormPrintError } from '@worm-print-platform/core/client'
 import { SAMPLES } from './templates'
 import { CHART_SAMPLES } from './templates-chart'
+import { useAutoShow } from './auto-show/useAutoShow'
+import AutoShowOverlay from './auto-show/AutoShowOverlay.vue'
 
 /** 全部示例 = 与 demo 同源的宿主安全示例 + 仅本宿主安装的图表适配包带来的图表样例 */
 const SAMPLE_LIBRARY = [...SAMPLES, ...CHART_SAMPLES]
@@ -658,6 +662,18 @@ watch(previewVisible, visible => {
     window.removeEventListener('keydown', onPreviewKeydown)
     window.removeEventListener('resize', onPreviewResize)
   }
+})
+
+const autoShow = useAutoShow({
+  designer: designerRef,
+  samples: SAMPLE_LIBRARY,
+  applySample,
+  openPreview,
+  closePreview: () => { previewVisible.value = false },
+  currentTemplateJson,
+  batchEnabled,
+  syncDesigner,
+  snapshot: () => ({ templateData, fields, activeData, currentSample, batchEnabled, customDataActive }),
 })
 
 // ────────────────── 示例模板库弹窗 ──────────────────

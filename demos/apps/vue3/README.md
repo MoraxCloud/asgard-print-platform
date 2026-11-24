@@ -30,6 +30,8 @@ npm run dev -w @worm-print-platform/render     # 服务端 PDF（3001，dev 代�
 | `vite.config.js` | `@vitejs/plugin-vue` 的 `template.compilerOptions.isCustomElement: tag => tag.startsWith('print-')` |
 | `src/App.vue` | 版式骨架 + property 注入 + 事件监听 + 三条出纸链路；`src/SampleThumb.vue` 为示例库卡片缩略图（几何工具取自 core） |
 
+自动演示是 Vue3 demo 专属模块，位于 `src/auto-show/`，可整目录删除；删除时同时移除 `App.vue` 中的 `useAutoShow` 调用与 `AutoShowOverlay` 组件。
+
 ## 三个必须知道的口径
 
 1. **对象入参只能赋 property**。Vue 的 `:template="obj"` / `:fields="arr"` 会走 `setAttribute` 被字符串化，
