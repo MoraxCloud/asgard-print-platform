@@ -91,11 +91,10 @@ function pushWiki(url, dir, pages, authEnv) {
   return true
 }
 
+// GitHub 使用 git 已配置的 gh credential helper（credential.https://github.com.helper），
+// 不注入自定义 header——bearer header 对 wiki push 无效，且会绕过 helper。
 function githubAuth() {
-  const r = spawnSync('gh', ['auth', 'token'], { encoding: 'utf8' })
-  if (r.status !== 0) return {}
-  const token = r.stdout.trim()
-  return { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.extraheader', GIT_CONFIG_VALUE_0: `AUTHORIZATION: bearer ${token}` }
+  return {}
 }
 
 function giteeAuth() {
