@@ -1,6 +1,6 @@
 {
   "name": "@worm-print-platform/demo-print",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "private": true,
   "type": "module",
   "scripts": {

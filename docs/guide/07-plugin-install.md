@@ -39,10 +39,10 @@ npx @worm-print-platform/marketplace remove echarts
 ### 2.2 版本规则
 
 - `<名称>` 可为索引短 id（如 `echarts`、`data-preview`），也支持带版本的 npm spec（`<包名>@<版本>`，仅当该插件确实发布在 npm 时可用；官方插件当前均未发 npm，见下方特例）。版本以 `list` / 索引为准，本文档不固定具体版本号。
-- 未带 `@版本` 取**最新稳定版**：npm 源取 `dist-tags.latest`（预发布则改取最高非预发布）；GitHub/Gitee 源列 `refs/tags/plugins/<id>/v*`，无 tag 回退默认分支并标记非稳定。
+- 未带 `@版本` 取**最新稳定版**：npm 源从 `npm view <包名> versions --json` 取最高非预发布版本；GitHub/Gitee 源列 `refs/tags/plugins/<id>/v*`，无 tag 回退默认分支并标记非稳定。
 - 预发布（`-rc` / `-beta` 等）不会被当作最新稳定版。
 - 确定性错误（插件不存在、版本不存在、元数据不一致）**不换源**；仅网络/克隆失败才回退。
-- **官方插件特例**：`@worm-print-platform/plugin-echarts` 未发布到 npm（404），默认 `auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；显式 `--source gitee` 可直接指定来源。数据源预览 `@worm-print-platform/plugin-data-preview` 同样未发 npm，且仓库未提交 `dist/index.js`，`install data-preview` 会报「插件入口文件不存在」；按仓库 `marketplace/plugins/data-preview` 源码 `npm install && npm run build` 后本地引用。
+- **官方插件来源**：`@worm-print-platform/plugin-echarts` 与 `@worm-print-platform/plugin-data-preview` 均不单独发布 npm；默认 `auto` 会先尝试 npm，再按 Gitee → GitHub 回退。两个插件的市场运行产物已纳入 Git，`data-preview` 可按市场 id 正常安装，版本独立于打印平台主线。
 
 ### 2.3 安装结果与语言资源
 
@@ -69,7 +69,7 @@ npx @worm-print-platform/marketplace remove echarts
 
 - 插件声明 `wormPrint.i18n` 时，安装器把 `dist/i18n/<locale>.json` 同步到 `.worm-print/i18n/<id>/`，并记入清单。
 - **卸载**：同时删除 `.worm-print/i18n/<id>/` 与清单条目。
-- **升级（`--force`）**：先清旧目录再写入，不留已删除语言；清单 `i18n.locales` 同步更新。
+- **升级（`--force`）**：先把新版本复制到同级暂存目录，校验插件与语言资源后原子切换；失败恢复旧目录与旧清单，成功后才删除备份，不残留旧文件或已删除语言。
 - **旧安装**：旧清单无 `i18n` 字段时，语言包 CLI 会提示「插件 X 的语言资源未同步，请重新安装」；用 `install <名称> --force` 重装。
 - npm 直装的插件只要声明了 `wormPrint.i18n` 也会被语言包 CLI 发现，不必经过市场安装。
 
@@ -99,10 +99,29 @@ Object.values(import.meta.glob('../.worm-print/plugins/*/dist/marketplace.js', {
 
 > 路径基准：`../.worm-print/...` 假设 `.worm-print` 在项目根、`main.js` 在 `src/`。若目录不同，按实际相对路径调整；`import.meta.glob` 是 Vite 专有，webpack/无打包器不可用。
 
+### 2.5 宿主仓库与测试边界
+
+市场插件的 `dist` 是运行产物，必须随宿主提交；不要用通用 `dist/` 或整个 `.worm-print/` 规则忽略它们。已有忽略规则时，可为官方插件补精确例外：
+
+```gitignore
+.worm-print/
+!.worm-print/plugins.json
+!.worm-print/plugins/
+.worm-print/plugins/*
+!.worm-print/plugins/echarts/
+!.worm-print/plugins/data-preview/
+!.worm-print/plugins/*/dist/
+!.worm-print/plugins/*/dist/**
+```
+
+本地插件入口由 `src/main.js/ts` 静态 import 即可被 Vite 扫描，不要把 `../.worm-print/plugins/...` 写进 `optimizeDeps.include`；该路径容易相对 Vite root 多退一级。保留 core/plugin-kit 的 `dedupe` 配置即可。
+
+ECharts 6 / zrender 6 会在 `setOption()` 后异步刷新 Canvas，happy-dom 的 `getContext()` 返回 null。组件测试应 mock `echarts.init`，聚焦业务 option；同时启用 `enableAutoUnmount(afterEach)`，用 `vi.waitFor` 断言 `setOption`，不要用固定 200ms 等待后只检查 DOM。
+
 ## 3. 验证（Verification）
 
 ```bash
-npx @worm-print-platform/marketplace list          # 能看到已装插件；npx 404 时用 §4 的本地 CLI 执行 list
+npx @worm-print-platform/marketplace list          # 能看到可用插件；npx 404 时用 §4 的本地 CLI 执行 list
 cat .worm-print/plugins.json                        # 回读版本/entry/i18n 与安装一致
 ls .worm-print/i18n/echarts/                        # 语言资源已同步
 npm run build                                       # 加载插件后构建通过
@@ -121,6 +140,9 @@ npm run build                                       # 加载插件后构建通�
 | 构建报 `Rollup failed to resolve import "echarts/charts"` | 市场 echarts 插件依赖 `echarts` 运行时（它不在 core/plugin-kit peerDeps 里，但运行时确实需要）：`npm install echarts@^6.1.0` 后重编。 |
 | 两条 echarts 路径分不清 | 「npm 包方式」=`npm i @worm-print-platform/echarts` + `import '@worm-print-platform/echarts/ui'`（兼容镜像包，含 `/ui`、`/node`、`/browser` 子路径）；「市场 CLI 方式」= 安装到 `.worm-print/plugins/echarts` + import `dist/marketplace.js`。二者都能注册元素，但来源与文件路径不同，**不要混用同一元素的两份注册**；二选一即可。 |
 | 外部项目不知道 `--repo` 填什么 | 装已发布插件用 `--source npm` 或默认 `auto`，无需 `--repo`；仅在离线/仓库内开发时才用 `--repo <本地市场目录或自定义 git 地址>`。 |
+| 入口存在但导入报 `./ui.js` 缺失 | 插件 `plugin.json.files` 白名单漏掉入口相对依赖。修正白名单（`data-preview` 使用整个 `dist`）并重新发布产物；不要靠无差别复制整个插件目录绕过契约。 |
+| `--force` 升级后旧文件仍残留 | 旧版安装器直接覆盖目录。升级到带暂存与原子切换的新版 CLI 后再执行 `install <名称> --force`。 |
+| 导入 echarts 出现 `[i18n] missing key` | 插件在语言资源注册前把 `t()` 求值成常量。使用标签 getter / 工厂函数的市场产物，并避免用对象展开复制已求值元数据。 |
 
 ## 5. AI 工具集成提示词（场景差异）
 
@@ -128,9 +150,9 @@ npm run build                                       # 加载插件后构建通�
 
 ```text
 【任务】安装指定插件并让设计器加载验证。
-- 先 marketplace list 确认可用；install 不指定版本取最新稳定版，以 list/索引为准。
+- 先 marketplace list 确认可用；install 不指定版本取最新稳定版，以 list/索引为准；更新源严格按 npm → Gitee → GitHub，默认 auto 已遵循。
 - npx 404 时按 07 §4 用本地 CLI（--source local --repo <本地市场目录>）回退，先判因再回退。
-- 宿主加载：入口 main.js import 插件 dist/marketplace.js；Vite 下对 core/plugin-kit 做 dedupe。
+- 宿主加载：echarts 入口为 dist/marketplace.js，data-preview 入口为 dist/index.js；在 main.js/ts 静态 import，Vite 下对 core/plugin-kit 做 dedupe。
 - 前置：确认已装含 ./i18n 导出的 core；市场 echarts 插件需 npm install echarts@^6.1.0。
 - npm 包方式（@worm-print-platform/echarts/ui）与市场 CLI 方式二选一，不混用同一元素。
 【验收】marketplace list 可见；回读 plugins.json 一致；语言资源目录存在；npm run build 通过；设计器出现插件元素。

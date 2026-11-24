@@ -1,5 +1,5 @@
 /*!
- * @worm-print-platform/plugin-echarts v1.6.3
+ * @worm-print-platform/plugin-echarts v1.6.4
  * Copyright (c) 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-FileCopyrightText: 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-License-Identifier: MIT
@@ -1048,17 +1048,30 @@ function renderChartElement(spec) {
 var CHART_EXECUTOR_VERSION = "2";
 
 // src/plugin.ts
-var CHART_OPTION_META = {
-  chartOption: { kind: "object", label: t("echarts.meta.chartOption") },
-  chartDataSource: { kind: "text", label: t("echarts.meta.dataSource") },
-  chartCategoryField: { kind: "text", label: t("echarts.meta.categoryField") },
-  chartValueFields: { kind: "object", label: t("echarts.meta.valueFields") },
-  chartSeriesField: { kind: "text", label: t("echarts.meta.seriesField") }
-};
-var SCATTER_OPTION_META = {
-  ...CHART_OPTION_META,
-  chartBubble: { kind: "bool", label: t("echarts.meta.bubbleSize") }
-};
+function createChartOptionMeta(includeBubble = false) {
+  return {
+    chartOption: { kind: "object", get label() {
+      return t("echarts.meta.chartOption");
+    } },
+    chartDataSource: { kind: "text", get label() {
+      return t("echarts.meta.dataSource");
+    } },
+    chartCategoryField: { kind: "text", get label() {
+      return t("echarts.meta.categoryField");
+    } },
+    chartValueFields: { kind: "object", get label() {
+      return t("echarts.meta.valueFields");
+    } },
+    chartSeriesField: { kind: "text", get label() {
+      return t("echarts.meta.seriesField");
+    } },
+    ...includeBubble ? { chartBubble: { kind: "bool", get label() {
+      return t("echarts.meta.bubbleSize");
+    } } } : {}
+  };
+}
+var CHART_OPTION_META = createChartOptionMeta();
+var SCATTER_OPTION_META = createChartOptionMeta(true);
 var CHART_PLUGIN = defineElementPlugin({
   id: CHART_PLUGIN_ID,
   version: CHART_EXECUTOR_VERSION,
@@ -2289,7 +2302,9 @@ var CHART_ELEMENT_UI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: t2("echarts.panel.group"),
+  get group() {
+    return t2("echarts.panel.group");
+  },
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: "echarts",

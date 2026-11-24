@@ -32,6 +32,10 @@ npm run dev -w @worm-print-platform/render     # 服务端 PDF（3001，dev 代�
 
 自动演示是 Vue3 demo 专属模块，位于 `src/auto-show/`，可整目录删除；删除时同时移除 `App.vue` 中的 `useAutoShow` 调用与 `AutoShowOverlay` 组件。
 
+## 市场插件接入
+
+插件更新按 **npm → Gitee → GitHub** 顺序回退；安装器默认 `auto` 已遵循该顺序。市场 `dist` 必须纳入宿主版本控制，不要用通用 `dist/` 规则忽略；本地插件由 `src/main.js/ts` 静态 import，不写进 Vite `optimizeDeps.include`。完整配置、升级回滚与 ECharts 6 测试边界见 [插件安装与配置](../../../docs/guide/07-plugin-install.md#25-宿主仓库与测试边界)。
+
 ## 三个必须知道的口径
 
 1. **对象入参只能赋 property**。Vue 的 `:template="obj"` / `:fields="arr"` 会走 `setAttribute` 被字符串化，

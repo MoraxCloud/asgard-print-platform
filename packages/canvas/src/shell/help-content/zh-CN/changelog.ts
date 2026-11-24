@@ -4,6 +4,13 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
+<h2>V1.6.4<small>(2026-11-24)</small></h2>
+
+<h3>修复</h3>
+<ul>
+  <li><strong>插件市场升级</strong>：数据源预览产物完整入库，强制升级改为暂存与原子切换；图表标签不再出现缺键告警，三语切换同步生效。</li>
+</ul>
+
 <h2>V1.6.3<small>(2026-11-24)</small></h2>
 
 <h3>修复</h3>

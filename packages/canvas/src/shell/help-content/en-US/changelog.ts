@@ -3,6 +3,13 @@ export default {
   id: 'changelog',
   title: 'Release Notes',
   content: `
+<h2>V1.6.4<small>(2026-11-24)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Marketplace upgrades</strong>: data-preview artifacts are complete in Git, forced upgrades use staged atomic swaps, and chart labels switch languages without missing-key warnings.</li>
+</ul>
+
 <h2>V1.6.3<small>(2026-11-24)</small></h2>
 
 <h3>Fixed</h3>

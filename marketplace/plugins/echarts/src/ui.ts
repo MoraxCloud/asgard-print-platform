@@ -887,7 +887,7 @@ export const CHART_ELEMENT_UI: ElementUI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: t('echarts.panel.group'),
+  get group() { return t('echarts.panel.group') },
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: 'echarts',

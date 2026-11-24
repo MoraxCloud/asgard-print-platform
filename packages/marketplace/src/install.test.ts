@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -54,6 +54,83 @@ describe('三源安装引擎', () => {
     expect(result.id).toBe('echarts')
     expect(result.version).toBe('1.0.0')
     expect(existsSync(join(cwd, '.worm-print/plugins/echarts/dist/index.js'))).toBe(true)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.version).toBe('1.0.0')
+  })
+
+  it('force 升级只保留新版本白名单文件', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
+    const repo = makeRepo(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    const target = join(cwd, '.worm-print/plugins/echarts')
+    writeFileSync(join(target, 'obsolete.js'), 'export const obsolete = true\n')
+
+    const index = indexOf(repo)
+    index.plugins[0].version = '2.0.0'
+    writeFileSync(join(repo, 'marketplace.json'), JSON.stringify(index))
+    const pluginPath = join(repo, 'plugins/echarts/plugin.json')
+    const plugin = JSON.parse(readFileSync(pluginPath, 'utf8'))
+    plugin.version = '2.0.0'
+    writeFileSync(pluginPath, JSON.stringify(plugin))
+
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, force: true, index })
+    expect(existsSync(join(target, 'obsolete.js'))).toBe(false)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.version).toBe('2.0.0')
+  })
+
+  it('force 复制失败时保留旧插件与语言资源', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
+    const repo = makeRepoWithI18n(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    const target = join(cwd, '.worm-print/plugins/echarts')
+    const oldEntry = readFileSync(join(target, 'dist/index.js'), 'utf8')
+    const oldLocale = readFileSync(join(cwd, '.worm-print/i18n/echarts/zh-CN.json'), 'utf8')
+
+    const index = indexOf(repo)
+    index.plugins[0].version = '2.0.0'
+    writeFileSync(join(repo, 'marketplace.json'), JSON.stringify(index))
+    const pluginPath = join(repo, 'plugins/echarts/plugin.json')
+    const plugin = JSON.parse(readFileSync(pluginPath, 'utf8'))
+    plugin.version = '2.0.0'
+    plugin.files = ['dist', 'plugin.json']
+    writeFileSync(pluginPath, JSON.stringify(plugin))
+    writeFileSync(join(repo, 'plugins/echarts/dist/index.js'), 'export const ok = "v2"\n')
+    const blocked = join(repo, 'plugins/echarts/dist/blocked.js')
+    writeFileSync(blocked, 'export const blocked = true\n')
+    chmodSync(blocked, 0)
+
+    try {
+      await expect(installPlugin({
+        name: 'echarts', source: 'local', repo, cwd, force: true, index,
+      })).rejects.toThrow()
+    } finally {
+      chmodSync(blocked, 0o644)
+    }
+    expect(readFileSync(join(target, 'dist/index.js'), 'utf8')).toBe(oldEntry)
+    expect(readFileSync(join(cwd, '.worm-print/i18n/echarts/zh-CN.json'), 'utf8')).toBe(oldLocale)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.version).toBe('1.0.0')
+  })
+
+  it('force 语言资源校验失败时尚未切换插件目录', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
+    const repo = makeRepoWithI18n(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    const target = join(cwd, '.worm-print/plugins/echarts')
+    const oldEntry = readFileSync(join(target, 'dist/index.js'), 'utf8')
+
+    const index = indexOf(repo)
+    index.plugins[0].version = '2.0.0'
+    writeFileSync(join(repo, 'marketplace.json'), JSON.stringify(index))
+    const pluginPath = join(repo, 'plugins/echarts/plugin.json')
+    const plugin = JSON.parse(readFileSync(pluginPath, 'utf8'))
+    plugin.version = '2.0.0'
+    writeFileSync(pluginPath, JSON.stringify(plugin))
+    writeFileSync(join(repo, 'plugins/echarts/dist/index.js'), 'export const ok = "v2"\n')
+    rmSync(join(repo, 'plugins/echarts/dist/i18n'), { recursive: true, force: true })
+
+    await expect(installPlugin({
+      name: 'echarts', source: 'local', repo, cwd, force: true, index,
+    })).rejects.toMatchObject({ code: 'INVALID_PLUGIN' })
+    expect(readFileSync(join(target, 'dist/index.js'), 'utf8')).toBe(oldEntry)
     expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.version).toBe('1.0.0')
   })
 
@@ -185,6 +262,62 @@ describe('插件语言资源同步', () => {
     await installPlugin({ name: 'echarts', source: 'local', repo, cwd, force: true, index: indexOf(repo) })
     expect(existsSync(join(cwd, '.worm-print/i18n/echarts/en-US.json'))).toBe(false)
     expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.i18n?.locales).toEqual(['zh-CN'])
+  })
+
+  it('force 升级取消 i18n 声明时清理旧语言目录', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-i18n-'))
+    const repo = makeRepoWithI18n(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+
+    const index = indexOf(repo)
+    index.plugins[0].version = '2.0.0'
+    writeFileSync(join(repo, 'marketplace.json'), JSON.stringify(index))
+    const pluginPath = join(repo, 'plugins/echarts/plugin.json')
+    const plugin = JSON.parse(readFileSync(pluginPath, 'utf8'))
+    plugin.version = '2.0.0'
+    writeFileSync(pluginPath, JSON.stringify(plugin))
+    const pkgPath = join(repo, 'plugins/echarts/package.json')
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+    delete pkg.wormPrint.i18n
+    writeFileSync(pkgPath, JSON.stringify(pkg))
+
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, force: true, index })
+    expect(existsSync(join(cwd, '.worm-print/i18n/echarts'))).toBe(false)
+    expect(readManifest('.worm-print/plugins', cwd).plugins.echarts.i18n).toBeUndefined()
+  })
+
+  it('force 清单写入失败时回滚已切换的插件与语言目录', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mp-install-'))
+    const repo = makeRepoWithI18n(cwd)
+    await installPlugin({ name: 'echarts', source: 'local', repo, cwd, index: indexOf(repo) })
+    const target = join(cwd, '.worm-print/plugins/echarts')
+    const oldEntry = readFileSync(join(target, 'dist/index.js'), 'utf8')
+    const oldLocale = readFileSync(join(cwd, '.worm-print/i18n/echarts/zh-CN.json'), 'utf8')
+    const oldManifest = readFileSync(join(cwd, '.worm-print/plugins.json'), 'utf8')
+
+    const index = indexOf(repo)
+    index.plugins[0].version = '2.0.0'
+    writeFileSync(join(repo, 'marketplace.json'), JSON.stringify(index))
+    const pluginPath = join(repo, 'plugins/echarts/plugin.json')
+    const plugin = JSON.parse(readFileSync(pluginPath, 'utf8'))
+    plugin.version = '2.0.0'
+    writeFileSync(pluginPath, JSON.stringify(plugin))
+    writeFileSync(join(repo, 'plugins/echarts/dist/index.js'), 'export const ok = "v2"\n')
+    writeFileSync(join(repo, 'plugins/echarts/dist/i18n/zh-CN.json'), JSON.stringify({ echarts: { 'echarts.panel.chart': 'v2' } }))
+
+    chmodSync(join(cwd, '.worm-print'), 0o555)
+    try {
+      await expect(installPlugin({
+        name: 'echarts', source: 'local', repo, cwd, force: true, index,
+      })).rejects.toThrow()
+    } finally {
+      chmodSync(join(cwd, '.worm-print'), 0o755)
+    }
+    expect(readFileSync(join(target, 'dist/index.js'), 'utf8')).toBe(oldEntry)
+    expect(readFileSync(join(cwd, '.worm-print/i18n/echarts/zh-CN.json'), 'utf8')).toBe(oldLocale)
+    expect(readFileSync(join(cwd, '.worm-print/plugins.json'), 'utf8')).toBe(oldManifest)
+    expect(readdirSync(join(cwd, '.worm-print/plugins')).filter(name => /^\.echarts\.(tmp|old)-/.test(name))).toEqual([])
+    expect(readdirSync(join(cwd, '.worm-print/i18n')).filter(name => /^\.echarts\.(tmp|old)-/.test(name))).toEqual([])
   })
 
   it('插件未声明 i18n 时不写语言目录也不写清单字段', async () => {

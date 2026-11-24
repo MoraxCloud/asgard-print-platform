@@ -8,7 +8,11 @@
   "kinds": [],
   "exportFormats": [],
   "peerDeps": {
-    "@worm-print-platform/core": "^1.5.3"
+    "@worm-print-platform/core": "^1.6.4"
   },
-  "files": ["dist/index.js", "dist/index.d.ts", "plugin.json", "README.md"]
+  "files": [
+    "dist",
+    "plugin.json",
+    "README.md"
+  ]
 }

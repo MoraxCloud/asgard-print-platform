@@ -39,6 +39,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: 校验官方插件发布产物
+        run: node scripts/verify-marketplace-release.mjs --require-tags
 
       - name: 安装 Node.js
         # Trusted Publishing 要求 npm CLI ≥ 11.5.1 且 Node ≥ 22.14.0，用 24 保证内置 npm 满足

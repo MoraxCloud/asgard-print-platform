@@ -3,7 +3,7 @@
 [← 返回目录](./README.md) | 下一篇：[Vue 3 接入](./02-vue3.md) →
 
 > 目标：读完你能确定「用哪些包、走哪条打印链路、宿主要提供什么」，并让 AI 工具先装规范再动手。
-> 适用范围：当前稳定主线 1.6.3；`core` / `canvas` / `plugin-kit` 同号同批发版。
+> 适用范围：当前稳定主线 1.6.4；`core` / `canvas` / `plugin-kit` 同号同批发版。
 
 ## 1. 前置条件（Prerequisites）
 
@@ -132,7 +132,7 @@ npx @worm-print-platform/skills worm-print-platform-integration \
 【第 4 步 · 按选择映射依赖（注意包名口径）】
 - 必选 core + canvas + plugin-kit 同号同批安装并提交锁文件，npm ls 核对；Vue 3 优先用 @worm-print-platform/canvas/vue3 门面，其余宿主用 <print-designer> 原生元素。
 - 百度图表：装 npm 兼容镜像 @worm-print-platform/echarts 并从 @worm-print-platform/echarts/ui import 即注册；@worm-print-platform/plugin-echarts 已不在 npm 发布，不要按该名字 npm install（市场分发用 npx @worm-print-platform/marketplace install echarts）。
-- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm，且市场 CLI 安装会因仓库未提交 dist/index.js 而报「插件入口文件不存在」；直接取仓库 marketplace/plugins/data-preview 源码，`npm install && npm run build` 后本地引用。它只提供 openDataPreview() API，入口由宿主挂载。
+- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm；用 npx @worm-print-platform/marketplace install data-preview --force 安装，市场运行产物已纳入 Git。它只提供 openDataPreview() API，入口由宿主挂载。
 - 国际化：按 06-i18n.md 生成、校验语言包并三端接入。
 - 模板管理：参考 https://gitee.com/liulong_oschina/worm-print-platform/tree/master/demos/apps/print-demo。它是参考而非直接复制：其 file:../../../packages/canvas 依赖换成 npm 同号包，MSW + localStorage 模拟后端换成项目真实接口，demo 仅实现链路 A；模板 JSON（elements）与宿主元信息分开存储。
 

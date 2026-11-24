@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.6.3-384BFF" alt="npm version">
+  <img src="https://img.shields.io/badge/npm-v1.6.4-384BFF" alt="npm version">
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
@@ -45,6 +45,10 @@
 [阅读完整使用文档 →](./docs/guide/README.md)
 文档覆盖四类框架接入、多语言配置、插件安装配置与插件开发；内置 AI Agent 接入提示词与官方技能（npx 一键安装），[可直接粘给 AI 工具按规范接入](./docs/guide/01-getting-started.md#5-ai-提示词模板唯一模板源)。AI 工具请先读 [docs/guide/AGENTS.md](./docs/guide/AGENTS.md)。
 
+### 打印插件更新源优先级（AI Agent 必读）
+
+在 `worm-base-ai` 等宿主项目更新打印插件时，严格按照 **npm → Gitee → GitHub** 的顺序：npm 可用时不得切换到 Git 源；npm 不可用时再试 Gitee，最后才试 GitHub。默认 `npx @worm-print-platform/marketplace install <id> --force` 已按该顺序回退；需要指定单一来源时显式使用 `--source npm|gitee|github`，并在交付中记录实际命中的来源。
+
 ### 快速接入
 
 把下面这整段粘给 AI Agent，它会**先只读探测技术栈并列出让你确认，再依次询问接入范围，确认后按规范装技能、读文档、最小化改动**完成接入；无需 clone 本仓。四个范围问题（图表 / 国际化 / 数据源预览 / 模板管理）原样保留，并补齐了仓库要求的门控与包名口径。
@@ -83,7 +87,7 @@
 【第 4 步 · 按选择映射依赖（注意包名口径）】
 - 必选 core + canvas + plugin-kit 同号同批安装并提交锁文件，npm ls 核对；Vue 3 优先用 @worm-print-platform/canvas/vue3 门面，其余宿主用 <print-designer> 原生元素。
 - 百度图表：装 npm 兼容镜像 @worm-print-platform/echarts 并从 @worm-print-platform/echarts/ui import 即注册；@worm-print-platform/plugin-echarts 已不在 npm 发布，不要按该名字 npm install（市场分发用 npx @worm-print-platform/marketplace install echarts）。
-- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm，且市场 CLI 安装会因仓库未提交 dist/index.js 而报「插件入口文件不存在」；直接取仓库 marketplace/plugins/data-preview 源码，`npm install && npm run build` 后本地引用。它只提供 openDataPreview() API，入口由宿主挂载。
+- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm；用 npx @worm-print-platform/marketplace install data-preview --force 安装，市场运行产物已纳入 Git。它只提供 openDataPreview() API，入口由宿主挂载。
 - 国际化：按 06-i18n.md 生成、校验语言包并三端接入。
 - 模板管理：参考 https://gitee.com/liulong_oschina/worm-print-platform/tree/master/demos/apps/print-demo。它是参考而非直接复制：其 file:../../../packages/canvas 依赖换成 npm 同号包，MSW + localStorage 模拟后端换成项目真实接口，demo 仅实现链路 A；模板 JSON（elements）与宿主元信息分开存储。
 
@@ -225,7 +229,7 @@ import '@worm-print-platform/plugin-echarts/ui'
 
 👉 [v1.6.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.6.1)（macOS x64 / arm64、Windows x64 与 Linux x64 均已随 v1.6.1 重新打包上传）
 
-<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方直链与版本号；纯设计器发版请保留历史链接。本轮 v1.6.3 未重打包客户端，mac / win / linux 沿用 v1.6.1 资产。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
+<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方直链与版本号；纯设计器发版请保留历史链接。本轮 v1.6.4 未重打包客户端，mac / win / linux 沿用 v1.6.1 资产。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
 
 ### 下载客户端安装包
 

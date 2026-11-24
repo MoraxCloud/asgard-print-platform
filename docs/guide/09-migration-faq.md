@@ -3,7 +3,7 @@
 [← 返回目录](./README.md) | ← 上一篇：[插件开发](./08-plugin-dev.md) | 下一篇：[数据格式转换](./10-data-transform.md) →
 
 > 适用对象：`@worm-vue3-print/*` 老用户，以及遇到接入问题的开发者。
-> 版本口径：本仓当前稳定主线 1.6.3；老迁移文档中的「1.5.x 主线」是历史表述，以 workspace `package.json` 版本为准。
+> 版本口径：本仓当前稳定主线 1.6.4；老迁移文档中的「1.5.x 主线」是历史表述，以 workspace `package.json` 版本为准。
 
 ## 1. 从 @worm-vue3-print 迁移（摘要）
 
@@ -36,7 +36,7 @@
 
 ## 2. 故障排查 FAQ
 
-- **插件装了不生效**：确认 `dist/` 已预构建、入口副作用模块已被 import（静态 import 或按清单动态加载），构建工具对 core/plugin-kit 做了 `dedupe`；CLI 重装副本后旧副本可能残留，需带 `--force` 重装。详见 [07 §4](./07-plugin-install.md#4-排错troubleshooting)。
+- **插件装了不生效**：确认 `dist/` 已预构建并纳入版本控制、入口副作用模块已被 import（静态 import 或按清单动态加载），构建工具对 core/plugin-kit 做了 `dedupe`；更新时使用带暂存与原子切换的新版 CLI 执行 `install <名称> --force`，失败会保留旧版。入口缺失、升级残留与 i18n 缺键的完整处理见 [07 §4](./07-plugin-install.md#4-排错troubleshooting)。
 - **切换语言后译文不更新**：不要在模块加载期把译文求值成常量——那会冻结为当时的语言。控件文本在渲染时调 `t()` / `ctx.t`；导出常量存 key、用 getter 每次读取取词。详见 [06 §3.5](./06-i18n.md#35-排错与已知限制)。
 - **跨副本注册失效**：core 与 plugin-kit 用 `Symbol.for` 全局注册表保证单实例；若出现「注册了却找不到」，检查是否打包出多份 core / plugin-kit，并做 `dedupe`。
 - **打印不出纸**：按三条链路分别排查——浏览器打印确认 iframe 已加载且调用 `contentWindow.print()`；服务端 PDF 确认 `services/render` 已部署且后端持密钥代理；静默打印确认本机客户端已启动且监听 `127.0.0.1:17521`。

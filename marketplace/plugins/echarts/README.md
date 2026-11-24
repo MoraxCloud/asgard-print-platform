@@ -15,7 +15,7 @@ worm-print-platform 插件市场的百度图表插件：**十类 ECharts 图表�
 npx @worm-print-platform/marketplace install echarts
 ```
 
-> npm 上未发布该主包，`auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；也可显式 `--source gitee` 指定来源。
+> npm 上未发布该主包；更新源严格按 npm → Gitee → GitHub，默认 `auto` 已遵循，也可显式 `--source gitee` 指定来源。
 
 宿主按清单加载插件入口（import 即注册，无需额外调用）：
 

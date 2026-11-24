@@ -2,10 +2,14 @@ node_modules/
 dist/
 out/
 
-# 市场插件语言资源必须入库：Git 源稀疏检出只拿跟踪文件，缺 dist/i18n 会导致安装失败
+# 市场插件运行产物必须入库：Git 源稀疏检出只拿跟踪文件
 !marketplace/plugins/echarts/dist/
 marketplace/plugins/echarts/dist/*
+!marketplace/plugins/echarts/dist/marketplace.js
 !marketplace/plugins/echarts/dist/i18n/
+!marketplace/plugins/echarts/dist/i18n/**
+!marketplace/plugins/data-preview/dist/
+!marketplace/plugins/data-preview/dist/**
 
 # macOS 目录元数据
 .DS_Store
