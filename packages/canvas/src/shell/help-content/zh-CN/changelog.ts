@@ -4,6 +4,13 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
+<h2>V1.6.3<small>(2026-11-24)</small></h2>
+
+<h3>修复</h3>
+<ul>
+  <li><strong>数据绑定串用</strong>：表格 demo 数据源缺失时不再回退到第一个数组；图表显式绑定数据源缺失时保持占位，字段下拉不再混入示例字段，避免条码与图表显示未绑定数据。</li>
+</ul>
+
 <h2>V1.6.2<small>(2026-11-23)</small></h2>
 
 <h3>修复</h3>

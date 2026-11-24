@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.6.2-384BFF" alt="npm version">
+  <img src="https://img.shields.io/badge/npm-v1.6.3-384BFF" alt="npm version">
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
@@ -225,7 +225,7 @@ import '@worm-print-platform/plugin-echarts/ui'
 
 👉 [v1.6.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.6.1)（macOS x64 / arm64、Windows x64 与 Linux x64 均已随 v1.6.1 重新打包上传）
 
-<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方直链与版本号；纯设计器发版请保留历史链接。本轮 v1.6.2 未重打包客户端，mac / win / linux 沿用 v1.6.1 资产。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
+<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方直链与版本号；纯设计器发版请保留历史链接。本轮 v1.6.3 未重打包客户端，mac / win / linux 沿用 v1.6.1 资产。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
 
 ### 下载客户端安装包
 

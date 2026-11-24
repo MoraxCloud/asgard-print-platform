@@ -1,7 +1,7 @@
 {
   "id": "echarts",
   "uniqueId": "worm-echarts",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "name": "百度图表元素",
   "npmName": "@worm-print-platform/plugin-echarts",
   "entry": "dist/marketplace.js",

@@ -18,7 +18,7 @@ import {
 declare const PLUGIN_MARKETPLACE_VERSION: string
 const VERSION = typeof PLUGIN_MARKETPLACE_VERSION !== 'undefined'
   ? PLUGIN_MARKETPLACE_VERSION
-  : '1.6.2'
+  : '1.6.3'
 
 const SOURCES = new Set(['npm', 'github', 'gitee', 'auto', 'local'])
 const PLUGIN_TYPES = new Set(['element', 'functional', 'export'])
