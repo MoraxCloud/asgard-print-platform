@@ -3,6 +3,13 @@ export default {
   id: 'changelog',
   title: 'Release Notes',
   content: `
+<h2>V1.6.3<small>(2026-11-24)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Data-binding fallbacks</strong>: table demo data sources no longer fall back to the first array when missing; charts keep the placeholder when an explicitly bound data source is absent, and field pickers no longer mix in sample-data fields.</li>
+</ul>
+
 <h2>V1.6.2<small>(2026-11-23)</small></h2>
 
 <h3>Fixed</h3>
