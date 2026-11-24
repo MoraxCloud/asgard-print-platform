@@ -1,0 +1,42 @@
+{
+  "provider": "edge-tts",
+  "voice": "zh-CN-YunxiNeural",
+  "generatedAt": "2026-11-24T07:53:40.082Z",
+  "lines": [
+    {
+      "key": "914c94e0b320238a",
+      "text": "先播放一段无字幕模板视频，快速展示面单、价签拼版和资产标签。",
+      "file": "assets/voice/914c94e0b320238a.mp3",
+      "sha256": "4522d29751ac6a1befff51ed703d83f1a62031371f2beb41739768d371ab0d1f",
+      "bytes": 40608
+    },
+    {
+      "key": "e2339c1fc8e15090",
+      "text": "已为你加载快递电子面单。画布、字段和出纸效果都来自真实模板。",
+      "file": "assets/voice/e2339c1fc8e15090.mp3",
+      "sha256": "81fb4592291b44e1a1c934c29f3348239a4b664020324a3291accf93a12513c4",
+      "bytes": 44208
+    },
+    {
+      "key": "0b87805de6885682",
+      "text": "现在打开真实出纸预览。彩排模式只展示纸张，不会连接实体打印机。",
+      "file": "assets/voice/0b87805de6885682.mp3",
+      "sha256": "c34fbdbde49f900b8d6d8710ea7c761ce541fd01a2e385756b86c0f8a001c1ee",
+      "bytes": 42336
+    },
+    {
+      "key": "d5d9a2a2241d40b1",
+      "text": "可以。价签打印会把三十二枚标签拼到一张 A4 纸上，我现在打开真实预览。",
+      "file": "assets/voice/d5d9a2a2241d40b1.mp3",
+      "sha256": "62964030a2c67db6eb6998990075179cd14964f55e13a142e20096639918b4f3",
+      "bytes": 46800
+    },
+    {
+      "key": "84434cdb4dded27b",
+      "text": "已为你加载资产/设备标签。画布、字段和出纸效果都来自真实模板。",
+      "file": "assets/voice/84434cdb4dded27b.mp3",
+      "sha256": "a5f8e252d1cf7be760388584843401e39f782398b54d4b0a57816cd54cb19547",
+      "bytes": 46656
+    }
+  ]
+}
