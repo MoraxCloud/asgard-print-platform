@@ -1,0 +1,42 @@
+{
+  "provider": "edge-tts",
+  "voice": "zh-CN-YunxiNeural",
+  "generatedAt": "2026-11-24T12:54:38.506Z",
+  "lines": [
+    {
+      "key": "intro",
+      "text": "欢迎来到打印模板设计器。接下来依次展示快递面单、价签拼版和资产标签。",
+      "file": "intro.mp3",
+      "sha256": "ad395dcb993b76945452c7b6057506e950463c3b4b5aee8ee5f8466821ec5d12",
+      "bytes": 47664
+    },
+    {
+      "key": "express",
+      "text": "已为你加载快递电子面单。画布、字段和出纸效果都来自真实模板。",
+      "file": "express.mp3",
+      "sha256": "81fb4592291b44e1a1c934c29f3348239a4b664020324a3291accf93a12513c4",
+      "bytes": 44208
+    },
+    {
+      "key": "preview",
+      "text": "现在打开真实出纸预览。这里只展示纸张，不会连接实体打印机。",
+      "file": "preview.mp3",
+      "sha256": "228653c6224d6f6c9ef8c3f1e89ac6b5ae6d68eead63adb57e913f1870c613d0",
+      "bytes": 39024
+    },
+    {
+      "key": "tiling",
+      "text": "可以。价签打印会把三十二枚标签拼到一张 A4 纸上，我现在打开真实预览。",
+      "file": "tiling.mp3",
+      "sha256": "62964030a2c67db6eb6998990075179cd14964f55e13a142e20096639918b4f3",
+      "bytes": 46800
+    },
+    {
+      "key": "asset",
+      "text": "已为你加载资产/设备标签。画布、字段和出纸效果都来自真实模板。",
+      "file": "asset.mp3",
+      "sha256": "a5f8e252d1cf7be760388584843401e39f782398b54d4b0a57816cd54cb19547",
+      "bytes": 46656
+    }
+  ]
+}

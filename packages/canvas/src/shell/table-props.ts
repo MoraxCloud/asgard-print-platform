@@ -3,10 +3,7 @@
 // （样式由 scripts/gen-styles.mjs 从 canvas 派生，类名对不上样式就掉）。
 // 矩阵/边框/合并等操作一律走 @worm-print-platform/core/designer 纯函数，
 // 历史与重绘统一经 store.updateElement 收口（Vue 3 轨 侧靠 Vue 响应式，这里必须显式 emit）。
-import { tr } from './controls.js'
-import { getLocale } from '@worm-print-platform/core/i18n'
-import { translateConstantLabel } from './label-translation.js'
-import { localizedPropertyTip } from './property-tip-translation.js'
+import { tr, trG } from './controls.js'
 import type {
   BorderPreset, ElementOptions, RuntimeElement, TableCell, TableCellBorder,
   TableCellType, TextAlign, TextFit, TableRow, TableRowType,
@@ -18,7 +15,7 @@ import {
   BORDER_LINE_STYLES,
   DEFAULT_BORDER,
   setRowType, splitCells, imageFitOptions, resolveDesignImageSrc, barcodeBarWidthRecommendText, createDefaultOptions,
-  CELL_BORDER_APPLY_HINT, CELL_BORDER_APPLY_HINT_MULTI, CELL_BORDER_APPLY_HINT_MIXED,
+  CELL_BORDER_APPLY_HINT_KEY, CELL_BORDER_APPLY_HINT_MULTI_KEY, CELL_BORDER_APPLY_HINT_MIXED_KEY,
 } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
 import type { El } from '../core/h'
@@ -378,7 +375,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
   const isTextCell = sharedType === 'text'
   const dotAligned = isBarcodeCell && !!val('printerDpi')
   /** 条宽推荐段：只在填了分辨率时出现，只给参考不回写值（与画布单元格台共用 core 文案） */
-  const barWidthRec = barcodeBarWidthRecommendText(val('printerDpi'), val('barWidth'))
+  const barWidthRec = barcodeBarWidthRecommendText(val('printerDpi'), val('barWidth'), ctx.t ?? trG)
   const cellTextFit = isMulti ? groupDraft.values.textFit : resolveCellTextFit(cell0)
   const cellTypeCurrent = isMulti
     ? ('cellType' in groupDraft.values ? (groupDraft.values.cellType ?? 'text') : '')
@@ -474,11 +471,11 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
       isBarcodeCell ? fieldHelp(tr(ctx, 'tableProps.k387'), stepper({
         value: numValue('barQuietZone', cell0.barQuietZone), min: 0, max: 20, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k388')),
         onCommit: v => writeField('barQuietZone', v),
-      }), localizedPropertyTip('cd-bar-quiet-zone', ctx.lang ?? getLocale()), cellReset('barQuietZone')) : '',
+      }), tr(ctx, 'propertyTips.cd-bar-quiet-zone'), cellReset('barQuietZone')) : '',
       isBarcodeCell ? fieldHelp(tr(ctx, 'tableProps.k389'), stepper({
         value: numValue('barHeight', cell0.barHeight), min: 1, max: 100, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k390')),
         onCommit: v => writeField('barHeight', v ?? undefined),
-      }), localizedPropertyTip('cd-bar-height', ctx.lang ?? getLocale()), cellReset('barHeight')) : '',
+      }), tr(ctx, 'propertyTips.cd-bar-height'), cellReset('barHeight')) : '',
       isBarcodeCell
         ? numField(tr(ctx, 'tableProps.k391'), numValue('barFontSize', cell0.barFontSize ?? 10), 'barFontSize',
           { min: 5, max: 24, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k392')) }, cellReset('barFontSize'))
@@ -498,10 +495,10 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
       isQrcodeCell ? fieldHelp(tr(ctx, 'tableProps.k400'), stepper({
         value: numValue('qrQuietZone', cell0.qrQuietZone), min: 0, max: 8, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k401')),
         onCommit: v => writeField('qrQuietZone', v),
-      }), localizedPropertyTip('cd-quiet-zone', ctx.lang ?? getLocale()), cellReset('qrQuietZone')) : '',
+      }), tr(ctx, 'propertyTips.cd-quiet-zone'), cellReset('qrQuietZone')) : '',
 
       isBarcodeCell ? hint(tr(ctx, 'tableProps.k402')) : '',
-      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(imageFitOptions()),
+      (isQrcodeCell || isImageCell) ? selectRowPlain(tr(ctx, 'tableProps.k403'), fitValue, withMulti(imageFitOptions(ctx.t ?? trG)),
         v => { if (v !== '__multi__') writeField('fit', v as TableCell['fit']) }, { reset: cellReset('fit') }) : '',
       isImageCell && !isMulti && cell0.fit === 'cover' ? cropAnchorField(ctx, {
         fieldKey: 'ap-img-object-position', label: tr(ctx, 'tableProps.k404'), src: resolveDesignImageSrc(cell0.formatter), fit: cell0.fit,
@@ -586,7 +583,7 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
         // 裸下拉必须显式赋值当前值（只靠 <option selected> 在内核不一致时会回落到第二项）
         plainSelect(borderStyleDisplay, [
           ...(styleMixed ? [{ value: BORDER_MIXED_VALUE, label: tr(ctx, 'tableProps.k431'), disabled: true }] : []),
-          ...BORDER_LINE_STYLES.map(o => ({ ...o, label: translateConstantLabel(o.label, ctx.lang ?? getLocale()) })),
+          ...BORDER_LINE_STYLES.map(o => ({ ...o, label: tr(ctx, o.labelKey) })),
         ], v => { if (v !== BORDER_MIXED_VALUE) setBorderStyle(v as TableCellBorder['style']) },
         { width: '90px' }),
         h('div', { style: { width: '112px', flexShrink: '0' } }, [stepper({
@@ -622,9 +619,9 @@ export function tableCellGroup(ctx: ShellCtx, el: RuntimeElement): El {
         }),
         h('span', { text: tr(ctx, edge.labelKey) }),
       ]))),
-      hint(translateConstantLabel(isMulti
-        ? CELL_BORDER_APPLY_HINT_MULTI
-        : (mixedActiveAny ? CELL_BORDER_APPLY_HINT_MIXED : CELL_BORDER_APPLY_HINT), ctx.lang ?? getLocale())),
+      hint(tr(ctx, isMulti
+        ? CELL_BORDER_APPLY_HINT_MULTI_KEY
+        : (mixedActiveAny ? CELL_BORDER_APPLY_HINT_MIXED_KEY : CELL_BORDER_APPLY_HINT_KEY))),
 
       numField(tr(ctx, 'tableProps.k439'), numValue('padding', optNum(cell0.padding)), 'padding',
         { min: 0, max: 10, step: 0.5, placeholder: multiPlaceholder(tr(ctx, 'tableProps.k440')) }, cellReset('padding')),

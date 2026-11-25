@@ -176,10 +176,13 @@ function badgeHeightMm(ctx: TableCtx, ri: number): number {
   return tableState(ctx.store).layouts.get(ctx.el.id)?.[ri]?.height ?? ctx.rows[ri]?.height ?? 0
 }
 
-/** demo 数据中 data 行迭代用的列表（与服务端 resolveListSource 优先级一致） */
+/**
+ * demo 数据中 data 行迭代用的列表（与服务端 resolveListSource 优先级一致）。
+ * 显式声明的数据源在 demo 中缺失时不回退到第一个数组，否则条码示例值会取到未绑定数据源的字段。
+ */
 function demoList(ctx: TableCtx): Record<string, any>[] | undefined {
   const ds = ctx.options.dataSource
-  if (ds && Array.isArray(DEFAULT_DEMO_DATA[ds])) return DEFAULT_DEMO_DATA[ds] as Record<string, any>[]
+  if (ds) return Array.isArray(DEFAULT_DEMO_DATA[ds]) ? DEFAULT_DEMO_DATA[ds] as Record<string, any>[] : undefined
   for (const v of Object.values(DEFAULT_DEMO_DATA)) {
     if (Array.isArray(v)) return v as Record<string, any>[]
   }

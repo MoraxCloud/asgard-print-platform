@@ -33,11 +33,11 @@ export const WATERMARK_DEFAULTS = {
   fontSize: 16,
 } as const
 
-/** 密度预设：调大瓦片 → 更疏；调小 → 更密 */
-export const WATERMARK_DENSITY_PRESETS: Record<string, { width: number; height: number; label: string }> = {
-  dense: { width: 200, height: 120, label: '密' },
-  medium: { width: 260, height: 180, label: '中（默认）' },
-  loose: { width: 340, height: 260, label: '疏' },
+/** 密度预设：调大瓦片 → 更疏；调小 → 更密；显示文案走 constants 命名空间 */
+export const WATERMARK_DENSITY_PRESETS: Record<string, { width: number; height: number; labelKey: string }> = {
+  dense: { width: 200, height: 120, labelKey: 'constants.watermark.density.dense' },
+  medium: { width: 260, height: 180, labelKey: 'constants.watermark.density.medium' },
+  loose: { width: 340, height: 260, labelKey: 'constants.watermark.density.loose' },
 }
 
 function clampTile(value: number | undefined, fallback: number, min: number): number {

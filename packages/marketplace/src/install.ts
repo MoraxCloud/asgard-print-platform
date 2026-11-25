@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
@@ -190,6 +190,46 @@ function copyFiles(sourceDir: string, target: string, meta: PluginMeta): void {
   }
 }
 
+interface StagedLocale {
+  staged: string
+  base: string
+  locales: string[]
+}
+
+/**
+ * 把插件包声明的语言资源暂存到统一目录的同级临时目录，不触碰现行资源。
+ * 返回的暂存目录与插件暂存目录一起参与安装事务。
+ */
+function stageLocaleResources(sourceDir: string, pluginTarget: string, id: string): StagedLocale | undefined {
+  const pkgFile = join(sourceDir, 'package.json')
+  if (!existsSync(pkgFile)) return undefined
+  const raw = JSON.parse(readFileSync(pkgFile, 'utf8')) as {
+    wormPrint?: { i18n?: { dir?: string; base?: string } }
+  }
+  const i18n = raw.wormPrint?.i18n
+  if (!i18n?.dir) return undefined
+  const from = join(sourceDir, i18n.dir)
+  if (!existsSync(from)) throw new MarketError('INVALID_PLUGIN', `声明了 wormPrint.i18n 但目录不存在：${i18n.dir}`)
+  const to = join(dirname(dirname(pluginTarget)), 'i18n', id)
+  mkdirSync(dirname(to), { recursive: true })
+  const tmp = mkdtempSync(join(dirname(to), `.${id}.tmp-`))
+  try {
+    cpSync(from, tmp, { recursive: true })
+  } catch (err) {
+    rmSync(tmp, { recursive: true, force: true })
+    throw err
+  }
+  const locales = readdirSync(from).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5))
+  return { staged: tmp, base: i18n.base ?? 'zh-CN', locales }
+}
+
+/** 在目标同级预留唯一备份路径；返回时路径尚未创建。 */
+function reserveBackupPath(target: string, id: string): string {
+  const backup = mkdtempSync(join(dirname(target), `.${id}.old-`))
+  rmSync(backup, { recursive: true, force: true })
+  return backup
+}
+
 export async function installPlugin(options: InstallOptions): Promise<InstallResult> {
   const cwd = options.cwd ?? process.cwd()
   const dir = options.dir ?? '.worm-print/plugins'
@@ -201,7 +241,7 @@ export async function installPlugin(options: InstallOptions): Promise<InstallRes
   const npmExecutor = options.npmExecutor ?? defaultNpmExecutor
   const gitExecutor = options.gitExecutor ?? defaultGitExecutor
   const sources: MarketSource[] = options.source === 'auto'
-    ? ['npm', 'github', 'gitee']
+    ? ['npm', 'gitee', 'github']
     : [options.source]
 
   let lastError: unknown
@@ -222,26 +262,86 @@ export async function installPlugin(options: InstallOptions): Promise<InstallRes
         throw new MarketError('INVALID_PLUGIN', `插件入口文件不存在：${fetched.meta.entry}`)
       }
 
-      mkdirSync(target, { recursive: true })
-      copyFiles(fetched.sourceDir, target, fetched.meta)
-      upsertManifestEntry(dir, id, {
-        version: fetched.version,
-        entry: fetched.meta.entry,
-        kinds: fetched.meta.kinds,
-        exportFormats: fetched.meta.exportFormats,
-        npmName,
-        source: source === 'local'
-          ? { mode: source, path: options.repo }
-          : source === 'npm'
-            ? { mode: source }
-            : {
-              mode: source,
-              repo: options.repo ?? undefined,
-              tag: fetched.stable === false ? undefined : buildGitTag(id, fetched.version),
-            },
-        stable: fetched.stable !== false,
-        installedAt: new Date().toISOString(),
-      }, cwd)
+      mkdirSync(dirname(target), { recursive: true })
+      const pluginStage = mkdtempSync(join(dirname(target), `.${id}.tmp-`))
+      const localeTarget = join(dirname(dirname(target)), 'i18n', id)
+      let localeStage: StagedLocale | undefined
+      let pluginBackup: string | undefined
+      let localeBackup: string | undefined
+      let pluginBackedUp = false
+      let localeBackedUp = false
+      let pluginSwitched = false
+      let localeSwitched = false
+      let committed = false
+      try {
+        copyFiles(fetched.sourceDir, pluginStage, fetched.meta)
+        localeStage = stageLocaleResources(fetched.sourceDir, pluginStage, id)
+
+        if (existsSync(target)) {
+          pluginBackup = reserveBackupPath(target, id)
+          renameSync(target, pluginBackup)
+          pluginBackedUp = true
+        }
+        renameSync(pluginStage, target)
+        pluginSwitched = true
+
+        if (localeStage || existsSync(localeTarget)) {
+          if (existsSync(localeTarget)) {
+            localeBackup = reserveBackupPath(localeTarget, id)
+            renameSync(localeTarget, localeBackup)
+            localeBackedUp = true
+          }
+          if (localeStage) renameSync(localeStage.staged, localeTarget)
+          localeSwitched = true
+        }
+
+        upsertManifestEntry(dir, id, {
+          version: fetched.version,
+          i18n: localeStage
+            ? { base: localeStage.base, locales: localeStage.locales }
+            : undefined,
+          entry: fetched.meta.entry,
+          kinds: fetched.meta.kinds,
+          exportFormats: fetched.meta.exportFormats,
+          npmName,
+          source: source === 'local'
+            ? { mode: source, path: options.repo }
+            : source === 'npm'
+              ? { mode: source }
+              : {
+                mode: source,
+                repo: options.repo ?? undefined,
+                tag: fetched.stable === false ? undefined : buildGitTag(id, fetched.version),
+              },
+          stable: fetched.stable !== false,
+          installedAt: new Date().toISOString(),
+        }, cwd)
+        committed = true
+      } catch (err) {
+        const rollbackErrors: unknown[] = []
+        const attempt = (action: () => void) => {
+          try { action() } catch (rollbackError) { rollbackErrors.push(rollbackError) }
+        }
+        if (pluginSwitched) attempt(() => rmSync(target, { recursive: true, force: true }))
+        if (localeSwitched) attempt(() => rmSync(localeTarget, { recursive: true, force: true }))
+        if (pluginBackedUp && pluginBackup) attempt(() => renameSync(pluginBackup!, target))
+        if (localeBackedUp && localeBackup) attempt(() => renameSync(localeBackup!, localeTarget))
+        if (rollbackErrors.length) {
+          const failure = new Error(`插件安装失败且回滚未完成：${id}；原始错误：${err instanceof Error ? err.message : String(err)}`) as Error & { cause?: unknown }
+          failure.cause = err
+          throw failure
+        }
+        throw err
+      } finally {
+        const cleanup = (path: string) => {
+          try { rmSync(path, { recursive: true, force: true }) } catch { /* 清理失败不得掩盖安装结果 */ }
+        }
+        cleanup(pluginStage)
+        if (localeStage) cleanup(localeStage.staged)
+        if (committed && pluginBackup) cleanup(pluginBackup)
+        if (committed && localeBackup) cleanup(localeBackup)
+      }
+
       return {
         id, version: fetched.version, target, source,
         stable: fetched.stable !== false, created: true,
@@ -270,6 +370,9 @@ export async function removePlugin(options: RemoveOptions): Promise<void> {
       // 卸载失败不阻断本地文件与清单清理
     }
   }
-  rmSync(absPath(join(dir, id), cwd), { recursive: true, force: true })
+  const pluginDir = absPath(join(dir, id), cwd)
+  rmSync(pluginDir, { recursive: true, force: true })
+  // 统一目录 .worm-print/i18n/<id> 是 plugins 目录的同级 i18n 目录
+  rmSync(join(dirname(dirname(pluginDir)), 'i18n', id), { recursive: true, force: true })
   removeManifestEntry(dir, id, cwd)
 }

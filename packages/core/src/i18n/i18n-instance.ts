@@ -5,6 +5,12 @@ import type { i18n as I18nInstance } from 'i18next'
 import { zhCN } from './messages/zh-CN.js'
 import { enUS } from './messages/en-US.js'
 import { thTH } from './messages/th-TH.js'
+import constantsZh from './locales/constants-zh-CN.json'
+import constantsEn from './locales/constants-en-US.json'
+import constantsTh from './locales/constants-th-TH.json'
+import propertyTipsZh from './locales/propertyTips-zh-CN.json'
+import propertyTipsEn from './locales/propertyTips-en-US.json'
+import propertyTipsTh from './locales/propertyTips-th-TH.json'
 
 export type { I18nInstance }
 
@@ -30,16 +36,16 @@ export function detectLocale(): string {
 
 /**
  * 创建 i18next 实例。
- * - 内联三语种内置资源（zh-CN / en-US / th-TH 均用真实包）
+ * - 内联三语种内置资源（zh-CN / en-US / th-TH 均用真实包），含 core/constants/propertyTips 三命名空间
  * - 关闭 key/ns 分隔符与 HTML 转义、改用 {name} 插值
  */
 export function createI18nInstance(): I18nInstance {
   const instance = createInstance()
   instance.init({
     resources: {
-      'zh-CN': { core: zhCN },
-      'en-US': { core: enUS },
-      'th-TH': { core: thTH },
+      'zh-CN': { core: zhCN, constants: constantsZh.constants, propertyTips: propertyTipsZh.propertyTips },
+      'en-US': { core: enUS, constants: constantsEn.constants, propertyTips: propertyTipsEn.propertyTips },
+      'th-TH': { core: thTH, constants: constantsTh.constants, propertyTips: propertyTipsTh.propertyTips },
     },
     lng: detectLocale(),
     fallbackLng: 'zh-CN',

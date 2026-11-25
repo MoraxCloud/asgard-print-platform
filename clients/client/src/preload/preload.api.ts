@@ -16,6 +16,8 @@ export interface McpState {
     name: string
     url: string
     templateName?: string
+    /** 首次 attach 时刻，供「活跃设计器」页按创建时间倒序展示 */
+    createdAt: number
     lastActiveAt: number
   }>
 }

@@ -1,7 +1,6 @@
 // 左栏素材台 / 页签栏 / 状态栏：DOM 类名对齐 Vue 3 轨的
 // LeftPanel.vue、FieldTreePanel.vue、LayerPanel.vue、PageTabs.vue、StatusBar.vue。
 import { tr } from './controls.js'
-import { translateConstantLabel } from './label-translation.js'
 import { PAPER_PRESETS, copyTextToClipboard, getPaperDimensions, groupFields, isWideMaterialLabel } from '@worm-print-platform/core/designer'
 import type { ElementType, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -81,11 +80,12 @@ const ELEMENT_LABEL_KEYS: Record<string, string> = {
   image: 'elementDefinitions.k556', table: 'elementDefinitions.k557', longText: 'elementDefinitions.k558',
   flowList: 'elementDefinitions.k559', hline: 'elementDefinitions.k560', vline: 'elementDefinitions.k561',
   rect: 'elementDefinitions.k562', oval: 'elementDefinitions.k563', pageNumber: 'elementDefinitions.k564',
-  // 图表插件十类（键在 echarts 插件语言包，注册后按全局 locale 解析）
-  barChart: 'echarts.kinds.k84', barHChart: 'echarts.kinds.k86', lineChart: 'echarts.kinds.k88',
-  areaChart: 'echarts.kinds.k90', pieChart: 'echarts.kinds.k92', doughnutChart: 'echarts.kinds.k94',
-  scatterChart: 'echarts.kinds.k96', radarChart: 'echarts.kinds.k98', funnelChart: 'echarts.kinds.k100',
-  gaugeChart: 'echarts.kinds.k102',
+  // 图表插件十类（键在 echarts 插件语言包；旧的数字后缀键已废弃，统一用语义键）
+  barChart: 'echarts.series.typeNames.bar', barHChart: 'echarts.series.typeNames.barH',
+  lineChart: 'echarts.series.typeNames.line', areaChart: 'echarts.series.typeNames.area',
+  pieChart: 'echarts.series.typeNames.pie', doughnutChart: 'echarts.series.typeNames.doughnut',
+  scatterChart: 'echarts.series.typeNames.scatter', radarChart: 'echarts.series.typeNames.radar',
+  funnelChart: 'echarts.series.typeNames.funnel', gaugeChart: 'echarts.series.typeNames.gauge',
 }
 
 /** 素材台分组标题的英文映射（group 来自 core 插件描述符，中文常量） */
@@ -323,7 +323,8 @@ export function renderStatusBar(ctx: ShellCtx) {
   // 与 Vue 3 轨的 paperLabel 同口径：预设名（含尺寸）+ 方向 + 实际长宽 + 出纸旋转提示
   const dim = getPaperDimensions(t)
   const orient = t.orientation === 'landscape' ? tr(ctx, 'panels.k174') : tr(ctx, 'panels.k175')
-  const name = translateConstantLabel(PAPER_PRESETS[t.paperSize]?.label ?? t.paperSize, ctx.lang ?? 'zh-CN')
+  const preset = PAPER_PRESETS[t.paperSize]
+  const name = preset ? tr(ctx, preset.labelKey) : t.paperSize
   const rot = t.outputRotation
   const paper = `${name} ${orient} ${Math.round(dim.width)}×${Math.round(dim.height)}mm${rot ? tr(ctx, 'panels.paperRotated', { rot }) : ''}`
   return h('div', { class: 'status-bar' }, [

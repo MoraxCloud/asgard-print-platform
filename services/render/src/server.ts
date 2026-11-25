@@ -7,9 +7,14 @@ import { BrowserPool } from './browser-pool.js'
 import { MAX_BATCH_COPIES } from '@worm-print-platform/core'
 import { normalizeLocale, setLocale, t } from '@worm-print-platform/core/i18n'
 import type { RenderRequest, PrintTemplateData as TemplateData } from '@worm-print-platform/core'
+import { loadLocalePack } from './locale-pack.js'
 
-// 渲染服务的诊断语言：默认中文，可用 WORM_PRINT_LOCALE 覆盖
-setLocale(normalizeLocale(process.env.WORM_PRINT_LOCALE ?? 'zh-CN'))
+// 渲染服务的诊断语言：默认中文，可用 WORM_PRINT_LOCALE 覆盖；
+// WORM_PRINT_LOCALE_FILE 指定扁平键 JSON（绝对路径或相对进程 cwd），加载失败只告警、不阻塞启动。
+const LOCALE = normalizeLocale(process.env.WORM_PRINT_LOCALE ?? 'zh-CN')
+setLocale(LOCALE)
+const LOCALE_FILE = process.env.WORM_PRINT_LOCALE_FILE
+if (LOCALE_FILE) loadLocalePack(LOCALE_FILE, LOCALE)
 
 /** 校验 printData：对象放行；数组检查非空、上限与每项类型。返回错误信息或 null（与 core 文案一致） */
 function validatePrintData(printData: unknown): string | null {

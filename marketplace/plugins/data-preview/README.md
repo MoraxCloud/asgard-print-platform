@@ -4,23 +4,28 @@
 
 ## 安装
 
-```bash
-npm install @worm-print-platform/plugin-data-preview
-```
-
-或在项目根目录通过市场 CLI 安装：
+本插件不单独发布 npm，在宿主项目根目录通过市场 CLI 安装：
 
 ```bash
 npx @worm-print-platform/marketplace install data-preview
 ```
 
+更新源默认按 npm → Gitee → GitHub 回退；升级时加 `--force`。
+
 ## 使用
 
-```js
-import '@worm-print-platform/plugin-data-preview'
-```
+插件只提供 `openDataPreview()` API，不自动往字段树挂按钮；入口由宿主按需挂载：
 
-import 即注册（与图表插件市场入口同口径）。之后设计器字段树的每个分组标题右侧会出现 👁 按钮，点开即可预览该分组对应的数据。
+```js
+import { openDataPreview } from '../.worm-print/plugins/data-preview/dist/index.js'
+
+openDataPreview({
+  data: designData,
+  fields,
+  groupKey: '系统信息',
+  title: '系统信息',
+})
+```
 
 ## 解析规则
 

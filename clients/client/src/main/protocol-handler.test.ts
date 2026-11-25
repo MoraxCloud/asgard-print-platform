@@ -61,7 +61,7 @@ describe('makeMessageHandler', () => {
   it('template.attach/detach 路由到模板会话注册表（携带连接上下文）', async () => {
     const { handler: h } = makeDeps()
     await expect(
-      h(MESSAGE_TYPES.TEMPLATE_ATTACH, { sessionId: 's'.repeat(20), name: 'x', url: 'http://a/' }, ctx),
+      h(MESSAGE_TYPES.TEMPLATE_ATTACH, { sessionId: 's'.repeat(6), name: 'x', url: 'http://a/' }, ctx),
     ).resolves.toEqual({ sessionId: 'sid' })
     expect(attachCalls).toBe(1)
     await expect(h(MESSAGE_TYPES.TEMPLATE_DETACH, {}, ctx)).resolves.toEqual({})

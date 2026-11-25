@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.6.0-384BFF" alt="npm version">
+  <img src="https://img.shields.io/badge/npm-v1.6.5-384BFF" alt="npm version">
   <img src="https://img.shields.io/badge/node-%E2%89%A520-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/TypeScript-5.4%2B-3178C6" alt="typescript">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
@@ -41,46 +41,77 @@
 
 ## 快速开始
 
-### 宿主最小接入（浏览器打印，零额外基础设施）
+把 worm-print-platform 作为打印插件接入你的系统？
+[阅读完整使用文档 →](./docs/guide/README.md)
+文档覆盖四类框架接入、多语言配置、插件安装配置与插件开发；内置 AI Agent 接入提示词与官方技能（npx 一键安装），[可直接粘给 AI 工具按规范接入](./docs/guide/01-getting-started.md#5-ai-提示词模板唯一模板源)。AI 工具请先读 [docs/guide/AGENTS.md](./docs/guide/AGENTS.md)。
 
-```bash
-# 安装（以 Vue 3 为例）
-npm i @worm-print-platform/canvas @worm-print-platform/core
+### 打印插件更新源优先级（AI Agent 必读）
+
+在 `worm-base-ai` 等宿主项目更新打印插件时，严格按照 **npm → Gitee → GitHub** 的顺序：npm 可用时不得切换到 Git 源；npm 不可用时再试 Gitee，最后才试 GitHub。默认 `npx @worm-print-platform/marketplace install <id> --force` 已按该顺序回退；需要指定单一来源时显式使用 `--source npm|gitee|github`，并在交付中记录实际命中的来源。
+
+### 快速接入
+
+把下面这整段粘给 AI Agent，它会**先只读探测技术栈并列出让你确认，再依次询问接入范围，确认后按规范装技能、读文档、最小化改动**完成接入；无需 clone 本仓。四个范围问题（图表 / 国际化 / 数据源预览 / 模板管理）原样保留，并补齐了仓库要求的门控与包名口径。
+
+```
+请帮我接入 worm-print-platform（仓库：https://gitee.com/liulong_oschina/worm-print-platform）。严格按以下阶段执行，我逐项确认前不要改任何代码；提问一次只问一个问题。
+
+【第 1 步 · 只读探测当前项目技术栈（不改代码）】
+检查 package.json 的 dependencies / devDependencies、构建配置（vite / webpack / rsbuild 等）、
+源码目录与现有代码风格、是否已装 @worm-print-platform/* 及版本、现有请求封装与 UI 组件库。
+据此判断：宿主框架与版本（Vue 3 / Vue 2.7 / React 18 / jQuery 或原生 JS）、构建器、包管理器。
+探测不到标「未知」不要猜测；先把探测结果列出来让我确认，不对的地方我会纠正。
+
+【第 2 步 · 依次确认接入范围（确认前不要动手）】
+探测结果确认后，按顺序逐个问我以下四个问题：
+1) 是否需要百度图表插件，用于图表打印？
+2) 是否需要国际化配置，用于切换多语言？
+3) 是否需要数据源预览功能？
+4) 是否创建或者修改现有的打印模板管理功能（打印模板的增删改查）？
+另需一并确认打印链路：A 浏览器打印 / B 服务端 PDF / C 桌面静默打印（可多选，交互式默认 A）。
+我的回答决定后续装哪些包、技能与文档，未确认不要开始实现。
+
+【第 3 步 · 确认后装技能、读规范（门控）】
+1) 在当前项目根目录安装官方技能（默认 GitHub→Gitee 回退，npx 404 时按仓库 skills/<技能名>/ 源码回退）：
+   npx @worm-print-platform/skills worm-print-platform-integration --force
+   需要国际化再加 worm-print-platform-i18n；需要 AI 实时读写画布再加 worm-print-platform-mcp。
+2) 完整阅读装好的 .agents/skills/<技能名>/SKILL.md 与 references/ 相关文档；
+   必读 docs/guide/AGENTS.md（文档地图与硬性约束）、docs/guide/01-getting-started.md（链路选型与包清单）。
+   按我的回答补读：框架篇 docs/guide/02-vue3.md / 03-vue2.md / 04-react.md / 05-jquery.md；
+   图表与数据源预览 → 07-plugin-install.md；国际化 → 06-i18n.md；
+   模板管理 → demos/apps/print-demo 的 README.md 与 PROMPT.md。
+   以上路径均在 https://gitee.com/liulong_oschina/worm-print-platform/raw/master/ 下。
+3) 先输出「已读规范确认」：逐个列出文件路径 + 与本任务相关的 3 条以上约束；
+   任一文档缺失或读不懂先提问，禁止臆测 API。
+
+【第 4 步 · 按选择映射依赖（注意包名口径）】
+- 必选 core + canvas + plugin-kit 同号同批安装并提交锁文件，npm ls 核对；Vue 3 优先用 @worm-print-platform/canvas/vue3 门面，其余宿主用 <print-designer> 原生元素。
+- 百度图表：装 npm 兼容镜像 @worm-print-platform/echarts 并从 @worm-print-platform/echarts/ui import 即注册；@worm-print-platform/plugin-echarts 已不在 npm 发布，不要按该名字 npm install（市场分发用 npx @worm-print-platform/marketplace install echarts）。
+- 数据源预览：市场 id 为 data-preview，但 @worm-print-platform/plugin-data-preview 未发布 npm；用 npx @worm-print-platform/marketplace install data-preview --force 安装，市场运行产物已纳入 Git。它只提供 openDataPreview() API，入口由宿主挂载。
+- 国际化：按 06-i18n.md 生成、校验语言包并三端接入。
+- 模板管理：参考 https://gitee.com/liulong_oschina/worm-print-platform/tree/master/demos/apps/print-demo。它是参考而非直接复制：其 file:../../../packages/canvas 依赖换成 npm 同号包，MSW + localStorage 模拟后端换成项目真实接口，demo 仅实现链路 A；模板 JSON（elements）与宿主元信息分开存储。
+
+【第 5 步 · 最小化实现与验收】
+复用项目现有请求封装、UI 组件库与代码风格，不引额外 UI 依赖；库不内置业务后端，按「宿主最小清单」实现前端片段与后端契约；不使用文档之外的组件方法/事件（如 back、setTemplateMeta）。
+验收：类型检查/构建通过；设计器保存模板 JSON 后重开能回填；最小链路跑通（保存 → 预览渲染真实业务数据 → 打印）；勾选图表则图表元素可见，勾选数据源预览则入口可打开；命令标注 cwd，失败先区分环境限制与文档缺口。
 ```
 
-```ts
-// main.ts — 注册设计器
-import { registerAll } from '@worm-print-platform/canvas'
-registerAll()
+> 上述路径均来自 Gitee 镜像的 `master` 分支 raw 文件；如需 GitHub 源，把域名换成 `https://raw.githubusercontent.com/worm-longliu/worm-print-platform/master/`。
+
+**给 AI Agent 的提示词片段**（安装官方技能版，可整段复制）：
+
+```
+请先在项目根目录执行以下命令安装 worm-print-platform 的官方技能规范，再开始接入开发：
+
+npx @worm-print-platform/skills worm-print-platform-integration --force
+
+默认安装到 .agents/skills/worm-print-platform-integration/（OpenAI 规范位置）。
+默认源 GitHub 优先、失败自动回退 Gitee；需要指定 Gitee 源时加 --repo 参数；
+需要其他技能目录（如 .claude/skills / .qoder/skills）时加 --dir 指定。
+安装完成后，请完整阅读该目录下的 SKILL.md 与 references/ 中与任务相关的文档。
 ```
 
-```html
-<!-- App.vue 模板里挂载；对象/函数入参赋 property，不要走 attribute -->
-<print-designer
-  ref="designer"
-  is-edit="true"
-  show-help="true"
-  @save="onSave"
-  @preview="onPreview"
-/>
-```
-
-```ts
-// 注入字段与模板（挂载后赋 property，避开 attribute 字符串化）
-const el = designer.value
-el.fields = [{ fieldKey: 'orderNo', fieldLabel: '单号' }]
-el.template = templateJson
-el.uploadImage = (file: File) => uploadToServer(file)
-```
-
-```ts
-// 浏览器渲染 + 打印（零基础设施）
-import { renderHtmlPages, browserCodeRenderer } from '@worm-print-platform/core'
-const pages = await renderHtmlPages(templateJson, printData, location.origin, browserCodeRenderer)
-// pages 写进 iframe → iframe.contentWindow.print()
-```
-
-> Vue 3 宿主也可用 `/vue3` 组件门面：`import { PrintDesigner } from '@worm-print-platform/canvas/vue3'`，沿用 props / 事件 / ref 写法。
+详细说明见 [docs/README.md · 技能安装方法](./docs/README.md#技能安装方法提示词第-0-步的通用说明)。
 
 ### 仓库开发
 
@@ -144,7 +175,7 @@ marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 | `packages/core` | `@worm-print-platform/core` | ✅ npm | 表达式引擎 + 同构渲染管线 + 框架无关设计器内核 |
 | `packages/plugin-kit` | `@worm-print-platform/plugin-kit` | ✅ npm | 插件设计器 UI 契约与注册表（纯 TS/DOM） |
 | `packages/canvas` | `@worm-print-platform/canvas` | ✅ npm | 设计器权威实现（Custom Elements + Shadow DOM） |
-| `marketplace/plugins/echarts` | `@worm-print-platform/plugin-echarts` | ✅ npm | 百度图表插件唯一源码真源（市场主口径） |
+| `marketplace/plugins/echarts` | `@worm-print-platform/plugin-echarts` | ❌ 市场分发 | 百度图表插件唯一源码真源（不再单独发 npm，走市场 CLI） |
 | `packages/echarts` | `@worm-print-platform/echarts` | ✅ npm | 同一源码生成的兼容镜像包（十类 kind，存量依赖零改动） |
 | `packages/skills` | `@worm-print-platform/skills` | ✅ npm | 命令行技能安装器（bin：`worm-print-skills`） |
 | `packages/marketplace` | `@worm-print-platform/marketplace` | ✅ npm | 插件市场 CLI（bin：`worm-print-marketplace`，三源安装） |
@@ -159,10 +190,10 @@ marketplace（npm 发布：插件市场 CLI，三源安装单个插件）
 
 | 框架 | 文档 | 接入形态 | 可运行示例 | 端口 |
 | --- | --- | --- | --- | --- |
-| Vue 3 | [docs/vue3.md](./docs/vue3.md) | `@worm-print-platform/canvas/vue3` 组件门面 | `demos/apps/vue3` | 9331 |
-| Vue 2.7 | [docs/vue2.md](./docs/vue2.md) | `<print-designer>` + `registerAll()` | `demos/apps/vue2` | 9332 |
-| React 18 | [docs/react.md](./docs/react.md) | `<print-designer>` + `addEventListener` | `demos/apps/react` | 9335 |
-| jQuery / 原生 JS | [docs/jquery.md](./docs/jquery.md) | UMD 直挂 `window.WormPrintCanvas` | `demos/apps/jquery` | 9334 |
+| Vue 3 | [用户使用文档 · Vue 3](./docs/guide/02-vue3.md) | `@worm-print-platform/canvas/vue3` 组件门面 | `demos/apps/vue3` | 9331 |
+| Vue 2.7 | [用户使用文档 · Vue 2.7](./docs/guide/03-vue2.md) | `<print-designer>` + `registerAll()` | `demos/apps/vue2` | 9332 |
+| React 18 | [用户使用文档 · React 18](./docs/guide/04-react.md) | `<print-designer>` + `addEventListener` | `demos/apps/react` | 9335 |
+| jQuery / 原生 JS | [用户使用文档 · jQuery/原生 JS](./docs/guide/05-jquery.md) | UMD 直挂 `window.WormPrintCanvas` | `demos/apps/jquery` | 9334 |
 
 - 老用户迁移：[docs/migration-worm-vue3-print.md](./docs/migration-worm-vue3-print.md)
 - 五个 demo 的总览页在 `:9300`，一条命令拉起：`npm run dev:demos:all`
@@ -187,7 +218,8 @@ import '@worm-print-platform/plugin-echarts/ui'
 自定义插件写法见 [packages/plugin-kit/README](./packages/plugin-kit/README.md)。
 
 插件市场（索引与插件源码常驻本仓 `marketplace/`，三源安装、缺省最新稳定版）见
-[docs/plugin-marketplace.md](./docs/plugin-marketplace.md)。百度图表插件源码真源在
+[用户使用文档 · 插件安装与配置](./docs/guide/07-plugin-install.md)，索引格式与命名规范见
+[插件市场规范](./docs/plugin-market-spec.md)。百度图表插件源码真源在
 `marketplace/plugins/echarts/`，同一源码发布 `@worm-print-platform/plugin-echarts`（市场主口径）与
 `@worm-print-platform/echarts`（兼容镜像，存量依赖零改动），两者 README 统一为市场口径。
 
@@ -195,84 +227,47 @@ import '@worm-print-platform/plugin-echarts/ui'
 
 客户端用于**链路 C**，安装包随 GitHub Releases 分发：
 
-👉 [v1.5.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.5.1)（客户端源码自 v1.5.1 起无变更，可继续使用；新版本仅涉及设计器与示例）
+👉 [v1.6.1 安装包 & SHA256SUMS](https://github.com/worm-longliu/worm-print-platform/releases/tag/v1.6.1)（macOS x64 / arm64、Windows x64 与 Linux x64 均已随 v1.6.1 重新打包上传）
 
-<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方 v1.5.1 直链与版本号；纯设计器发版请保留历史链接。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
+<!-- 维护提示：仅当新版确实重新打包并上传客户端安装包（release 资产存在）时，才替换下方直链与版本号；纯设计器发版请保留历史链接。本轮 v1.6.4 未重打包客户端，mac / win / linux 沿用 v1.6.1 资产。规则见 .agents/skills/releasing-official-version/references/version-carriers.md -->
 
-| 平台 | 架构 | 安装包 | 下载链接 |
-| --- | --- | --- | --- |
-| macOS | x64 (Intel) | `WormPrintClient-1.5.1-mac-x64.dmg` | [📋 复制下载链接](#client-mac-x64) |
-| macOS | arm64 (Apple Silicon) | `WormPrintClient-1.5.1-mac-arm64.dmg` | [📋 复制下载链接](#client-mac-arm64) |
-| Windows | x64 | `WormPrintClient-1.5.1-win-x64.exe` | [📋 复制下载链接](#client-win-x64) |
-| Linux | x64 (deb) | `WormPrintClient-1.5.1-linux-amd64.deb` | [📋 复制下载链接](#client-linux-deb) |
-| Linux | x64 (rpm) | `WormPrintClient-1.5.1-linux-x86_64.rpm` | [📋 复制下载链接](#client-linux-rpm) |
-| Linux | x64 (AppImage) | `WormPrintClient-1.5.1-linux-x86_64.AppImage` | [📋 复制下载链接](#client-linux-appimage) |
+### 下载客户端安装包
 
-国内直连下载较慢，可展开对应平台的「复制下载链接」并复制地址，粘贴到迅雷新建任务下载（无需登录）。
+安装包**不在 npm 发布，也不入仓库**，而是作为 GitHub 发行版（Releases）的附件提供：
 
-##### client-mac-x64
+> **[GitHub Releases 页面](https://github.com/worm-longliu/worm-print-platform/releases)** —— 点击下载，无需登录。macOS / Windows / Linux 最新安装包均来自 `v1.6.1`（正式版，Release 标记为 Prerelease=false）。
 
-<details><summary>macOS x64 · 📋 复制下载链接</summary>
+下表是客户端安装包完整直链，可直接点击或复制。macOS / Windows / Linux 均为 `v1.6.1` 重新打包版本。
 
-```text
-https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-mac-x64.dmg
+| 安装包直链 | 适用系统 |
+| --- | --- |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-mac-x64.dmg](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-mac-x64.dmg) | Intel Mac |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-mac-arm64.dmg](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-mac-arm64.dmg) | Apple Silicon Mac |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-win-x64.exe](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-win-x64.exe) | Windows 10 / 11 x64（NSIS 安装程序，可选择安装目录、创建桌面快捷方式） |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-linux-amd64.deb](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-linux-amd64.deb) | Debian / Ubuntu x64（`sudo apt install ./<文件>`） |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-linux-x86_64.rpm](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-linux-x86_64.rpm) | Fedora / RHEL / openSUSE x64（`sudo rpm -i <文件>`） |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-linux-x86_64.AppImage](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/WormPrintClient-1.6.1-linux-x86_64.AppImage) | 任意 x64 发行版，免安装单文件（需 `libfuse2`） |
+| [https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/SHA256SUMS.txt](https://github.com/worm-longliu/worm-print-platform/releases/download/v1.6.1/SHA256SUMS.txt) | v1.6.1 macOS / Windows / Linux 安装包的 SHA-256 校验和 |
+
+下载不动或速度很慢时（GitHub 附件在国内直连常掉速，大文件容易中途断开）：
+
+- 复制上表任意一条链接，粘贴到**迅雷**、IDM、qBittorrent 等支持断点续传的下载工具新建任务即可，安装包本身没有限制来源；用浏览器另存为时若提示失败，重试同一链接通常就能续上。
+- 连 [Releases 页面](https://github.com/worm-longliu/worm-print-platform/releases) 本身都打不开时，说明是 GitHub 访问受阻而非文件过大：换用可访问 GitHub 的网络或代理后重试，或直接按下方[手工打包速查](#手工打包速查)自行打包（Gitee 侧的发行版只有源码包，没有安装包附件）。
+- 下载工具有时会在文件名后追加 `(1)` 等重复标记，安装前核对一下文件名即可。
+- 无论走哪条途径，装前都用 `SHA256SUMS.txt` 核对一次：校验和不一致说明文件不完整或被替换，请重新下载。
+
+下载后可与安装包放在同一目录校验完整性（Linux 用 `sha256sum -c`）：
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
 ```
 
-</details>
-
-##### client-mac-arm64
-
-<details><summary>macOS arm64 · 📋 复制下载链接</summary>
-
-```text
-https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-mac-arm64.dmg
-```
-
-</details>
-
-##### client-win-x64
-
-<details><summary>Windows x64 · 📋 复制下载链接</summary>
-
-```text
-https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-win-x64.exe
-```
-
-</details>
-
-##### client-linux-deb
-
-<details><summary>Linux deb · 📋 复制下载链接</summary>
-
-```text
-https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-amd64.deb
-```
-
-</details>
-
-##### client-linux-rpm
-
-<details><summary>Linux rpm · 📋 复制下载链接</summary>
-
-```text
-https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-x86_64.rpm
-```
-
-</details>
-
-##### client-linux-appimage
-
-<details><summary>Linux AppImage · 📋 复制下载链接</summary>
-
-```text
-https://github.com/worm-longliu/worm-print-platform/releases/download/v1.5.1/WormPrintClient-1.5.1-linux-x86_64.AppImage
-```
-
-</details>
+- **安装包未做 Developer ID 签名与公证**（本项目没有 Apple Developer ID 与 Windows 签名证书），首次打开会被系统拦截：macOS 执行 `xattr -dr com.apple.quarantine /Applications/WormPrintClient.app`，或在 系统设置 → 隐私与安全性 点「仍要打开」；Windows 在 SmartScreen 提示「未知发布者」页点「更多信息」→「仍要运行」。
+- **Linux 三个包在 x64 的 Docker 容器内交叉构建，未经 Linux 真机安装与出纸验证**（出纸依赖 CUPS）。deb/rpm 内的 `chrome-sandbox` 为非 setuid（`0755`），启动若报 `SUID sandbox helper` 错误，需启用非特权用户命名空间或临时加 `--no-sandbox`；只提供 fuse3 的发行版（如 Ubuntu 24.04）跑 AppImage 前先装 `libfuse2`，或用 `--appimage-extract-and-run`。本版不提供 `snap` 与 Linux arm64 包。
+- 发行版里同批出现的 `*.zip` 与 `*.blockmap` 是自动更新用的中间产物，客户端未接自动更新，**请下载 `.dmg` / `.exe` / `.deb` / `.rpm` / `.AppImage`**。
+- **Gitee 用户请前往上面的 GitHub 地址下载**：Gitee 发行版附件单文件上限 100MB，超过该体积的安装包只能挂在 GitHub。
 
 客户端本地 WebSocket 默认监听 `127.0.0.1:17521`，宿主用 `@worm-print-platform/core/client` 的 `PrintClient.printHtml()` 静默出纸，无对话框。
-
-> macOS 首次打开若提示"无法验证开发者"，在「系统设置 → 隐私与安全性」中允许打开即可（未做 Apple 公证）。
 
 ### 手工打包速查
 
@@ -289,54 +284,37 @@ npm run pack:client:release  # 安装包 + SHA256SUMS + 发行版上传命令
 
 ## AI Agent 配套技能
 
-仓库随源码维护两个技能包（`skills/` 目录），AI Agent 接入时先装规范再动手：
+仓库随源码维护三个技能包（`skills/` 目录），AI Agent 接入时先装规范再动手：
 
 | 技能 | 覆盖范围 |
 | --- | --- |
 | `worm-print-platform-integration` | 全形态宿主集成：NPM 门面与 `<print-designer>` 契约、三条打印链路、故障排查 |
+| `worm-print-platform-i18n` | 自定义语言包：骨架生成、校验、人工审核对照表、三端接入与排错 |
 | `worm-print-platform-mcp` | 桌面 MCP 工具：模板会话、渲染预览、视觉回读与参考图比对 |
 
 ### 快捷安装（可一键复制）
 
-**Gitee 优先，默认目录 `.agents/skills/`**：
+默认源 **GitHub 优先，失败自动回退 Gitee**；默认目录 `.agents/skills/`。在**你的项目根目录**执行：
 
 ```bash
-# 在你的项目根目录执行。先试 Gitee（国内快），网络不通时去掉 --repo 自动回退 GitHub
-npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
-npx @worm-print-platform/skills worm-print-platform-mcp           --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
+npx @worm-print-platform/skills worm-print-platform-integration --force
+npx @worm-print-platform/skills worm-print-platform-i18n       --force
+npx @worm-print-platform/skills worm-print-platform-mcp         --force
 ```
 
-**网络回退（GitHub 兜底）**：
+**指定 Gitee 源**（国内网络快，可选）：
 
 ```bash
-# 不带 --repo 时默认 GitHub 优先、失败自动回退 Gitee
-npx @worm-print-platform/skills worm-print-platform-integration --force
-npx @worm-print-platform/skills worm-print-platform-mcp           --force
+npx @worm-print-platform/skills worm-print-platform-integration \
+  --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
 ```
 
 **自定义安装目录**（可选）：
 
 ```bash
 # 常见目录：Claude Code → .claude/skills · Qoder → .qoder/skills · 用户级 → ~/.agents/skills
-npx @worm-print-platform/skills worm-print-platform-integration \
-  --repo https://gitee.com/liulong_oschina/worm-print-platform.git \
-  --dir .claude/skills --force
+npx @worm-print-platform/skills worm-print-platform-integration --dir .claude/skills --force
 ```
-
-**给 AI Agent 的提示词片段**（可整段复制）：
-
-```
-请先在项目根目录执行以下命令安装 worm-print-platform 的官方技能规范，再开始接入开发：
-
-npx @worm-print-platform/skills worm-print-platform-integration --repo https://gitee.com/liulong_oschina/worm-print-platform.git --force
-
-默认安装到 .agents/skills/worm-print-platform-integration/（OpenAI 规范位置）。
-若 Gitee 网络不通，去掉 --repo 参数即可自动回退 GitHub；
-需要其他技能目录（如 .claude/skills / .qoder/skills）时加 --dir 指定。
-安装完成后，请完整阅读该目录下的 SKILL.md 与 references/ 全部文件。
-```
-
-详细说明见 [docs/README.md · 技能安装方法](./docs/README.md#技能安装方法提示词第-0-步的通用说明)。
 
 ## 发布
 
@@ -388,6 +366,8 @@ CI 发布走 `.github/workflows/publish-npm.yml`，认证优先 Trusted Publishi
 | <img src="./docs/images/douyin.svg" width="18" alt="抖音" /> | 程\*\*\*\*已 | 赞赏 |
 | <img src="./docs/images/douyin.svg" width="18" alt="抖音" /> | 天\*\*\*\*夜 | 赞赏 |
 | <img src="./docs/images/github.svg" width="18" alt="GitHub" /> | C\*\*\*\*g | 代码贡献（特别鸣谢：多次提交 PR） |
+| <img src="./docs/images/wechat.svg" width="18" alt="微信" /> | l\*\*\*\*n | 赞赏 |
+| <img src="./docs/images/wechat.svg" width="18" alt="微信" /> | 蚂\*\*\*\*象 | 赞赏 |
 
 ## License
 

@@ -17,7 +17,7 @@ import { ProtocolFailure } from './protocol-error.js'
 export { type OpenTemplateSession }
 
 const MAX_SESSIONS = 32
-const SESSION_ID_RE = /^[A-Za-z0-9_-]{16,128}$/
+const SESSION_ID_RE = /^[a-z0-9]{6}$/
 const NAME_LIMIT = 120
 const URL_LIMIT = 512
 const GET_TIMEOUT_MS = 5_000
@@ -34,6 +34,8 @@ interface BoundSession {
   name: string
   url: string
   templateName?: string
+  /** 首次 attach 时刻；同源重连不重置，供设置页按创建时间倒序展示 */
+  createdAt: number
   lastActiveAt: number
   ws: WebSocket
   origin: string
@@ -84,7 +86,7 @@ export class TemplateSessionRegistry {
       throw new ProtocolFailure('INVALID_REQUEST', 'template.attach 需要 sessionId/name/url 字符串字段')
     }
     if (!SESSION_ID_RE.test(p.sessionId)) {
-      throw new ProtocolFailure('INVALID_REQUEST', 'sessionId 必须是 16–128 位 [A-Za-z0-9_-] 随机串')
+      throw new ProtocolFailure('INVALID_REQUEST', 'sessionId 必须是 6 位 [a-z0-9] 随机串')
     }
     // 每个浏览器连接最多绑定一个模板会话：已绑定其他 sessionId 直接拒绝，不新增也不覆盖
     for (const [id, bound] of this.sessions) {
@@ -115,6 +117,7 @@ export class TemplateSessionRegistry {
       ...(typeof p.templateName === 'string' && p.templateName.trim()
         ? { templateName: p.templateName.slice(0, NAME_LIMIT) }
         : {}),
+      createdAt: existing?.createdAt ?? Date.now(),
       lastActiveAt: Date.now(),
       ws: ctx.ws,
       origin,
@@ -136,12 +139,13 @@ export class TemplateSessionRegistry {
 
   list(): OpenTemplateSession[] {
     return [...this.sessions.values()]
-      .sort((a, b) => b.lastActiveAt - a.lastActiveAt)
+      .sort((a, b) => b.createdAt - a.createdAt)
       .map(s => ({
         sessionId: s.sessionId,
         name: s.name,
         url: s.url,
         ...(s.templateName ? { templateName: s.templateName } : {}),
+        createdAt: s.createdAt,
         lastActiveAt: s.lastActiveAt,
       }))
   }
@@ -195,6 +199,7 @@ export class TemplateSessionRegistry {
           name: s.name,
           url: s.url,
           ...(s.templateName ? { templateName: s.templateName } : {}),
+          createdAt: s.createdAt,
           lastActiveAt: s.lastActiveAt,
         },
         revision: result.revision,

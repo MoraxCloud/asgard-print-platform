@@ -1,10 +1,10 @@
 /*!
- * @worm-print-platform/plugin-echarts v1.1.0
+ * @worm-print-platform/plugin-echarts v1.6.5
  * Copyright (c) 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-FileCopyrightText: 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-License-Identifier: MIT
- */import { G as a } from "./plugin-C1jOjWQq.js";
-import { C as s, a as i, b as C, c as n, d as o, i as g, j as l, l as h, m as u, n as D, o as P, p as T, q as m, r as I, u as f, v as d, B as p, D as _, H as c, I as A, J as H, M as N } from "./plugin-C1jOjWQq.js";
+ */import { G as a } from "./plugin-onif6lqS.js";
+import { C as s, a as i, b as C, c as n, d as o, i as g, j as l, l as h, m as u, n as D, o as P, p as T, q as m, r as I, u as f, v as d, B as p, D as _, H as c, I as A, J as H, M as N } from "./plugin-onif6lqS.js";
 a();
 export {
   s as CHART_KINDS,

@@ -121,6 +121,22 @@ export const zhCN = {
   'crop.fitNone': '原始尺寸',
   'crop.fitScaleDown': '缩小（保持比例）',
 
+  // 条码条宽推荐（core/render/barcode-dot 单一来源，元素台与单元格台共用）
+  'barcode.recommendOk': '按 {dpi}dpi 推荐条宽倍率 {rec}（每模块 {recDots} 个打印点 = {width}mm，取达到 {min}mm 下限的最小档）；当前倍率 {current} 折算为 {curDots} 点 / {curWidth}mm，已达标。这里只提示，不会替你改值',
+  'barcode.recommendLow': '按 {dpi}dpi 推荐条宽倍率 {rec}（每模块 {recDots} 个打印点 = {width}mm，取达到 {min}mm 下限的最小档）；当前倍率 {current} 只有 {curDots} 点 / {curWidth}mm，低于下限。这里只提示，不会替你改值',
+
+  // 码类旋转门槛说明（属性台旋转行下方常驻）
+  'code.rotateNote': '条码与二维码仅支持 90° 步进；任意角度需 385dpi 以上打印头',
+
+  // 颜色选择器面板（plugin-kit/color-picker）
+  'colorPicker.pickColor': '颜色选择',
+  'colorPicker.hexValue': '颜色值',
+  'colorPicker.customColor': '自定义颜色',
+  'colorPicker.hue': '色相',
+  'colorPicker.commonColors': '常用颜色',
+  'colorPicker.clear': '清除选中的颜色',
+  'colorPicker.clearShort': '清除',
+
   // 设计器外壳
   'save.geometryWarningConfirm': '出纸提示：部分内容超出纸面，打印时会被裁切。\n是否接受裁切并继续保存？\n点击“确定”继续保存，点击“取消”返回修改。\n\n{warnings}',
   'store.tilingSinglePage': '开启拼版后只能有一个设计页面',

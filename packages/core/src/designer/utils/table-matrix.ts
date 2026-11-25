@@ -397,17 +397,14 @@ export function applyBorderPreset(
   }
 }
 
-/** 线型/宽度/颜色是待应用规格（初值取自选区真实边框），必须点预设或勾单边才落盘；文案画布与本包单元格台共用一条 */
-export const CELL_BORDER_APPLY_HINT
-  = '线型 / 宽度 / 颜色是待应用规格：选中格已有的边框规格一致时会填进这三行；四边不一致的项显示「混合」，一条边都没有时显示「无 / 0」。改完点「全部 / 外侧 / 内部」或勾选上、下、左、右某条边才会写入选中的单元格；「无」是清除边框'
+/** 线型/宽度/颜色是待应用规格（初值取自选区真实边框）的文案语义键 */
+export const CELL_BORDER_APPLY_HINT_KEY = 'constants.hint.border.pending'
 
-/** 多选态边框说明：多选不回显单格，三行只作批写规格；与单选的「取自选区」口径区分 */
-export const CELL_BORDER_APPLY_HINT_MULTI
-  = '多选时不回显单格边框：线型 / 宽度 / 颜色按当前设置作为批写规格，点「全部 / 外侧 / 内部」或勾选某条边后写入所有选中格；「无」是清除边框'
+/** 多选态边框说明语义键：多选不回显单格，三行只作批写规格 */
+export const CELL_BORDER_APPLY_HINT_MULTI_KEY = 'constants.hint.border.multi'
 
-/** 单格四边规格不一致的说明：不一致的字段显示「混合」，未改项批写仍按缺省档 */
-export const CELL_BORDER_APPLY_HINT_MIXED
-  = '当前单元格四边边框规格不一致：带「混合」的项不谎报，未改项在点「全部 / 外侧 / 内部」或勾选单边时按缺省档（实线 0.75pt）写入，改任一项即按该值批写'
+/** 单格四边规格不一致的说明语义键：不一致的字段显示「混合」，未改项批写仍按缺省档 */
+export const CELL_BORDER_APPLY_HINT_MIXED_KEY = 'constants.hint.border.mixed'
 
 /**
  * 单边写入：只动那一条边，其余三边原样保留。

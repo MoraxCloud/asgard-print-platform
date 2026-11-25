@@ -9,7 +9,7 @@ import { buildFontFaceCss, normalizeTemplate, validateTiling, collectPrintWarnin
 import { fitTextNode } from '@worm-print-platform/core/browser'
 import { getElementUIEntries, subscribeElementUIRegistry } from '@worm-print-platform/plugin-kit'
 import {
-  createTranslator, getLocale, normalizeLocale, registerLocale,
+  createTranslator, getLocale, normalizeLocale,
   t as globalT, subscribe as subscribeI18n,
 } from '@worm-print-platform/core/i18n'
 import type { CustomLocaleMessages } from '@worm-print-platform/core/i18n'
@@ -40,7 +40,7 @@ import { disposeAllElementUI } from './shell/plugin-ui'
 import { abortTableColResize, renderTableContextMenu } from './shell/table'
 import type { TableMenuState } from './shell/table'
 import { renderExpressionEditor, normalizeFieldDisplay } from './shell/expression-editor'
-import type { ExpressionEditorTarget, FieldDisplayMode } from './shell/expression-editor'
+import type { ExpressionEditorOptions, ExpressionEditorTarget, FieldDisplayMode } from './shell/expression-editor'
 import { mountHelpModal } from './shell/help-modal'
 import { applyPropertySearch } from './shell/property-search'
 import { isExpressionText } from './shell/watermark'
@@ -152,9 +152,7 @@ export class PrintDesignerElement extends HTMLElement {
   private instanceDisposers: Array<() => void> = []
   /** 实例显式语言；未设置时跟随 core 全局 locale */
   private _lang: string | undefined
-  /** messages 属性注册的用户语言包注销句柄 */
-  private disposeMessages: (() => void) | null = null
-  /** 当前 messages 值，切换 lang 时按新 locale 重新注册 */
+  /** 当前实例用户语言包：交给 scoped translator 使用，不注册到全局 */
   private _messages: CustomLocaleMessages | undefined
   /** 全局 locale 变化订阅；仅未显式设置 lang 的实例重绘 */
   private unsubI18n: (() => void) | null = null
@@ -185,6 +183,7 @@ export class PrintDesignerElement extends HTMLElement {
   private tableMenu: TableMenuState = { visible: false, x: 0, y: 0 }
   private exprTarget: ExpressionEditorTarget | null = null
   private exprMountedFor: ExpressionEditorTarget | null = null
+  private exprApply?: ExpressionEditorOptions['onApply']
   /** 帮助弹窗：Vue 3 轨的 helpVisible（showHelp 为 false 时强制收起，见 set showHelp） */
   private helpVisible = false
   private helpInitialTab: string | undefined
@@ -293,9 +292,7 @@ export class PrintDesignerElement extends HTMLElement {
     } else if (this.getAttribute('lang') !== this._lang) {
       this.setAttribute('lang', this._lang!)
     }
-    // 用户包按 locale 分层，切换 lang 时须按新 locale 重新注册
-    this.disposeMessages?.()
-    this.disposeMessages = this._messages ? registerLocale(this.lang, this._messages) : null
+    // 用户包由实例 scoped translator 持有，切换 lang 只需重绘（取词随新 locale 重建）
     // 帮助弹窗按 locale 选语言内容，切换 lang 时若已打开则重建
     if (this.helpVisible && this.unmountHelp) {
       this.unmountHelp()
@@ -305,13 +302,9 @@ export class PrintDesignerElement extends HTMLElement {
   }
   get lang(): string { return this._lang ?? getLocale() }
 
-  /** 自定义语言包（对象注入）；注册到实例 locale，覆盖内置与插件译文 */
+  /** 自定义语言包（对象注入）：只作用于本实例的 scoped translator，不污染全局 */
   set messages(v: CustomLocaleMessages | undefined) {
     this._messages = v
-    this.disposeMessages?.()
-    // 必须用实例 locale 注册：用户包由 createTranslator(this.lang) 读取；
-    // 若注册到全局 locale，显式 lang 与全局不同时覆盖会失效。
-    this.disposeMessages = v ? registerLocale(this.lang, v) : null
     this.repaint()
   }
 
@@ -402,8 +395,6 @@ export class PrintDesignerElement extends HTMLElement {
       this.attachInstanceListeners()
       this.unsubI18n = subscribeI18n(() => {
         if (this._lang) return
-        this.disposeMessages?.()
-        this.disposeMessages = this._messages ? registerLocale(getLocale(), this._messages) : null
         this.repaint()
       })
       return
@@ -427,10 +418,7 @@ export class PrintDesignerElement extends HTMLElement {
     this.unsub = this.store.subscribe(() => this.repaint())
     this.unsubI18n = subscribeI18n(() => {
       if (this._lang) return // 显式 lang 的实例不跟随全局
-      // 未设 lang 的实例：用户包按旧 locale 注册，全局 locale 变化后重新注册到新 locale
-      this.disposeMessages?.()
-      this.disposeMessages = this._messages ? registerLocale(getLocale(), this._messages) : null
-      this.repaint()
+      this.repaint() // 实例用户包由 scoped translator 持有，全局切换只需重绘
     })
     this.attachDocKeys()
     this.attachPluginUI()
@@ -510,8 +498,6 @@ export class PrintDesignerElement extends HTMLElement {
     this.unsub = null
     this.unsubI18n?.()
     this.unsubI18n = null
-    this.disposeMessages?.()
-    this.disposeMessages = null
     this.unsubPluginUI?.()
     this.unsubPluginUI = null
     this.unsubDefinitions?.()
@@ -666,13 +652,15 @@ export class PrintDesignerElement extends HTMLElement {
   // ─── 表达式编辑器 ───
   // Vue 3 轨用 v-model 控制弹窗显隐；这里按 target 对象身份挂载/卸载：
   // 外壳重绘不清空 root 上的遮罩节点，避免打字过程中被 repaint 打断而丢光标。
-  private openExpression(target: ExpressionEditorTarget) {
+  private openExpression(target: ExpressionEditorTarget, onApply?: ExpressionEditorOptions['onApply']) {
     this.exprTarget = target
+    this.exprApply = onApply
     this.syncExpression()
   }
 
   private closeExpression() {
     this.exprTarget = null
+    this.exprApply = undefined
     this.syncExpression()
   }
 
@@ -687,11 +675,14 @@ export class PrintDesignerElement extends HTMLElement {
     stale.forEach(n => n.remove())
     const target = this.exprTarget
     render(renderExpressionEditor({
-      fields: this.store.fields,
+      fields: [...(target.fields ?? this.store.fields)],
       fieldDisplay: this.state.fieldDisplay,
       t: this.ctx.t,
       onClose: () => this.closeExpression(),
-      onApply: next => this.applyExpression(target, next),
+      onApply: next => {
+        if (this.exprApply) this.exprApply(next)
+        else this.applyExpression(target, next)
+      },
     }, target), this.root)
     this.exprMountedFor = target
   }
@@ -719,6 +710,7 @@ export class PrintDesignerElement extends HTMLElement {
       this.unmountHelp = mountHelpModal(this.root, {
         initialTab: this.helpInitialTab,
         locale: this.lang,
+        t: createTranslator(this.lang, this._messages),
         onClose: () => this.closeHelp(),
       })
     } else if (!want && this.unmountHelp) {
@@ -800,7 +792,7 @@ export class PrintDesignerElement extends HTMLElement {
       showPreview: this.getAttribute('show-preview') !== 'false',
       showSave: this.getAttribute('show-save') !== 'false',
       isEdit: this.getAttribute('is-edit') === 'true',
-      t: createTranslator(this.lang),
+      t: createTranslator(this.lang, this._messages),
       lang: this.lang,
       host: {
         uploadImage: this.uploadImage,
@@ -835,7 +827,7 @@ export class PrintDesignerElement extends HTMLElement {
   private paint() {
     // 所有绘制路径（含拖拽/缩放的直接调用）都在实例语言作用域内，
     // 无 ctx 的共用控件（步进/重置/取色/表格角标等）才不会回落到全局 locale
-    withRenderTranslator(createTranslator(this.lang), () => this.paintInternal())
+    withRenderTranslator(createTranslator(this.lang, this._messages), () => this.paintInternal())
   }
 
   private paintInternal() {
@@ -1091,6 +1083,11 @@ export class PrintDesignerElement extends HTMLElement {
         })); break
       }
       case 'open-expression': this.openExpression(arg as ExpressionEditorTarget); break
+      case 'open-plugin-expression': {
+        const request = arg as { target: ExpressionEditorTarget; onApply: ExpressionEditorOptions['onApply'] }
+        this.openExpression(request.target, request.onApply)
+        break
+      }
       case 'drop': this.onDrop(arg as DragEvent); break
       case 'wheel': this.onWheel(arg as WheelEvent); break
       case 'scroll': this.onScroll(); break

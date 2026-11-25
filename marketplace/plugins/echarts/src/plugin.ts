@@ -26,18 +26,21 @@ import { CHART_EXECUTOR_VERSION } from './version.js'
 export { CHART_PLUGIN_ID } from './constants.js'
 
 /** 十类图表元素共享的数据契约（strict 校验与 AI 提示词共用） */
-const CHART_OPTION_META = {
-  chartOption: { kind: 'object' as const, label: t('echarts.meta.chartOption') },
-  chartDataSource: { kind: 'text' as const, label: t('echarts.meta.dataSource') },
-  chartCategoryField: { kind: 'text' as const, label: t('echarts.meta.categoryField') },
-  chartValueFields: { kind: 'object' as const, label: t('echarts.meta.valueFields') },
-  chartSeriesField: { kind: 'text' as const, label: t('echarts.meta.seriesField') },
+function createChartOptionMeta(includeBubble = false) {
+  return {
+    chartOption: { kind: 'object' as const, get label() { return t('echarts.meta.chartOption') } },
+    chartDataSource: { kind: 'text' as const, get label() { return t('echarts.meta.dataSource') } },
+    chartCategoryField: { kind: 'text' as const, get label() { return t('echarts.meta.categoryField') } },
+    chartValueFields: { kind: 'object' as const, get label() { return t('echarts.meta.valueFields') } },
+    chartSeriesField: { kind: 'text' as const, get label() { return t('echarts.meta.seriesField') } },
+    ...(includeBubble
+      ? { chartBubble: { kind: 'bool' as const, get label() { return t('echarts.meta.bubbleSize') } } }
+      : {}),
+  }
 }
 
-const SCATTER_OPTION_META = {
-  ...CHART_OPTION_META,
-  chartBubble: { kind: 'bool' as const, label: t('echarts.meta.bubbleSize') },
-}
+const CHART_OPTION_META = createChartOptionMeta()
+const SCATTER_OPTION_META = createChartOptionMeta(true)
 
 export const CHART_PLUGIN: PrintElementPlugin = defineElementPlugin({
   id: CHART_PLUGIN_ID,

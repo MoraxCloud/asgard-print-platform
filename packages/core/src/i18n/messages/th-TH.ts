@@ -113,6 +113,22 @@ export const thTH: Partial<LocaleMessages> = {
   'crop.fitNone': 'ขนาดต้นฉบับ',
   'crop.fitScaleDown': 'ย่อ (คงอัตราส่วน)',
 
+  // คำแนะนำความกว้างแท่นบาร์โค้ด (แหล่งเดียวใน core/render/barcode-dot)
+  'barcode.recommendOk': 'ที่ {dpi}dpi อัตราความกว้างแท่นที่แนะนำคือ {rec} ({recDots} จุดพิมพ์ต่อโมดูล = {width}mm ซึ่งเป็นขั้นน้อยสุดที่ถึงขีดต่ำสุด {min}mm); อัตราปัจจุบัน {current} คิดเป็น {curDots} จุด / {curWidth}mm ผ่านเกณฑ์แล้ว ข้อความนี้เป็นคำแนะนำเท่านั้น จะไม่เปลี่ยนค่าที่คุณใส่',
+  'barcode.recommendLow': 'ที่ {dpi}dpi อัตราความกว้างแท่นที่แนะนำคือ {rec} ({recDots} จุดพิมพ์ต่อโมดูล = {width}mm ซึ่งเป็นขั้นน้อยสุดที่ถึงขีดต่ำสุด {min}mm); อัตราปัจจุบัน {current} คิดเป็น {curDots} จุด / {curWidth}mm ต่ำกว่าขีดต่ำสุด ข้อความนี้เป็นคำแนะนำเท่านั้น จะไม่เปลี่ยนค่าที่คุณใส่',
+
+  // คำอธิบายข้อจำกัดการหมุนโค้ด (แสดงใต้ช่องหมุน)
+  'code.rotateNote': 'บาร์โค้ดและคิวอาร์โค้ดรองรับเฉพาะขั้น 90°; มุมอิสระต้องการหัวพิมพ์ 385dpi ขึ้นไป',
+
+  // แผงเลือกสี (plugin-kit/color-picker)
+  'colorPicker.pickColor': 'เลือกสี',
+  'colorPicker.hexValue': 'ค่าสี',
+  'colorPicker.customColor': 'สีที่กำหนดเอง',
+  'colorPicker.hue': 'เฉดสี',
+  'colorPicker.commonColors': 'สีที่ใช้บ่อย',
+  'colorPicker.clear': 'ล้างสีที่เลือก',
+  'colorPicker.clearShort': 'ล้าง',
+
   'save.geometryWarningConfirm': 'คำเตือนการพิมพ์: เนื้อหาบางส่วนเกินขอบกระดาษและจะถูกตัดเมื่อพิมพ์\nยอมรับการตัดและบันทึกต่อหรือไม่?\nคลิก ตกลง เพื่อบันทึก คลิก ยกเลิก เพื่อกลับไปแก้ไข\n\n{warnings}',
   'store.tilingSinglePage': 'เมื่อเปิดการจัดเรียงชิ้น อนุญาตให้มีหน้าออกแบบได้เพียงหน้าเดียว',
   'elementGroup.chart': 'แผนภูมิ',

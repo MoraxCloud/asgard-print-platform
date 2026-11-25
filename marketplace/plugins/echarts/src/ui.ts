@@ -4,11 +4,28 @@
 //
 // 事件统一用 change（失焦/回车提交）：common 每次 store 变更都会整树重绘，
 // 用 input 会让输入框在每次按键后重建、丢焦点。
-import { t } from '@worm-print-platform/core/i18n'
-import { echartsZhCN } from './i18n/zh-CN.js'
-import { echartsEnUS } from './i18n/en-US.js'
-import { echartsThTH } from './i18n/th-TH.js'
-import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
+import { t as globalT, type Translate } from '@worm-print-platform/core/i18n'
+
+/**
+ * 渲染期 translator：插件 UI 的所有 t() 都经此转发。
+ * 宿主按实例 lang 注入 ctx.t；未注入时回退 core 全局 locale（旧行为）。
+ * 与 canvas 的 withRenderTranslator 同口径：一次渲染内有效，结束即还原。
+ */
+let activeT: Translate = globalT
+const t: Translate = (key, params) => activeT(key, params)
+function withTranslator<R>(translator: Translate | undefined, render: () => R): R {
+  const prev = activeT
+  activeT = translator ?? globalT
+  try {
+    return render()
+  } finally {
+    activeT = prev
+  }
+}
+import zhCN from './i18n/zh-CN.json'
+import enUS from './i18n/en-US.json'
+import thTH from './i18n/th-TH.json'
+import type { ElementOptions, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import { defineElementUI, registerElementUI } from '@worm-print-platform/plugin-kit'
 import { render } from '@worm-print-platform/plugin-kit/dom'
 import { colorPicker } from '@worm-print-platform/plugin-kit/controls'
@@ -58,18 +75,9 @@ const CANVAS_STYLE = 'width:100%;height:100%;min-width:0;min-height:0;pointer-ev
 const STYLES = [
   '.echarts-canvas-element{overflow:hidden}',
   '.echarts-field-row{display:flex;gap:6px;align-items:center}',
+  '.echarts-field-current{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--pd-text-secondary,#6b7280)}',
   '.echarts-field-row>.pd-input{flex:1;min-width:0}',
   '.echarts-field-row>.pd-button{flex:none}',
-  '.echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}',
-  '.echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}',
-  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
-  '.echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-  '.echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}',
-  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
-  '.echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}',
-  '.echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-  '.echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}',
-  '.echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}',
   '.echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}',
   '.echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}',
   '.echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}',
@@ -155,25 +163,6 @@ function valueFieldsLabel(def: ChartKindDefinition | undefined, limit: number): 
   return limit === 1 ? t('echarts.panel.field.value') : t('echarts.panel.field.valueMulti')
 }
 
-/** 数据源候选：设计态示例数据里取「数组值」的顶层键 */
-function dataSourceCandidates(data?: readonly Record<string, unknown>[]): string[] {
-  const first = data?.[0]
-  if (!first) return []
-  return Object.keys(first).filter(key => Array.isArray(first[key]))
-}
-
-/** 行字段候选：取指定数据源数组首行的键，供类目/数值字段下拉；无数据源时取顶层第一个数组 */
-function dataRowFields(data: readonly Record<string, unknown>[] | undefined, dataSource: string): string[] {
-  const first = data?.[0]
-  if (!first) return []
-  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find(k => Array.isArray(first[k]))
-  if (!key) return []
-  const rows = first[key] as Record<string, unknown>[]
-  return rows.length > 0 && typeof rows[0] === 'object' && rows[0] !== null
-    ? Object.keys(rows[0])
-    : []
-}
-
 /** 字段键→中文名映射；业务字段清单 ctx.fields 里声明过的键可显示「中文名 (键)」 */
 type FieldLabelMap = ReadonlyMap<string, string>
 function fieldLabelMap(fields: readonly { fieldKey: string; fieldLabel?: string }[] | undefined): FieldLabelMap {
@@ -185,23 +174,48 @@ function fieldLabelMap(fields: readonly { fieldKey: string; fieldLabel?: string 
 }
 
 /** 选项展示文案：有中文名则「中文名（键）」，否则仅键 */
-function optionLabel(value: string, labels: FieldLabelMap, fallbackSuffix?: string): string {
-  if (!value) return fallbackSuffix ?? t('echarts.panel.default')
+function optionLabel(value: string, labels: FieldLabelMap): string {
+  if (!value) return t('echarts.panel.default')
   const name = labels.get(value)
-  const base = name ? `${name}（${value}）` : value
-  return fallbackSuffix ? `${base}${fallbackSuffix}` : base
+  return name ? `${name}（${value}）` : value
 }
 
-/** 构造下拉选项：候选 + 当前值（若不在候选里，动态补一项以保留已有模板的值） */
-function dropdownOptions(
-  candidates: readonly string[],
+function fieldBindingKey(next: { formatter?: string; binding?: string }): string {
+  if (next.binding) return next.binding
+  const matched = /^\{\s*([^{}]+?)\s*\}$/.exec(next.formatter?.trim() ?? '')
+  return matched?.[1]?.trim() ?? ''
+}
+
+function fieldPicker(
+  ctx: ElementUIPropertyContext,
   current: string,
-  labels: FieldLabelMap = new Map(),
-): { value: string; label: string }[] {
-  const opts = candidates.map(value => ({ value, label: optionLabel(value, labels) }))
-  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t('echarts.panel.current')) })
-  if (!current) opts.unshift({ value: '', label: t('echarts.panel.defaultFirstArray') })
-  return opts
+  targetPath: string,
+  fields: readonly PrintBusinessField[],
+  labels: FieldLabelMap,
+  onSelect: (value: string) => void,
+  allowAuto = false,
+): HTMLDivElement {
+  const row = el('div', 'echarts-field-row')
+  const display = el('span', 'echarts-field-current',
+    current ? optionLabel(current, labels) : allowAuto ? t('echarts.panel.autoSource') : t('echarts.panel.default'))
+  const picker = el('button', 'pd-button small echarts-field-picker', t('echarts.panel.selectField'))
+  picker.type = 'button'
+  picker.addEventListener('click', () => ctx.openExpression({
+    elementId: ctx.element.id,
+    targetPath,
+    value: current ? `{${current}}` : '',
+    binding: current || undefined,
+    fieldOnly: true,
+    fields,
+  }, next => onSelect(fieldBindingKey(next))))
+  row.append(display, picker)
+  if (allowAuto) {
+    const auto = el('button', 'pd-button small echarts-auto-source', t('echarts.panel.autoSource'))
+    auto.type = 'button'
+    auto.addEventListener('click', () => onSelect(''))
+    row.appendChild(auto)
+  }
+  return row
 }
 
 function seriesList(option: Record<string, any>): Record<string, any>[] {
@@ -313,117 +327,22 @@ function selectInput(
   return select
 }
 
-// 当前打开的自定义下拉（同一时刻只开一个，切换字段自动收起上一个）
-let activeDropdown: { close: () => void } | null = null
-
-function composedPathOf(ev: Event): EventTarget[] {
-  const composed = typeof (ev as { composedPath?: () => EventTarget[] }).composedPath === 'function'
-    ? (ev as { composedPath: () => EventTarget[] }).composedPath()
-    : []
-  return composed.length ? composed : [ev.target as EventTarget]
-}
-
-/**
- * 自定义下拉：原生 <select> 的弹窗方向由浏览器按可用空间决定，属性面板里会向上弹、遮挡上方字段。
- * 这里用「触发钮 + fixed 面板」保证选项固定在选择框正下方展开；面板挂在触发钮所在 root（shadow 或 body），
- * 与颜色选择器同一手法，避开 .pd-form 的 overflow 裁剪。外点 / Esc / 滚动 / resize 均收起。
- */
-function dropdownSelect(
-  options: readonly { value: string; label: string }[],
-  value: string,
-  onCommit: (value: string) => void,
-): HTMLElement {
-  const current = options.find(item => item.value === value) ?? { value, label: value || t('echarts.panel.optionDefault') }
-  const trigger = el('button', 'echarts-dropdown-trigger')
-  trigger.type = 'button'
-  trigger.setAttribute('aria-haspopup', 'listbox')
-  trigger.setAttribute('aria-expanded', 'false')
-  const valueEl = el('span', 'echarts-dropdown-value', current.label)
-  const arrow = el('span', 'echarts-dropdown-arrow', '▾')
-  trigger.appendChild(valueEl)
-  trigger.appendChild(arrow)
-
-  let panel: HTMLElement | null = null
-  let off: Array<() => void> = []
-
-  const close = () => {
-    off.forEach(fn => fn())
-    off = []
-    panel?.remove()
-    panel = null
-    trigger.setAttribute('aria-expanded', 'false')
-    if (activeDropdown?.close === close) activeDropdown = null
-  }
-
-  const open = () => {
-    activeDropdown?.close()
-    const root = trigger.getRootNode() as ShadowRoot | Document
-    const mount: Element | ShadowRoot = root instanceof ShadowRoot ? root : document.body
-    panel = el('div', 'echarts-dropdown-panel')
-    panel.setAttribute('role', 'listbox')
-    for (const item of options) {
-      const optionEl = el('div', `echarts-dropdown-option${item.value === value ? ' is-active' : ''}`, item.label)
-      optionEl.setAttribute('role', 'option')
-      optionEl.setAttribute('aria-selected', item.value === value ? 'true' : 'false')
-      optionEl.addEventListener('click', ev => {
-        ev.stopPropagation()
-        close()
-        onCommit(item.value)
-      })
-      panel.appendChild(optionEl)
-    }
-    mount.appendChild(panel)
-    // 定位在触发钮正下方：fixed 相对视口，shadow 内亦如此（祖先无 transform）
-    const rect = trigger.getBoundingClientRect()
-    panel.style.left = `${rect.left}px`
-    panel.style.top = `${rect.bottom + 4}px`
-    panel.style.minWidth = `${rect.width}px`
-    trigger.setAttribute('aria-expanded', 'true')
-    activeDropdown = { close }
-
-    const onPointerDown = (ev: Event) => {
-      const path = composedPathOf(ev)
-      if (path.includes(trigger) || path.includes(panel!)) return
-      close()
-    }
-    const onKeydown = (ev: Event) => { if ((ev as KeyboardEvent).key === 'Escape') close() }
-    const onScroll = () => close()
-    document.addEventListener('pointerdown', onPointerDown, true)
-    document.addEventListener('keydown', onKeydown)
-    window.addEventListener('scroll', onScroll, true)
-    window.addEventListener('resize', onScroll)
-    root.addEventListener('scroll', onScroll, true)
-    off.push(
-      () => document.removeEventListener('pointerdown', onPointerDown, true),
-      () => document.removeEventListener('keydown', onKeydown),
-      () => window.removeEventListener('scroll', onScroll, true),
-      () => window.removeEventListener('resize', onScroll),
-      () => root.removeEventListener('scroll', onScroll, true),
-    )
-  }
-
-  trigger.addEventListener('click', ev => {
-    ev.stopPropagation()
-    if (panel) close()
-    else open()
-  })
-  return trigger
-}
-
-const OVERFLOW_OPTIONS = [
+// 以下档位表/标签表曾为模块级常量，t() 在模块加载期求值会冻结成单一语言；
+// 改为渲染期求值的函数，才能跟随本次 ctx.t（实例 locale）。
+const overflowOptions = () => [
   { value: '', label: t('echarts.panel.overflow.default') },
   { value: 'none', label: t('echarts.panel.overflow.none') },
   { value: 'truncate', label: t('echarts.panel.overflow.truncate') },
   { value: 'break', label: t('echarts.panel.overflow.break') },
 ] as const
 
-const FONT_WEIGHT_OPTIONS = [
+const fontWeightOptions = () => [
   { value: '', label: t('echarts.panel.fontWeight.default') },
   { value: 'normal', label: t('echarts.panel.fontWeight.normal') },
   { value: 'bold', label: t('echarts.panel.fontWeight.bold') },
 ] as const
 
-const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
+const styleFieldLabels = (): Partial<Record<LabelFieldKey, string>> => ({
   distance: t('echarts.panel.label.distance'),
   rotate: t('echarts.panel.label.rotate'),
   fontSize: t('echarts.panel.label.fontSize'),
@@ -434,7 +353,7 @@ const STYLE_FIELD_LABELS: Partial<Record<LabelFieldKey, string>> = {
   borderWidth: t('echarts.panel.label.borderWidth'),
   borderRadius: t('echarts.panel.label.borderRadius'),
   padding: t('echarts.panel.label.padding'),
-}
+})
 
 /** 数据标签分组：一个可折叠 details，内部按「内容 / 位置 / 样式 / 引导线」分块 */
 function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDetailsElement {
@@ -443,6 +362,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
   const fields = labelFieldsOf(type)
   const has = (key: LabelFieldKey): boolean => fields.includes(key)
   const state = readChartLabel(panelOption(element), type)
+  const styleLabels = styleFieldLabels()
 
   const commit = (patch: ChartLabelPatch): void => {
     commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch))
@@ -460,18 +380,20 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     commit({ labelLine: { [key]: value } })
   }
   const numberField = (key: LabelFieldKey, value: number | undefined): HTMLDivElement => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    const wrap = field(styleLabels[key] ?? key)
     wrap.appendChild(
       textInput({ value: value === undefined ? '' : String(value), type: 'number' }, raw => commitNumber(key, raw)),
     )
     return wrap
   }
   const colorField = (key: LabelFieldKey, value: string | undefined): HTMLDivElement => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key)
+    const wrap = field(styleLabels[key] ?? key)
     const holder = el('span')
     render(colorPicker({
       value: value ?? '',
-      title: STYLE_FIELD_LABELS[key] ?? key,
+      title: styleLabels[key] ?? key,
+      // 面板点击时才构建，届时候选渲染期 translator 已还原，必须固化 ctx.t
+      translator: ctx.t,
       onChange: next => commit({ [key]: next ?? '' } as ChartLabelPatch),
     }), holder)
     wrap.appendChild(holder)
@@ -506,7 +428,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     }
     if (has('overflow')) {
       const wrap = field(t('echarts.panel.label.overflow'))
-      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? '', value => commit({ overflow: value })))
+      wrap.appendChild(selectInput(overflowOptions(), state.overflow ?? '', value => commit({ overflow: value })))
       group.appendChild(wrap)
     }
   }
@@ -552,7 +474,7 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
     if (has('fontSize')) group.appendChild(numberField('fontSize', state.fontSize))
     if (has('fontWeight')) {
       const wrap = field(t('echarts.panel.labelLine.fontWeight'))
-      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? '', value => commit({ fontWeight: value })))
+      wrap.appendChild(selectInput(fontWeightOptions(), state.fontWeight ?? '', value => commit({ fontWeight: value })))
       group.appendChild(wrap)
     }
     for (const key of ['color', 'backgroundColor', 'borderColor'] as const) {
@@ -599,18 +521,28 @@ function renderLabelGroup(ctx: ElementUIPropertyContext, type: string): HTMLDeta
 }
 
 function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
+  return withTranslator(ctx.t, () => renderPropertyInner(ctx))
+}
+
+function renderPropertyInner(ctx: ElementUIPropertyContext): ElementUIRenderResult {
+  if (!ctx.openExpression) throw new Error('[echarts] 图表属性面板需要宿主提供 openExpression（字段选择仅支持表达式弹框）')
   const element = ctx.element
   const type = elementType(element)
   const def = getChartKindDefinition(type)
-  const fields = resolveChartPanelFields(type)
-  const has = (key: ChartFieldKey): boolean => fields.includes(key)
+  const panelFields = resolveChartPanelFields(type)
+  const has = (key: ChartFieldKey): boolean => panelFields.includes(key)
   const options = element.options
   const widthMm = Number(options.width) || 0
   const heightMm = Number(options.height) || 0
   const limit = maxValueFields(def)
   const palettes = getChartPalettes()
-  // 业务字段清单：fieldKey → fieldLabel，用于下拉展示「中文名（键）」
+  // 字段候选只来自宿主业务字段清单 fields：data 仅用于预览，不贡献候选键
   const fieldLabels = fieldLabelMap(ctx.fields)
+  const allFields = ctx.fields ?? []
+  const sourceFields = allFields.filter(field => field.fieldType === 'list')
+  const bound = String(options.chartDataSource ?? '')
+  const prefixed = bound ? allFields.filter(field => field.fieldKey.startsWith(`${bound}.`)) : []
+  const rowFields: PrintBusinessField[] = prefixed.length > 0 ? prefixed : allFields.filter(field => field.fieldType !== 'list')
 
   const root = el('div', 'echarts-property')
   const form = el('form', 'pd-form')
@@ -619,27 +551,20 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
 
   if (has('dataSource')) {
     const wrap = field(t('echarts.panel.dataSourceTitle'))
-    const current = String(options.chartDataSource ?? '')
-    wrap.appendChild(
-      dropdownSelect(
-        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
-        current,
-        value => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
-      ),
-    )
+    wrap.appendChild(fieldPicker(
+      ctx, String(options.chartDataSource ?? ''), 'options.chartDataSource', sourceFields, fieldLabels,
+      value => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
+      true,
+    ))
     form.appendChild(wrap)
   }
 
   if (has('categoryField')) {
     const wrap = field(t('echarts.panel.categoryField'))
-    const current = String(options.chartCategoryField ?? '')
-    wrap.appendChild(
-      dropdownSelect(
-        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? '')), current, fieldLabels),
-        current,
-        value => commitOption(ctx, type, panelOption(element), { chartCategoryField: value }),
-      ),
-    )
+    wrap.appendChild(fieldPicker(
+      ctx, String(options.chartCategoryField ?? ''), 'options.chartCategoryField', rowFields, fieldLabels,
+      value => commitOption(ctx, type, panelOption(element), { chartCategoryField: value }),
+    ))
     form.appendChild(wrap)
   }
 
@@ -647,17 +572,13 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     const wrap = field(valueFieldsLabel(def, limit))
     const fieldsNow = readValueFields(element)
     fieldsNow.forEach((value, index) => {
-      const row = el('div', 'echarts-field-row')
-      row.appendChild(
-        dropdownSelect(
-          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? '')), value, fieldLabels),
-          value,
-          next => {
-            const list = readValueFields(element)
-            list[index] = next
-            syncValueFields(ctx, type, list)
-          },
-        ),
+      const row = fieldPicker(
+        ctx, value, `options.chartValueFields.${index}`, rowFields, fieldLabels,
+        next => {
+          const list = readValueFields(element)
+          list[index] = next
+          syncValueFields(ctx, type, list)
+        },
       )
       if (fieldsNow.length > 1) {
         const remove = el('button', 'pd-button small', '−')
@@ -679,12 +600,10 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
 
   if (has('seriesField')) {
     const wrap = field(t('echarts.panel.seriesField'))
-    wrap.appendChild(
-      textInput(
-        { value: String(options.chartSeriesField ?? ''), placeholder: t('echarts.panel.seriesFieldHint') },
-        value => commitOption(ctx, type, panelOption(element), { chartSeriesField: value }),
-      ),
-    )
+    wrap.appendChild(fieldPicker(
+      ctx, String(options.chartSeriesField ?? ''), 'options.chartSeriesField', rowFields, fieldLabels,
+      value => commitOption(ctx, type, panelOption(element), { chartSeriesField: value }),
+    ))
     form.appendChild(wrap)
   }
 
@@ -728,7 +647,7 @@ function renderProperty(ctx: ElementUIPropertyContext): ElementUIRenderResult {
     for (const palette of palettes) {
       const optionEl = el('option')
       optionEl.value = palette.key
-      optionEl.textContent = palette.label
+      optionEl.textContent = palette.labelKey ? t(palette.labelKey) : palette.label
       select.appendChild(optionEl)
     }
     select.value = readPaletteKey(panelOption(element), palettes)
@@ -849,11 +768,11 @@ export const CHART_ELEMENT_UI: ElementUI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: t('echarts.panel.group'),
+  get group() { return t('echarts.panel.group') },
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: 'echarts',
-  locales: { 'zh-CN': echartsZhCN, 'en-US': echartsEnUS, 'th-TH': echartsThTH },
+  locales: { 'zh-CN': zhCN.echarts, 'en-US': enUS.echarts, 'th-TH': thTH.echarts },
 })
 
 let disposeHandle: (() => void) | undefined

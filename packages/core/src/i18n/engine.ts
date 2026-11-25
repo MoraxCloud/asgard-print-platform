@@ -1,6 +1,8 @@
 // i18n 引擎：在 i18next 实例上的薄封装，对外 API 与旧实现完全一致。
 // 状态（explicit / missing / listeners / 插件命名空间）在本模块维护，
 // i18next 负责资源分层与插值解析。
+import { createInstance } from 'i18next'
+import type { i18n as I18nInstance } from 'i18next'
 import type { CustomLocaleMessages, Locale, Translate } from './types.js'
 import { createI18nInstance, detectLocale, normalizeLocale } from './i18n-instance.js'
 
@@ -62,18 +64,54 @@ export function t(key: string, params?: Record<string, string | number>): string
   return translate(currentLocale(), key, params)
 }
 
-export function createTranslator(locale: Locale): Translate {
-  const fixed = instance.getFixedT(normalizeLocale(locale), lookupNamespaces())
-  return (key, params) => asString(params ? fixed(key, params) : fixed(key), key)
+/**
+ * 每个 messages 对象对应一个独立 i18next 实例，只承载 user 命名空间。
+ * 用 WeakMap 避免实例常驻内存；同一对象反复注入只更新该实例的资源，不碰全局。
+ */
+const scopeInstances = new WeakMap<CustomLocaleMessages, I18nInstance>()
+
+function scopedInstance(messages: CustomLocaleMessages): I18nInstance {
+  let scoped = scopeInstances.get(messages)
+  if (!scoped) {
+    scoped = createInstance()
+    scoped.init({
+      resources: {}, lng: 'zh-CN', fallbackLng: false, ns: ['user'], defaultNS: 'user',
+      keySeparator: false, nsSeparator: false,
+      interpolation: { prefix: '{', suffix: '}', escapeValue: false },
+      returnNull: false, returnEmptyString: false,
+    })
+    scopeInstances.set(messages, scoped)
+  }
+  return scoped
 }
 
 /**
- * 检索命名空间顺序：user > plugins > core。
- * 旧引擎优先级 user > plugin > 内置，i18next 按 ns 数组顺序命中，
- * 显式传入本列表可保证用户/插件覆盖 core（defaultNS 只查 core 会导致覆盖失效）。
+ * 绑定 locale 的取词器。传入 messages 时为其创建实例级作用域：
+ * 用户包命中优先，缺键/空串/插值缺失回退全局引擎（含内置三语与插件层）。
+ */
+export function createTranslator(locale: Locale, messages?: CustomLocaleMessages): Translate {
+  const normalized = normalizeLocale(locale)
+  const globalFixed = instance.getFixedT(normalized, lookupNamespaces())
+  if (!messages) return (key, params) => asString(params ? globalFixed(key, params) : globalFixed(key), key)
+
+  const scoped = scopedInstance(messages)
+  scoped.addResourceBundle(normalized, 'user', messages as Record<string, string>, true, true)
+  const fixed = scoped.getFixedT(normalized, 'user')
+  return (key, params) => {
+    const local = asString(params ? fixed(key, params) : fixed(key), '')
+    // 空串按缺失处理（returnEmptyString:false 下 i18next 返回 key，这里用空串兜底判定）
+    if (local !== '' && local !== key) return local
+    return asString(params ? globalFixed(key, params) : globalFixed(key), key)
+  }
+}
+
+/**
+ * 检索命名空间顺序：user > 插件 > constants > propertyTips > core。
+ * i18next 按 ns 数组顺序命中，显式传入本列表可保证用户/插件覆盖内置包
+ * （defaultNS 只查 core 会导致覆盖失效）。
  */
 function lookupNamespaces(): string[] {
-  return ['user', ...registeredPluginIds, 'core']
+  return ['user', ...registeredPluginIds, 'constants', 'propertyTips', 'core']
 }
 
 export function registerLocale(locale: Locale, messages: CustomLocaleMessages): () => void {

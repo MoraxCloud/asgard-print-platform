@@ -13,7 +13,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "plugin.json", "README.md"],
+  "files": [
+    "dist",
+    "plugin.json",
+    "README.md"
+  ],
   "wormPrint": {
     "id": "data-preview",
     "version": "0.1.0",
@@ -21,7 +25,7 @@
     "kinds": [],
     "exportFormats": [],
     "peerDeps": {
-      "@worm-print-platform/core": "^1.6.0"
+      "@worm-print-platform/core": "^1.6.5"
     }
   },
   "scripts": {
@@ -30,12 +34,17 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@worm-print-platform/core": "^1.6.0"
+    "@worm-print-platform/core": "^1.6.5"
   },
   "devDependencies": {
     "happy-dom": "^20.10.6",
     "typescript": "~5.9.3",
     "vitest": "^1.6.0"
   },
-  "keywords": ["print", "data-preview", "plugin", "worm-print-platform"]
+  "keywords": [
+    "print",
+    "data-preview",
+    "plugin",
+    "worm-print-platform"
+  ]
 }

@@ -21,6 +21,8 @@ export interface OpenTemplateSession {
   name: string
   url: string
   templateName?: string
+  /** 首次 attach 时刻；同源重连不重置 */
+  createdAt: number
   lastActiveAt: number
 }
 

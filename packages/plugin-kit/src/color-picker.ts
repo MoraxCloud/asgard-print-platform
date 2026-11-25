@@ -20,6 +20,7 @@
 // （与 Vue 3 轨一致）。清除回传 undefined：canvas emit '' 后由消费方归一化为未设置，
 // 本包在触发器层直接归一，调用方 patch 后即删除该颜色属性。
 import { PRESET_COLORS } from '@worm-print-platform/core/designer'
+import { t as globalT, type Translate } from '@worm-print-platform/core/i18n'
 import { h, render } from './dom.js'
 import type { El } from './dom.js'
 
@@ -34,6 +35,8 @@ export interface ColorPickerOptions {
   triggerClass?: string
   /** 选中回调；undefined 表示清除（Vue 3 轨 emit '' 的等价归一） */
   onChange: (value: string | undefined) => void
+  /** 面板文案 translator；缺省用 core 全局 locale。绘制期由宿主固化实例 translator 传入 */
+  translator?: Translate
 }
 
 /** 面板活跃实例：同一时刻全页只开一个面板（Vue 3 轨 外点关闭逻辑下同） */
@@ -58,6 +61,8 @@ interface PickerInstance {
   handle: HTMLElement
   hueRange: HTMLInputElement
   clearBtn: HTMLButtonElement | null
+  /** 打开面板时固化的 translator（面板晚于绘制期构建，不能现场读 renderT） */
+  translator: Translate
   items: { el: HTMLElement; color: string }[]
   teardowns: Array<() => void>
 }
@@ -133,7 +138,8 @@ function clamp01(number: number): number {
 
 /** 触发按钮（对应 Vue 3 轨 的 button.preset-color-trigger）；点击在挂载根上开/关面板 */
 export function colorPicker(opts: ColorPickerOptions): El {
-  const title = opts.title ?? '颜色选择'
+  const tr = opts.translator ?? globalT
+  const title = opts.title ?? tr('colorPicker.pickColor')
   return h('button', {
     type: 'button',
     class: `preset-color-trigger${opts.triggerClass ? ` ${opts.triggerClass}` : ''}`,
@@ -152,7 +158,7 @@ export function colorPicker(opts: ColorPickerOptions): El {
       // 外壳重绘会替换触发钮节点：同「挂载根 + title」的钮视为同一字段，保持打开、把面板迁到新钮；
       // 其余情形先关旧面板再开新面板（Vue 3 轨 里 pointerdown 外点关闭已保证互斥，口径一致）
       closeColorPicker()
-      openPanel(btn, opts)
+      openPanel(btn, opts, tr)
     },
   }, [
     h('span', {
@@ -174,17 +180,17 @@ export function closeColorPicker(): void {
 
 // ─── 面板挂载 ───
 
-function openPanel(trigger: HTMLElement, opts: ColorPickerOptions): void {
+function openPanel(trigger: HTMLElement, opts: ColorPickerOptions, tr: Translate): void {
   const root = trigger.getRootNode() as ShadowRoot | Document
   const mount: Element | ShadowRoot = root instanceof ShadowRoot ? root : document.body
   const inst: PickerInstance = {
-    root, title: opts.title ?? '颜色选择', trigger, panel: null as unknown as HTMLElement,
+    root, title: opts.title ?? tr('colorPicker.pickColor'), trigger, panel: null as unknown as HTMLElement,
     clearable: opts.clearable !== false, onChange: opts.onChange,
     model: opts.value || undefined, hue: 0, saturation: 0, value_: 0, hexText: '',
     dragging: false,
     current: null as unknown as HTMLElement, hex: null as unknown as HTMLInputElement,
     area: null as unknown as HTMLElement, handle: null as unknown as HTMLElement,
-    hueRange: null as unknown as HTMLInputElement, clearBtn: null, items: [],
+    hueRange: null as unknown as HTMLInputElement, clearBtn: null, translator: tr, items: [],
     teardowns: [],
   }
   // 打开时从当前色值同步 HSV；非法/空值保持默认（Vue 3 轨 的 watch immediate 同口径）
@@ -259,34 +265,35 @@ function pathOf(ev: Event): EventTarget[] {
 // ─── 面板 DOM 描述（结构与 Vue 3 轨 模板逐项对齐）───
 
 function buildPanel(inst: PickerInstance): El {
+  const tr = inst.translator
   return h('div', {
     class: 'preset-color-panel',
     role: 'dialog',
-    'aria-label': '颜色选择',
+    'aria-label': tr('colorPicker.pickColor'),
     style: { position: 'fixed' },
     onPointerdown: (ev: Event) => ev.stopPropagation(),
   }, [
     h('div', { class: 'picker-preview' }, [
       h('span', { class: 'picker-current' }),
       h('input', {
-        class: 'picker-hex', type: 'text', maxlength: 7, spellcheck: 'false', 'aria-label': '颜色值',
+        class: 'picker-hex', type: 'text', maxlength: 7, spellcheck: 'false', 'aria-label': tr('colorPicker.hexValue'),
         onInput: (ev: Event) => onHexInput(inst, (ev.target as HTMLInputElement).value),
       }),
     ]),
     h('div', {
-      class: 'picker-area', 'aria-label': '自定义颜色', tabindex: 0,
+      class: 'picker-area', 'aria-label': tr('colorPicker.customColor'), tabindex: 0,
       onPointerdown: (ev: Event) => startAreaDrag(inst, ev as PointerEvent),
       onKeydown: (ev: Event) => onAreaKeydown(inst, ev as KeyboardEvent),
     }, [h('span', { class: 'picker-handle' })]),
     h('input', {
-      class: 'picker-hue', type: 'range', min: 0, max: 360, step: 1, 'aria-label': '色相',
+      class: 'picker-hue', type: 'range', min: 0, max: 360, step: 1, 'aria-label': tr('colorPicker.hue'),
       onInput: (ev: Event) => onHueInput(inst, Number((ev.target as HTMLInputElement).value)),
       onChange: () => commitHsv(inst),
     }),
     h('div', { class: 'picker-heading' }, [
-      h('span', { text: '常用颜色' }),
+      h('span', { text: tr('colorPicker.commonColors') }),
       inst.clearable ? h('button', {
-        type: 'button', class: 'picker-clear', title: '清除选中的颜色',
+        type: 'button', class: 'picker-clear', title: tr('colorPicker.clear'),
         onClick: () => commitModel(inst, undefined),
       }, [
         h('svg', { viewBox: '0 0 16 16', width: 12, height: 12, 'aria-hidden': 'true' }, [
@@ -295,7 +302,7 @@ function buildPanel(inst: PickerInstance): El {
             'stroke-linecap': 'round', fill: 'none',
           }),
         ]),
-        '清除',
+        tr('colorPicker.clearShort'),
       ]) : '',
     ].filter(Boolean) as never),
     h('div', { class: 'preset-color-grid' }, PRESET_COLORS.map(color => h('button', {

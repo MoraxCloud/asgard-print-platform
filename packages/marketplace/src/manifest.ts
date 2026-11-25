@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import type { ManifestEntry, PluginsManifest } from './types.js'
 
@@ -20,7 +21,14 @@ export function readManifest(dir: string, cwd = process.cwd()): PluginsManifest 
 export function writeManifest(dir: string, manifest: PluginsManifest, cwd = process.cwd()): void {
   const path = manifestPath(dir, cwd)
   mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
+  const tmp = `${path}.${process.pid}.${randomUUID()}.tmp`
+  try {
+    writeFileSync(tmp, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
+    renameSync(tmp, path)
+  } catch (err) {
+    rmSync(tmp, { force: true })
+    throw err
+  }
 }
 
 export function upsertManifestEntry(

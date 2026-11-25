@@ -20,6 +20,10 @@ export interface AppConfig {
   pairingToken: string
   /** AI 助手（MCP Streamable HTTP）开关：默认关闭；开启后 /mcp 恒要求 Bearer pairingToken */
   mcpEnabled: boolean
+  /** 诊断界面语言；'' = 跟随系统 */
+  locale: string
+  /** 外部语言包路径；绝对路径或相对 userData，空 = 只用内置 locales/ */
+  localePack: string
 }
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -32,6 +36,8 @@ export const DEFAULT_CONFIG: AppConfig = {
   allowedOrigins: [],
   pairingToken: '',
   mcpEnabled: false,
+  locale: '',
+  localePack: '',
 }
 
 const LOG_LEVELS: readonly LogLevel[] = ['debug', 'info', 'warn', 'error']
@@ -80,6 +86,8 @@ export function parseConfig(raw: unknown): AppConfig {
       typeof src.pairingToken === 'string' ? src.pairingToken : DEFAULT_CONFIG.pairingToken,
     // 旧配置缺字段时回退默认，不迁移、不报错；round-trip 由 parse 显式保留
     mcpEnabled: src.mcpEnabled === true,
+    locale: typeof src.locale === 'string' ? src.locale.trim() : '',
+    localePack: typeof src.localePack === 'string' ? src.localePack.trim() : '',
   }
 }
 

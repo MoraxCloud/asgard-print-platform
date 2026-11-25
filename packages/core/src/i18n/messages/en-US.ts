@@ -113,6 +113,22 @@ export const enUS: Partial<LocaleMessages> = {
   'crop.fitNone': 'Original size',
   'crop.fitScaleDown': 'Scale down (keep ratio)',
 
+  // Barcode bar-width recommendation (single source in core/render/barcode-dot)
+  'barcode.recommendOk': 'At {dpi}dpi the recommended bar-width ratio is {rec} ({recDots} print dots per module = {width}mm, the smallest step reaching the {min}mm minimum); current ratio {current} works out to {curDots} dots / {curWidth}mm, which meets the minimum. Informational only — your value is not changed.',
+  'barcode.recommendLow': 'At {dpi}dpi the recommended bar-width ratio is {rec} ({recDots} print dots per module = {width}mm, the smallest step reaching the {min}mm minimum); current ratio {current} works out to {curDots} dots / {curWidth}mm, which is below the minimum. Informational only — your value is not changed.',
+
+  // Code rotation threshold note (shown under the rotation field)
+  'code.rotateNote': 'Barcodes and QR codes support 90° steps only; arbitrary angles require a 385dpi+ print head',
+
+  // Color picker panel (plugin-kit/color-picker)
+  'colorPicker.pickColor': 'Pick a color',
+  'colorPicker.hexValue': 'Color value',
+  'colorPicker.customColor': 'Custom color',
+  'colorPicker.hue': 'Hue',
+  'colorPicker.commonColors': 'Common colors',
+  'colorPicker.clear': 'Clear the selected color',
+  'colorPicker.clearShort': 'Clear',
+
   'save.geometryWarningConfirm': 'Print warning: some content extends beyond the paper and will be clipped.\nAccept clipping and continue saving?\nClick OK to save, Cancel to go back and edit.\n\n{warnings}',
   'store.tilingSinglePage': 'Tiling allows only one design page',
   'elementGroup.chart': 'Chart',

@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import { setLocale } from '@worm-print-platform/core/i18n'
 import { definePrintDesigner, type PrintDesignerElement } from '../../index.js'
-import { translateConstantLabel } from '../label-translation.js'
-import { localizedPropertyTip } from '../property-tip-translation.js'
+import { customPropertyTabLabel } from '../../core/plugin.js'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..')
 
@@ -47,21 +47,16 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-describe('泰语常量与属性说明', () => {
-  it('模块级常量与属性说明按泰语 locale 取词', () => {
-    const noneTh = translateConstantLabel('无', 'th-TH')
-    expect(noneTh).not.toBe('无')
-    expect(noneTh.length).toBeGreaterThan(0)
-    expect(/[\u4e00-\u9fff]/.test(noneTh)).toBe(false)
-
-    const tipTh = localizedPropertyTip('ap-rotate', 'th-TH')
-    expect(tipTh).not.toBe(localizedPropertyTip('ap-rotate', 'en-US'))
-    expect(/[\u4e00-\u9fff]/.test(tipTh)).toBe(false)
-    expect(tipTh.length).toBeGreaterThan(0)
-  })
-})
-
 describe('设计器 shell 文案国际化', () => {
+  it('法语实例属性台出现法语线型', async () => {
+    const shadow = await mountWithSelected('fr-FR', 'table')
+    const el = document.querySelector('print-designer') as PrintDesignerElement
+    el.messages = { 'constants.borderStyle.solid': 'Solide' }
+    await frame()
+    expect(shadow.textContent).toContain('Solide')
+  })
+
+
   it('英文界面：工具栏按钮为英文', async () => {
     const root = await mount('en-US')
     const texts = [...root.querySelectorAll('button')].map(b => b.textContent?.trim() ?? '')
@@ -113,6 +108,59 @@ describe('设计器 shell 文案国际化', () => {
     const root = await mountWithSelected('en-US', 'table')
     const options = [...root.querySelectorAll('.property-panel option')].map(e => e.textContent?.trim())
     expect(options.filter(o => /[\u3400-\u9fff]/.test(o))).toEqual([])
+  })
+
+  it('「自定义属性」页签标题按 locale 取词', () => {
+    setLocale('en-US')
+    expect(customPropertyTabLabel()).toBe('Custom properties')
+    setLocale('th-TH')
+    expect(customPropertyTabLabel()).not.toMatch(/[\u3400-\u9fff]/)
+    setLocale('zh-CN')
+    expect(customPropertyTabLabel()).toBe('自定义属性')
+  })
+
+  it('英文/泰语界面：二维码缩放模式下拉选项按实例语言取词', async () => {
+    for (const lang of ['en-US', 'th-TH']) {
+      const root = await mountWithSelected(lang, 'qrcode')
+      const fitSelect = [...root.querySelectorAll<HTMLSelectElement>('.property-panel select')]
+        .find(s => Array.from(s.options).some(o => o.value === 'contain'))
+      expect(fitSelect).toBeTruthy()
+      const labels = Array.from(fitSelect!.options).map(o => o.textContent?.trim() ?? '')
+      expect(labels.some(l => /[\u3400-\u9fff]/.test(l))).toBe(false)
+      if (lang === 'en-US') expect(labels).toContain('Contain (keep ratio)')
+    }
+  })
+
+  it('英文界面：条码条宽推荐与旋转说明按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'barcode', store => {
+      store.updateElement(store.elements[0].id, { printerDpi: 203, barWidth: 2 })
+    })
+    const text = root.textContent ?? ''
+    expect(text).toContain('recommended bar-width ratio')
+    expect(text).not.toContain('推荐条宽倍率')
+    expect(text).toContain('90° steps only')
+    expect(text).not.toContain('条码与二维码仅支持')
+  })
+
+  it('英文界面：颜色选择器面板文案按实例语言取词', async () => {
+    const root = await mountWithSelected('en-US', 'text')
+    const trigger = root.querySelector<HTMLElement>('.preset-color-trigger')
+    expect(trigger).toBeTruthy()
+    trigger!.click()
+    await frame()
+    const panel = root.querySelector('.preset-color-panel')
+    expect(panel).toBeTruthy()
+    expect(panel!.getAttribute('aria-label')).toBe('Pick a color')
+    const panelText = panel!.textContent ?? ''
+    expect(panelText).toContain('Common colors')
+    expect(panelText).toContain('Clear')
+    expect(panelText).not.toMatch(/[\u3400-\u9fff]/)
+  })
+
+  it('高级组三开关每行一个的样式在 core 样式源中已声明', () => {
+    const css = readFileSync(resolve(ROOT, 'packages/core/src/styles/designer.css'), 'utf8')
+    expect(css).toMatch(/\.advanced-row\{display:flex;flex-direction:column/)
+    expect(css).toMatch(/\.advanced-row \.pd-label-t\{white-space:nowrap\}/)
   })
 
   it('英文界面：core 中文常量文案按实例语言取词', async () => {

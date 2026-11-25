@@ -66,25 +66,26 @@ node demos/scripts/verify-business-scenarios.mjs http://localhost:9331/ --quick 
 
 ## npm 发布
 
-发布到 npm 的包共 5 个：`core`、`plugin-kit`、`canvas`、`echarts`、`skills`。
+发布到 npm 的包共 7 个：`core`、`plugin-kit`、`canvas`、`echarts`、`skills`、`marketplace`、`i18n`。百度图表插件 `@worm-print-platform/plugin-echarts` 不再单独发 npm，通过插件市场 CLI 分发。
 `contract` / `mcp` / `render` / `client` 为私有包，不发布（随客户端打包分发）。
+正式发布用 `npm run publish:npm`；canvas 单独补发用 `npm run publish:canvas`。
 
 ### 发布前版本同步
 
 仓库没有版本号自动递增脚本，发布前手动完成：
 
-1. 将 `packages/{core,plugin-kit,canvas,echarts,skills}/package.json` 的 `version` 统一改为目标版本；
+1. 将以下包的 `package.json#version` 统一改为目标版本：`packages/{core,plugin-kit,canvas,echarts,skills,marketplace,i18n}`；
 2. 同步根 `package.json` 的 `version`；
 3. 执行 `npm install` 刷新 `package-lock.json` 中的 workspace 版本；
 4. 更新 `CHANGELOG.md`，提交并打 tag（`v<版本>`）推送到远端。
 
-`publish-npm.yml` 会校验 `core` / `plugin-kit` / `canvas` / `echarts` 四个包与 tag 版本一致；漏发任一包会导致宿主安装 404。
+`publish-npm.yml` 会校验标签与包版本一致，并在安装依赖前运行 `node scripts/verify-marketplace-release.mjs` 校验官方插件产物已入库；漏发任一包会导致宿主安装 404。各包实际发布清单以根 `package.json` 的 `publish:npm` 脚本为准。
 
 ### 本地发布
 
 ```bash
 npm run publish:dry-run            # 干跑：build + test + 逐包 publish --dry-run
-npm run publish:npm                # 正式发布：build + test，按 core → plugin-kit → canvas → echarts → skills 顺序发布
+npm run publish:npm                # 正式发布：build + test，按 core → plugin-kit → canvas → echarts → skills → marketplace → i18n 顺序发布
 
 npm run publish:local              # 本地联调：build 后 yalc push core（需已安装 yalc：npm i -g yalc）
 ```
@@ -105,8 +106,8 @@ npm run publish:canvas:check       # 只检查 canvas 的 dist-tag 健康度（l
 `publish-npm.yml` 仅手动触发，认证为纯 Trusted Publishing（OIDC，不注入任何 npm token）。前提：npmjs.com 各包已配置 Trusted Publisher（Organization `worm-longliu` / Repository `worm-print-platform` / Workflow `publish-npm.yml` / Environment 留空 / Allowed actions 勾选 `npm publish`），账号 Publishing access 选 "disallow bypass 2fa tokens"。发版完整流程见 `.agents/skills/releasing-official-version/SKILL.md`。
 
 ```bash
-gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true   # 先干跑
-gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=false  # 再正式发布
+gh workflow run publish-npm.yml -f tag=v1.6.5 -f dry_run=true   # 先干跑
+gh workflow run publish-npm.yml -f tag=v1.6.5 -f dry_run=false  # 再正式发布
 ```
 
 dist-tag 运维与 Gitee Release：
@@ -114,10 +115,10 @@ dist-tag 运维与 Gitee Release：
 ```bash
 # 移除/添加 dist-tag（如清理首发自动生成的 latest）
 gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/canvas -f action=rm -f tag=latest
-gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/canvas -f action=add -f tag=next -f version=1.6.0
+gh workflow run npm-dist-tag.yml -f pkg=@worm-print-platform/canvas -f action=add -f tag=next -f version=1.6.5
 
 # 按 GitHub 同名 release 正文在 Gitee 创建 release
-gh workflow run create-gitee-release.yml -f tag=v1.6.0
+gh workflow run create-gitee-release.yml -f tag=v1.6.5
 ```
 
 ## 客户端打包
@@ -209,7 +210,7 @@ docker run -p 3001:3001 \
 | Workflow | 用途 | 触发方式 |
 | --- | --- | --- |
 | `ci.yml` | 全量 build + test，render 分页集成用例单独 job | `gh workflow run ci.yml` |
-| `publish-npm.yml` | 按 tag 发布 4 个代码包（支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.0 -f dry_run=true` |
+| `publish-npm.yml` | 按 tag 发布 7 个包（core / plugin-kit / canvas / echarts / skills / marketplace / i18n，支持 dry run） | `gh workflow run publish-npm.yml -f tag=v1.6.5 -f dry_run=true` |
 | `npm-dist-tag.yml` | 运维 dist-tag（rm / add） | `gh workflow run npm-dist-tag.yml ...` |
-| `create-gitee-release.yml` | 在 Gitee 创建同名 release | `gh workflow run create-gitee-release.yml -f tag=v1.6.0` |
+| `create-gitee-release.yml` | 在 Gitee 创建同名 release | `gh workflow run create-gitee-release.yml -f tag=v1.6.5` |
 | `deploy-pages.yml` | 五个宿主 demo 的 GitHub Pages 静态演示 | `gh workflow run deploy-pages.yml` |

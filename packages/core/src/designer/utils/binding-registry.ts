@@ -21,6 +21,7 @@ export function getTableCellBindings(
     return [{
       targetPath: `options.tableRows[${rowIndex}].cells[${cellIndex}].formatter`,
       label: '内容',
+      labelKey: 'constants.label.content',
       dataSource: 'list',
       listField,
       placeholder: '{name}',
@@ -30,6 +31,7 @@ export function getTableCellBindings(
     return [{
       targetPath: `options.tableRows[${rowIndex}].cells[${cellIndex}].formatter`,
       label: '内容',
+      labelKey: 'constants.label.content',
       dataSource: 'subtotal',
       placeholder: '{MONEY(SUM(amount))}',
     }]
@@ -38,6 +40,7 @@ export function getTableCellBindings(
     return [{
       targetPath: `options.tableRows[${rowIndex}].cells[${cellIndex}].formatter`,
       label: '内容',
+      labelKey: 'constants.label.content',
       dataSource: 'summary',
       placeholder: '{MONEY(SUM(amount))}',
     }]
@@ -45,6 +48,7 @@ export function getTableCellBindings(
   return [{
     targetPath: `options.tableRows[${rowIndex}].cells[${cellIndex}].formatter`,
     label: '内容',
+    labelKey: 'constants.label.content',
     dataSource: 'main',
     placeholder: '合计: {order.total}',
   }]

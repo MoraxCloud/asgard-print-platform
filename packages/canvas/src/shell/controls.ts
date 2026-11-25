@@ -285,7 +285,8 @@ export const divider = (text: string) => h('h3', { class: 'pd-divider', text })
  * onPick 收到的 undefined 表示「清除颜色」：Vue 3 轨侧 emit '' 后由消费方归一化为未设置，
  * 本包在触发器层直接归一后透传，调用方 patch 即删除该颜色属性（签名保持 (v: string) 不变）。 */
 export function colorTrigger(value: string | undefined, onPick: (v: string) => void, title = trG( 'controls.k36'), triggerClass?: string) {
-  return colorPicker({ value, title, triggerClass, onChange: v => onPick(v as string) })
+  // 面板晚于绘制期构建，故在此固化实例 translator：点击时 renderT 已还原，现场读会退回全局 locale
+  return colorPicker({ value, title, triggerClass, translator: renderT ?? globalT, onChange: v => onPick(v as string) })
 }
 
 /** 单选组（对应 Vue 3 轨 的 .pd-radio-group） */

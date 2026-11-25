@@ -12,7 +12,7 @@
 
 1. **目录常驻本仓**：`marketplace/` 永久留在当前 monorepo 顶层，**不创建任何独立索引仓**。
 2. **三源分发**：安装支持 `gitee` / `github` / `npm` 三种来源，可用 `--source` 指定；默认 `auto` 按
-   npm → GitHub → Gitee 顺序尝试。
+   npm → Gitee → GitHub 顺序尝试。
 3. **默认最新稳定版**：`install <name>[@<version>]`，未指定版本时解析为最新稳定版（详见 §4）。
 4. **新增导出插件类别**：除元素插件外，导出 Excel / Word 等打印内容也必须可用插件实现；用户选型为
    「接收渲染结果、浏览器侧生成文件并触发下载」（详见 §3.2）。
@@ -114,7 +114,7 @@ install <name>[@<version>] [--source npm|github|gitee|auto] [--dir ...] [--repo 
         └─ 6. 更新 .worm-print/plugins.json 清单
 ```
 
-- `auto` 模式：npm → GitHub → Gitee 依次尝试；**确定性错误**（NOT_FOUND / VERSION_NOT_FOUND /
+- `auto` 模式：npm → Gitee → GitHub 依次尝试；**确定性错误**（NOT_FOUND / VERSION_NOT_FOUND /
   INVALID_PLUGIN / BAD_PLUGIN_ID）不换源，仅网络/克隆失败才回退到下一源。
 - 指定 `--source` 时只走该源，失败即报错，不做回退。
 
@@ -168,8 +168,7 @@ export interface ExportResult {
 - 注册：core 新增 `export-plugin-registry.ts`，提供 `defineExportPlugin` / `registerExportPlugin` /
   `getExportPlugins` / `getExportPluginByFormat`，注册表键
   `Symbol.for('worm-print-platform.export-plugin-registry.v1')`。
-- **宿主接入**：设计器工具栏 / 宿主 UI 按已注册 `formats` 自动生成「导出 Excel」「导出 Word」菜单项；
-  点击取当前 `pages` + `template` + `printData` 调 `plugin.export()`，拿到 `blob` 触发浏览器下载。
+- **宿主接入（规划中，尚未实现）**：设计器工具栏 / 宿主 UI 按已注册 `formats` 自动生成「导出 Excel」「导出 Word」菜单项的方案见 `docs/proposals/05-export-plugins.html`（P2 待增功能）；当前已落地的是导出插件注册契约，宿主导出菜单与下载入口尚未实现。实现后点击取当前 `pages` + `template` + `printData` 调 `plugin.export()`，拿到 `blob` 触发浏览器下载。
 - **能力边界（用户已确认接受）**：渲染结果导出是「所见即所得」但**结构化差**——HTML 表格转 xlsx
   单元格的列对齐、docx 排版还原均由插件自身负责，主体不保证保真；大文件性能也由插件自行优化。
 - contract 联动：`packages/contract/src/kinds.ts:52-58` 的 strict 校验（MISSING_PLUGIN /

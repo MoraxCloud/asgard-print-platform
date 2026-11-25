@@ -18,11 +18,11 @@ const MSG = {
   TEMPLATE_APPLY: 'template.apply',
 }
 const SESSION_KEY = 'worm-print-demo:template-session'
-const SESSION_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+const SESSION_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 function randomSessionId() {
-  const bytes = crypto.getRandomValues(new Uint8Array(24))
-  return Array.from(bytes, b => SESSION_ALPHABET[b % 64]).join('')
+  const bytes = crypto.getRandomValues(new Uint8Array(6))
+  return Array.from(bytes, b => SESSION_ALPHABET[b % SESSION_ALPHABET.length]).join('')
 }
 
 function canonicalize(value) {
@@ -57,7 +57,7 @@ export function createTemplateSession(hooks) {
   const sessionId = (() => {
     try {
       const saved = sessionStorage.getItem(SESSION_KEY)
-      if (saved && /^[A-Za-z0-9_-]{16,128}$/.test(saved)) return saved
+      if (saved && /^[a-z0-9]{6}$/.test(saved)) return saved
     } catch { /* 隐私模式 */ }
     const fresh = randomSessionId()
     try { sessionStorage.setItem(SESSION_KEY, fresh) } catch { /* 忽略 */ }

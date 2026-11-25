@@ -20,6 +20,14 @@ function tpl(over: Partial<TemplateData> = {}): TemplateData {
   } as TemplateData
 }
 
+describe('纸张预设语义键', () => {
+  it('预设携带 labelKey 与语义分组，标签纸判定走分组 id', () => {
+    expect(PAPER_PRESETS.A4.labelKey).toBe('constants.paper.A4.label')
+    expect(PAPER_PRESETS.LABEL_80X60.group).toBe('labels')
+    expect(isLabelPaperSize('LABEL_80X60')).toBe(true)
+  })
+})
+
 describe('纸张预设：针式打印纸', () => {
   it('全等分 / 二等分 / 三等分尺寸', () => {
     expect(PAPER_PRESETS.DOT_FULL).toMatchObject({ width: 241, height: 279.4 })
@@ -103,10 +111,10 @@ describe('纸张预设：小票纸（连续纸）', () => {
 })
 
 describe('纸张预设：下拉元数据', () => {
-  it('每个预设都有中文显示名与分组', () => {
+  it('每个预设都有显示名语义键与分组 id', () => {
     for (const [key, preset] of Object.entries(PAPER_PRESETS)) {
-      expect(preset.label, key).toBeTruthy()
-      expect(preset.group, key).toBeTruthy()
+      expect(preset.labelKey, key).toMatch(/^constants\.paper\./)
+      expect(preset.group, key).toMatch(/^(common|dotMatrix|labels|receipt|continuous)$/)
     }
   })
 })

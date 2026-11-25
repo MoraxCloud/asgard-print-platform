@@ -1,5 +1,5 @@
 /*!
- * @worm-print-platform/plugin-echarts v1.1.0
+ * @worm-print-platform/plugin-echarts v1.6.5
  * Copyright (c) 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-FileCopyrightText: 2026 worm <liu_long_qqcom@qq.com>
  * SPDX-License-Identifier: MIT
@@ -186,8 +186,10 @@ function hasDataPlaceholder(series) {
   return Array.isArray(series.data) && series.data.includes("$data");
 }
 function resolveListSource(options, data) {
-  const explicit = options.dataSource;
-  if (typeof explicit === "string" && Array.isArray(data[explicit])) return data[explicit];
+  const chartSource = typeof options.chartDataSource === "string" ? options.chartDataSource : "";
+  const legacySource = typeof options.dataSource === "string" ? options.dataSource : "";
+  const explicit = chartSource || legacySource;
+  if (explicit) return Array.isArray(data[explicit]) ? data[explicit] : [];
   for (const value of Object.values(data)) {
     if (Array.isArray(value)) return value;
   }
@@ -311,7 +313,7 @@ function bindChartData(type, options, data) {
   const option = evaluateChartOption(raw, data);
   const valueFields = asFieldList(options.chartValueFields);
   if (valueFields.length === 0) return { _chartOption: option };
-  const list = resolveListSource({ ...options, dataSource: options.chartDataSource ?? options.dataSource }, data);
+  const list = resolveListSource(options, data);
   if (list.length === 0) return { _chartOption: option };
   const categoryField = asString(options.chartCategoryField);
   const def = getChartKindDefinition(type);
@@ -344,10 +346,10 @@ import { configurePlugin, getPluginConfig } from "@worm-print-platform/core/desi
 // src/constants.ts
 var CHART_PLUGIN_ID = "@worm-print-platform/echarts";
 var CHART_PALETTES = [
-  { key: "default", label: "\u9ED8\u8BA4\u84DD", colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"] },
-  { key: "fresh", label: "\u6E05\u65B0\u7EFF", colors: ["#2f9e6e", "#5cc9a7", "#9ad6c1", "#f2c94c", "#4a90e2"] },
-  { key: "warm", label: "\u6696\u6A59\u7EA2", colors: ["#f2704e", "#f7a35c", "#f7d56d", "#c54e3f", "#8f5a4a"] },
-  { key: "purple", label: "\u7D2B\u7070", colors: ["#7b61ff", "#9b8cff", "#c3baff", "#596275", "#8d99ae"] }
+  { key: "default", label: "\u9ED8\u8BA4\u84DD", labelKey: "echarts.palette.default", colors: ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de"] },
+  { key: "fresh", label: "\u6E05\u65B0\u7EFF", labelKey: "echarts.palette.fresh", colors: ["#2f9e6e", "#5cc9a7", "#9ad6c1", "#f2c94c", "#4a90e2"] },
+  { key: "warm", label: "\u6696\u6A59\u7EA2", labelKey: "echarts.palette.warm", colors: ["#f2704e", "#f7a35c", "#f7d56d", "#c54e3f", "#8f5a4a"] },
+  { key: "purple", label: "\u7D2B\u7070", labelKey: "echarts.palette.purple", colors: ["#7b61ff", "#9b8cff", "#c3baff", "#596275", "#8d99ae"] }
 ];
 var FALLBACK_SAMPLE_CATEGORIES = ["\u793A\u4F8B\u4E00", "\u793A\u4F8B\u4E8C", "\u793A\u4F8B\u4E09"];
 var FUNNEL_PADDING_DEFAULTS = { top: 6, right: 25, bottom: 6, left: 5 };
@@ -435,7 +437,7 @@ function getChartPalettes() {
   const overrides = getChartPluginConfig().palettes ?? {};
   const builtin = CHART_PALETTES.map((palette) => {
     const custom = overrides[palette.key];
-    return custom ? { key: palette.key, label: custom.label ?? palette.label, colors: custom.colors } : { key: palette.key, label: palette.label, colors: palette.colors };
+    return custom ? { key: palette.key, label: custom.label ?? palette.label, labelKey: custom.label ? void 0 : palette.labelKey, colors: custom.colors } : { key: palette.key, label: palette.label, labelKey: palette.labelKey, colors: palette.colors };
   });
   const extra = Object.entries(overrides).filter(([key]) => !CHART_PALETTES.some((palette) => palette.key === key)).map(([key, value]) => ({ key, label: value.label ?? key, colors: value.colors }));
   return [...builtin, ...extra];
@@ -453,8 +455,8 @@ function chartFactoryDefaults(type, partial) {
     title: def?.label ?? "\u56FE\u8868",
     chartOption: createDefaultChartOption(type),
     chartDataSource: "",
-    chartCategoryField: "name",
-    chartValueFields: ["value"],
+    chartCategoryField: "",
+    chartValueFields: [],
     chartSeriesField: "",
     ...partial
   };
@@ -1046,17 +1048,30 @@ function renderChartElement(spec) {
 var CHART_EXECUTOR_VERSION = "2";
 
 // src/plugin.ts
-var CHART_OPTION_META = {
-  chartOption: { kind: "object", label: t("echarts.meta.chartOption") },
-  chartDataSource: { kind: "text", label: t("echarts.meta.dataSource") },
-  chartCategoryField: { kind: "text", label: t("echarts.meta.categoryField") },
-  chartValueFields: { kind: "object", label: t("echarts.meta.valueFields") },
-  chartSeriesField: { kind: "text", label: t("echarts.meta.seriesField") }
-};
-var SCATTER_OPTION_META = {
-  ...CHART_OPTION_META,
-  chartBubble: { kind: "bool", label: t("echarts.meta.bubbleSize") }
-};
+function createChartOptionMeta(includeBubble = false) {
+  return {
+    chartOption: { kind: "object", get label() {
+      return t("echarts.meta.chartOption");
+    } },
+    chartDataSource: { kind: "text", get label() {
+      return t("echarts.meta.dataSource");
+    } },
+    chartCategoryField: { kind: "text", get label() {
+      return t("echarts.meta.categoryField");
+    } },
+    chartValueFields: { kind: "object", get label() {
+      return t("echarts.meta.valueFields");
+    } },
+    chartSeriesField: { kind: "text", get label() {
+      return t("echarts.meta.seriesField");
+    } },
+    ...includeBubble ? { chartBubble: { kind: "bool", get label() {
+      return t("echarts.meta.bubbleSize");
+    } } } : {}
+  };
+}
+var CHART_OPTION_META = createChartOptionMeta();
+var SCATTER_OPTION_META = createChartOptionMeta(true);
 var CHART_PLUGIN = defineElementPlugin({
   id: CHART_PLUGIN_ID,
   version: CHART_EXECUTOR_VERSION,
@@ -1105,478 +1120,501 @@ registerChartPlugin();
 registerChartPlugin();
 
 // src/ui.ts
-import { t as t2 } from "@worm-print-platform/core/i18n";
+import { t as globalT } from "@worm-print-platform/core/i18n";
 
-// src/i18n/zh-CN.ts
-var echartsZhCN = {
-  "echarts.panel.chart": "\u56FE\u8868",
-  "echarts.panel.config": "\u914D\u7F6E",
-  "echarts.panel.dataSource": "\u6570\u636E\u6E90",
-  "echarts.panel.category": "\u7C7B\u76EE",
-  "echarts.panel.value": "\u6570\u503C",
-  "echarts.panel.series": "\u7CFB\u5217",
-  "echarts.panel.chartType.bar": "\u67F1\u72B6",
-  "echarts.panel.chartType.barH": "\u6761\u5F62",
-  "echarts.panel.chartType.line": "\u6298\u7EBF",
-  "echarts.panel.chartType.area": "\u9762\u79EF",
-  "echarts.panel.chartType.pie": "\u997C",
-  "echarts.panel.chartType.doughnut": "\u73AF\u5F62",
-  "echarts.panel.chartType.scatter": "\u6563\u70B9",
-  "echarts.panel.chartType.radar": "\u96F7\u8FBE",
-  "echarts.panel.chartType.funnel": "\u6F0F\u6597",
-  "echarts.panel.chartType.gauge": "\u4EEA\u8868",
-  "echarts.panel.dataLabel": "\u6570\u636E\u6807\u7B7E",
-  "echarts.panel.valueLabel": "\u6570\u503C\u6807\u7B7E",
-  "echarts.panel.hint.dataBinding": "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002",
-  "echarts.panel.field.dimension": "\u7EF4\u5EA6\u5B57\u6BB5\uFF08\u6BCF\u4E2A\u5B57\u6BB5\u4E00\u4E2A\u7EF4\u5EA6\uFF09",
-  "echarts.panel.field.value": "\u6570\u503C\u5B57\u6BB5",
-  "echarts.panel.field.valueMulti": "\u6570\u503C\u5B57\u6BB5\uFF08\u591A\u503C\u591A\u7CFB\u5217\uFF09",
-  "echarts.panel.default": "\uFF08\u9ED8\u8BA4\uFF09",
-  "echarts.panel.current": "\uFF08\u5F53\u524D\uFF09",
-  "echarts.panel.defaultFirstArray": "\uFF08\u9ED8\u8BA4\uFF1A\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09",
-  "echarts.panel.error.invalidOption": "\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61",
-  "echarts.panel.chartFallback": "\u56FE\u8868",
-  "echarts.panel.optionDefault": "\uFF08\u9ED8\u8BA4\uFF09",
-  "echarts.panel.overflow.default": "\u9ED8\u8BA4",
-  "echarts.panel.overflow.none": "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09",
-  "echarts.panel.overflow.truncate": "\u622A\u65AD",
-  "echarts.panel.overflow.break": "\u6362\u884C",
-  "echarts.panel.fontWeight.default": "\u9ED8\u8BA4",
-  "echarts.panel.fontWeight.normal": "\u5E38\u89C4",
-  "echarts.panel.fontWeight.bold": "\u52A0\u7C97",
-  "echarts.panel.label.distance": "\u8DDD\u79BB",
-  "echarts.panel.label.rotate": "\u65CB\u8F6C\uFF08\u5EA6\uFF09",
-  "echarts.panel.label.fontSize": "\u5B57\u53F7",
-  "echarts.panel.label.fontWeight": "\u5B57\u91CD",
-  "echarts.panel.label.color": "\u6587\u5B57\u989C\u8272",
-  "echarts.panel.label.backgroundColor": "\u80CC\u666F\u8272",
-  "echarts.panel.label.borderColor": "\u8FB9\u6846\u8272",
-  "echarts.panel.label.borderWidth": "\u8FB9\u6846\u5BBD\u5EA6",
-  "echarts.panel.label.borderRadius": "\u5706\u89D2",
-  "echarts.panel.label.padding": "\u5185\u8FB9\u8DDD",
-  "echarts.panel.label.show": "\u663E\u793A\u6570\u636E\u6807\u7B7E",
-  "echarts.panel.label.content": "\u5185\u5BB9",
-  "echarts.panel.label.formatterTitle": "\u6570\u636E\u6807\u7B7E\u5185\u5BB9",
-  "echarts.panel.label.formatterCustom": "\u81EA\u5B9A\u4E49 / \u9ED8\u8BA4",
-  "echarts.panel.label.formatterPlaceholder": "\u5982 {b}: {c}",
-  "echarts.panel.label.overflow": "\u6EA2\u51FA\u5904\u7406",
-  "echarts.panel.label.position": "\u4F4D\u7F6E",
-  "echarts.panel.label.positionTitle": "\u6807\u7B7E\u4F4D\u7F6E",
-  "echarts.panel.label.positionDefault": "\u9ED8\u8BA4",
-  "echarts.panel.label.offset": "\u504F\u79FB X / Y",
-  "echarts.panel.label.style": "\u6837\u5F0F",
-  "echarts.panel.labelLine.fontWeight": "\u5B57\u91CD",
-  "echarts.panel.labelLine": "\u5F15\u5BFC\u7EBF",
-  "echarts.panel.labelLine.show": "\u663E\u793A\u5F15\u5BFC\u7EBF",
-  "echarts.panel.labelLine.length": "\u5F15\u5BFC\u7EBF\u957F\u5EA6",
-  "echarts.panel.labelLine.length2": "\u7B2C\u4E8C\u6BB5\u957F\u5EA6",
-  "echarts.panel.labelLine.smooth": "\u5E73\u6ED1\u5F15\u5BFC\u7EBF",
-  "echarts.panel.dataSourceTitle": "\u6570\u636E\u6E90",
-  "echarts.panel.categoryField": "\u7C7B\u76EE\u5B57\u6BB5",
-  "echarts.panel.removeField": "\u5220\u9664\u8BE5\u5B57\u6BB5",
-  "echarts.panel.addField": "+ \u6DFB\u52A0\u5B57\u6BB5",
-  "echarts.panel.seriesField": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
-  "echarts.panel.seriesFieldHint": "\u53EF\u9009\uFF0C\u5982 region\uFF08\u6309\u503C\u62C6\u6210\u591A\u7CFB\u5217\uFF09",
-  "echarts.panel.bubbleSize": "\u6C14\u6CE1\u5927\u5C0F",
-  "echarts.panel.title": "\u56FE\u8868\u6807\u9898",
-  "echarts.panel.titleHint": "\u7559\u7A7A\u4E0D\u663E\u793A\u6807\u9898",
-  "echarts.panel.legend": "\u663E\u793A\u56FE\u4F8B",
-  "echarts.panel.palette": "\u914D\u8272",
-  "echarts.panel.stack": "\u5806\u53E0\u663E\u793A",
-  "echarts.panel.innerRadius": "\u5185\u5F84\uFF08%\uFF09",
-  "echarts.panel.paddingTRBL": "\u5185\u8FB9\u8DDD \u4E0A/\u53F3/\u4E0B/\u5DE6 (%)",
-  "echarts.panel.paddingTop": "\u4E0A\u8FB9\u8DDD",
-  "echarts.panel.paddingRight": "\u53F3\u8FB9\u8DDD\uFF08\u7559\u5916\u7F6E\u6807\u7B7E\uFF09",
-  "echarts.panel.paddingBottom": "\u4E0B\u8FB9\u8DDD",
-  "echarts.panel.paddingLeft": "\u5DE6\u8FB9\u8DDD",
-  "echarts.panel.radius": "\u534A\u5F84\uFF08%\uFF09",
-  "echarts.panel.minMax": "\u6700\u5C0F / \u6700\u5927\u503C",
-  "echarts.panel.group": "\u56FE\u8868",
-  "echarts.series.typeNames.bar": "\u67F1\u72B6\u56FE",
-  "echarts.series.typeNames.barH": "\u6761\u5F62\u56FE",
-  "echarts.series.typeNames.line": "\u6298\u7EBF\u56FE",
-  "echarts.series.typeNames.area": "\u9762\u79EF\u56FE",
-  "echarts.series.typeNames.pie": "\u997C\u56FE",
-  "echarts.series.typeNames.doughnut": "\u73AF\u5F62\u56FE",
-  "echarts.series.typeNames.scatter": "\u6563\u70B9\u56FE",
-  "echarts.series.typeNames.radar": "\u96F7\u8FBE\u56FE",
-  "echarts.series.typeNames.funnel": "\u6F0F\u6597\u56FE",
-  "echarts.series.typeNames.gauge": "\u4EEA\u8868\u76D8",
-  "echarts.label.formatter.value": "\u6570\u503C",
-  "echarts.label.formatter.nameValue": "\u540D\u79F0: \u6570\u503C",
-  "echarts.label.formatter.name": "\u540D\u79F0",
-  "echarts.label.formatter.percent": "\u767E\u5206\u6BD4",
-  "echarts.label.position.bar.top": "\u9876\u90E8",
-  "echarts.label.position.bar.inside": "\u5185\u90E8",
-  "echarts.label.position.bar.insideTop": "\u5185\u90E8\u9876\u7AEF",
-  "echarts.label.position.bar.bottom": "\u5E95\u90E8",
-  "echarts.label.position.bar.insideBottom": "\u5185\u90E8\u5E95\u7AEF",
-  "echarts.label.position.bar.right": "\u53F3\u4FA7",
-  "echarts.label.position.bar.left": "\u5DE6\u4FA7",
-  "echarts.label.position.bar.middle": "\u5C45\u4E2D",
-  "echarts.label.position.line.top": "\u9876\u90E8",
-  "echarts.label.position.line.bottom": "\u5E95\u90E8",
-  "echarts.label.position.line.inside": "\u5185\u90E8",
-  "echarts.label.position.line.left": "\u5DE6\u4FA7",
-  "echarts.label.position.line.right": "\u53F3\u4FA7",
-  "echarts.label.position.pie.outside": "\u5916\u4FA7",
-  "echarts.label.position.pie.inside": "\u5185\u90E8",
-  "echarts.label.position.pie.center": "\u4E2D\u5FC3",
-  "echarts.label.position.scatter.top": "\u9876\u90E8",
-  "echarts.label.position.scatter.bottom": "\u5E95\u90E8",
-  "echarts.label.position.scatter.left": "\u5DE6\u4FA7",
-  "echarts.label.position.scatter.right": "\u53F3\u4FA7",
-  "echarts.label.position.scatter.inside": "\u5185\u90E8",
-  "echarts.label.position.radar.top": "\u9876\u90E8",
-  "echarts.label.position.radar.bottom": "\u5E95\u90E8",
-  "echarts.label.position.radar.left": "\u5DE6\u4FA7",
-  "echarts.label.position.radar.right": "\u53F3\u4FA7",
-  "echarts.label.position.radar.inside": "\u5185\u90E8",
-  "echarts.label.position.funnel.outer": "\u5916\u4FA7",
-  "echarts.label.position.funnel.inner": "\u5185\u90E8",
-  "echarts.label.position.funnel.left": "\u5DE6\u4FA7",
-  "echarts.label.position.funnel.right": "\u53F3\u4FA7",
-  "echarts.label.position.funnel.top": "\u9876\u90E8",
-  "echarts.label.position.funnel.bottom": "\u5E95\u90E8",
-  "echarts.meta.chartOption": "\u56FE\u8868 option",
-  "echarts.meta.dataSource": "\u6570\u636E\u6E90",
-  "echarts.meta.categoryField": "\u7C7B\u76EE\u5B57\u6BB5",
-  "echarts.meta.valueFields": "\u6570\u503C\u5B57\u6BB5",
-  "echarts.meta.seriesField": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
-  "echarts.meta.bubbleSize": "\u6C14\u6CE1\u5927\u5C0F",
-  // 十类图表的 AI 提示说明（notes），键顺序对应 CHART_KIND_DEFINITIONS
-  "echarts.notes.bar": "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight",
-  "echarts.notes.barH": "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D",
-  "echarts.notes.line": "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle",
-  "echarts.notes.area": "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE",
-  "echarts.notes.pie": "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5",
-  "echarts.notes.doughnut": "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E",
-  "echarts.notes.scatter": "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F",
-  "echarts.notes.radar": "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09",
-  "echarts.notes.funnel": "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09",
-  "echarts.notes.gauge": "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max"
+// src/i18n/zh-CN.json
+var zh_CN_default = {
+  echarts: {
+    "echarts.panel.chart": "\u56FE\u8868",
+    "echarts.panel.config": "\u914D\u7F6E",
+    "echarts.panel.dataSource": "\u6570\u636E\u6E90",
+    "echarts.panel.category": "\u7C7B\u76EE",
+    "echarts.panel.value": "\u6570\u503C",
+    "echarts.panel.series": "\u7CFB\u5217",
+    "echarts.panel.chartType.bar": "\u67F1\u72B6",
+    "echarts.panel.chartType.barH": "\u6761\u5F62",
+    "echarts.panel.chartType.line": "\u6298\u7EBF",
+    "echarts.panel.chartType.area": "\u9762\u79EF",
+    "echarts.panel.chartType.pie": "\u997C",
+    "echarts.panel.chartType.doughnut": "\u73AF\u5F62",
+    "echarts.panel.chartType.scatter": "\u6563\u70B9",
+    "echarts.panel.chartType.radar": "\u96F7\u8FBE",
+    "echarts.panel.chartType.funnel": "\u6F0F\u6597",
+    "echarts.panel.chartType.gauge": "\u4EEA\u8868",
+    "echarts.panel.dataLabel": "\u6570\u636E\u6807\u7B7E",
+    "echarts.panel.valueLabel": "\u6570\u503C\u6807\u7B7E",
+    "echarts.panel.hint.dataBinding": "\u6570\u636E\u7531\u6A21\u677F\u7ED1\u5B9A\u9636\u6BB5\u6CE8\u5165\uFF1Aseries/xAxis \u7684 data \u4FDD\u7559 `$data` \u5360\u4F4D\u5373\u53EF\uFF1B\u590D\u6742\u6837\u5F0F\u53EF\u5728\u6A21\u677F JSON \u4E2D\u624B\u5199 chartOption\u3002",
+    "echarts.panel.field.dimension": "\u7EF4\u5EA6\u5B57\u6BB5\uFF08\u6BCF\u4E2A\u5B57\u6BB5\u4E00\u4E2A\u7EF4\u5EA6\uFF09",
+    "echarts.panel.field.value": "\u6570\u503C\u5B57\u6BB5",
+    "echarts.panel.field.valueMulti": "\u6570\u503C\u5B57\u6BB5\uFF08\u591A\u503C\u591A\u7CFB\u5217\uFF09",
+    "echarts.panel.default": "\uFF08\u9ED8\u8BA4\uFF09",
+    "echarts.panel.current": "\uFF08\u5F53\u524D\uFF09",
+    "echarts.panel.defaultFirstArray": "\uFF08\u9ED8\u8BA4\uFF1A\u9876\u5C42\u7B2C\u4E00\u4E2A\u6570\u7EC4\uFF09",
+    "echarts.panel.error.invalidOption": "\u56FE\u8868 option \u975E\u6CD5\uFF1A\u9700\u8981\u5BF9\u8C61",
+    "echarts.panel.chartFallback": "\u56FE\u8868",
+    "echarts.panel.optionDefault": "\uFF08\u9ED8\u8BA4\uFF09",
+    "echarts.panel.overflow.default": "\u9ED8\u8BA4",
+    "echarts.panel.overflow.none": "\u4E0D\u5904\u7406\uFF08\u663E\u793A\u5B8C\u6574\uFF09",
+    "echarts.panel.overflow.truncate": "\u622A\u65AD",
+    "echarts.panel.overflow.break": "\u6362\u884C",
+    "echarts.panel.fontWeight.default": "\u9ED8\u8BA4",
+    "echarts.panel.fontWeight.normal": "\u5E38\u89C4",
+    "echarts.panel.fontWeight.bold": "\u52A0\u7C97",
+    "echarts.panel.label.distance": "\u8DDD\u79BB",
+    "echarts.panel.label.rotate": "\u65CB\u8F6C\uFF08\u5EA6\uFF09",
+    "echarts.panel.label.fontSize": "\u5B57\u53F7",
+    "echarts.panel.label.fontWeight": "\u5B57\u91CD",
+    "echarts.panel.label.color": "\u6587\u5B57\u989C\u8272",
+    "echarts.panel.label.backgroundColor": "\u80CC\u666F\u8272",
+    "echarts.panel.label.borderColor": "\u8FB9\u6846\u8272",
+    "echarts.panel.label.borderWidth": "\u8FB9\u6846\u5BBD\u5EA6",
+    "echarts.panel.label.borderRadius": "\u5706\u89D2",
+    "echarts.panel.label.padding": "\u5185\u8FB9\u8DDD",
+    "echarts.panel.label.show": "\u663E\u793A\u6570\u636E\u6807\u7B7E",
+    "echarts.panel.label.content": "\u5185\u5BB9",
+    "echarts.panel.label.formatterTitle": "\u6570\u636E\u6807\u7B7E\u5185\u5BB9",
+    "echarts.panel.label.formatterCustom": "\u81EA\u5B9A\u4E49 / \u9ED8\u8BA4",
+    "echarts.panel.label.formatterPlaceholder": "\u5982 {b}: {c}",
+    "echarts.panel.label.overflow": "\u6EA2\u51FA\u5904\u7406",
+    "echarts.panel.label.position": "\u4F4D\u7F6E",
+    "echarts.panel.label.positionTitle": "\u6807\u7B7E\u4F4D\u7F6E",
+    "echarts.panel.label.positionDefault": "\u9ED8\u8BA4",
+    "echarts.panel.label.offset": "\u504F\u79FB X / Y",
+    "echarts.panel.label.style": "\u6837\u5F0F",
+    "echarts.panel.labelLine.fontWeight": "\u5B57\u91CD",
+    "echarts.panel.labelLine": "\u5F15\u5BFC\u7EBF",
+    "echarts.panel.labelLine.show": "\u663E\u793A\u5F15\u5BFC\u7EBF",
+    "echarts.panel.labelLine.length": "\u5F15\u5BFC\u7EBF\u957F\u5EA6",
+    "echarts.panel.labelLine.length2": "\u7B2C\u4E8C\u6BB5\u957F\u5EA6",
+    "echarts.panel.labelLine.smooth": "\u5E73\u6ED1\u5F15\u5BFC\u7EBF",
+    "echarts.panel.dataSourceTitle": "\u6570\u636E\u6E90",
+    "echarts.panel.selectField": "\u9009\u62E9\u5B57\u6BB5",
+    "echarts.panel.autoSource": "\u81EA\u52A8",
+    "echarts.panel.categoryField": "\u7C7B\u76EE\u5B57\u6BB5",
+    "echarts.panel.removeField": "\u5220\u9664\u8BE5\u5B57\u6BB5",
+    "echarts.panel.addField": "+ \u6DFB\u52A0\u5B57\u6BB5",
+    "echarts.panel.seriesField": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
+    "echarts.panel.seriesFieldHint": "\u53EF\u9009\uFF0C\u5982 region\uFF08\u6309\u503C\u62C6\u6210\u591A\u7CFB\u5217\uFF09",
+    "echarts.panel.bubbleSize": "\u6C14\u6CE1\u5927\u5C0F",
+    "echarts.panel.title": "\u56FE\u8868\u6807\u9898",
+    "echarts.panel.titleHint": "\u7559\u7A7A\u4E0D\u663E\u793A\u6807\u9898",
+    "echarts.panel.legend": "\u663E\u793A\u56FE\u4F8B",
+    "echarts.panel.palette": "\u914D\u8272",
+    "echarts.palette.default": "\u9ED8\u8BA4\u84DD",
+    "echarts.palette.fresh": "\u6E05\u65B0\u7EFF",
+    "echarts.palette.warm": "\u6696\u6A59\u7EA2",
+    "echarts.palette.purple": "\u7D2B\u7070",
+    "echarts.panel.stack": "\u5806\u53E0\u663E\u793A",
+    "echarts.panel.innerRadius": "\u5185\u5F84\uFF08%\uFF09",
+    "echarts.panel.paddingTRBL": "\u5185\u8FB9\u8DDD \u4E0A/\u53F3/\u4E0B/\u5DE6 (%)",
+    "echarts.panel.paddingTop": "\u4E0A\u8FB9\u8DDD",
+    "echarts.panel.paddingRight": "\u53F3\u8FB9\u8DDD\uFF08\u7559\u5916\u7F6E\u6807\u7B7E\uFF09",
+    "echarts.panel.paddingBottom": "\u4E0B\u8FB9\u8DDD",
+    "echarts.panel.paddingLeft": "\u5DE6\u8FB9\u8DDD",
+    "echarts.panel.radius": "\u534A\u5F84\uFF08%\uFF09",
+    "echarts.panel.minMax": "\u6700\u5C0F / \u6700\u5927\u503C",
+    "echarts.panel.group": "\u56FE\u8868",
+    "echarts.series.typeNames.bar": "\u67F1\u72B6\u56FE",
+    "echarts.series.typeNames.barH": "\u6761\u5F62\u56FE",
+    "echarts.series.typeNames.line": "\u6298\u7EBF\u56FE",
+    "echarts.series.typeNames.area": "\u9762\u79EF\u56FE",
+    "echarts.series.typeNames.pie": "\u997C\u56FE",
+    "echarts.series.typeNames.doughnut": "\u73AF\u5F62\u56FE",
+    "echarts.series.typeNames.scatter": "\u6563\u70B9\u56FE",
+    "echarts.series.typeNames.radar": "\u96F7\u8FBE\u56FE",
+    "echarts.series.typeNames.funnel": "\u6F0F\u6597\u56FE",
+    "echarts.series.typeNames.gauge": "\u4EEA\u8868\u76D8",
+    "echarts.label.formatter.value": "\u6570\u503C",
+    "echarts.label.formatter.nameValue": "\u540D\u79F0: \u6570\u503C",
+    "echarts.label.formatter.name": "\u540D\u79F0",
+    "echarts.label.formatter.percent": "\u767E\u5206\u6BD4",
+    "echarts.label.position.bar.top": "\u9876\u90E8",
+    "echarts.label.position.bar.inside": "\u5185\u90E8",
+    "echarts.label.position.bar.insideTop": "\u5185\u90E8\u9876\u7AEF",
+    "echarts.label.position.bar.bottom": "\u5E95\u90E8",
+    "echarts.label.position.bar.insideBottom": "\u5185\u90E8\u5E95\u7AEF",
+    "echarts.label.position.bar.right": "\u53F3\u4FA7",
+    "echarts.label.position.bar.left": "\u5DE6\u4FA7",
+    "echarts.label.position.bar.middle": "\u5C45\u4E2D",
+    "echarts.label.position.line.top": "\u9876\u90E8",
+    "echarts.label.position.line.bottom": "\u5E95\u90E8",
+    "echarts.label.position.line.inside": "\u5185\u90E8",
+    "echarts.label.position.line.left": "\u5DE6\u4FA7",
+    "echarts.label.position.line.right": "\u53F3\u4FA7",
+    "echarts.label.position.pie.outside": "\u5916\u4FA7",
+    "echarts.label.position.pie.inside": "\u5185\u90E8",
+    "echarts.label.position.pie.center": "\u4E2D\u5FC3",
+    "echarts.label.position.scatter.top": "\u9876\u90E8",
+    "echarts.label.position.scatter.bottom": "\u5E95\u90E8",
+    "echarts.label.position.scatter.left": "\u5DE6\u4FA7",
+    "echarts.label.position.scatter.right": "\u53F3\u4FA7",
+    "echarts.label.position.scatter.inside": "\u5185\u90E8",
+    "echarts.label.position.radar.top": "\u9876\u90E8",
+    "echarts.label.position.radar.bottom": "\u5E95\u90E8",
+    "echarts.label.position.radar.left": "\u5DE6\u4FA7",
+    "echarts.label.position.radar.right": "\u53F3\u4FA7",
+    "echarts.label.position.radar.inside": "\u5185\u90E8",
+    "echarts.label.position.funnel.outer": "\u5916\u4FA7",
+    "echarts.label.position.funnel.inner": "\u5185\u90E8",
+    "echarts.label.position.funnel.left": "\u5DE6\u4FA7",
+    "echarts.label.position.funnel.right": "\u53F3\u4FA7",
+    "echarts.label.position.funnel.top": "\u9876\u90E8",
+    "echarts.label.position.funnel.bottom": "\u5E95\u90E8",
+    "echarts.meta.chartOption": "\u56FE\u8868 option",
+    "echarts.meta.dataSource": "\u6570\u636E\u6E90",
+    "echarts.meta.categoryField": "\u7C7B\u76EE\u5B57\u6BB5",
+    "echarts.meta.valueFields": "\u6570\u503C\u5B57\u6BB5",
+    "echarts.meta.seriesField": "\u7CFB\u5217\u62C6\u5206\u5B57\u6BB5",
+    "echarts.meta.bubbleSize": "\u6C14\u6CE1\u5927\u5C0F",
+    "echarts.notes.bar": "\u67F1\u72B6\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6BCF\u5B57\u6BB5\u4E00\u4E2A series\uFF1Bseries[].data \u5199 $data \u5360\u4F4D\uFF1B\u56FA\u5B9A\u9AD8\uFF0C\u7981\u6B62 autoHeight",
+    "echarts.notes.barH": "\u6A2A\u5411\u6761\u5F62\u56FE\uFF1AxAxis \u4E3A\u6570\u503C\u3001yAxis \u4E3A\u7C7B\u76EE\uFF1B\u7C7B\u76EE\u5199 yAxis.data \u7684 $data \u5360\u4F4D",
+    "echarts.notes.line": "\u6298\u7EBF\u56FE\uFF1A\u7C7B\u76EE + \u591A\u4E2A\u6570\u503C\u5B57\u6BB5\uFF1B\u4E0D\u5199 areaStyle",
+    "echarts.notes.area": "\u9762\u79EF\u56FE\uFF1A\u6298\u7EBF + series[].areaStyle\uFF1B\u5176\u4F59\u540C\u6298\u7EBF\u56FE",
+    "echarts.notes.pie": "\u997C\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u751F\u6210 { name, value }\uFF1B\u53EA\u9700\u4E00\u4E2A\u6570\u503C\u5B57\u6BB5",
+    "echarts.notes.doughnut": "\u73AF\u5F62\u56FE\uFF1A\u997C\u56FE + radius:[\u5185\u5F84,\u5916\u5F84]\uFF1B\u5185\u5F84\u7531\u9762\u677F\u914D\u7F6E",
+    "echarts.notes.scatter": "\u6563\u70B9\u56FE\uFF1A\u7C7B\u76EE\u5B57\u6BB5\u4F5C x\u3001\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C y\uFF1BchartBubble \u5F00\u542F\u65F6\u7528\u7B2C\u4E8C\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u70B9\u5927\u5C0F",
+    "echarts.notes.radar": "\u96F7\u8FBE\u56FE\uFF1A\u6BCF\u4E2A\u6570\u503C\u5B57\u6BB5\u662F\u4E00\u4E2A\u7EF4\u5EA6\uFF08radar.indicator\uFF09\uFF0C\u6BCF\u884C\u6570\u636E\u662F\u4E00\u4E2A\u7CFB\u5217\uFF08\u7C7B\u76EE\u5B57\u6BB5\u4F5C\u7CFB\u5217\u540D\uFF09\uFF1B\u534A\u5F84\u7531\u9762\u677F\u5199 radar.radius\uFF08%\uFF0C\u9ED8\u8BA4 75\uFF09",
+    "echarts.notes.funnel": "\u6F0F\u6597\u56FE\uFF1A\u7C7B\u76EE + \u9996\u4E2A\u6570\u503C\u5B57\u6BB5\uFF0C\u6309\u6570\u503C\u964D\u5E8F\uFF1B\u56DB\u8FB9\u5185\u8FB9\u8DDD\u7531\u9762\u677F\u5199 series.left/right/top/bottom\uFF08%\uFF0C\u53F3\u4FA7\u9700\u7559\u5916\u7F6E\u6807\u7B7E\u7A7A\u95F4\uFF09",
+    "echarts.notes.gauge": "\u4EEA\u8868\u76D8\uFF1A\u53D6\u9996\u884C\u6570\u636E\u7684\u9996\u4E2A\u6570\u503C\u5B57\u6BB5\u4F5C\u6307\u9488\u503C\uFF1Bmin/max \u7531\u9762\u677F\u5199\u5165 series[0].min/max"
+  }
 };
 
-// src/i18n/en-US.ts
-var echartsEnUS = {
-  "echarts.panel.chart": "Chart",
-  "echarts.panel.config": "Config",
-  "echarts.panel.dataSource": "Data source",
-  "echarts.panel.category": "Category",
-  "echarts.panel.value": "Value",
-  "echarts.panel.series": "Series",
-  "echarts.panel.chartType.bar": "Bar",
-  "echarts.panel.chartType.barH": "Horizontal bar",
-  "echarts.panel.chartType.line": "Line",
-  "echarts.panel.chartType.area": "Area",
-  "echarts.panel.chartType.pie": "Pie",
-  "echarts.panel.chartType.doughnut": "Doughnut",
-  "echarts.panel.chartType.scatter": "Scatter",
-  "echarts.panel.chartType.radar": "Radar",
-  "echarts.panel.chartType.funnel": "Funnel",
-  "echarts.panel.chartType.gauge": "Gauge",
-  "echarts.panel.dataLabel": "Data label",
-  "echarts.panel.valueLabel": "Value label",
-  "echarts.panel.hint.dataBinding": "Data is injected at template binding; keep the `$data` placeholder in series/xAxis data; advanced styles can be written in chartOption in the template JSON.",
-  "echarts.panel.field.dimension": "Dimension fields (one per dimension)",
-  "echarts.panel.field.value": "Value fields",
-  "echarts.panel.field.valueMulti": "Value fields (multiple values, multiple series)",
-  "echarts.panel.default": "(default)",
-  "echarts.panel.current": "(current)",
-  "echarts.panel.defaultFirstArray": "(default: first top-level array)",
-  "echarts.panel.error.invalidOption": "Invalid chart option: expected an object",
-  "echarts.panel.chartFallback": "Chart",
-  "echarts.panel.optionDefault": "(default)",
-  "echarts.panel.overflow.default": "Default",
-  "echarts.panel.overflow.none": "None (show full)",
-  "echarts.panel.overflow.truncate": "Truncate",
-  "echarts.panel.overflow.break": "Wrap",
-  "echarts.panel.fontWeight.default": "Default",
-  "echarts.panel.fontWeight.normal": "Regular",
-  "echarts.panel.fontWeight.bold": "Bold",
-  "echarts.panel.label.distance": "Distance",
-  "echarts.panel.label.rotate": "Rotation (deg)",
-  "echarts.panel.label.fontSize": "Font size",
-  "echarts.panel.label.fontWeight": "Font weight",
-  "echarts.panel.label.color": "Text color",
-  "echarts.panel.label.backgroundColor": "Background color",
-  "echarts.panel.label.borderColor": "Border color",
-  "echarts.panel.label.borderWidth": "Border width",
-  "echarts.panel.label.borderRadius": "Radius",
-  "echarts.panel.label.padding": "Padding",
-  "echarts.panel.label.show": "Show data labels",
-  "echarts.panel.label.content": "Content",
-  "echarts.panel.label.formatterTitle": "Data label content",
-  "echarts.panel.label.formatterCustom": "Custom / Default",
-  "echarts.panel.label.formatterPlaceholder": "e.g. {b}: {c}",
-  "echarts.panel.label.overflow": "Overflow",
-  "echarts.panel.label.position": "Position",
-  "echarts.panel.label.positionTitle": "Label position",
-  "echarts.panel.label.positionDefault": "Default",
-  "echarts.panel.label.offset": "Offset X / Y",
-  "echarts.panel.label.style": "Style",
-  "echarts.panel.labelLine.fontWeight": "Font weight",
-  "echarts.panel.labelLine": "Label line",
-  "echarts.panel.labelLine.show": "Show label line",
-  "echarts.panel.labelLine.length": "Label line length",
-  "echarts.panel.labelLine.length2": "Second segment length",
-  "echarts.panel.labelLine.smooth": "Smooth label line",
-  "echarts.panel.dataSourceTitle": "Data source",
-  "echarts.panel.categoryField": "Category field",
-  "echarts.panel.removeField": "Remove this field",
-  "echarts.panel.addField": "+ Add field",
-  "echarts.panel.seriesField": "Series split field",
-  "echarts.panel.seriesFieldHint": "Optional, e.g. region (splits into series by value)",
-  "echarts.panel.bubbleSize": "Bubble size",
-  "echarts.panel.title": "Chart title",
-  "echarts.panel.titleHint": "Leave empty to hide the title",
-  "echarts.panel.legend": "Show legend",
-  "echarts.panel.palette": "Color palette",
-  "echarts.panel.stack": "Stacked",
-  "echarts.panel.innerRadius": "Inner radius (%)",
-  "echarts.panel.paddingTRBL": "Padding top/right/bottom/left (%)",
-  "echarts.panel.paddingTop": "Top padding",
-  "echarts.panel.paddingRight": "Right padding (for outer labels)",
-  "echarts.panel.paddingBottom": "Bottom padding",
-  "echarts.panel.paddingLeft": "Left padding",
-  "echarts.panel.radius": "Radius (%)",
-  "echarts.panel.minMax": "Min / max",
-  "echarts.panel.group": "Chart",
-  "echarts.series.typeNames.bar": "Bar chart",
-  "echarts.series.typeNames.barH": "Horizontal bar chart",
-  "echarts.series.typeNames.line": "Line chart",
-  "echarts.series.typeNames.area": "Area chart",
-  "echarts.series.typeNames.pie": "Pie chart",
-  "echarts.series.typeNames.doughnut": "Doughnut chart",
-  "echarts.series.typeNames.scatter": "Scatter chart",
-  "echarts.series.typeNames.radar": "Radar chart",
-  "echarts.series.typeNames.funnel": "Funnel chart",
-  "echarts.series.typeNames.gauge": "Gauge chart",
-  "echarts.label.formatter.value": "Value",
-  "echarts.label.formatter.nameValue": "Name: Value",
-  "echarts.label.formatter.name": "Name",
-  "echarts.label.formatter.percent": "Percentage",
-  "echarts.label.position.bar.top": "Top",
-  "echarts.label.position.bar.inside": "Inside",
-  "echarts.label.position.bar.insideTop": "Inside top",
-  "echarts.label.position.bar.bottom": "Bottom",
-  "echarts.label.position.bar.insideBottom": "Inside bottom",
-  "echarts.label.position.bar.right": "Right",
-  "echarts.label.position.bar.left": "Left",
-  "echarts.label.position.bar.middle": "Center",
-  "echarts.label.position.line.top": "Top",
-  "echarts.label.position.line.bottom": "Bottom",
-  "echarts.label.position.line.inside": "Inside",
-  "echarts.label.position.line.left": "Left",
-  "echarts.label.position.line.right": "Right",
-  "echarts.label.position.pie.outside": "Outside",
-  "echarts.label.position.pie.inside": "Inside",
-  "echarts.label.position.pie.center": "Center",
-  "echarts.label.position.scatter.top": "Top",
-  "echarts.label.position.scatter.bottom": "Bottom",
-  "echarts.label.position.scatter.left": "Left",
-  "echarts.label.position.scatter.right": "Right",
-  "echarts.label.position.scatter.inside": "Inside",
-  "echarts.label.position.radar.top": "Top",
-  "echarts.label.position.radar.bottom": "Bottom",
-  "echarts.label.position.radar.left": "Left",
-  "echarts.label.position.radar.right": "Right",
-  "echarts.label.position.radar.inside": "Inside",
-  "echarts.label.position.funnel.outer": "Outside",
-  "echarts.label.position.funnel.inner": "Inside",
-  "echarts.label.position.funnel.left": "Left",
-  "echarts.label.position.funnel.right": "Right",
-  "echarts.label.position.funnel.top": "Top",
-  "echarts.label.position.funnel.bottom": "Bottom",
-  "echarts.meta.chartOption": "Chart option",
-  "echarts.meta.dataSource": "Data source",
-  "echarts.meta.categoryField": "Category field",
-  "echarts.meta.valueFields": "Value fields",
-  "echarts.meta.seriesField": "Series split field",
-  "echarts.meta.bubbleSize": "Bubble size",
-  // AI hints for the ten chart kinds (notes), order matches CHART_KIND_DEFINITIONS
-  "echarts.notes.bar": "Bar chart: category + multiple value fields, one series per field; write the $data placeholder in series[].data; fixed height, autoHeight is forbidden",
-  "echarts.notes.barH": "Horizontal bar: xAxis is the value axis, yAxis is the category axis; write the $data placeholder in yAxis.data for categories",
-  "echarts.notes.line": "Line chart: category + multiple value fields; do not write areaStyle",
-  "echarts.notes.area": "Area chart: line + series[].areaStyle; otherwise same as the line chart",
-  "echarts.notes.pie": "Pie chart: category + the first value field produce { name, value }; only one value field is needed",
-  "echarts.notes.doughnut": "Doughnut: pie + radius:[inner, outer]; the inner radius is configured in the panel",
-  "echarts.notes.scatter": "Scatter: the category field is x, the first value field is y; when chartBubble is on, the second value field is the point size",
-  "echarts.notes.radar": "Radar: each value field is a dimension (radar.indicator), each data row is a series (the category field is the series name); the radius is written by the panel to radar.radius (%, default 75)",
-  "echarts.notes.funnel": "Funnel: category + the first value field, sorted descending; the four insets are written by the panel to series.left/right/top/bottom (%, reserve room on the right for outer labels)",
-  "echarts.notes.gauge": "Gauge: the first value field of the first data row is the pointer value; min/max are written by the panel to series[0].min/max"
+// src/i18n/en-US.json
+var en_US_default = {
+  echarts: {
+    "echarts.panel.chart": "Chart",
+    "echarts.panel.config": "Config",
+    "echarts.panel.dataSource": "Data source",
+    "echarts.panel.category": "Category",
+    "echarts.panel.value": "Value",
+    "echarts.panel.series": "Series",
+    "echarts.panel.chartType.bar": "Bar",
+    "echarts.panel.chartType.barH": "Horizontal bar",
+    "echarts.panel.chartType.line": "Line",
+    "echarts.panel.chartType.area": "Area",
+    "echarts.panel.chartType.pie": "Pie",
+    "echarts.panel.chartType.doughnut": "Doughnut",
+    "echarts.panel.chartType.scatter": "Scatter",
+    "echarts.panel.chartType.radar": "Radar",
+    "echarts.panel.chartType.funnel": "Funnel",
+    "echarts.panel.chartType.gauge": "Gauge",
+    "echarts.panel.dataLabel": "Data label",
+    "echarts.panel.valueLabel": "Value label",
+    "echarts.panel.hint.dataBinding": "Data is injected at template binding; keep the `$data` placeholder in series/xAxis data; advanced styles can be written in chartOption in the template JSON.",
+    "echarts.panel.field.dimension": "Dimension fields (one per dimension)",
+    "echarts.panel.field.value": "Value fields",
+    "echarts.panel.field.valueMulti": "Value fields (multiple values, multiple series)",
+    "echarts.panel.default": "(default)",
+    "echarts.panel.current": "(current)",
+    "echarts.panel.defaultFirstArray": "(default: first top-level array)",
+    "echarts.panel.error.invalidOption": "Invalid chart option: expected an object",
+    "echarts.panel.chartFallback": "Chart",
+    "echarts.panel.optionDefault": "(default)",
+    "echarts.panel.overflow.default": "Default",
+    "echarts.panel.overflow.none": "None (show full)",
+    "echarts.panel.overflow.truncate": "Truncate",
+    "echarts.panel.overflow.break": "Wrap",
+    "echarts.panel.fontWeight.default": "Default",
+    "echarts.panel.fontWeight.normal": "Regular",
+    "echarts.panel.fontWeight.bold": "Bold",
+    "echarts.panel.label.distance": "Distance",
+    "echarts.panel.label.rotate": "Rotation (deg)",
+    "echarts.panel.label.fontSize": "Font size",
+    "echarts.panel.label.fontWeight": "Font weight",
+    "echarts.panel.label.color": "Text color",
+    "echarts.panel.label.backgroundColor": "Background color",
+    "echarts.panel.label.borderColor": "Border color",
+    "echarts.panel.label.borderWidth": "Border width",
+    "echarts.panel.label.borderRadius": "Radius",
+    "echarts.panel.label.padding": "Padding",
+    "echarts.panel.label.show": "Show data labels",
+    "echarts.panel.label.content": "Content",
+    "echarts.panel.label.formatterTitle": "Data label content",
+    "echarts.panel.label.formatterCustom": "Custom / Default",
+    "echarts.panel.label.formatterPlaceholder": "e.g. {b}: {c}",
+    "echarts.panel.label.overflow": "Overflow",
+    "echarts.panel.label.position": "Position",
+    "echarts.panel.label.positionTitle": "Label position",
+    "echarts.panel.label.positionDefault": "Default",
+    "echarts.panel.label.offset": "Offset X / Y",
+    "echarts.panel.label.style": "Style",
+    "echarts.panel.labelLine.fontWeight": "Font weight",
+    "echarts.panel.labelLine": "Label line",
+    "echarts.panel.labelLine.show": "Show label line",
+    "echarts.panel.labelLine.length": "Label line length",
+    "echarts.panel.labelLine.length2": "Second segment length",
+    "echarts.panel.labelLine.smooth": "Smooth label line",
+    "echarts.panel.dataSourceTitle": "Data source",
+    "echarts.panel.selectField": "Select field",
+    "echarts.panel.autoSource": "Auto",
+    "echarts.panel.categoryField": "Category field",
+    "echarts.panel.removeField": "Remove this field",
+    "echarts.panel.addField": "+ Add field",
+    "echarts.panel.seriesField": "Series split field",
+    "echarts.panel.seriesFieldHint": "Optional, e.g. region (splits into series by value)",
+    "echarts.panel.bubbleSize": "Bubble size",
+    "echarts.panel.title": "Chart title",
+    "echarts.panel.titleHint": "Leave empty to hide the title",
+    "echarts.panel.legend": "Show legend",
+    "echarts.panel.palette": "Color palette",
+    "echarts.palette.default": "Default blue",
+    "echarts.palette.fresh": "Fresh green",
+    "echarts.palette.warm": "Warm orange-red",
+    "echarts.palette.purple": "Purple grey",
+    "echarts.panel.stack": "Stacked",
+    "echarts.panel.innerRadius": "Inner radius (%)",
+    "echarts.panel.paddingTRBL": "Padding top/right/bottom/left (%)",
+    "echarts.panel.paddingTop": "Top padding",
+    "echarts.panel.paddingRight": "Right padding (for outer labels)",
+    "echarts.panel.paddingBottom": "Bottom padding",
+    "echarts.panel.paddingLeft": "Left padding",
+    "echarts.panel.radius": "Radius (%)",
+    "echarts.panel.minMax": "Min / max",
+    "echarts.panel.group": "Chart",
+    "echarts.series.typeNames.bar": "Bar chart",
+    "echarts.series.typeNames.barH": "Horizontal bar chart",
+    "echarts.series.typeNames.line": "Line chart",
+    "echarts.series.typeNames.area": "Area chart",
+    "echarts.series.typeNames.pie": "Pie chart",
+    "echarts.series.typeNames.doughnut": "Doughnut chart",
+    "echarts.series.typeNames.scatter": "Scatter chart",
+    "echarts.series.typeNames.radar": "Radar chart",
+    "echarts.series.typeNames.funnel": "Funnel chart",
+    "echarts.series.typeNames.gauge": "Gauge chart",
+    "echarts.label.formatter.value": "Value",
+    "echarts.label.formatter.nameValue": "Name: Value",
+    "echarts.label.formatter.name": "Name",
+    "echarts.label.formatter.percent": "Percentage",
+    "echarts.label.position.bar.top": "Top",
+    "echarts.label.position.bar.inside": "Inside",
+    "echarts.label.position.bar.insideTop": "Inside top",
+    "echarts.label.position.bar.bottom": "Bottom",
+    "echarts.label.position.bar.insideBottom": "Inside bottom",
+    "echarts.label.position.bar.right": "Right",
+    "echarts.label.position.bar.left": "Left",
+    "echarts.label.position.bar.middle": "Center",
+    "echarts.label.position.line.top": "Top",
+    "echarts.label.position.line.bottom": "Bottom",
+    "echarts.label.position.line.inside": "Inside",
+    "echarts.label.position.line.left": "Left",
+    "echarts.label.position.line.right": "Right",
+    "echarts.label.position.pie.outside": "Outside",
+    "echarts.label.position.pie.inside": "Inside",
+    "echarts.label.position.pie.center": "Center",
+    "echarts.label.position.scatter.top": "Top",
+    "echarts.label.position.scatter.bottom": "Bottom",
+    "echarts.label.position.scatter.left": "Left",
+    "echarts.label.position.scatter.right": "Right",
+    "echarts.label.position.scatter.inside": "Inside",
+    "echarts.label.position.radar.top": "Top",
+    "echarts.label.position.radar.bottom": "Bottom",
+    "echarts.label.position.radar.left": "Left",
+    "echarts.label.position.radar.right": "Right",
+    "echarts.label.position.radar.inside": "Inside",
+    "echarts.label.position.funnel.outer": "Outside",
+    "echarts.label.position.funnel.inner": "Inside",
+    "echarts.label.position.funnel.left": "Left",
+    "echarts.label.position.funnel.right": "Right",
+    "echarts.label.position.funnel.top": "Top",
+    "echarts.label.position.funnel.bottom": "Bottom",
+    "echarts.meta.chartOption": "Chart option",
+    "echarts.meta.dataSource": "Data source",
+    "echarts.meta.categoryField": "Category field",
+    "echarts.meta.valueFields": "Value fields",
+    "echarts.meta.seriesField": "Series split field",
+    "echarts.meta.bubbleSize": "Bubble size",
+    "echarts.notes.bar": "Bar chart: category + multiple value fields, one series per field; write the $data placeholder in series[].data; fixed height, autoHeight is forbidden",
+    "echarts.notes.barH": "Horizontal bar: xAxis is the value axis, yAxis is the category axis; write the $data placeholder in yAxis.data for categories",
+    "echarts.notes.line": "Line chart: category + multiple value fields; do not write areaStyle",
+    "echarts.notes.area": "Area chart: line + series[].areaStyle; otherwise same as the line chart",
+    "echarts.notes.pie": "Pie chart: category + the first value field produce { name, value }; only one value field is needed",
+    "echarts.notes.doughnut": "Doughnut: pie + radius:[inner, outer]; the inner radius is configured in the panel",
+    "echarts.notes.scatter": "Scatter: the category field is x, the first value field is y; when chartBubble is on, the second value field is the point size",
+    "echarts.notes.radar": "Radar: each value field is a dimension (radar.indicator), each data row is a series (the category field is the series name); the radius is written by the panel to radar.radius (%, default 75)",
+    "echarts.notes.funnel": "Funnel: category + the first value field, sorted descending; the four insets are written by the panel to series.left/right/top/bottom (%, reserve room on the right for outer labels)",
+    "echarts.notes.gauge": "Gauge: the first value field of the first data row is the pointer value; min/max are written by the panel to series[0].min/max"
+  }
 };
 
-// src/i18n/th-TH.ts
-var echartsThTH = {
-  "echarts.panel.chart": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
-  "echarts.panel.config": "\u0E01\u0E32\u0E23\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E04\u0E48\u0E32",
-  "echarts.panel.dataSource": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.category": "\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
-  "echarts.panel.value": "\u0E04\u0E48\u0E32",
-  "echarts.panel.series": "\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.chartType.bar": "\u0E41\u0E17\u0E48\u0E07",
-  "echarts.panel.chartType.barH": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
-  "echarts.panel.chartType.line": "\u0E40\u0E2A\u0E49\u0E19",
-  "echarts.panel.chartType.area": "\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48",
-  "echarts.panel.chartType.pie": "\u0E27\u0E07\u0E01\u0E25\u0E21",
-  "echarts.panel.chartType.doughnut": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19",
-  "echarts.panel.chartType.scatter": "\u0E08\u0E38\u0E14\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22",
-  "echarts.panel.chartType.radar": "\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C",
-  "echarts.panel.chartType.funnel": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07",
-  "echarts.panel.chartType.gauge": "\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14",
-  "echarts.panel.dataLabel": "\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.valueLabel": "\u0E1B\u0E49\u0E32\u0E22\u0E04\u0E48\u0E32",
-  "echarts.panel.hint.dataBinding": "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E16\u0E39\u0E01\u0E41\u0E17\u0E23\u0E01\u0E15\u0E2D\u0E19\u0E1C\u0E39\u0E01\u0E40\u0E17\u0E21\u0E40\u0E1E\u0E25\u0E15; \u0E04\u0E07\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 `$data` \u0E44\u0E27\u0E49\u0E43\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 series/xAxis; \u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E40\u0E02\u0E35\u0E22\u0E19\u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E43\u0E19 chartOption \u0E02\u0E2D\u0E07 JSON \u0E40\u0E17\u0E21\u0E40\u0E1E\u0E25\u0E15\u0E44\u0E14\u0E49",
-  "echarts.panel.field.dimension": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E21\u0E34\u0E15\u0E34 (\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34)",
-  "echarts.panel.field.value": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
-  "echarts.panel.field.valueMulti": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32 (\u0E2B\u0E25\u0E32\u0E22\u0E04\u0E48\u0E32 \u0E2B\u0E25\u0E32\u0E22\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25)",
-  "echarts.panel.default": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19)",
-  "echarts.panel.current": "(\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19)",
-  "echarts.panel.defaultFirstArray": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19: \u0E2D\u0E32\u0E23\u0E4C\u0E40\u0E23\u0E22\u0E4C\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01)",
-  "echarts.panel.error.invalidOption": "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E32\u0E14\u0E27\u0E48\u0E32\u0E40\u0E1B\u0E47\u0E19\u0E2D\u0E47\u0E2D\u0E1A\u0E40\u0E08\u0E01\u0E15\u0E4C",
-  "echarts.panel.chartFallback": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
-  "echarts.panel.optionDefault": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19)",
-  "echarts.panel.overflow.default": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
-  "echarts.panel.overflow.none": "\u0E44\u0E21\u0E48\u0E21\u0E35 (\u0E41\u0E2A\u0E14\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14)",
-  "echarts.panel.overflow.truncate": "\u0E15\u0E31\u0E14\u0E17\u0E34\u0E49\u0E07",
-  "echarts.panel.overflow.break": "\u0E15\u0E31\u0E14\u0E04\u0E33",
-  "echarts.panel.fontWeight.default": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
-  "echarts.panel.fontWeight.normal": "\u0E1B\u0E01\u0E15\u0E34",
-  "echarts.panel.fontWeight.bold": "\u0E2B\u0E19\u0E32",
-  "echarts.panel.label.distance": "\u0E23\u0E30\u0E22\u0E30\u0E2B\u0E48\u0E32\u0E07",
-  "echarts.panel.label.rotate": "\u0E01\u0E32\u0E23\u0E2B\u0E21\u0E38\u0E19 (\u0E2D\u0E07\u0E28\u0E32)",
-  "echarts.panel.label.fontSize": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
-  "echarts.panel.label.fontWeight": "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
-  "echarts.panel.label.color": "\u0E2A\u0E35\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21",
-  "echarts.panel.label.backgroundColor": "\u0E2A\u0E35\u0E1E\u0E37\u0E49\u0E19\u0E2B\u0E25\u0E31\u0E07",
-  "echarts.panel.label.borderColor": "\u0E2A\u0E35\u0E40\u0E2A\u0E49\u0E19\u0E02\u0E2D\u0E1A",
-  "echarts.panel.label.borderWidth": "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E40\u0E2A\u0E49\u0E19\u0E02\u0E2D\u0E1A",
-  "echarts.panel.label.borderRadius": "\u0E23\u0E31\u0E28\u0E21\u0E35",
-  "echarts.panel.label.padding": "\u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19",
-  "echarts.panel.label.show": "\u0E41\u0E2A\u0E14\u0E07\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.label.content": "\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32",
-  "echarts.panel.label.formatterTitle": "\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.label.formatterCustom": "\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07 / \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
-  "echarts.panel.label.formatterPlaceholder": "\u0E40\u0E0A\u0E48\u0E19 {b}: {c}",
-  "echarts.panel.label.overflow": "\u0E25\u0E49\u0E19",
-  "echarts.panel.label.position": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07",
-  "echarts.panel.label.positionTitle": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07\u0E1B\u0E49\u0E32\u0E22",
-  "echarts.panel.label.positionDefault": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
-  "echarts.panel.label.offset": "\u0E2D\u0E2D\u0E1F\u0E40\u0E0B\u0E47\u0E15 X / Y",
-  "echarts.panel.label.style": "\u0E2A\u0E44\u0E15\u0E25\u0E4C",
-  "echarts.panel.labelLine.fontWeight": "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
-  "echarts.panel.labelLine": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
-  "echarts.panel.labelLine.show": "\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
-  "echarts.panel.labelLine.length": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
-  "echarts.panel.labelLine.length2": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E17\u0E48\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07",
-  "echarts.panel.labelLine.smooth": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07",
-  "echarts.panel.dataSourceTitle": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.categoryField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
-  "echarts.panel.removeField": "\u0E25\u0E1A\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E19\u0E35\u0E49",
-  "echarts.panel.addField": "+ \u0E40\u0E1E\u0E34\u0E48\u0E21\u0E1F\u0E34\u0E25\u0E14\u0E4C",
-  "echarts.panel.seriesField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.panel.seriesFieldHint": "\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A \u0E40\u0E0A\u0E48\u0E19 region (\u0E41\u0E22\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32)",
-  "echarts.panel.bubbleSize": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
-  "echarts.panel.title": "\u0E0A\u0E37\u0E48\u0E2D\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
-  "echarts.panel.titleHint": "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E0B\u0E48\u0E2D\u0E19\u0E0A\u0E37\u0E48\u0E2D",
-  "echarts.panel.legend": "\u0E41\u0E2A\u0E14\u0E07\u0E04\u0E33\u0E2D\u0E18\u0E34\u0E1A\u0E32\u0E22",
-  "echarts.panel.palette": "\u0E0A\u0E38\u0E14\u0E2A\u0E35",
-  "echarts.panel.stack": "\u0E0B\u0E49\u0E2D\u0E19\u0E01\u0E31\u0E19",
-  "echarts.panel.innerRadius": "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19 (%)",
-  "echarts.panel.paddingTRBL": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19/\u0E02\u0E27\u0E32/\u0E25\u0E48\u0E32\u0E07/\u0E0B\u0E49\u0E32\u0E22 (%)",
-  "echarts.panel.paddingTop": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19",
-  "echarts.panel.paddingRight": "\u0E23\u0E30\u0E22\u0E30\u0E02\u0E27\u0E32 (\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
-  "echarts.panel.paddingBottom": "\u0E23\u0E30\u0E22\u0E30\u0E25\u0E48\u0E32\u0E07",
-  "echarts.panel.paddingLeft": "\u0E23\u0E30\u0E22\u0E30\u0E0B\u0E49\u0E32\u0E22",
-  "echarts.panel.radius": "\u0E23\u0E31\u0E28\u0E21\u0E35 (%)",
-  "echarts.panel.minMax": "\u0E15\u0E48\u0E33\u0E2A\u0E38\u0E14 / \u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14",
-  "echarts.panel.group": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
-  "echarts.series.typeNames.bar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07",
-  "echarts.series.typeNames.barH": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
-  "echarts.series.typeNames.line": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
-  "echarts.series.typeNames.area": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48",
-  "echarts.series.typeNames.pie": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21",
-  "echarts.series.typeNames.doughnut": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19",
-  "echarts.series.typeNames.scatter": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22",
-  "echarts.series.typeNames.radar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C",
-  "echarts.series.typeNames.funnel": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07",
-  "echarts.series.typeNames.gauge": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14",
-  "echarts.label.formatter.value": "\u0E04\u0E48\u0E32",
-  "echarts.label.formatter.nameValue": "\u0E0A\u0E37\u0E48\u0E2D: \u0E04\u0E48\u0E32",
-  "echarts.label.formatter.name": "\u0E0A\u0E37\u0E48\u0E2D",
-  "echarts.label.formatter.percent": "\u0E40\u0E1B\u0E2D\u0E23\u0E4C\u0E40\u0E0B\u0E47\u0E19\u0E15\u0E4C",
-  "echarts.label.position.bar.top": "\u0E1A\u0E19",
-  "echarts.label.position.bar.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
-  "echarts.label.position.bar.insideTop": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19\u0E1A\u0E19",
-  "echarts.label.position.bar.bottom": "\u0E25\u0E48\u0E32\u0E07",
-  "echarts.label.position.bar.insideBottom": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19\u0E25\u0E48\u0E32\u0E07",
-  "echarts.label.position.bar.right": "\u0E02\u0E27\u0E32",
-  "echarts.label.position.bar.left": "\u0E0B\u0E49\u0E32\u0E22",
-  "echarts.label.position.bar.middle": "\u0E01\u0E25\u0E32\u0E07",
-  "echarts.label.position.line.top": "\u0E1A\u0E19",
-  "echarts.label.position.line.bottom": "\u0E25\u0E48\u0E32\u0E07",
-  "echarts.label.position.line.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
-  "echarts.label.position.line.left": "\u0E0B\u0E49\u0E32\u0E22",
-  "echarts.label.position.line.right": "\u0E02\u0E27\u0E32",
-  "echarts.label.position.pie.outside": "\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01",
-  "echarts.label.position.pie.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
-  "echarts.label.position.pie.center": "\u0E01\u0E25\u0E32\u0E07",
-  "echarts.label.position.scatter.top": "\u0E1A\u0E19",
-  "echarts.label.position.scatter.bottom": "\u0E25\u0E48\u0E32\u0E07",
-  "echarts.label.position.scatter.left": "\u0E0B\u0E49\u0E32\u0E22",
-  "echarts.label.position.scatter.right": "\u0E02\u0E27\u0E32",
-  "echarts.label.position.scatter.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
-  "echarts.label.position.radar.top": "\u0E1A\u0E19",
-  "echarts.label.position.radar.bottom": "\u0E25\u0E48\u0E32\u0E07",
-  "echarts.label.position.radar.left": "\u0E0B\u0E49\u0E32\u0E22",
-  "echarts.label.position.radar.right": "\u0E02\u0E27\u0E32",
-  "echarts.label.position.radar.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
-  "echarts.label.position.funnel.outer": "\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01",
-  "echarts.label.position.funnel.inner": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
-  "echarts.label.position.funnel.left": "\u0E0B\u0E49\u0E32\u0E22",
-  "echarts.label.position.funnel.right": "\u0E02\u0E27\u0E32",
-  "echarts.label.position.funnel.top": "\u0E1A\u0E19",
-  "echarts.label.position.funnel.bottom": "\u0E25\u0E48\u0E32\u0E07",
-  "echarts.meta.chartOption": "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
-  "echarts.meta.dataSource": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.meta.categoryField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
-  "echarts.meta.valueFields": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
-  "echarts.meta.seriesField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
-  "echarts.meta.bubbleSize": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
-  // คำแนะนำ AI สำหรับแผนภูมิทั้งสิบประเภท (notes) ลำดับตรงกับ CHART_KIND_DEFINITIONS
-  "echarts.notes.bar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27 \u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 series[].data; \u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E04\u0E07\u0E17\u0E35\u0E48 \u0E2B\u0E49\u0E32\u0E21\u0E43\u0E0A\u0E49 autoHeight",
-  "echarts.notes.barH": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19: xAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E04\u0E48\u0E32 yAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 yAxis.data \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
-  "echarts.notes.line": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27; \u0E44\u0E21\u0E48\u0E40\u0E02\u0E35\u0E22\u0E19 areaStyle",
-  "echarts.notes.area": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48: \u0E40\u0E2A\u0E49\u0E19 + series[].areaStyle; \u0E19\u0E2D\u0E01\u0E19\u0E31\u0E49\u0E19\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
-  "echarts.notes.pie": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E2A\u0E23\u0E49\u0E32\u0E07 { name, value }; \u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E1E\u0E35\u0E22\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
-  "echarts.notes.doughnut": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19: \u0E27\u0E07\u0E01\u0E25\u0E21 + radius:[\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19, \u0E23\u0E31\u0E28\u0E21\u0E35\u0E19\u0E2D\u0E01]; \u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E43\u0E19\u0E41\u0E1C\u0E07",
-  "echarts.notes.scatter": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19 x \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19 y; \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14 chartBubble \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E19\u0E32\u0E14\u0E08\u0E38\u0E14",
-  "echarts.notes.radar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E17\u0E38\u0E01\u0E15\u0E31\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34 (radar.indicator) \u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E15\u0E48\u0E25\u0E30\u0E41\u0E16\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series (\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E37\u0E48\u0E2D series); \u0E23\u0E31\u0E28\u0E21\u0E35\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 radar.radius (%, \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19 75)",
-  "echarts.notes.funnel": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01 \u0E40\u0E23\u0E35\u0E22\u0E07\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32\u0E25\u0E07\u0E21\u0E32; \u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19\u0E2A\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series.left/right/top/bottom (%, \u0E40\u0E1C\u0E37\u0E48\u0E2D\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E02\u0E27\u0E32\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
-  "echarts.notes.gauge": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E02\u0E2D\u0E07\u0E41\u0E16\u0E27\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E04\u0E48\u0E32\u0E1C\u0E25\u0E31\u0E01\u0E14\u0E31\u0E19; min/max \u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series[0].min/max"
+// src/i18n/th-TH.json
+var th_TH_default = {
+  echarts: {
+    "echarts.panel.chart": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+    "echarts.panel.config": "\u0E01\u0E32\u0E23\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E04\u0E48\u0E32",
+    "echarts.panel.dataSource": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.category": "\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+    "echarts.panel.value": "\u0E04\u0E48\u0E32",
+    "echarts.panel.series": "\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.chartType.bar": "\u0E41\u0E17\u0E48\u0E07",
+    "echarts.panel.chartType.barH": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
+    "echarts.panel.chartType.line": "\u0E40\u0E2A\u0E49\u0E19",
+    "echarts.panel.chartType.area": "\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48",
+    "echarts.panel.chartType.pie": "\u0E27\u0E07\u0E01\u0E25\u0E21",
+    "echarts.panel.chartType.doughnut": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19",
+    "echarts.panel.chartType.scatter": "\u0E08\u0E38\u0E14\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22",
+    "echarts.panel.chartType.radar": "\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C",
+    "echarts.panel.chartType.funnel": "\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07",
+    "echarts.panel.chartType.gauge": "\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14",
+    "echarts.panel.dataLabel": "\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.valueLabel": "\u0E1B\u0E49\u0E32\u0E22\u0E04\u0E48\u0E32",
+    "echarts.panel.hint.dataBinding": "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E16\u0E39\u0E01\u0E41\u0E17\u0E23\u0E01\u0E15\u0E2D\u0E19\u0E1C\u0E39\u0E01\u0E40\u0E17\u0E21\u0E40\u0E1E\u0E25\u0E15; \u0E04\u0E07\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 `$data` \u0E44\u0E27\u0E49\u0E43\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 series/xAxis; \u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E40\u0E02\u0E35\u0E22\u0E19\u0E2A\u0E44\u0E15\u0E25\u0E4C\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E43\u0E19 chartOption \u0E02\u0E2D\u0E07 JSON \u0E40\u0E17\u0E21\u0E40\u0E1E\u0E25\u0E15\u0E44\u0E14\u0E49",
+    "echarts.panel.field.dimension": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E21\u0E34\u0E15\u0E34 (\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34)",
+    "echarts.panel.field.value": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+    "echarts.panel.field.valueMulti": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32 (\u0E2B\u0E25\u0E32\u0E22\u0E04\u0E48\u0E32 \u0E2B\u0E25\u0E32\u0E22\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25)",
+    "echarts.panel.default": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19)",
+    "echarts.panel.current": "(\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19)",
+    "echarts.panel.defaultFirstArray": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19: \u0E2D\u0E32\u0E23\u0E4C\u0E40\u0E23\u0E22\u0E4C\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01)",
+    "echarts.panel.error.invalidOption": "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E32\u0E14\u0E27\u0E48\u0E32\u0E40\u0E1B\u0E47\u0E19\u0E2D\u0E47\u0E2D\u0E1A\u0E40\u0E08\u0E01\u0E15\u0E4C",
+    "echarts.panel.chartFallback": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+    "echarts.panel.optionDefault": "(\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19)",
+    "echarts.panel.overflow.default": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+    "echarts.panel.overflow.none": "\u0E44\u0E21\u0E48\u0E21\u0E35 (\u0E41\u0E2A\u0E14\u0E07\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14)",
+    "echarts.panel.overflow.truncate": "\u0E15\u0E31\u0E14\u0E17\u0E34\u0E49\u0E07",
+    "echarts.panel.overflow.break": "\u0E15\u0E31\u0E14\u0E04\u0E33",
+    "echarts.panel.fontWeight.default": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+    "echarts.panel.fontWeight.normal": "\u0E1B\u0E01\u0E15\u0E34",
+    "echarts.panel.fontWeight.bold": "\u0E2B\u0E19\u0E32",
+    "echarts.panel.label.distance": "\u0E23\u0E30\u0E22\u0E30\u0E2B\u0E48\u0E32\u0E07",
+    "echarts.panel.label.rotate": "\u0E01\u0E32\u0E23\u0E2B\u0E21\u0E38\u0E19 (\u0E2D\u0E07\u0E28\u0E32)",
+    "echarts.panel.label.fontSize": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
+    "echarts.panel.label.fontWeight": "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
+    "echarts.panel.label.color": "\u0E2A\u0E35\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21",
+    "echarts.panel.label.backgroundColor": "\u0E2A\u0E35\u0E1E\u0E37\u0E49\u0E19\u0E2B\u0E25\u0E31\u0E07",
+    "echarts.panel.label.borderColor": "\u0E2A\u0E35\u0E40\u0E2A\u0E49\u0E19\u0E02\u0E2D\u0E1A",
+    "echarts.panel.label.borderWidth": "\u0E04\u0E27\u0E32\u0E21\u0E01\u0E27\u0E49\u0E32\u0E07\u0E40\u0E2A\u0E49\u0E19\u0E02\u0E2D\u0E1A",
+    "echarts.panel.label.borderRadius": "\u0E23\u0E31\u0E28\u0E21\u0E35",
+    "echarts.panel.label.padding": "\u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19",
+    "echarts.panel.label.show": "\u0E41\u0E2A\u0E14\u0E07\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.label.content": "\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32",
+    "echarts.panel.label.formatterTitle": "\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E1B\u0E49\u0E32\u0E22\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.label.formatterCustom": "\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E40\u0E2D\u0E07 / \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+    "echarts.panel.label.formatterPlaceholder": "\u0E40\u0E0A\u0E48\u0E19 {b}: {c}",
+    "echarts.panel.label.overflow": "\u0E25\u0E49\u0E19",
+    "echarts.panel.label.position": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07",
+    "echarts.panel.label.positionTitle": "\u0E15\u0E33\u0E41\u0E2B\u0E19\u0E48\u0E07\u0E1B\u0E49\u0E32\u0E22",
+    "echarts.panel.label.positionDefault": "\u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+    "echarts.panel.label.offset": "\u0E2D\u0E2D\u0E1F\u0E40\u0E0B\u0E47\u0E15 X / Y",
+    "echarts.panel.label.style": "\u0E2A\u0E44\u0E15\u0E25\u0E4C",
+    "echarts.panel.labelLine.fontWeight": "\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01\u0E1F\u0E2D\u0E19\u0E15\u0E4C",
+    "echarts.panel.labelLine": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
+    "echarts.panel.labelLine.show": "\u0E41\u0E2A\u0E14\u0E07\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
+    "echarts.panel.labelLine.length": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22",
+    "echarts.panel.labelLine.length2": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E17\u0E48\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07",
+    "echarts.panel.labelLine.smooth": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07",
+    "echarts.panel.dataSourceTitle": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.selectField": "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1F\u0E34\u0E25\u0E14\u0E4C",
+    "echarts.panel.autoSource": "\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34",
+    "echarts.panel.categoryField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+    "echarts.panel.removeField": "\u0E25\u0E1A\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E19\u0E35\u0E49",
+    "echarts.panel.addField": "+ \u0E40\u0E1E\u0E34\u0E48\u0E21\u0E1F\u0E34\u0E25\u0E14\u0E4C",
+    "echarts.panel.seriesField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.seriesFieldHint": "\u0E44\u0E21\u0E48\u0E1A\u0E31\u0E07\u0E04\u0E31\u0E1A \u0E40\u0E0A\u0E48\u0E19 region (\u0E41\u0E22\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32)",
+    "echarts.panel.bubbleSize": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
+    "echarts.panel.title": "\u0E0A\u0E37\u0E48\u0E2D\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+    "echarts.panel.titleHint": "\u0E40\u0E27\u0E49\u0E19\u0E27\u0E48\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E0B\u0E48\u0E2D\u0E19\u0E0A\u0E37\u0E48\u0E2D",
+    "echarts.panel.legend": "\u0E41\u0E2A\u0E14\u0E07\u0E04\u0E33\u0E2D\u0E18\u0E34\u0E1A\u0E32\u0E22",
+    "echarts.panel.palette": "\u0E0A\u0E38\u0E14\u0E2A\u0E35",
+    "echarts.palette.default": "\u0E2A\u0E35\u0E19\u0E49\u0E33\u0E40\u0E07\u0E34\u0E19\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19",
+    "echarts.palette.fresh": "\u0E2A\u0E35\u0E40\u0E02\u0E35\u0E22\u0E27\u0E2A\u0E14\u0E0A\u0E37\u0E48\u0E19",
+    "echarts.palette.warm": "\u0E2A\u0E35\u0E2A\u0E49\u0E21\u0E41\u0E14\u0E07\u0E2D\u0E1A\u0E2D\u0E38\u0E48\u0E19",
+    "echarts.palette.purple": "\u0E2A\u0E35\u0E21\u0E39\u0E1F\u0E40\u0E17\u0E32",
+    "echarts.panel.stack": "\u0E0B\u0E49\u0E2D\u0E19\u0E01\u0E31\u0E19",
+    "echarts.panel.innerRadius": "\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19 (%)",
+    "echarts.panel.paddingTRBL": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19/\u0E02\u0E27\u0E32/\u0E25\u0E48\u0E32\u0E07/\u0E0B\u0E49\u0E32\u0E22 (%)",
+    "echarts.panel.paddingTop": "\u0E23\u0E30\u0E22\u0E30\u0E1A\u0E19",
+    "echarts.panel.paddingRight": "\u0E23\u0E30\u0E22\u0E30\u0E02\u0E27\u0E32 (\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
+    "echarts.panel.paddingBottom": "\u0E23\u0E30\u0E22\u0E30\u0E25\u0E48\u0E32\u0E07",
+    "echarts.panel.paddingLeft": "\u0E23\u0E30\u0E22\u0E30\u0E0B\u0E49\u0E32\u0E22",
+    "echarts.panel.radius": "\u0E23\u0E31\u0E28\u0E21\u0E35 (%)",
+    "echarts.panel.minMax": "\u0E15\u0E48\u0E33\u0E2A\u0E38\u0E14 / \u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14",
+    "echarts.panel.group": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+    "echarts.series.typeNames.bar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07",
+    "echarts.series.typeNames.barH": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19",
+    "echarts.series.typeNames.line": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
+    "echarts.series.typeNames.area": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48",
+    "echarts.series.typeNames.pie": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21",
+    "echarts.series.typeNames.doughnut": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19",
+    "echarts.series.typeNames.scatter": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22",
+    "echarts.series.typeNames.radar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C",
+    "echarts.series.typeNames.funnel": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07",
+    "echarts.series.typeNames.gauge": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14",
+    "echarts.label.formatter.value": "\u0E04\u0E48\u0E32",
+    "echarts.label.formatter.nameValue": "\u0E0A\u0E37\u0E48\u0E2D: \u0E04\u0E48\u0E32",
+    "echarts.label.formatter.name": "\u0E0A\u0E37\u0E48\u0E2D",
+    "echarts.label.formatter.percent": "\u0E40\u0E1B\u0E2D\u0E23\u0E4C\u0E40\u0E0B\u0E47\u0E19\u0E15\u0E4C",
+    "echarts.label.position.bar.top": "\u0E1A\u0E19",
+    "echarts.label.position.bar.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+    "echarts.label.position.bar.insideTop": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19\u0E1A\u0E19",
+    "echarts.label.position.bar.bottom": "\u0E25\u0E48\u0E32\u0E07",
+    "echarts.label.position.bar.insideBottom": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19\u0E25\u0E48\u0E32\u0E07",
+    "echarts.label.position.bar.right": "\u0E02\u0E27\u0E32",
+    "echarts.label.position.bar.left": "\u0E0B\u0E49\u0E32\u0E22",
+    "echarts.label.position.bar.middle": "\u0E01\u0E25\u0E32\u0E07",
+    "echarts.label.position.line.top": "\u0E1A\u0E19",
+    "echarts.label.position.line.bottom": "\u0E25\u0E48\u0E32\u0E07",
+    "echarts.label.position.line.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+    "echarts.label.position.line.left": "\u0E0B\u0E49\u0E32\u0E22",
+    "echarts.label.position.line.right": "\u0E02\u0E27\u0E32",
+    "echarts.label.position.pie.outside": "\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01",
+    "echarts.label.position.pie.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+    "echarts.label.position.pie.center": "\u0E01\u0E25\u0E32\u0E07",
+    "echarts.label.position.scatter.top": "\u0E1A\u0E19",
+    "echarts.label.position.scatter.bottom": "\u0E25\u0E48\u0E32\u0E07",
+    "echarts.label.position.scatter.left": "\u0E0B\u0E49\u0E32\u0E22",
+    "echarts.label.position.scatter.right": "\u0E02\u0E27\u0E32",
+    "echarts.label.position.scatter.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+    "echarts.label.position.radar.top": "\u0E1A\u0E19",
+    "echarts.label.position.radar.bottom": "\u0E25\u0E48\u0E32\u0E07",
+    "echarts.label.position.radar.left": "\u0E0B\u0E49\u0E32\u0E22",
+    "echarts.label.position.radar.right": "\u0E02\u0E27\u0E32",
+    "echarts.label.position.radar.inside": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+    "echarts.label.position.funnel.outer": "\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01",
+    "echarts.label.position.funnel.inner": "\u0E14\u0E49\u0E32\u0E19\u0E43\u0E19",
+    "echarts.label.position.funnel.left": "\u0E0B\u0E49\u0E32\u0E22",
+    "echarts.label.position.funnel.right": "\u0E02\u0E27\u0E32",
+    "echarts.label.position.funnel.top": "\u0E1A\u0E19",
+    "echarts.label.position.funnel.bottom": "\u0E25\u0E48\u0E32\u0E07",
+    "echarts.meta.chartOption": "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34",
+    "echarts.meta.dataSource": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.meta.categoryField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+    "echarts.meta.valueFields": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+    "echarts.meta.seriesField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E41\u0E22\u0E01\u0E0A\u0E38\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.meta.bubbleSize": "\u0E02\u0E19\u0E32\u0E14\u0E1F\u0E2D\u0E07",
+    "echarts.notes.bar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E41\u0E17\u0E48\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27 \u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E15\u0E48\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 series[].data; \u0E04\u0E27\u0E32\u0E21\u0E2A\u0E39\u0E07\u0E04\u0E07\u0E17\u0E35\u0E48 \u0E2B\u0E49\u0E32\u0E21\u0E43\u0E0A\u0E49 autoHeight",
+    "echarts.notes.barH": "\u0E41\u0E17\u0E48\u0E07\u0E41\u0E19\u0E27\u0E19\u0E2D\u0E19: xAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E04\u0E48\u0E32 yAxis \u0E40\u0E1B\u0E47\u0E19\u0E41\u0E01\u0E19\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48; \u0E40\u0E02\u0E35\u0E22\u0E19\u0E15\u0E31\u0E27\u0E41\u0E17\u0E19 $data \u0E43\u0E19 yAxis.data \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
+    "echarts.notes.line": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27; \u0E44\u0E21\u0E48\u0E40\u0E02\u0E35\u0E22\u0E19 areaStyle",
+    "echarts.notes.area": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48: \u0E40\u0E2A\u0E49\u0E19 + series[].areaStyle; \u0E19\u0E2D\u0E01\u0E19\u0E31\u0E49\u0E19\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E2A\u0E49\u0E19",
+    "echarts.notes.pie": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E27\u0E07\u0E01\u0E25\u0E21: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E2A\u0E23\u0E49\u0E32\u0E07 { name, value }; \u0E15\u0E49\u0E2D\u0E07\u0E01\u0E32\u0E23\u0E40\u0E1E\u0E35\u0E22\u0E07\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32",
+    "echarts.notes.doughnut": "\u0E27\u0E07\u0E01\u0E25\u0E21\u0E27\u0E07\u0E41\u0E2B\u0E27\u0E19: \u0E27\u0E07\u0E01\u0E25\u0E21 + radius:[\u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19, \u0E23\u0E31\u0E28\u0E21\u0E35\u0E19\u0E2D\u0E01]; \u0E23\u0E31\u0E28\u0E21\u0E35\u0E43\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E43\u0E19\u0E41\u0E1C\u0E07",
+    "echarts.notes.scatter": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E01\u0E23\u0E30\u0E08\u0E32\u0E22: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19 x \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19 y; \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14 chartBubble \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E19\u0E32\u0E14\u0E08\u0E38\u0E14",
+    "echarts.notes.radar": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E23\u0E14\u0E32\u0E23\u0E4C: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E17\u0E38\u0E01\u0E15\u0E31\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E21\u0E34\u0E15\u0E34 (radar.indicator) \u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E15\u0E48\u0E25\u0E30\u0E41\u0E16\u0E27\u0E04\u0E37\u0E2D\u0E2B\u0E19\u0E36\u0E48\u0E07 series (\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E0A\u0E37\u0E48\u0E2D series); \u0E23\u0E31\u0E28\u0E21\u0E35\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 radar.radius (%, \u0E04\u0E48\u0E32\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E49\u0E19 75)",
+    "echarts.notes.funnel": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E0A\u0E48\u0E2D\u0E07\u0E17\u0E32\u0E07: \u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48 + \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01 \u0E40\u0E23\u0E35\u0E22\u0E07\u0E15\u0E32\u0E21\u0E04\u0E48\u0E32\u0E25\u0E07\u0E21\u0E32; \u0E23\u0E30\u0E22\u0E30\u0E20\u0E32\u0E22\u0E43\u0E19\u0E2A\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series.left/right/top/bottom (%, \u0E40\u0E1C\u0E37\u0E48\u0E2D\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E14\u0E49\u0E32\u0E19\u0E02\u0E27\u0E32\u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A\u0E1B\u0E49\u0E32\u0E22\u0E14\u0E49\u0E32\u0E19\u0E19\u0E2D\u0E01)",
+    "echarts.notes.gauge": "\u0E41\u0E1C\u0E19\u0E20\u0E39\u0E21\u0E34\u0E40\u0E01\u0E08\u0E27\u0E31\u0E14: \u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E04\u0E48\u0E32\u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E02\u0E2D\u0E07\u0E41\u0E16\u0E27\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E41\u0E23\u0E01\u0E40\u0E1B\u0E47\u0E19\u0E04\u0E48\u0E32\u0E1C\u0E25\u0E31\u0E01\u0E14\u0E31\u0E19; min/max \u0E40\u0E02\u0E35\u0E22\u0E19\u0E42\u0E14\u0E22\u0E41\u0E1C\u0E07\u0E44\u0E1B\u0E17\u0E35\u0E48 series[0].min/max"
+  }
 };
 
 // src/ui.ts
 import { defineElementUI, registerElementUI } from "@worm-print-platform/plugin-kit";
 import { render } from "@worm-print-platform/plugin-kit/dom";
 import { colorPicker } from "@worm-print-platform/plugin-kit/controls";
+var activeT = globalT;
+var t2 = (key, params) => activeT(key, params);
+function withTranslator(translator, render2) {
+  const prev = activeT;
+  activeT = translator ?? globalT;
+  try {
+    return render2();
+  } finally {
+    activeT = prev;
+  }
+}
 var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-events:none";
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
   ".echarts-field-row{display:flex;gap:6px;align-items:center}",
+  ".echarts-field-current{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--pd-text-secondary,#6b7280)}",
   ".echarts-field-row>.pd-input{flex:1;min-width:0}",
   ".echarts-field-row>.pd-button{flex:none}",
-  ".echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}",
-  ".echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}",
-  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
-  ".echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-  ".echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}",
-  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
-  ".echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}",
-  ".echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-  ".echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}",
-  ".echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}",
   ".echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}",
   ".echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}",
   ".echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}",
@@ -1657,19 +1695,6 @@ function valueFieldsLabel(def, limit) {
   if (def?.seriesType === "radar") return t2("echarts.panel.field.dimension");
   return limit === 1 ? t2("echarts.panel.field.value") : t2("echarts.panel.field.valueMulti");
 }
-function dataSourceCandidates(data) {
-  const first = data?.[0];
-  if (!first) return [];
-  return Object.keys(first).filter((key) => Array.isArray(first[key]));
-}
-function dataRowFields(data, dataSource) {
-  const first = data?.[0];
-  if (!first) return [];
-  const key = dataSource && Array.isArray(first[dataSource]) ? dataSource : Object.keys(first).find((k) => Array.isArray(first[k]));
-  if (!key) return [];
-  const rows = first[key];
-  return rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null ? Object.keys(rows[0]) : [];
-}
 function fieldLabelMap(fields) {
   const map = /* @__PURE__ */ new Map();
   for (const field2 of fields ?? []) {
@@ -1677,17 +1702,41 @@ function fieldLabelMap(fields) {
   }
   return map;
 }
-function optionLabel(value, labels, fallbackSuffix) {
-  if (!value) return fallbackSuffix ?? t2("echarts.panel.default");
+function optionLabel(value, labels) {
+  if (!value) return t2("echarts.panel.default");
   const name = labels.get(value);
-  const base = name ? `${name}\uFF08${value}\uFF09` : value;
-  return fallbackSuffix ? `${base}${fallbackSuffix}` : base;
+  return name ? `${name}\uFF08${value}\uFF09` : value;
 }
-function dropdownOptions(candidates, current, labels = /* @__PURE__ */ new Map()) {
-  const opts = candidates.map((value) => ({ value, label: optionLabel(value, labels) }));
-  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t2("echarts.panel.current")) });
-  if (!current) opts.unshift({ value: "", label: t2("echarts.panel.defaultFirstArray") });
-  return opts;
+function fieldBindingKey(next) {
+  if (next.binding) return next.binding;
+  const matched = /^\{\s*([^{}]+?)\s*\}$/.exec(next.formatter?.trim() ?? "");
+  return matched?.[1]?.trim() ?? "";
+}
+function fieldPicker(ctx, current, targetPath, fields, labels, onSelect, allowAuto = false) {
+  const row = el("div", "echarts-field-row");
+  const display = el(
+    "span",
+    "echarts-field-current",
+    current ? optionLabel(current, labels) : allowAuto ? t2("echarts.panel.autoSource") : t2("echarts.panel.default")
+  );
+  const picker = el("button", "pd-button small echarts-field-picker", t2("echarts.panel.selectField"));
+  picker.type = "button";
+  picker.addEventListener("click", () => ctx.openExpression({
+    elementId: ctx.element.id,
+    targetPath,
+    value: current ? `{${current}}` : "",
+    binding: current || void 0,
+    fieldOnly: true,
+    fields
+  }, (next) => onSelect(fieldBindingKey(next))));
+  row.append(display, picker);
+  if (allowAuto) {
+    const auto = el("button", "pd-button small echarts-auto-source", t2("echarts.panel.autoSource"));
+    auto.type = "button";
+    auto.addEventListener("click", () => onSelect(""));
+    row.appendChild(auto);
+  }
+  return row;
 }
 function seriesList(option) {
   return Array.isArray(option.series) ? option.series : [];
@@ -1767,96 +1816,18 @@ function selectInput(options, value, onCommit) {
   select.addEventListener("change", () => onCommit(select.value));
   return select;
 }
-var activeDropdown = null;
-function composedPathOf(ev) {
-  const composed = typeof ev.composedPath === "function" ? ev.composedPath() : [];
-  return composed.length ? composed : [ev.target];
-}
-function dropdownSelect(options, value, onCommit) {
-  const current = options.find((item) => item.value === value) ?? { value, label: value || t2("echarts.panel.optionDefault") };
-  const trigger = el("button", "echarts-dropdown-trigger");
-  trigger.type = "button";
-  trigger.setAttribute("aria-haspopup", "listbox");
-  trigger.setAttribute("aria-expanded", "false");
-  const valueEl = el("span", "echarts-dropdown-value", current.label);
-  const arrow = el("span", "echarts-dropdown-arrow", "\u25BE");
-  trigger.appendChild(valueEl);
-  trigger.appendChild(arrow);
-  let panel = null;
-  let off = [];
-  const close = () => {
-    off.forEach((fn) => fn());
-    off = [];
-    panel?.remove();
-    panel = null;
-    trigger.setAttribute("aria-expanded", "false");
-    if (activeDropdown?.close === close) activeDropdown = null;
-  };
-  const open = () => {
-    activeDropdown?.close();
-    const root = trigger.getRootNode();
-    const mount = root instanceof ShadowRoot ? root : document.body;
-    panel = el("div", "echarts-dropdown-panel");
-    panel.setAttribute("role", "listbox");
-    for (const item of options) {
-      const optionEl = el("div", `echarts-dropdown-option${item.value === value ? " is-active" : ""}`, item.label);
-      optionEl.setAttribute("role", "option");
-      optionEl.setAttribute("aria-selected", item.value === value ? "true" : "false");
-      optionEl.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        close();
-        onCommit(item.value);
-      });
-      panel.appendChild(optionEl);
-    }
-    mount.appendChild(panel);
-    const rect = trigger.getBoundingClientRect();
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.bottom + 4}px`;
-    panel.style.minWidth = `${rect.width}px`;
-    trigger.setAttribute("aria-expanded", "true");
-    activeDropdown = { close };
-    const onPointerDown = (ev) => {
-      const path = composedPathOf(ev);
-      if (path.includes(trigger) || path.includes(panel)) return;
-      close();
-    };
-    const onKeydown = (ev) => {
-      if (ev.key === "Escape") close();
-    };
-    const onScroll = () => close();
-    document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("keydown", onKeydown);
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onScroll);
-    root.addEventListener("scroll", onScroll, true);
-    off.push(
-      () => document.removeEventListener("pointerdown", onPointerDown, true),
-      () => document.removeEventListener("keydown", onKeydown),
-      () => window.removeEventListener("scroll", onScroll, true),
-      () => window.removeEventListener("resize", onScroll),
-      () => root.removeEventListener("scroll", onScroll, true)
-    );
-  };
-  trigger.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-    if (panel) close();
-    else open();
-  });
-  return trigger;
-}
-var OVERFLOW_OPTIONS = [
+var overflowOptions = () => [
   { value: "", label: t2("echarts.panel.overflow.default") },
   { value: "none", label: t2("echarts.panel.overflow.none") },
   { value: "truncate", label: t2("echarts.panel.overflow.truncate") },
   { value: "break", label: t2("echarts.panel.overflow.break") }
 ];
-var FONT_WEIGHT_OPTIONS = [
+var fontWeightOptions = () => [
   { value: "", label: t2("echarts.panel.fontWeight.default") },
   { value: "normal", label: t2("echarts.panel.fontWeight.normal") },
   { value: "bold", label: t2("echarts.panel.fontWeight.bold") }
 ];
-var STYLE_FIELD_LABELS = {
+var styleFieldLabels = () => ({
   distance: t2("echarts.panel.label.distance"),
   rotate: t2("echarts.panel.label.rotate"),
   fontSize: t2("echarts.panel.label.fontSize"),
@@ -1867,13 +1838,14 @@ var STYLE_FIELD_LABELS = {
   borderWidth: t2("echarts.panel.label.borderWidth"),
   borderRadius: t2("echarts.panel.label.borderRadius"),
   padding: t2("echarts.panel.label.padding")
-};
+});
 function renderLabelGroup(ctx, type) {
   const element = ctx.element;
   const def = getChartKindDefinition(type);
   const fields = labelFieldsOf(type);
   const has = (key) => fields.includes(key);
   const state = readChartLabel(panelOption(element), type);
+  const styleLabels = styleFieldLabels();
   const commit = (patch) => {
     commitOption(ctx, type, updateChartLabel(panelOption(element), type, patch));
   };
@@ -1890,18 +1862,20 @@ function renderLabelGroup(ctx, type) {
     commit({ labelLine: { [key]: value } });
   };
   const numberField = (key, value) => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    const wrap = field(styleLabels[key] ?? key);
     wrap.appendChild(
       textInput({ value: value === void 0 ? "" : String(value), type: "number" }, (raw) => commitNumber(key, raw))
     );
     return wrap;
   };
   const colorField = (key, value) => {
-    const wrap = field(STYLE_FIELD_LABELS[key] ?? key);
+    const wrap = field(styleLabels[key] ?? key);
     const holder = el("span");
     render(colorPicker({
       value: value ?? "",
-      title: STYLE_FIELD_LABELS[key] ?? key,
+      title: styleLabels[key] ?? key,
+      // 面板点击时才构建，届时候选渲染期 translator 已还原，必须固化 ctx.t
+      translator: ctx.t,
       onChange: (next) => commit({ [key]: next ?? "" })
     }), holder);
     wrap.appendChild(holder);
@@ -1932,7 +1906,7 @@ function renderLabelGroup(ctx, type) {
     }
     if (has("overflow")) {
       const wrap = field(t2("echarts.panel.label.overflow"));
-      wrap.appendChild(selectInput(OVERFLOW_OPTIONS, state.overflow ?? "", (value) => commit({ overflow: value })));
+      wrap.appendChild(selectInput(overflowOptions(), state.overflow ?? "", (value) => commit({ overflow: value })));
       group.appendChild(wrap);
     }
   }
@@ -1976,7 +1950,7 @@ function renderLabelGroup(ctx, type) {
     if (has("fontSize")) group.appendChild(numberField("fontSize", state.fontSize));
     if (has("fontWeight")) {
       const wrap = field(t2("echarts.panel.labelLine.fontWeight"));
-      wrap.appendChild(selectInput(FONT_WEIGHT_OPTIONS, state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
+      wrap.appendChild(selectInput(fontWeightOptions(), state.fontWeight ?? "", (value) => commit({ fontWeight: value })));
       group.appendChild(wrap);
     }
     for (const key of ["color", "backgroundColor", "borderColor"]) {
@@ -2020,60 +1994,70 @@ function renderLabelGroup(ctx, type) {
   return group;
 }
 function renderProperty(ctx) {
+  return withTranslator(ctx.t, () => renderPropertyInner(ctx));
+}
+function renderPropertyInner(ctx) {
+  if (!ctx.openExpression) throw new Error("[echarts] \u56FE\u8868\u5C5E\u6027\u9762\u677F\u9700\u8981\u5BBF\u4E3B\u63D0\u4F9B openExpression\uFF08\u5B57\u6BB5\u9009\u62E9\u4EC5\u652F\u6301\u8868\u8FBE\u5F0F\u5F39\u6846\uFF09");
   const element = ctx.element;
   const type = elementType(element);
   const def = getChartKindDefinition(type);
-  const fields = resolveChartPanelFields(type);
-  const has = (key) => fields.includes(key);
+  const panelFields = resolveChartPanelFields(type);
+  const has = (key) => panelFields.includes(key);
   const options = element.options;
   const widthMm = Number(options.width) || 0;
   const heightMm = Number(options.height) || 0;
   const limit = maxValueFields(def);
   const palettes = getChartPalettes();
   const fieldLabels = fieldLabelMap(ctx.fields);
+  const allFields = ctx.fields ?? [];
+  const sourceFields = allFields.filter((field2) => field2.fieldType === "list");
+  const bound = String(options.chartDataSource ?? "");
+  const prefixed = bound ? allFields.filter((field2) => field2.fieldKey.startsWith(`${bound}.`)) : [];
+  const rowFields = prefixed.length > 0 ? prefixed : allFields.filter((field2) => field2.fieldType !== "list");
   const root = el("div", "echarts-property");
   const form = el("form", "pd-form");
   form.addEventListener("submit", (event) => event.preventDefault());
   root.appendChild(form);
   if (has("dataSource")) {
     const wrap = field(t2("echarts.panel.dataSourceTitle"));
-    const current = String(options.chartDataSource ?? "");
-    wrap.appendChild(
-      dropdownSelect(
-        dropdownOptions(dataSourceCandidates(ctx.data), current, fieldLabels),
-        current,
-        (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value })
-      )
-    );
+    wrap.appendChild(fieldPicker(
+      ctx,
+      String(options.chartDataSource ?? ""),
+      "options.chartDataSource",
+      sourceFields,
+      fieldLabels,
+      (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
+      true
+    ));
     form.appendChild(wrap);
   }
   if (has("categoryField")) {
     const wrap = field(t2("echarts.panel.categoryField"));
-    const current = String(options.chartCategoryField ?? "");
-    wrap.appendChild(
-      dropdownSelect(
-        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), current, fieldLabels),
-        current,
-        (value) => commitOption(ctx, type, panelOption(element), { chartCategoryField: value })
-      )
-    );
+    wrap.appendChild(fieldPicker(
+      ctx,
+      String(options.chartCategoryField ?? ""),
+      "options.chartCategoryField",
+      rowFields,
+      fieldLabels,
+      (value) => commitOption(ctx, type, panelOption(element), { chartCategoryField: value })
+    ));
     form.appendChild(wrap);
   }
   if (has("valueFields")) {
     const wrap = field(valueFieldsLabel(def, limit));
     const fieldsNow = readValueFields(element);
     fieldsNow.forEach((value, index) => {
-      const row = el("div", "echarts-field-row");
-      row.appendChild(
-        dropdownSelect(
-          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), value, fieldLabels),
-          value,
-          (next) => {
-            const list = readValueFields(element);
-            list[index] = next;
-            syncValueFields(ctx, type, list);
-          }
-        )
+      const row = fieldPicker(
+        ctx,
+        value,
+        `options.chartValueFields.${index}`,
+        rowFields,
+        fieldLabels,
+        (next) => {
+          const list = readValueFields(element);
+          list[index] = next;
+          syncValueFields(ctx, type, list);
+        }
       );
       if (fieldsNow.length > 1) {
         const remove = el("button", "pd-button small", "\u2212");
@@ -2094,12 +2078,14 @@ function renderProperty(ctx) {
   }
   if (has("seriesField")) {
     const wrap = field(t2("echarts.panel.seriesField"));
-    wrap.appendChild(
-      textInput(
-        { value: String(options.chartSeriesField ?? ""), placeholder: t2("echarts.panel.seriesFieldHint") },
-        (value) => commitOption(ctx, type, panelOption(element), { chartSeriesField: value })
-      )
-    );
+    wrap.appendChild(fieldPicker(
+      ctx,
+      String(options.chartSeriesField ?? ""),
+      "options.chartSeriesField",
+      rowFields,
+      fieldLabels,
+      (value) => commitOption(ctx, type, panelOption(element), { chartSeriesField: value })
+    ));
     form.appendChild(wrap);
   }
   if (has("bubble")) {
@@ -2139,7 +2125,7 @@ function renderProperty(ctx) {
     for (const palette of palettes) {
       const optionEl = el("option");
       optionEl.value = palette.key;
-      optionEl.textContent = palette.label;
+      optionEl.textContent = palette.labelKey ? t2(palette.labelKey) : palette.label;
       select.appendChild(optionEl);
     }
     select.value = readPaletteKey(panelOption(element), palettes);
@@ -2252,11 +2238,13 @@ var CHART_ELEMENT_UI = defineElementUI({
   renderCanvas,
   renderProperty,
   hasProperties: chartHasProperties,
-  group: t2("echarts.panel.group"),
+  get group() {
+    return t2("echarts.panel.group");
+  },
   searchKeywords: SEARCH_KEYWORDS,
   styles: STYLES,
   i18nId: "echarts",
-  locales: { "zh-CN": echartsZhCN, "en-US": echartsEnUS, "th-TH": echartsThTH }
+  locales: { "zh-CN": zh_CN_default.echarts, "en-US": en_US_default.echarts, "th-TH": th_TH_default.echarts }
 });
 var disposeHandle2;
 function installChartCommonUI() {

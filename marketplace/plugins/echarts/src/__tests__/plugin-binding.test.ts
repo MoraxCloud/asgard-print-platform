@@ -79,6 +79,15 @@ describe('图表数据绑定', () => {
     expect(gauge.series[0]).toMatchObject({ min: 0, max: 200 })
   })
 
+  it('显式绑定的数据源在数据中缺失时，不串用其它数组的数据', () => {
+    const opt = bindChartData('barChart', {
+      chartOption: createDefaultChartOption('barChart'), chartDataSource: 'wbc',
+      chartCategoryField: 'name', chartValueFields: ['qty'],
+    }, { sales: [{ name: 'A', qty: 7 }] })._chartOption as Record<string, any>
+    expect(opt.series[0].data).toEqual(['$data'])
+    expect(opt.xAxis.data).toEqual(['$data'])
+  })
+
   it('手写真实数据（无 $data 占位）不被字段映射覆盖', () => {
     const handwritten = { series: [{ type: 'bar', data: [1, 2, 3] }] }
     const opt = bindChartData('barChart', {

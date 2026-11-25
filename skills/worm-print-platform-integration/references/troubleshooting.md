@@ -137,6 +137,14 @@
 - **MCP 写回受限**：UMD 未导出 `findBlockedElementPaths`，直挂宿主拿不到时 MCP 写回保持只读（只处理 `template.get`），见 [宿主 MCP 集成](mcp-host-integration.md)。
 - **jQuery 事件 detail 是 undefined**：`.on('save', e => …)` 包了一层，取 `e.originalEvent.detail`。
 
+## 市场插件安装、升级与语言异常
+
+- **入口存在但导入报 `./ui.js` 缺失**：`plugin.json.files` 漏掉入口相对依赖；`data-preview` 白名单必须覆盖整个 `dist`。修复产物后重新安装，并用动态 import 验证 `openDataPreview` / `describeDataSource` 均为函数。
+- **`--force` 后旧文件残留**：旧 CLI 直接覆盖目录；升级到暂存 + 原子切换版本后再装。验收同时检查旧文件消失、失败时旧入口与旧清单仍可读。
+- **echarts 导入出现 `[i18n] missing key`**：模块加载期提前求值 `t()`；使用 getter / 工厂函数，不能用对象展开复制带 getter 的元数据。导入时告警必须为 0，切换 zh/en/th 后 label 与 UI group 必须同步变化。
+- **全新克隆后插件 import 失败**：检查 `.gitignore` 是否吞掉 `.worm-print/plugins/*/dist`；运行产物必须入库。Vite 只保留 main 静态 import 与 core/plugin-kit `dedupe`，不要加本地 `optimizeDeps.include`。
+- **ECharts 6 测试进程报 null Canvas context**：happy-dom 不支持真实 Canvas；mock `echarts.init`，启用 `enableAutoUnmount(afterEach)`，用 `vi.waitFor` 断言 `setOption`，不要固定等待 200ms。
+
 ## 生产使用建议
 
 canvas 已作为设计器权威实现正式发布（1.5.x 主线），是本仓后续维护迭代的稳定主版本，可用于生产环境。

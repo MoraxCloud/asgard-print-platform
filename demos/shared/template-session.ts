@@ -52,11 +52,11 @@ export interface TemplateSessionHandle {
 
 const SESSION_KEY = 'worm-print-demo:template-session'
 
-const SESSION_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'
+const SESSION_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 function randomSessionId(): string {
-  const byte = crypto.getRandomValues(new Uint8Array(24))
-  return Array.from(byte, b => SESSION_ALPHABET[b % 64]).join('') // 固定 24 位，64 值均匀映射无越界
+  const bytes = crypto.getRandomValues(new Uint8Array(6))
+  return Array.from(bytes, b => SESSION_ALPHABET[b % SESSION_ALPHABET.length]).join('') // 固定 6 位小写字母+数字
 }
 
 /** 稳定内容指纹：键排序后 JSON 序列化，再 SHA-256（无 subtle 时退化为 FNV-1a） */
@@ -121,7 +121,7 @@ export function createTemplateSession(hooks: TemplateSessionHooks, token?: strin
   const sessionId = (() => {
     try {
       const saved = sessionStorage.getItem(SESSION_KEY)
-      if (saved && /^[A-Za-z0-9_-]{16,128}$/.test(saved)) return saved
+      if (saved && /^[a-z0-9]{6}$/.test(saved)) return saved
     } catch { /* 隐私模式下可能受限 */ }
     const fresh = randomSessionId()
     try { sessionStorage.setItem(SESSION_KEY, fresh) } catch { /* 忽略 */ }

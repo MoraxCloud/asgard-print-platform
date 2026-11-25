@@ -1,41 +1,44 @@
 // web/src/components/print/utils/default-config.ts
 import type { TemplateData } from '../types.js'
 
-/** 标签纸分组名（PAPER_PRESETS.group）：该组纸型默认取消页眉、页脚与页边距 */
-export const LABEL_PAPER_GROUP = '标签纸'
+/** 纸张下拉分组语义 id（显示文案在 constants.paper.group.* 资源里） */
+export type PaperGroupId = 'common' | 'dotMatrix' | 'labels' | 'receipt' | 'continuous'
+
+/** 标签纸分组 id：该组纸型默认取消页眉、页脚与页边距 */
+export const LABEL_PAPER_GROUP: PaperGroupId = 'labels'
 
 export interface PaperPreset {
   width: number
   height: number
   /** 连续纸（热敏卷纸/小票纸）：出纸高度按内容推导，纸宽可用 customWidth 覆盖 */
   continuous?: boolean
-  /** 设计器下拉显示名 */
-  label?: string
-  /** 设计器下拉分组名 */
-  group?: string
+  /** 设计器下拉显示名语义键（constants 命名空间） */
+  labelKey: string
+  /** 设计器下拉分组语义 id */
+  group: PaperGroupId
 }
 
 /** 纸张预设（mm）；顺序即设计器下拉顺序，与 render 层 PAPER_DIMENSIONS 数值保持一致 */
 export const PAPER_PRESETS: Record<string, PaperPreset> = {
-  A4:     { width: 210, height: 297, label: 'A4 210×297mm',   group: '常用纸张' },
-  A3:     { width: 297, height: 420, label: 'A3 297×420mm',   group: '常用纸张' },
-  A5:     { width: 148, height: 210, label: 'A5 148×210mm',   group: '常用纸张' },
-  Letter: { width: 216, height: 279, label: 'Letter 216×279mm', group: '常用纸张' },
-  Legal:  { width: 216, height: 356, label: 'Legal 216×356mm',  group: '常用纸张' },
+  A4:     { width: 210, height: 297, labelKey: 'constants.paper.A4.label',     group: 'common' },
+  A3:     { width: 297, height: 420, labelKey: 'constants.paper.A3.label',     group: 'common' },
+  A5:     { width: 148, height: 210, labelKey: 'constants.paper.A5.label',     group: 'common' },
+  Letter: { width: 216, height: 279, labelKey: 'constants.paper.Letter.label', group: 'common' },
+  Legal:  { width: 216, height: 356, labelKey: 'constants.paper.Legal.label',  group: 'common' },
   // 针式打印纸（241 系列等分）：11 英寸整张 279.4mm 按等分取整
-  DOT_FULL:  { width: 241, height: 279.4, label: '全等分 241×279.4mm', group: '针式打印纸' },
-  DOT_HALF:  { width: 241, height: 139.7, label: '二等分 241×139.7mm', group: '针式打印纸' },
-  DOT_THIRD: { width: 241, height: 93.1,  label: '三等分 241×93.1mm',  group: '针式打印纸' },
+  DOT_FULL:  { width: 241, height: 279.4, labelKey: 'constants.paper.DOT_FULL.label',  group: 'dotMatrix' },
+  DOT_HALF:  { width: 241, height: 139.7, labelKey: 'constants.paper.DOT_HALF.label',  group: 'dotMatrix' },
+  DOT_THIRD: { width: 241, height: 93.1,  labelKey: 'constants.paper.DOT_THIRD.label', group: 'dotMatrix' },
   // 标签纸
-  LABEL_80X60: { width: 80, height: 60, label: '80×60mm', group: LABEL_PAPER_GROUP },
-  LABEL_60X40: { width: 60, height: 40, label: '60×40mm', group: LABEL_PAPER_GROUP },
-  LABEL_40X30: { width: 40, height: 30, label: '40×30mm', group: LABEL_PAPER_GROUP },
+  LABEL_80X60: { width: 80, height: 60, labelKey: 'constants.paper.LABEL_80X60.label', group: LABEL_PAPER_GROUP },
+  LABEL_60X40: { width: 60, height: 40, labelKey: 'constants.paper.LABEL_60X40.label', group: LABEL_PAPER_GROUP },
+  LABEL_40X30: { width: 40, height: 30, labelKey: 'constants.paper.LABEL_40X30.label', group: LABEL_PAPER_GROUP },
   // 小票纸（热敏卷纸）：高度仅为设计画布高度，出纸按内容推导
-  THERMAL_57:  { width: 57,  height: 297, continuous: true, label: '57mm',  group: '小票纸' },
-  THERMAL_80:  { width: 80,  height: 297, continuous: true, label: '80mm',  group: '小票纸' },
-  THERMAL_110: { width: 110, height: 297, continuous: true, label: '110mm', group: '小票纸' },
+  THERMAL_57:  { width: 57,  height: 297, continuous: true, labelKey: 'constants.paper.THERMAL_57.label',  group: 'receipt' },
+  THERMAL_80:  { width: 80,  height: 297, continuous: true, labelKey: 'constants.paper.THERMAL_80.label',  group: 'receipt' },
+  THERMAL_110: { width: 110, height: 297, continuous: true, labelKey: 'constants.paper.THERMAL_110.label', group: 'receipt' },
   // 连续纸：默认 80mm 热敏；高度仅为设计画布高度，出纸按内容推导
-  CONTINUOUS: { width: 80, height: 297, continuous: true, label: '连续纸（自定义宽度）', group: '连续纸' },
+  CONTINUOUS: { width: 80, height: 297, continuous: true, labelKey: 'constants.paper.CONTINUOUS.label', group: 'continuous' },
 }
 
 /** 纸型是否连续纸（小票纸/热敏卷纸）：出纸高度按渲染内容推导 */
@@ -79,7 +82,7 @@ export function getPaperDimensions(t: Pick<TemplateData, 'paperSize' | 'orientat
     }
   } else {
     const preset = PAPER_PRESETS[t.paperSize] || PAPER_PRESETS['A4']!
-    // 只取宽高：预设还带 label/group 等下拉元数据，不能泄漏进几何结果
+    // 只取宽高：预设还带 labelKey/group 等下拉元数据，不能泄漏进几何结果
     base = { width: preset.width, height: preset.height }
   }
   return t.orientation === 'landscape' && !continuous

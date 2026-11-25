@@ -1,0 +1,7 @@
+{
+  "toolbar.save": "Enregistrer",
+  "diagnostic.parser.expected": "Position attendue {pos} : \"{value}\"",
+  "constants.borderStyle.solid": "Trait plein",
+  "propertyTips.ap-img-fit": "Ajustement de l'image dans la zone",
+  "echarts.panel.chart": "Graphique"
+}

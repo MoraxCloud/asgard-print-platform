@@ -1,6 +1,6 @@
 {
   "name": "@worm-print-platform/skills",
-  "version": "1.6.0",
+  "version": "1.6.5",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"

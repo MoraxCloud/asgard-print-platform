@@ -2,6 +2,7 @@
 import type { ElementOptions, RuntimeElement } from '@worm-print-platform/core/designer'
 import { getElementUI } from '@worm-print-platform/plugin-kit'
 import type { ElementUIRenderResult } from '@worm-print-platform/plugin-kit'
+import type { ExpressionEditorTarget } from '@worm-print-platform/plugin-kit/expression-editor'
 import {
   CHART_KINDS,
   CHART_KIND_DEFINITIONS,
@@ -36,25 +37,41 @@ function labelsOf(root: HTMLElement): string[] {
 interface PropertyFixture {
   root: HTMLElement
   updates: Partial<ElementOptions>[]
+  expressionRequests: Array<{
+    target: ExpressionEditorTarget
+    apply: (next: { formatter?: string; binding?: string; title?: string }) => void
+  }>
 }
+
+type OpenExpression = (
+  target: ExpressionEditorTarget,
+  apply: (next: { formatter?: string; binding?: string; title?: string }) => void,
+) => void
 
 function renderProperty(
   type: string,
   options: Record<string, unknown> = {},
   data: readonly Record<string, unknown>[] = [{ name: '华东', value: 12, region: 'A' }],
   fields: readonly { fieldKey: string; fieldLabel: string; fieldType?: string; sortOrder?: number }[] = [],
+  openExpression?: OpenExpression,
 ): PropertyFixture {
   const ui = getElementUI(type)
   expect(ui?.renderProperty).toBeTypeOf('function')
   const updates: Partial<ElementOptions>[] = []
+  const expressionRequests: PropertyFixture['expressionRequests'] = []
   const result = ui!.renderProperty!({
     element: makeElement(type, options),
     data,
-    fields,
+    fields: fields.map(field => ({
+      ...field,
+      fieldType: field.fieldType ?? 'string',
+      sortOrder: field.sortOrder ?? 0,
+    })),
     update: partial => { updates.push(partial) },
     repaint: () => {},
+    openExpression: openExpression ?? (() => {}),
   })
-  return { root: mount(result), updates }
+  return { root: mount(result), updates, expressionRequests }
 }
 
 describe('echarts common ElementUI 注册', () => {
@@ -145,11 +162,13 @@ describe('renderProperty 写回', () => {
       // 与 barChart 语义不符的 series.type，用于验证写回前按 kind 归一
       series: [{ type: 'line', data: ['$data'], name: '旧名' }],
     }
-    const { root, updates } = renderProperty('barChart', { chartOption }, [{ trend: [{ name: '一月', region: '东' }] }])
-    const catWrap = [...root.querySelectorAll('.pd-field')].find(f => f.querySelector('.pd-label')?.textContent?.trim() === '类目字段')!
-    ;(catWrap.querySelector('.echarts-dropdown-trigger') as HTMLButtonElement).click()
-    const region = [...document.querySelectorAll('.echarts-dropdown-option')].find(o => o.textContent === 'region') as HTMLElement
-    region.click()
+    const requests: PropertyFixture['expressionRequests'] = []
+    const { root, updates } = renderProperty('barChart', { chartOption }, [{ trend: [{ name: '一月', region: '东' }] }], [], (target, apply) => {
+      requests.push({ target, apply })
+    })
+    const pickers = [...root.querySelectorAll<HTMLButtonElement>('.echarts-field-picker')]
+    pickers[1]!.click() // 类目字段
+    requests[0]!.apply({ formatter: '{region}', binding: 'region' })
 
     expect(updates).toHaveLength(1)
     const patch = updates[0]!
@@ -271,73 +290,102 @@ describe('数据标签分组', () => {
   })
 })
 
-describe('数据源/字段下拉选择', () => {
-  const option = () => {
-    const o = createDefaultChartOption('barChart')
-    return o
-  }
+describe('数据源/字段弹框选择', () => {
+  const option = () => createDefaultChartOption('barChart')
   const chartData = [{ trend: [{ name: '一月', sales: 120, region: '东' }] }]
-  const render = () => renderProperty('barChart', {
-    chartOption: option(),
-    chartDataSource: 'trend',
-    chartCategoryField: 'name',
-    chartValueFields: ['sales'],
-  }, chartData)
-
-  const fieldTrigger = (root: HTMLElement, label: string) => {
-    const wrap = [...root.querySelectorAll('.pd-field')].find(f => f.querySelector('.pd-label')?.textContent?.trim() === label)!
-    return wrap.querySelector('.echarts-dropdown-trigger') as HTMLButtonElement
-  }
-  const openOptions = (trigger: HTMLButtonElement): string[] => {
-    trigger.click()
-    const panel = document.querySelector('.echarts-dropdown-panel') as HTMLElement
-    expect(panel).toBeTruthy()
-    // fixed 定位在触发钮下方（top 大于按钮 bottom）
-    expect(Number.parseFloat(panel.style.top)).toBeGreaterThanOrEqual(trigger.getBoundingClientRect().bottom)
-    return [...panel.querySelectorAll('.echarts-dropdown-option')].map(o => (o as HTMLElement).textContent ?? '')
+  const capture = () => {
+    const requests: PropertyFixture['expressionRequests'] = []
+    const apply: OpenExpression = (target, applyNext) => { requests.push({ target, apply: applyNext }) }
+    return { requests, apply }
   }
 
-  it('数据源是下拉，候选来自示例数据的数组键', () => {
-    const { root } = render()
-    const trigger = fieldTrigger(root, '数据源')
-    expect(trigger).toBeTruthy()
-    expect(openOptions(trigger)).toContain('trend')
+  it('图表绑定字段通过字段表达式弹框选择并回写原始 key', () => {
+    const { requests, apply } = capture()
+    const fields = [
+      { fieldKey: 'goodsDetails', fieldLabel: '货物明细', fieldType: 'list', sortOrder: 1 },
+      { fieldKey: 'name', fieldLabel: '名称', fieldType: 'string', sortOrder: 2 },
+      { fieldKey: 'value', fieldLabel: '数值', fieldType: 'number', sortOrder: 3 },
+      { fieldKey: 'region', fieldLabel: '区域', fieldType: 'string', sortOrder: 4 },
+    ]
+    const { root, updates } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'goodsDetails', chartCategoryField: 'name',
+      chartValueFields: ['value'], chartSeriesField: 'region',
+    }, [{ goodsDetails: [{ name: 'A', value: 1, region: '东区' }] }], fields, apply)
+    const pickers = [...root.querySelectorAll<HTMLButtonElement>('.echarts-field-picker')]
+    expect(pickers).toHaveLength(4)
+    pickers[0]!.click()
+    expect(requests[0]!.target).toMatchObject({
+      targetPath: 'options.chartDataSource', binding: 'goodsDetails', fieldOnly: true,
+    })
+    expect(requests[0]!.target.fields?.map(field => field.fieldKey)).toEqual(['goodsDetails'])
+    requests[0]!.apply({ formatter: '{goodsDetails}', binding: 'goodsDetails', title: '货物明细' })
+    expect(updates.at(-1)?.chartDataSource).toBe('goodsDetails')
+
+    pickers[1]!.click()
+    expect(requests[1]!.target.fields?.map(field => field.fieldKey)).toEqual(['name', 'value', 'region'])
+    requests[1]!.apply({ formatter: '{name}', binding: 'name', title: '名称' })
+    expect(updates.at(-1)?.chartCategoryField).toBe('name')
+
+    pickers[2]!.click()
+    requests[2]!.apply({ formatter: '{value}', binding: 'value', title: '数值' })
+    expect(updates.at(-1)?.chartValueFields).toEqual(['value'])
+
+    pickers[3]!.click()
+    requests[3]!.apply({ formatter: '{region}', binding: 'region', title: '区域' })
+    expect(updates.at(-1)?.chartSeriesField).toBe('region')
   })
 
-  it('类目/数值字段是下拉，候选来自数据源数组的行字段', () => {
-    const { root } = render()
-    expect(openOptions(fieldTrigger(root, '类目字段'))).toEqual(expect.arrayContaining(['name', 'sales', 'region']))
-    const valWrap = [...root.querySelectorAll('.pd-field')].find(f => f.querySelector('.pd-label')?.textContent?.trim()?.includes('数值字段'))!
-    expect(valWrap.querySelector('.echarts-dropdown-trigger')).toBeTruthy()
-  })
-
-  it('不在候选里的已有值保留为选项，不丢失', () => {
+  it('数据源候选只来自 fields 的列表字段，不混入 demo 数组键', () => {
+    const { requests, apply } = capture()
     const { root } = renderProperty('barChart', {
-      chartOption: option(), chartDataSource: 'legacySource', chartCategoryField: 'legacyField',
-    }, chartData)
-    expect(openOptions(fieldTrigger(root, '数据源')).some(label => label.includes('legacySource'))).toBe(true)
+      chartOption: option(), chartDataSource: 'goodsDetails',
+    }, [{ goods: [{ name: 'demo' }] }], [
+      { fieldKey: 'goodsDetails', fieldLabel: '货物明细', fieldType: 'list', sortOrder: 1 },
+    ], apply)
+    root.querySelector<HTMLButtonElement>('.echarts-field-picker')!.click()
+    expect(requests[0]!.target.fields?.map(field => field.fieldKey)).toEqual(['goodsDetails'])
   })
 
-  it('业务字段有中文名时，选项展示「中文名（键）」；行内字段无中文名则只显示键', () => {
+  it('宿主未提供 openExpression 时明确报错', () => {
+    const ui = getElementUI('barChart')!
+    expect(() => ui.renderProperty!({
+      element: makeElement('barChart', { chartOption: option() }),
+      data: chartData,
+      fields: [],
+      update: () => {},
+      repaint: () => {},
+    } as any)).toThrow(/openExpression/)
+  })
+
+  it('历史值不在 fields 时仍在按钮上显示裸 key', () => {
     const { root } = renderProperty('barChart', {
-      chartOption: option(), chartDataSource: 'trend', chartCategoryField: 'name', chartValueFields: ['sales'],
+      chartOption: option(), chartDataSource: 'legacySource',
+    }, chartData, [])
+    expect(root.querySelector<HTMLElement>('.echarts-field-current')?.textContent).toBe('legacySource')
+  })
+
+  it('绑定数据源后行字段优先取带前缀的字段', () => {
+    const { requests, apply } = capture()
+    const { root } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'goods', chartCategoryField: 'name',
     }, chartData, [
-      { fieldKey: 'trend', fieldLabel: '趋势数据', fieldType: 'list', sortOrder: 1 },
-    ])
-    expect(openOptions(fieldTrigger(root, '数据源'))).toContain('趋势数据（trend）')
-    // name 是行内字段，fields 里没有其中文名，回退显示键
-    expect(openOptions(fieldTrigger(root, '类目字段'))).toContain('name')
+      { fieldKey: 'goods', fieldLabel: '商品', fieldType: 'list', sortOrder: 1 },
+      { fieldKey: 'goods.name', fieldLabel: '商品名', fieldType: 'string', sortOrder: 2 },
+      { fieldKey: 'other.name', fieldLabel: '其他名', fieldType: 'string', sortOrder: 3 },
+    ], apply)
+    const pickers = [...root.querySelectorAll<HTMLButtonElement>('.echarts-field-picker')]
+    pickers[1]!.click()
+    expect(requests[0]!.target.fields?.map(field => field.fieldKey)).toEqual(['goods.name'])
   })
 
-  it('选中选项后写回并把面板收起', () => {
-    const { root, updates } = render()
-    const trigger = fieldTrigger(root, '数据源')
-    trigger.click()
-    const option = [...document.querySelectorAll('.echarts-dropdown-option')].find(o => o.textContent === 'trend') as HTMLElement
-    // 当前值就是 trend，点它仍会写回；用一个非当前值更直观，但候选里有 trend，这里断言写回发生
-    option.click()
-    expect(updates.length).toBeGreaterThan(0)
-    expect(document.querySelector('.echarts-dropdown-panel')).toBeNull()
+  it('数据源保留自动模式，可清空为顶层第一个数组', () => {
+    const { root, updates } = renderProperty('barChart', {
+      chartOption: option(), chartDataSource: 'goodsDetails',
+    }, [{ goodsDetails: [] }], [], () => {})
+    const auto = root.querySelector<HTMLButtonElement>('.echarts-auto-source')!
+    expect(auto).toBeTruthy()
+    auto.click()
+    expect(updates.at(-1)?.chartDataSource).toBe('')
   })
 })
 

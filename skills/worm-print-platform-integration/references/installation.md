@@ -62,6 +62,21 @@ import '@worm-print-platform/canvas/style.css'
 - `@worm-print-platform/canvas/browser`：UMD 浏览器产物（`canvas.js` + `canvas.css`），浏览器直挂用。
 - `@worm-print-platform/canvas/style.css`：light DOM 兜底样式。
 
+### 市场插件安装与更新
+
+官方 `echarts` 与 `data-preview` 通过市场 CLI 分发，不单独发布 npm：
+
+```bash
+npx @worm-print-platform/marketplace install echarts --force
+npx @worm-print-platform/marketplace install data-preview --force
+```
+
+- 更新源严格按 **npm → Gitee → GitHub**；默认 `--source auto` 已遵循，npm 可用时不得手动切到 Git 源。
+- `echarts` 入口是 `.worm-print/plugins/echarts/dist/marketplace.js`，`data-preview` 入口是 `.worm-print/plugins/data-preview/dist/index.js`。
+- 市场 `dist` 必须纳入宿主版本控制；若已有通用 `dist/` 或 `.worm-print/` 忽略规则，用精确例外放行插件目录与 `dist/**`。
+- 入口放 `src/main.js/ts` 静态 import，不把本地插件路径写进 Vite `optimizeDeps.include`。
+- `--force` 暂存后原子切换，失败恢复旧插件、旧语言与旧清单；不要先 `rm -rf` 旧目录。
+
 ### 浏览器直挂（无打包器 / jQuery / 传统项目）
 
 从 `@worm-print-platform/canvas/browser` 对应产物把 `canvas.js` 与 `canvas.css` 拷到宿主静态目录（真实项目等价于「从制品库下载这两个文件」）。`canvas.js` 是 UMD，已内联 core 与码制库，挂出全局 `window.WormPrintCanvas`：

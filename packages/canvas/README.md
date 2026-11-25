@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.6.0-384BFF" alt="npm">
+  <img src="https://img.shields.io/badge/npm-v1.6.5-384BFF" alt="npm">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
   <a href="/vue3">
     <img src="https://img.shields.io/badge/vue-optional%20peer-42b883" alt="vue peer">
@@ -58,9 +58,9 @@ el.validateTemplate()    // 拼版/多页配置校验，保存前必须调
 el.loadTemplate(json)
 ```
 
-> 完整宿主接入代码见根 README「快速开始」章节与各框架文档：[docs/vue3.md](../../docs/vue3.md) · [docs/vue2.md](../../docs/vue2.md) · [docs/react.md](../../docs/react.md) · [docs/jquery.md](../../docs/jquery.md)。可运行工程：`demos/apps/{vue3,vue2,react,jquery}`。
+> 完整宿主接入代码见用户使用文档：[Vue 3](../../docs/guide/02-vue3.md) · [Vue 2.7](../../docs/guide/03-vue2.md) · [React 18](../../docs/guide/04-react.md) · [jQuery / 原生 JS](../../docs/guide/05-jquery.md)。可运行工程：`demos/apps/{vue3,vue2,react,jquery}`。
 
-> 多语言（宿主 `lang`/`messages`、自定义语言文件、插件接入）：[docs/i18n.md](../../docs/i18n.md)。
+> 多语言（宿主 `lang`/`messages`、自定义语言文件、插件接入）：[用户使用文档 · 多语言](../../docs/guide/06-i18n.md)。
 
 ## /vue3 兼容门面
 

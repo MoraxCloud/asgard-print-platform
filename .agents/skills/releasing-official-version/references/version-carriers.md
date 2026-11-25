@@ -4,20 +4,21 @@
 
 ## 必须改（自身版本 `OLD→NEW`）
 
-### package.json（14 个，`services/render` 除外）
+### package.json（自身版本 `OLD→NEW`，`services/render` 与 `marketplace/plugins/data-preview` 除外）
 
 ```
 package.json
 clients/client/package.json
-packages/{core,plugin-kit,canvas,echarts,skills,contract,mcp}/package.json
-demos/apps/{vue3,vue2,react,jquery}/package.json
+packages/{core,plugin-kit,canvas,echarts,skills,contract,mcp,marketplace,i18n}/package.json
+marketplace/plugins/echarts/package.json（含 wormPrint.version）
+demos/apps/{vue3,vue2,react,jquery,print-demo}/package.json
 ```
 
-### lock 文件（5 个）
+### lock 文件（6 个）
 
 ```
 package-lock.json
-demos/apps/{vue3,vue2,react,jquery}/package-lock.json
+demos/apps/{vue3,vue2,react,jquery,print-demo}/package-lock.json
 ```
 
 **坑**：root lock 里第三方 `base64-js` 版本恰好是 `1.5.1`（含 `resolved` URL 和依赖范围 `^1.5.1`），全局替换会误伤。按行处理时**跳过含 `base64-js` 的行**。demos lock 里的 `file:../../../packages/*` 快照的 `version` 与依赖范围也要改。
@@ -68,6 +69,14 @@ grep -rn 'OLD' --include=package.json --include=*.ts --include=package-lock.json
 
 ## 发布包范围
 
-正式发 npm 的是 4 个代码包：`core` / `plugin-kit` / `canvas` / `echarts`（CI workflow 只发这四个）。
-`skills` 虽在 CHANGELOG 写"同号同批发版"，但**CI 不发布它**，历史上也未上 npm——release 正文应注明"skills 为 CLI 安装器，不随本轮发版"。
+正式发 npm 的是 7 个包：`core` / `plugin-kit` / `canvas` / `echarts` / `skills` / `marketplace` / `i18n`（`publish-npm.yml` 按依赖顺序同批发布，2026-11-23 起扩展至七包）。
+百度图表主包 `@worm-print-platform/plugin-echarts` 不单独发 npm，经插件市场 CLI 分发；兼容镜像 `echarts` 随主线发版。
 `contract` / `mcp` 随客户端打包，不发 npm。
+
+## 已知坑（1.6.2 发版实测）
+
+- **provenance 校验 repository**：纯 OIDC Trusted Publishing 会校验 sigstore provenance 与 `package.json` `repository.url` 一致；缺 `repository` 字段的包报 E422 中断发布链。新包入库时必须带 `repository`（与其他包同格式）。
+- **CLI 入口软链守卫**：bin 入口判断必须 `realpathSync(argv[1])` 归一后对比 `import.meta.url`（见 `isCliEntry`）；用 `resolve` 对比会在 npx 软链调用时静默空转、退出码 0。
+- **Git 源插件产物入库**：插件 `package.json` 声明 `wormPrint.i18n.dir` 指向的目录必须被 git 跟踪（根 `.gitignore` 的 `dist/` 需放行例外），否则停发 npm 后 Git 源稀疏检出安装必失败。
+- **registry 边缘延迟**：CI 日志出现 `+ @scope/pkg@X.Y.Z` 即发布成功；`npm view` 短暂仍旧版是边缘节点延迟，等几分钟复查，不要重发。
+- **补发个别包**：npm 不允许覆盖已发版本；临时用 contents API 改 workflow（固定检出到修复提交、只保留待发包的构建与发布步骤），跑完恢复原版。

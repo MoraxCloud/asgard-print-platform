@@ -1,6 +1,6 @@
 {
   "name": "@worm-print-platform/echarts",
-  "version": "1.6.0",
+  "version": "1.6.5",
   "type": "module",
   "description": "兼容镜像包：源码唯一真源在 marketplace/plugins/echarts（@worm-print-platform/plugin-echarts），本包由同一源码生成，保留原包名与子路径供存量依赖方零改动使用",
   "main": "./dist/index.cjs",
@@ -39,6 +39,32 @@
   "files": [
     "dist"
   ],
+  "wormPrint": {
+    "id": "echarts",
+    "i18n": {
+      "dir": "dist/i18n",
+      "base": "zh-CN"
+    },
+    "version": "1.6.5",
+    "entry": "dist/marketplace.js",
+    "kinds": [
+      "barChart",
+      "barHChart",
+      "lineChart",
+      "areaChart",
+      "pieChart",
+      "doughnutChart",
+      "scatterChart",
+      "radarChart",
+      "funnelChart",
+      "gaugeChart"
+    ],
+    "exportFormats": [],
+    "peerDeps": {
+      "@worm-print-platform/core": "^1.6.5",
+      "@worm-print-platform/plugin-kit": "^1.6.5"
+    }
+  },
   "license": "MIT",
   "author": "worm <liu_long_qqcom@qq.com>",
   "repository": {
@@ -61,8 +87,8 @@
     "test:watch": "npm --prefix ../../marketplace/plugins/echarts run test:watch"
   },
   "dependencies": {
-    "@worm-print-platform/core": "^1.6.0",
-    "@worm-print-platform/plugin-kit": "^1.6.0",
+    "@worm-print-platform/core": "^1.6.5",
+    "@worm-print-platform/plugin-kit": "^1.6.5",
     "echarts": "^6.1.0"
   },
   "devDependencies": {

@@ -2,6 +2,15 @@ node_modules/
 dist/
 out/
 
+# 市场插件运行产物必须入库：Git 源稀疏检出只拿跟踪文件
+!marketplace/plugins/echarts/dist/
+marketplace/plugins/echarts/dist/*
+!marketplace/plugins/echarts/dist/marketplace.js
+!marketplace/plugins/echarts/dist/i18n/
+!marketplace/plugins/echarts/dist/i18n/**
+!marketplace/plugins/data-preview/dist/
+!marketplace/plugins/data-preview/dist/**
+
 # macOS 目录元数据
 .DS_Store
 
@@ -15,6 +24,9 @@ demos/evidence/
 # demos 子工程直挂资产：npm install 的 postinstall 从 @worm-print-platform/canvas 的 dist 拷来
 demos/apps/*/public/vendor/
 demos/apps/*/dist/
+
+# demo 启动时由 sync-plugin 生成的市场安装语言资源
+demos/apps/*/.worm-print/i18n/
 
 # demos 子工程的示例字体：单个体积 1.5~8MB 不入库，需要时自行放置
 demos/apps/*/public/fonts/

@@ -46,6 +46,7 @@ function session(overrides: Partial<OpenTemplateSession> = {}): OpenTemplateSess
     sessionId: 's' + Math.random().toString(36).slice(2, 18).padEnd(17, 'a'),
     name: '综合示例模板',
     url: 'http://localhost:9303/',
+    createdAt: Date.now(),
     lastActiveAt: Date.now(),
     ...overrides,
   }

@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/npm-v1.6.0-384BFF" alt="npm">
+  <img src="https://img.shields.io/badge/npm-v1.6.5-384BFF" alt="npm">
   <img src="https://img.shields.io/badge/node-%E2%89%A518-4B9B4B" alt="node">
   <img src="https://img.shields.io/badge/license-MIT-9A9A9A" alt="license">
 </p>
@@ -75,6 +75,7 @@ npx @worm-print-platform/skills worm-print-platform-integration --force
 | 技能 | 覆盖范围 |
 | --- | --- |
 | `worm-print-platform-integration` | 全形态宿主集成：NPM 宿主的 `canvas/vue3` 门面与 `<print-designer>` 契约、浏览器直挂 / Vue 2 / React / jQuery、三条打印链路、AI 集成提示词、故障排查 |
+| `worm-print-platform-i18n` | 自定义语言包：骨架生成、校验、人工审核对照表、浏览器/render/client 三端接入与排错 |
 | `worm-print-platform-mcp` | 桌面 MCP 工具：模板会话、渲染预览、视觉回读与参考图比对 |
 
 技能源码随本仓库分发（`skills/<技能名>/` 目录），安装器会 sparse-checkout 整个目录。

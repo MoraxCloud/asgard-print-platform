@@ -320,12 +320,12 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     const ws = await fakeBrowser(port, { revision: 'rev-1' })
 
     const attachReply = await attach(ws, {
-      sessionId: 'sess-page-00000001',
+      sessionId: 'page01',
       name: '综合示例模板',
       url: 'http://localhost:9303/?utm=1#frag',
     })
     expect(attachReply.ok).toBe(true)
-    expect(((attachReply as { payload: unknown }).payload as { sessionId?: string }).sessionId).toBe('sess-page-00000001')
+    expect(((attachReply as { payload: unknown }).payload as { sessionId?: string }).sessionId).toBe('page01')
 
     const listed = await client.callTool({ name: 'print_list_open_templates', arguments: {} })
     const sessions = JSON.parse(textOf(listed)).sessions
@@ -335,7 +335,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
 
     const got = await client.callTool({ name: 'print_get_open_template', arguments: {} })
     expect(JSON.parse(textOf(got)).revision).toBe('rev-1')
-    expect(JSON.parse(textOf(got)).session.sessionId).toBe('sess-page-00000001')
+    expect(JSON.parse(textOf(got)).session.sessionId).toBe('page01')
 
     const applied = await client.callTool({
       name: 'print_apply_open_template',
@@ -387,21 +387,21 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     const wsA = await fakeBrowser(port)
     const wsB = await fakeBrowser(port)
     expect((await attach(wsA, {
-      sessionId: 'sess-multi-000001', name: '页面甲', url: 'http://localhost:9303/a',
+      sessionId: 'mult01', name: '页面甲', url: 'http://localhost:9303/a',
     })).ok).toBe(true)
     expect((await attach(wsB, {
-      sessionId: 'sess-multi-000002', name: '页面乙', url: 'http://localhost:9303/b',
+      sessionId: 'mult02', name: '页面乙', url: 'http://localhost:9303/b',
     })).ok).toBe(true)
 
     const noId = await client.callTool({ name: 'print_get_open_template', arguments: {} })
     expect(noId.isError).toBe(true)
     const hint = textOf(noId)
-    expect(hint).toContain('sess-multi-000001')
-    expect(hint).toContain('sess-multi-000002')
+    expect(hint).toContain('mult01')
+    expect(hint).toContain('mult02')
     expect(hint).toContain('sessionId')
 
     const named = await client.callTool({
-      name: 'print_get_open_template', arguments: { sessionId: 'sess-multi-000002' },
+      name: 'print_get_open_template', arguments: { sessionId: 'mult02' },
     })
     expect(JSON.parse(textOf(named)).session.name).toBe('页面乙')
 
@@ -409,7 +409,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     // close 事件异步送达主进程：等 handleDisconnect 完成后再查
     await new Promise(r => setTimeout(r, 80))
     const died = await client.callTool({
-      name: 'print_get_open_template', arguments: { sessionId: 'sess-multi-000001' },
+      name: 'print_get_open_template', arguments: { sessionId: 'mult01' },
     })
     expect(died.isError).toBe(true)
     expect(textOf(died)).toContain('会话不存在')
@@ -430,7 +430,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
       t.once('open', () => {
         t.send(JSON.stringify({
           id: 'b0', type: MESSAGE_TYPES.TEMPLATE_ATTACH,
-          payload: { sessionId: 'sess-noorigin-00001', name: 'x', url: 'http://x/' },
+          payload: { sessionId: 'noorig', name: 'x', url: 'http://x/' },
         }))
       })
       t.on('message', raw => {
@@ -452,13 +452,13 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     for (let i = 0; i < 32; i++) {
       const w = await connectWs(port, { Origin: `http://tab-${i}.example.com` })
       expect((await attach(w, {
-        sessionId: `sess-limit-${String(i).padStart(14, '0')}`,
+        sessionId: `${i.toString(36).padStart(6, '0')}`,
         name: `页面${i}`, url: 'http://x/',
       })).ok).toBe(true)
     }
     expect(registry.size).toBe(32)
     const extra = await attach(ws as WsConn, {
-      sessionId: 'sess-limit-exhausted-09', name: '多余页面', url: 'http://x/',
+      sessionId: 'limx09', name: '多余页面', url: 'http://x/',
     })
     expect(!extra.ok && extra.error.code).toBe('BUSY')
   })
@@ -470,13 +470,13 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     const again = await connectWs(port, { Origin: 'http://a.example.com' })
 
     expect((await attach(a, {
-      sessionId: 'sess-xorigin-00001', name: 'x', url: 'http://x/',
+      sessionId: 'xorig1', name: 'x', url: 'http://x/',
     })).ok).toBe(true)
 
-    const hijack = await attach(b, { sessionId: 'sess-xorigin-00001', name: 'x', url: 'http://x/' })
+    const hijack = await attach(b, { sessionId: 'xorig1', name: 'x', url: 'http://x/' })
     expect(!hijack.ok && hijack.error.code).toBe('UNAUTHORIZED')
 
-    const reagain = await attach(again, { sessionId: 'sess-xorigin-00001', name: 'x', url: 'http://x/' })
+    const reagain = await attach(again, { sessionId: 'xorig1', name: 'x', url: 'http://x/' })
     expect(reagain.ok, JSON.stringify(reagain)).toBe(true)
     expect(registry.size).toBe(1)
   })
@@ -490,10 +490,10 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     // 先挂一个真实会话，再查不存在的 sessionId
     const ws = await fakeBrowser(port)
     expect((await attach(ws, {
-      sessionId: 'sess-page-00000001', name: 'x', url: 'http://x/',
+      sessionId: 'page01', name: 'x', url: 'http://x/',
     })).ok).toBe(true)
     const missing = await client.callTool({
-      name: 'print_get_open_template', arguments: { sessionId: 'sess-gone-000000001' },
+      name: 'print_get_open_template', arguments: { sessionId: 'gone01' },
     })
     expect(missing.isError).toBe(true)
     expect(textOf(missing)).toContain('会话不存在')
@@ -504,19 +504,19 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     const { port, registry } = await buildStack()
     const ws = await connectWs(port, { Origin: 'http://localhost:9303' })
     expect((await attach(ws, {
-      sessionId: 'sess-one-conn-00001', name: '页面甲', url: 'http://x/',
+      sessionId: 'onec01', name: '页面甲', url: 'http://x/',
     })).ok).toBe(true)
 
     // 同连接不同 sessionId → INVALID_REQUEST，且会话表不变
-    const second = await attach(ws, { sessionId: 'sess-one-conn-00002', name: '页面乙', url: 'http://x/' })
+    const second = await attach(ws, { sessionId: 'onec02', name: '页面乙', url: 'http://x/' })
     expect(!second.ok && second.error.code).toBe('INVALID_REQUEST')
     expect(!second.ok && second.error.message).toContain('一个连接只能绑定')
     expect(registry.size).toBe(1)
-    expect(JSON.stringify(registry.listSessions())).not.toContain('sess-one-conn-00002')
+    expect(JSON.stringify(registry.listSessions())).not.toContain('onec02')
 
     // 拒绝之后原会话仍正常可用（本连接重签同 sessionId 也允许）
     expect((await attach(ws, {
-      sessionId: 'sess-one-conn-00001', name: '页面甲改名', url: 'http://x/',
+      sessionId: 'onec01', name: '页面甲改名', url: 'http://x/',
     })).ok).toBe(true)
     expect(registry.size).toBe(1)
     expect(JSON.stringify(registry.listSessions())).toContain('页面甲改名')
@@ -530,7 +530,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
       origins.push(`http://full-${i}.example.com`)
       wss.push(await connectWs(port, { Origin: origins[i]! }))
       expect((await attach(wss[i]!, {
-        sessionId: `sess-full-${String(i).padStart(14, '0')}`,
+        sessionId: `${i.toString(36).padStart(6, '0')}`,
         name: `页面${i}`, url: 'http://x/',
       })).ok).toBe(true)
     }
@@ -538,13 +538,13 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
 
     // 新 sessionId → BUSY
     const fresh = await connectWs(port, { Origin: 'http://fresh.example.com' })
-    const busy = await attach(fresh, { sessionId: 'sess-full-exhausted-001', name: '第33个', url: 'http://x/' })
+    const busy = await attach(fresh, { sessionId: 'fulx01', name: '第33个', url: 'http://x/' })
     expect(!busy.ok && busy.error.code).toBe('BUSY')
 
     // 第 0 号会话的同源重连：不算新增，必须成功替换且总数仍 32
     const reconnect = await connectWs(port, { Origin: 'http://full-0.example.com' })
     const r = await attach(reconnect, {
-      sessionId: 'sess-full-00000000000000', name: '页面0重连', url: 'http://x/',
+      sessionId: '000000', name: '页面0重连', url: 'http://x/',
     })
     expect(r.ok, JSON.stringify(r)).toBe(true)
     expect(registry.size).toBe(32)
@@ -552,7 +552,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
 
     // 重连后的连接只能绑这一个会话（一连接一会话语义仍生效）
     const extra = await attach(reconnect, {
-      sessionId: 'sess-full-00000000000001', name: '页面1', url: 'http://x/',
+      sessionId: '000001', name: '页面1', url: 'http://x/',
     })
     expect(!extra.ok && extra.error.code).toBe('INVALID_REQUEST')
   })
@@ -566,7 +566,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     const applyGate = new Promise<void>(r => { releaseApply = r })
     const ws = await fakeBrowser(port, { revision: 'rev-1', applyGate, events })
     expect((await attach(ws, {
-      sessionId: 'sess-serial-00000001', name: '页面甲', url: 'http://x/',
+      sessionId: 'seri01', name: '页面甲', url: 'http://x/',
     })).ok).toBe(true)
 
     const applyP = client.callTool({
@@ -577,7 +577,7 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
 
     // 确认 get 已到达桌面端并排入会话链，再断言它尚未触达被 apply 占用的浏览器
     const getP = client.callTool({
-      name: 'print_get_open_template', arguments: { sessionId: 'sess-serial-00000001' },
+      name: 'print_get_open_template', arguments: { sessionId: 'seri01' },
     })
     await waitFor(() => bridgeEvents.includes('get-enter'), 3000, 'get 未到达桌面会话桥')
     expect(events).not.toContain('get-req')
@@ -598,10 +598,10 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     const client = await mcpClient(port, 'pair-token-1')
     const ws = await fakeBrowser(port)
     expect((await attach(ws, {
-      sessionId: 'sess-metrics-000001', name: '埋点页面', url: 'http://x/',
+      sessionId: 'metr01', name: '埋点页面', url: 'http://x/',
     })).ok).toBe(true)
     const result = await client.callTool({
-      name: 'print_get_open_template', arguments: { sessionId: 'sess-metrics-000001' },
+      name: 'print_get_open_template', arguments: { sessionId: 'metr01' },
     })
     expect(result.isError).toBeFalsy()
     const requestLog = debug.mock.calls.find(call => call[0] === 'MCP 请求完成')
@@ -611,12 +611,12 @@ describe('MCP HTTP 集成（SDK Client 连真实 /mcp）', () => {
     expect(requestLog?.[1].payloadBytes).toEqual(expect.any(Number))
     console.info('MCP 请求分段基准', JSON.stringify(requestLog?.[1]))
     const sessionLog = debug.mock.calls.find(call => call[0] === '模板会话请求完成')
-    expect(sessionLog?.[1]).toMatchObject({ operation: 'get', sessionId: 'sess-metrics-000001' })
+    expect(sessionLog?.[1]).toMatchObject({ operation: 'get', sessionId: 'metr01' })
     expect(sessionLog?.[1].queueMs).toEqual(expect.any(Number))
     expect(sessionLog?.[1].roundTripMs).toEqual(expect.any(Number))
     expect(JSON.stringify(debug.mock.calls)).not.toContain('placeholder')
     await client.callTool({
-      name: 'print_get_open_template', arguments: { sessionId: 'sess-missing-000001' },
+      name: 'print_get_open_template', arguments: { sessionId: 'miss01' },
     })
     const failedLog = debug.mock.calls.filter(call => call[0] === 'MCP 请求完成').at(-1)
     expect(failedLog?.[1].ok).toBe(false)

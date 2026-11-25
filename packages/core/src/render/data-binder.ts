@@ -96,7 +96,10 @@ function bindElement(
   if (isImage && typeof cloned.options.src === 'string') {
     let src = cloned.options.src
     if (src.includes('{')) {
-      src = evaluateTemplate(src, data)
+      // 与 formatter 同一口径：字段缺失时整段回落到示例值，
+      // 否则 evaluateTemplate 保留原表达式，src 会变成 baseUrl + '/{字段}' 的坏地址。
+      const example = typeof cloned.options.exampleValue === 'string' ? cloned.options.exampleValue : ''
+      src = evaluateTemplate(src, data, example)
     }
     if (src && baseUrl && !/^([a-z][a-z\d+\-.]*:|\/\/)/i.test(src)) {
       // 完整 URL（http/协议相对/data/blob 等）原样；站点绝对路径与相对路径都拼进图片基址
@@ -173,8 +176,10 @@ function bindFlowListData(el: TemplateElement, data: Record<string, any>): void 
 function resolveListSource(opts: any, data: Record<string, any>): { list: Record<string, any>[]; key: string | undefined } {
   // 优先显式 dataSource（属性面板配置）→ fields 配置 → printData 顶层第一个数组
   const explicitKey: string | undefined = opts.dataSource ?? opts.fields?.[0]?.dataSource ?? opts.fields?.[0]?.field
-  if (explicitKey && Array.isArray(data[explicitKey])) {
-    return { list: data[explicitKey], key: explicitKey }
+  if (explicitKey) {
+    // 已显式声明数据源时绝不再扫顶层数组兜底：{ items:'x', logs:[...] } 这类数据下
+    // 会把 logs 当成 items 渲染，既静默出错又无法从模板上察觉。
+    return { list: Array.isArray(data[explicitKey]) ? data[explicitKey] : [], key: explicitKey }
   }
   for (const [k, v] of Object.entries(data)) {
     if (Array.isArray(v)) return { list: v as Record<string, any>[], key: k }
@@ -269,7 +274,8 @@ function resolveCellText(cell: any, ctx: Record<string, any>): string {
   const formatter = cell.formatter
   if (!formatter) return ''
   if (referencesPageNumbers(formatter)) return formatter
-  return evaluateTemplate(formatter, ctx)
+  // 字段缺失时渲染空串，不把 `{expr}` 原文泄漏到纸面（与元素 formatter 的示例值回落同一取向）
+  return evaluateTemplate(formatter, ctx, '')
 }
 
 function makeRenderRow(

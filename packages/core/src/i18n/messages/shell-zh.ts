@@ -328,6 +328,7 @@ export const shellZh = {
   'propertyPanel.k325': "元素属性",
   'propertyPanel.k326': "页面属性",
   'propertyPanel.k327': "请在画布中选择一个元素",
+  'propertyPanel.k328': "自定义属性",
   'propertySearch.k328': "搜索属性...",
   'propertySearch.k329': "搜索属性",
   'tableProps.k330': "多级表头作为一个结构整体重复，勾选后表头区所有行都会在每页顶部重复",

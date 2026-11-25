@@ -11,6 +11,7 @@ import {
   installPlugin,
   isStableVersion,
   latestStable,
+  localize,
   manifestPath,
   parseRepoUrl,
   parseSemver,
@@ -21,8 +22,9 @@ import {
   resolvePluginName,
   resolveVersion,
   upsertManifestEntry,
+  validateIndex,
   writeManifest
-} from "./chunk-SZQKPTMS.js";
+} from "./chunk-SIIHBJ4M.js";
 export {
   BUNDLED_CATALOG,
   DEFAULT_GITEE_REPO,
@@ -36,6 +38,7 @@ export {
   installPlugin,
   isStableVersion,
   latestStable,
+  localize,
   manifestPath,
   parseRepoUrl,
   parseSemver,
@@ -46,5 +49,6 @@ export {
   resolvePluginName,
   resolveVersion,
   upsertManifestEntry,
+  validateIndex,
   writeManifest
 };

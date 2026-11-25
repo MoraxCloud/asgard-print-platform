@@ -5,8 +5,6 @@
 // 文本输入用 change（失焦/回车提交）而非 input —— 无框架版每次 store 变更都会整体重绘属性台，
 // 边打边提交会把光标顶回输入框开头。
 import { tr } from './controls.js'
-import { getLocale } from '@worm-print-platform/core/i18n'
-import { translateConstantLabel } from './label-translation.js'
 import { WATERMARK_DEFAULTS, WATERMARK_DENSITY_PRESETS } from '@worm-print-platform/core'
 import type { WatermarkOptions } from '@worm-print-platform/core/designer'
 import { h } from '../core/h'
@@ -140,7 +138,7 @@ export function watermarkSection(ctx: ShellCtx) {
           },
         }, [
           ...Object.entries(PRESETS).map(([key, p]) => h('option', {
-            value: key, text: `${translateConstantLabel(p.label, ctx.lang ?? getLocale())}（${p.width}×${p.height}）`, selected: density === key,
+            value: key, text: `${tr(ctx, p.labelKey)}${tr(ctx, 'constants.watermark.density.size', { w: p.width, h: p.height })}`, selected: density === key,
           })),
           h('option', { value: 'custom', text: tr(ctx, 'watermark.k550'), selected: density === 'custom' }),
         ]),

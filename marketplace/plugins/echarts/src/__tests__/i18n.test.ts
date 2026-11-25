@@ -1,6 +1,9 @@
 // @vitest-environment happy-dom
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { resetLocale, setLocale, t } from '@worm-print-platform/core/i18n'
+import { createTranslator, resetLocale, setLocale, t } from '@worm-print-platform/core/i18n'
+import zh from '../i18n/zh-CN.json'
 import { CHART_ELEMENT_UI, installChartCommonUI, uninstallChartCommonUI } from '../ui.js'
 import { CHART_KIND_DEFINITIONS, CHART_KINDS } from '../kinds.js'
 import { LABEL_POSITIONS, LABEL_PRESETS } from '../label.js'
@@ -15,6 +18,32 @@ afterEach(() => {
 })
 
 describe('echarts 插件语言包', () => {
+  it('语言资源含 zh-CN 且键以 echarts. 开头', () => {
+    expect(Object.keys(zh.echarts).length).toBeGreaterThan(100)
+    for (const key of Object.keys(zh.echarts)) expect(key.startsWith('echarts.')).toBe(true)
+  })
+
+  it('源码引用的语义键在三语资源中齐全（含中文配置）', () => {
+    const pluginDir = process.cwd()
+    const sources = ['src/ui.ts', 'src/constants.ts', 'src/label.ts', 'src/kinds.ts', 'src/plugin.ts']
+      .map(rel => readFileSync(resolve(pluginDir, rel), 'utf8')).join('\n')
+    const keys = new Set<string>()
+    for (const m of sources.matchAll(/\bt\('([^']+)'\)/g)) keys.add(m[1])
+    for (const m of sources.matchAll(/labelKey:\s*'([^']+)'/g)) keys.add(m[1])
+    for (const locale of ['zh-CN', 'en-US', 'th-TH']) {
+      const messages = JSON.parse(readFileSync(resolve(pluginDir, `src/i18n/${locale}.json`), 'utf8')).echarts
+      for (const key of keys) expect(messages[key], `${locale} 缺少 ${key}`).toBeTruthy()
+    }
+  })
+
+  it('主包与兼容包都声明 wormPrint.i18n', () => {
+    const root = resolve(process.cwd(), '../../..')
+    for (const rel of ['marketplace/plugins/echarts/package.json', 'packages/echarts/package.json']) {
+      const pkg = JSON.parse(readFileSync(resolve(root, rel), 'utf8'))
+      expect(pkg.wormPrint.i18n).toEqual({ dir: 'dist/i18n', base: 'zh-CN' })
+    }
+  })
+
   it('注册了 id 与双语包，键集合一致且前缀合规', () => {
     expect(CHART_ELEMENT_UI.i18nId).toBe('echarts')
     expect(CHART_ELEMENT_UI.locales).toHaveProperty('zh-CN')
@@ -28,8 +57,8 @@ describe('echarts 插件语言包', () => {
     expect(zhKeys.every(k => k.startsWith('echarts.'))).toBe(true)
     // 所有 key 必须语义化：不允许纯数字编号后缀
     expect(zhKeys.filter(k => /\.k\d+$/.test(k))).toEqual([])
-    // 145 键数量不变（一一对应，仅重命名）
-    expect(zhKeys).toHaveLength(145)
+    // 151 键数量不变（一一对应，仅重命名）
+    expect(zhKeys).toHaveLength(151)
     // 关键语义 key 存在（对齐百度 ECharts 的 series.typeNames 等命名）
     expect(zhKeys).toContain('echarts.series.typeNames.bar')
     expect(zhKeys).toContain('echarts.series.typeNames.gauge')
@@ -38,6 +67,7 @@ describe('echarts 插件语言包', () => {
     expect(zhKeys).toContain('echarts.label.position.bar.top')
     expect(zhKeys).toContain('echarts.meta.chartOption')
     expect(zhKeys).toContain('echarts.panel.hint.dataBinding')
+    expect(zhKeys).toContain('echarts.palette.default')
   })
 
   it('切泰语后 engine 能解析插件键', () => {
@@ -99,6 +129,7 @@ describe('echarts 插件语言包', () => {
       fields: [],
       update: () => {},
       repaint: () => {},
+      openExpression: () => {},
     })
     const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
     const host = document.createElement('div')
@@ -107,6 +138,86 @@ describe('echarts 插件语言包', () => {
     const hint = [...host.querySelectorAll('.pd-hint')].map(n => n.textContent ?? '').join(' ')
     expect(hint).not.toContain('echarts.ui.k')
     expect(hint.length).toBeGreaterThan(0)
+  })
+
+  it('属性面板按宿主传入的 t 取词，不冻结在全局 locale', () => {
+    // 全局仍是中文，模拟实例 lang=en-US 而全局未变的真实场景
+    setLocale('zh-CN')
+    const ui = getElementUI('barChart')!
+    const element = {
+      id: 'e1', type: 'barChart',
+      printElementType: { type: 'barChart', title: '柱状图' },
+      options: { left: 0, top: 0, width: 100, height: 60, chartOption: {} },
+    } as unknown as RuntimeElement
+    const result = ui.renderProperty!({
+      element,
+      data: [{ name: 'x', value: 1 }],
+      fields: [],
+      update: () => {},
+      repaint: () => {},
+      openExpression: () => {},
+      t: createTranslator('en-US'),
+    })
+    const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
+    const host = document.createElement('div')
+    if (typeof node === 'string') host.innerHTML = node
+    else host.appendChild(node as Node)
+    const text = host.textContent ?? ''
+    expect(text).toContain('Data source')
+    expect(text).toContain('Value fields')
+    expect(text).not.toMatch(/[\u3400-\u9fff]/)
+  })
+
+  it('属性面板内颜色选择器按实例 locale 取词', () => {
+    setLocale('zh-CN')
+    const ui = getElementUI('barChart')!
+    const element = {
+      id: 'e1', type: 'barChart',
+      printElementType: { type: 'barChart', title: '柱状图' },
+      options: { left: 0, top: 0, width: 100, height: 60, chartOption: {} },
+    } as unknown as RuntimeElement
+    const result = ui.renderProperty!({
+      element, data: [{ name: 'x', value: 1 }], fields: [],
+      update: () => {}, repaint: () => {}, openExpression: () => {}, t: createTranslator('en-US'),
+    })
+    const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    try {
+      if (typeof node === 'string') host.innerHTML = node
+      else host.appendChild(node as Node)
+      const trigger = host.querySelector<HTMLElement>('.preset-color-trigger')
+      expect(trigger).toBeTruthy()
+      trigger!.click()
+      const panel = document.body.querySelector('.preset-color-panel')
+      expect(panel).toBeTruthy()
+      expect(panel!.getAttribute('aria-label')).toBe('Pick a color')
+      expect(panel!.textContent).toContain('Common colors')
+    } finally {
+      host.remove()
+    }
+  })
+
+  it('十类图表属性面板在实例 locale 下均无中文残留', () => {
+    setLocale('zh-CN')
+    const ui = getElementUI('barChart')!
+    const en = createTranslator('en-US')
+    for (const def of CHART_KIND_DEFINITIONS) {
+      const element = {
+        id: 'e1', type: def.type,
+        printElementType: { type: def.type, title: def.label },
+        options: { left: 0, top: 0, width: 100, height: 60, chartOption: {} },
+      } as unknown as RuntimeElement
+      const result = ui.renderProperty!({
+        element, data: [{ name: 'x', value: 1 }], fields: [],
+        update: () => {}, repaint: () => {}, openExpression: () => {}, t: en,
+      })
+      const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
+      const host = document.createElement('div')
+      if (typeof node === 'string') host.innerHTML = node
+      else host.appendChild(node as Node)
+      expect(host.textContent ?? '', def.type).not.toMatch(/[\u3400-\u9fff]/)
+    }
   })
 
   it('切英文后 engine 能解析插件键，切回中文恢复', () => {

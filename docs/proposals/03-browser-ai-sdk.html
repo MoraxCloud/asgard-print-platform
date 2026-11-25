@@ -140,7 +140,7 @@ session.ask(<span class="s">'把表头改成蓝色'</span>)  <span class="c">// 
   <div class="notes">
     <h3>设计要点（与现有代码的衔接）</h3>
     <ol>
-      <li><b>抽取来源</b>：以 <code>demos/shared/template-session.ts</code> 为实现蓝本——状态机、24 位 sessionId、<code>revisionOf()</code> 键排序 SHA-256、<code>createRevisionCache()</code>、<code>template.get</code> / <code>template.apply</code> handler 全部平移进 SDK。</li>
+      <li><b>抽取来源</b>：以 <code>demos/shared/template-session.ts</code> 为实现蓝本——状态机、6 位 sessionId、<code>revisionOf()</code> 键排序 SHA-256、<code>createRevisionCache()</code>、<code>template.get</code> / <code>template.apply</code> handler 全部平移进 SDK。</li>
       <li><b>传输抽象</b>：<code>createTransport('ws' | 'sse' | 'http')</code> 对应功能 02 的三种链路；WS 复用 <code>PrintClient</code>，SSE 复用新增的 <code>/mcp/events</code>，HTTP 走服务端代理。</li>
       <li><b>安全</b>：SDK 不持有模型密钥；浏览器直连场景由服务端下发短期令牌，沿用现有 Bearer pairing token 鉴权口径。</li>
       <li><b>兼容</b>：桌面 MCP 12 工具与 <code>template.attach/get/apply/detach</code> 消息类型保持不变，四个 demo 仅做几行初始化替换，不重写业务逻辑。</li>

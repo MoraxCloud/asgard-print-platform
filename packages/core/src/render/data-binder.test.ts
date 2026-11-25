@@ -63,6 +63,17 @@ describe('bindTableData 动态模式', () => {
     expect(bound.elements[0]!.options._renderRows.map((r: any) => r.type)).toEqual(['header', 'summary'])
   })
 
+  it('显式 dataSource 非数组时不回落到顶层其他数组', () => {
+    const rows = [
+      { id: 'r1', type: 'header', height: 8, cells: [cell({ formatter: '名称' })] },
+      { id: 'r2', type: 'data', height: 8, cells: [cell({ formatter: '{name}' })] },
+    ]
+    const t = makeTemplate({ tableMode: 'dynamic', tableRows: rows, fields: [{ dataSource: 'items' }] })
+    const bound = bindData(t, { items: 'not-array', logs: [{ name: 'LOG-1' }] })
+    expect(bound.elements[0]!.options._renderRows.map((r: any) => r.type)).toEqual(['header'])
+    expect(JSON.stringify(bound.elements[0]!.options._renderRows)).not.toContain('LOG-1')
+  })
+
   it('无 printData 时仍生成 _renderRows（data 行 0 行）', () => {
     const t = makeTemplate({ tableMode: 'dynamic', tableRows: dynamicRows(), fields: [{ text: 'items', dataSource: 'items' }] })
     const bound = bindData(t)
@@ -345,6 +356,22 @@ describe('bindData 图片 src', () => {
     expect(bound.elements[0]!.options.src).toBe('https://x.com/sign.png')
   })
 
+  it('{字段} 缺失时整段回落为 exampleValue，不输出字面表达式', () => {
+    const base = makeImageTemplate('{photoUrl}')
+    const el = base.elements[0]!
+    const t: TemplateData = {
+      ...base,
+      elements: [{ ...el, options: { ...el.options, exampleValue: '/images/placeholder.png' } }],
+    }
+    const bound = bindData(t, {}, 'http://localhost:10103')
+    expect(bound.elements[0]!.options.src).toBe('http://localhost:10103/images/placeholder.png')
+  })
+
+  it('{字段} 缺失且无 exampleValue 时 src 为空，不拼出坏 URL', () => {
+    const bound = bindData(makeImageTemplate('{photoUrl}'), {}, 'http://localhost:10103')
+    expect(bound.elements[0]!.options.src).toBe('')
+  })
+
   it('相对路径 src 拼接服务端 base URL', () => {
     const t = makeImageTemplate('/docfiles/20260824/1_logo.png')
     const bound = bindData(t, undefined, 'http://localhost:10103')
@@ -569,5 +596,23 @@ describe('元素示例值兜底（#IKVLXT）', () => {
   it('纯字面文本元素不受影响', () => {
     const t = textTemplate({ formatter: '物料名称：', exampleValue: '示例文本' })
     expect(bindData(t, {}).elements[0]!.options.formatter).toBe('物料名称：')
+  })
+})
+
+describe('表格单元格字段缺失回落', () => {
+  it('静态单元格缺字段时渲染空串，不泄漏 {expr} 原文', () => {
+    const rows = [{ id: 'r1', type: 'static', height: 8, cells: [cell({ formatter: '{missing}' })] }]
+    const bound = bindData(makeTemplate({ tableMode: 'static', tableRows: rows }), {})
+    expect(bound.elements[0]!.options._renderRows[0].cells[0].content).toBe('')
+  })
+
+  it('动态数据行缺字段时同样渲染空串', () => {
+    const rows = [
+      { id: 'r1', type: 'header', height: 8, cells: [cell({ formatter: '名称' })] },
+      { id: 'r2', type: 'data', height: 8, cells: [cell({ formatter: '{missing}' })] },
+    ]
+    const t = makeTemplate({ tableMode: 'dynamic', tableRows: rows, fields: [{ dataSource: 'items' }] })
+    const bound = bindData(t, { items: [{ name: 'A' }] })
+    expect(bound.elements[0]!.options._renderRows[1].cells[0].content).toBe('')
   })
 })

@@ -8,9 +8,11 @@ import { getElementPluginKinds } from '@worm-print-platform/core/designer'
 import type { RuntimeElement } from '@worm-print-platform/core/designer'
 import { getElementUI } from '@worm-print-platform/plugin-kit'
 import type { ElementUI } from '@worm-print-platform/plugin-kit'
+import { trG } from '../shell/controls.js'
 
-/** 属性台「自定义属性」页签的缺省标题（与 Vue 3 轨同串） */
-export const CUSTOM_PROPERTY_TAB_LABEL = '自定义属性'
+/** 属性台「自定义属性」页签标题键；渲染期按实例 locale 取词，不再冻结为中文 */
+export const CUSTOM_PROPERTY_TAB_LABEL_KEY = 'propertyPanel.k328'
+export const customPropertyTabLabel = (): string => trG(CUSTOM_PROPERTY_TAB_LABEL_KEY)
 
 export interface PluginElement {
   type: string
@@ -80,7 +82,7 @@ export function getPluginPropertyTab(element?: RuntimeElement | null): PluginPro
       return undefined
     }
   }
-  const label = CUSTOM_PROPERTY_TAB_LABEL
+  const label = customPropertyTabLabel()
   return {
     ui,
     label,

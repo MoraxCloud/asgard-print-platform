@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
 import type { AppConfig } from '../main/config.js'
 import type { PrinterInfo } from '@worm-print-platform/core/client'
 import type { JobRecord } from '../main/job-history.js'
@@ -8,13 +8,16 @@ import type { McpState } from '../preload/preload.api.js'
 import {
   buildMcpAgentPrompt,
   buildMcpConfigJson,
+  buildSessionBasicInfoPrompt,
   MCP_PROMPT_SCENARIOS,
   MCP_SERVICE_NAME,
   resolveMcpConnectionView,
   type McpPromptScenario,
 } from './mcp-config'
 
-const tab = ref<'settings' | 'jobs' | 'logs'>('settings')
+const tab = ref<'settings' | 'jobs' | 'designers' | 'logs'>('settings')
+/** 与注册表 MAX_SESSIONS 一致：达到该数量时给出关闭多余设计器的提示 */
+const DESIGNER_LIMIT = 32
 const config = ref<AppConfig | null>(null)
 const port = ref(0)
 const version = ref('')
@@ -32,6 +35,10 @@ const mcpState = ref<McpState | null>(null)
 const mcpCopyMsg = ref('')
 const mcpPromptCopyMsg = ref('')
 const mcpPromptScenario = ref<McpPromptScenario>('mcp')
+const designerCopyMsg = ref('')
+const topMcpCopyMsg = ref('')
+/** 会话只在 attach/detach 时变化：打开「活跃设计器」页签时定时拉取最新列表 */
+let designerRefreshTimer: ReturnType<typeof setInterval> | null = null
 /** 端口漂移检测：上次记录的 MCP URL 与当前不同时提示更新 Agent 配置 */
 const MCP_LAST_URL_KEY = 'worm-print-client:mcpLastUrl'
 const mcpUrlDrift = ref('')
@@ -62,6 +69,12 @@ const mcpAgentPrompt = computed(() =>
 const mcpConnectionView = computed(() =>
   resolveMcpConnectionView(config.value?.mcpEnabled ?? false, mcpState.value?.enabled ?? false),
 )
+/** 注册表 list() 已按创建时间倒序，这里只做空数组兜底 */
+const designerSessions = computed(() => mcpState.value?.sessions ?? [])
+const atDesignerLimit = computed(() => designerSessions.value.length >= DESIGNER_LIMIT)
+const defaultMcpAgentPrompt = computed(() =>
+  buildMcpAgentPrompt(mcpState.value?.url ?? '', config.value?.pairingToken ?? '', 'mcp'),
+)
 
 async function copyMcpConfig() {
   try {
@@ -82,6 +95,29 @@ async function copyMcpAgentPrompt() {
   }
   setTimeout(() => (mcpPromptCopyMsg.value = ''), 3000)
 }
+
+async function copyText(text: string, msg: Ref<string>, ok: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    msg.value = ok
+  } catch {
+    msg.value = '复制失败：请检查剪贴板权限后重试'
+  }
+  setTimeout(() => (msg.value = ''), 3000)
+}
+
+function copySessionId(sessionId: string) {
+  return copyText(sessionId, designerCopyMsg, '已复制会话 ID')
+}
+
+function copySessionPrompt(session: (typeof designerSessions.value)[number]) {
+  return copyText(buildSessionBasicInfoPrompt(session), designerCopyMsg, '已复制基础信息提示词')
+}
+
+function copyTopMcpPrompt() {
+  return copyText(defaultMcpAgentPrompt.value, topMcpCopyMsg, '已复制 MCP 接入提示词（实时模板编辑）')
+}
+
 /** 路径条实际展示的目录：自定义目录优先，未设置时回退默认目录 */
 const effectivePdfDir = computed(() => config.value?.pdfOutputDir?.trim() || pdfDir.value)
 
@@ -118,6 +154,13 @@ onMounted(async () => {
   } catch (err) {
     bridgeError.value = `初始化失败：${(err as Error)?.message ?? String(err)}`
   }
+  designerRefreshTimer = setInterval(() => {
+    if (tab.value === 'designers') void refreshMcpState()
+  }, 2000)
+})
+
+onUnmounted(() => {
+  if (designerRefreshTimer) clearInterval(designerRefreshTimer)
 })
 
 async function save() {
@@ -184,6 +227,10 @@ function fmtTime(iso: string): string {
   return new Date(iso).toLocaleString()
 }
 
+function fmtCreatedAt(ms: number): string {
+  return new Date(ms).toLocaleString()
+}
+
 </script>
 
 <template>
@@ -194,8 +241,15 @@ function fmtTime(iso: string): string {
     <div class="tabs">
       <button class="tab" :class="{ active: tab === 'settings' }" @click="tab = 'settings'">设置</button>
       <button class="tab" :class="{ active: tab === 'jobs' }" @click="tab = 'jobs'">任务记录</button>
+      <button class="tab" :class="{ active: tab === 'designers' }" @click="tab = 'designers'">
+        活跃设计器 <span class="tab-count">{{ designerSessions.length }}</span>
+      </button>
       <button class="tab" :class="{ active: tab === 'logs' }" @click="tab = 'logs'">日志</button>
-      <span class="muted" style="margin-left: auto; align-self: center">v{{ version }}　端口 {{ port }}</span>
+      <div class="tabs-top-actions">
+        <button type="button" class="link-btn" @click="copyTopMcpPrompt">复制 MCP 接入提示词</button>
+        <span v-if="topMcpCopyMsg" class="muted">{{ topMcpCopyMsg }}</span>
+      </div>
+      <span class="muted" style="align-self: center">v{{ version }}　端口 {{ port }}</span>
     </div>
 
     <div v-if="tab === 'settings' && config">
@@ -418,6 +472,38 @@ function fmtTime(iso: string): string {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div v-else-if="tab === 'designers'">
+      <div v-if="atDesignerLimit" class="mcp-warn designer-limit">
+        已达上限 {{ DESIGNER_LIMIT }}/{{ DESIGNER_LIMIT }}，请关闭多余设计器
+      </div>
+      <table class="designers-table">
+        <colgroup>
+          <col style="width: 110px" />
+          <col />
+          <col style="width: 168px" />
+          <col style="width: 220px" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>会话 ID</th><th>模板名称</th><th>创建时间</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="s in designerSessions" :key="s.sessionId">
+            <td><code class="session-code" :title="s.sessionId">{{ s.sessionId }}</code></td>
+            <td :title="s.templateName || s.name">{{ s.templateName || s.name || '未命名模板' }}</td>
+            <td class="time-cell">{{ fmtCreatedAt(s.createdAt) }}</td>
+            <td>
+              <button type="button" class="link-btn" @click="copySessionId(s.sessionId)">复制会话 ID</button>
+              <button type="button" class="link-btn" @click="copySessionPrompt(s)">复制基础信息提示词</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="!designerSessions.length" class="muted designer-empty">暂无活跃设计器：请在浏览器中打开已注册模板会话的设计器页面。</div>
+      <div class="muted designer-copy-msg">{{ designerCopyMsg }}</div>
     </div>
 
     <div v-else>

@@ -124,7 +124,7 @@ client.onStatusChange(s =&gt;
       <div class="panel">
         <div class="pt">template.attach 的注册门槛（客户端侧）</div>
         <div class="code">① 必须带 Origin，没来源的页面 <span class="e">UNAUTHORIZED</span>
-② sessionId 只收 16–128 位随机串 <span class="c">[A-Za-z0-9_-]</span>
+② sessionId 只收 6 位随机串 <span class="c">[a-z0-9]</span>
 ③ 一个连接只绑一个会话，换号要先 detach
 ④ 全局上限 32 个会话 → 超了回 <span class="e">BUSY</span>
 ⑤ 跨 Origin 不许顶号；同源重连才替换旧连接</div>

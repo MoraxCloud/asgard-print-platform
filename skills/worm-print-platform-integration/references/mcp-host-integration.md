@@ -21,7 +21,7 @@
 ## 1. 页面侧会话职责
 
 - 页面加载后连接本地桌面客户端；客户端未启动时由 `PrintClient` 固定退避重试，不阻塞设计器。
-- 每次连接成功后发 `template.attach`（sessionId 存 sessionStorage，重连复用；16–128 位 `[A-Za-z0-9_-]`）。
+- 每次连接成功后发 `template.attach`（sessionId 存 sessionStorage，重连复用；6 位 `[a-z0-9]`）。
 - 响应 `template.get`：返回当前画布快照（模板 JSON / 字段树 / 打印数据 / 模板名）与内容 revision。
 - 响应 `template.apply`：revision 冲突拒绝 → 封禁元素拒绝 → 结构校验 → 深拷贝写回 → 重新读取实际结果返回新 revision。
 - 页面卸载 best-effort 发 `template.detach`，连接关闭由桌面端自动回收会话。

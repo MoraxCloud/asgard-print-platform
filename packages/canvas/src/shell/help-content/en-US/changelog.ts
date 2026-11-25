@@ -3,6 +3,51 @@ export default {
   id: 'changelog',
   title: 'Release Notes',
   content: `
+<h2>V1.6.5<small>(2026-11-25)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Mixed-orientation previews</strong>: screenshots now use the target page's paper size, eliminating cross-page results and wrong dimensions when requesting page=N; single-page behavior is unchanged.</li>
+</ul>
+
+<h3>Changed</h3>
+<ul>
+  <li><strong>Chart field selection</strong>: unified into the expression editor dialog (field tab only), with no default values assigned automatically.</li>
+</ul>
+
+<h2>V1.6.4<small>(2026-11-24)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Marketplace upgrades</strong>: data-preview artifacts are complete in Git, forced upgrades use staged atomic swaps, and chart labels switch languages without missing-key warnings.</li>
+</ul>
+
+<h2>V1.6.3<small>(2026-11-24)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Data-binding fallbacks</strong>: table demo data sources no longer fall back to the first array when missing; charts keep the placeholder when an explicitly bound data source is absent, and field pickers no longer mix in sample-data fields.</li>
+</ul>
+
+<h2>V1.6.2<small>(2026-11-23)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Chart plugin installation</strong>: fixed the marketplace CLI silently doing nothing when invoked via npx, and chart plugin installs from Git sources failing due to missing language resources; installing the Baidu chart plugin via the marketplace works again.</li>
+</ul>
+
+<h2>V1.6.1<small>(2026-11-22)</small></h2>
+
+<h3>Added</h3>
+<ul>
+  <li><strong>Custom language packs</strong>: designer shell text can be replaced with custom language resources, with a CLI to export skeletons, validate translations and apply incremental updates.</li>
+</ul>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Rendering and designer details</strong>: fixes for dot-matrix barcodes, full-page rotation, watermarks, image borders and crop anchors; property search and table matrices are more reliable.</li>
+</ul>
+
 <h2>V1.6.0<small>(2026-11-19)</small></h2>
 <h3>Added</h3>
 <ul>
