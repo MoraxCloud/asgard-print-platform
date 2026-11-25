@@ -57,8 +57,8 @@ describe('echarts 插件语言包', () => {
     expect(zhKeys.every(k => k.startsWith('echarts.'))).toBe(true)
     // 所有 key 必须语义化：不允许纯数字编号后缀
     expect(zhKeys.filter(k => /\.k\d+$/.test(k))).toEqual([])
-    // 149 键数量不变（一一对应，仅重命名）
-    expect(zhKeys).toHaveLength(149)
+    // 151 键数量不变（一一对应，仅重命名）
+    expect(zhKeys).toHaveLength(151)
     // 关键语义 key 存在（对齐百度 ECharts 的 series.typeNames 等命名）
     expect(zhKeys).toContain('echarts.series.typeNames.bar')
     expect(zhKeys).toContain('echarts.series.typeNames.gauge')
@@ -129,6 +129,7 @@ describe('echarts 插件语言包', () => {
       fields: [],
       update: () => {},
       repaint: () => {},
+      openExpression: () => {},
     })
     const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
     const host = document.createElement('div')
@@ -154,6 +155,7 @@ describe('echarts 插件语言包', () => {
       fields: [],
       update: () => {},
       repaint: () => {},
+      openExpression: () => {},
       t: createTranslator('en-US'),
     })
     const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
@@ -176,7 +178,7 @@ describe('echarts 插件语言包', () => {
     } as unknown as RuntimeElement
     const result = ui.renderProperty!({
       element, data: [{ name: 'x', value: 1 }], fields: [],
-      update: () => {}, repaint: () => {}, t: createTranslator('en-US'),
+      update: () => {}, repaint: () => {}, openExpression: () => {}, t: createTranslator('en-US'),
     })
     const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
     const host = document.createElement('div')
@@ -208,7 +210,7 @@ describe('echarts 插件语言包', () => {
       } as unknown as RuntimeElement
       const result = ui.renderProperty!({
         element, data: [{ name: 'x', value: 1 }], fields: [],
-        update: () => {}, repaint: () => {}, t: en,
+        update: () => {}, repaint: () => {}, openExpression: () => {}, t: en,
       })
       const node = typeof result === 'object' && result !== null && 'node' in result ? result.node : result
       const host = document.createElement('div')

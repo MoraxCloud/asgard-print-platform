@@ -71,8 +71,8 @@ export function chartFactoryDefaults(type: string, partial?: Record<string, unkn
     title: def?.label ?? '图表',
     chartOption: createDefaultChartOption(type),
     chartDataSource: '',
-    chartCategoryField: 'name',
-    chartValueFields: ['value'],
+    chartCategoryField: '',
+    chartValueFields: [],
     chartSeriesField: '',
     ...partial,
   }

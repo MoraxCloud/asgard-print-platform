@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { chartFactoryDefaults } from '../config.js'
 import { createDefaultChartOption } from '../defaults.js'
 import { CHART_KIND_DEFINITIONS } from '../kinds.js'
 
@@ -40,5 +41,13 @@ describe('出厂 option', () => {
 
   it('未知 kind 回落柱状图而不是抛错', () => {
     expect((createDefaultChartOption('unknown') as Record<string, any>).series[0].type).toBe('bar')
+  })
+})
+
+describe('新建图表字段默认', () => {
+  it('出厂不带类目/值字段默认赋值', () => {
+    const defaults = chartFactoryDefaults('barChart')
+    expect(defaults.chartCategoryField).toBe('')
+    expect(defaults.chartValueFields).toEqual([])
   })
 })

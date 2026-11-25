@@ -455,8 +455,8 @@ function chartFactoryDefaults(type, partial) {
     title: def?.label ?? "\u56FE\u8868",
     chartOption: createDefaultChartOption(type),
     chartDataSource: "",
-    chartCategoryField: "name",
-    chartValueFields: ["value"],
+    chartCategoryField: "",
+    chartValueFields: [],
     chartSeriesField: "",
     ...partial
   };
@@ -1188,6 +1188,8 @@ var zh_CN_default = {
     "echarts.panel.labelLine.length2": "\u7B2C\u4E8C\u6BB5\u957F\u5EA6",
     "echarts.panel.labelLine.smooth": "\u5E73\u6ED1\u5F15\u5BFC\u7EBF",
     "echarts.panel.dataSourceTitle": "\u6570\u636E\u6E90",
+    "echarts.panel.selectField": "\u9009\u62E9\u5B57\u6BB5",
+    "echarts.panel.autoSource": "\u81EA\u52A8",
     "echarts.panel.categoryField": "\u7C7B\u76EE\u5B57\u6BB5",
     "echarts.panel.removeField": "\u5220\u9664\u8BE5\u5B57\u6BB5",
     "echarts.panel.addField": "+ \u6DFB\u52A0\u5B57\u6BB5",
@@ -1343,6 +1345,8 @@ var en_US_default = {
     "echarts.panel.labelLine.length2": "Second segment length",
     "echarts.panel.labelLine.smooth": "Smooth label line",
     "echarts.panel.dataSourceTitle": "Data source",
+    "echarts.panel.selectField": "Select field",
+    "echarts.panel.autoSource": "Auto",
     "echarts.panel.categoryField": "Category field",
     "echarts.panel.removeField": "Remove this field",
     "echarts.panel.addField": "+ Add field",
@@ -1498,6 +1502,8 @@ var th_TH_default = {
     "echarts.panel.labelLine.length2": "\u0E04\u0E27\u0E32\u0E21\u0E22\u0E32\u0E27\u0E17\u0E48\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E2D\u0E07",
     "echarts.panel.labelLine.smooth": "\u0E40\u0E2A\u0E49\u0E19\u0E1B\u0E49\u0E32\u0E22\u0E42\u0E04\u0E49\u0E07",
     "echarts.panel.dataSourceTitle": "\u0E41\u0E2B\u0E25\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25",
+    "echarts.panel.selectField": "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1F\u0E34\u0E25\u0E14\u0E4C",
+    "echarts.panel.autoSource": "\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34",
     "echarts.panel.categoryField": "\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E2B\u0E21\u0E27\u0E14\u0E2B\u0E21\u0E39\u0E48",
     "echarts.panel.removeField": "\u0E25\u0E1A\u0E1F\u0E34\u0E25\u0E14\u0E4C\u0E19\u0E35\u0E49",
     "echarts.panel.addField": "+ \u0E40\u0E1E\u0E34\u0E48\u0E21\u0E1F\u0E34\u0E25\u0E14\u0E4C",
@@ -1606,18 +1612,9 @@ var CANVAS_STYLE = "width:100%;height:100%;min-width:0;min-height:0;pointer-even
 var STYLES = [
   ".echarts-canvas-element{overflow:hidden}",
   ".echarts-field-row{display:flex;gap:6px;align-items:center}",
+  ".echarts-field-current{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--pd-text-secondary,#6b7280)}",
   ".echarts-field-row>.pd-input{flex:1;min-width:0}",
   ".echarts-field-row>.pd-button{flex:none}",
-  ".echarts-dropdown-trigger{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:26px;min-height:26px;padding:3px 6px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);color:inherit;font:inherit;box-sizing:border-box;cursor:pointer;text-align:left}",
-  ".echarts-dropdown-trigger:hover{border-color:var(--pd-text-faint,#b4b9c4)}",
-  '.echarts-dropdown-trigger[aria-expanded="true"]{border-color:var(--pd-accent,#165dff);box-shadow:0 0 0 2px rgb(22 93 255 / 12%)}',
-  ".echarts-dropdown-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-  ".echarts-dropdown-arrow{flex:none;color:var(--pd-text-muted,#909399);font-size:10px;transition:transform .14s}",
-  '.echarts-dropdown-trigger[aria-expanded="true"] .echarts-dropdown-arrow{transform:rotate(180deg)}',
-  ".echarts-dropdown-panel{position:fixed;z-index:1200;max-height:240px;overflow:auto;padding:3px;border:1px solid var(--pd-border,#d9dde6);border-radius:6px;background:var(--pd-input-bg,#fff);box-shadow:0 6px 18px rgb(0 0 0 / 14%);box-sizing:border-box}",
-  ".echarts-dropdown-option{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-  ".echarts-dropdown-option:hover{background:var(--pd-accent-soft,rgb(22 93 255 / 9%))}",
-  ".echarts-dropdown-option.is-active{background:var(--pd-accent-soft,rgb(22 93 255 / 9%));color:var(--pd-accent,#165dff)}",
   ".echarts-label-group{margin-top:8px;border-top:1px solid var(--pd-border,#e5e7eb);padding-top:8px}",
   ".echarts-label-group>summary{display:flex;align-items:center;cursor:pointer;list-style:none;font-size:12px;font-weight:600}",
   ".echarts-label-summary>.pd-field{flex:1;margin:0;font-weight:400}",
@@ -1698,22 +1695,6 @@ function valueFieldsLabel(def, limit) {
   if (def?.seriesType === "radar") return t2("echarts.panel.field.dimension");
   return limit === 1 ? t2("echarts.panel.field.value") : t2("echarts.panel.field.valueMulti");
 }
-function dataSourceCandidates(data, fields) {
-  const first = data?.[0];
-  const keys = first ? Object.keys(first).filter((key) => Array.isArray(first[key])) : [];
-  for (const field2 of fields ?? []) {
-    if (field2.fieldType === "list" && field2.fieldKey && !keys.includes(field2.fieldKey)) keys.push(field2.fieldKey);
-  }
-  return keys;
-}
-function dataRowFields(data, dataSource) {
-  const first = data?.[0];
-  if (!first) return [];
-  const key = dataSource ? Array.isArray(first[dataSource]) ? dataSource : "" : Object.keys(first).find((k) => Array.isArray(first[k]));
-  if (!key) return [];
-  const rows = first[key];
-  return rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null ? Object.keys(rows[0]) : [];
-}
 function fieldLabelMap(fields) {
   const map = /* @__PURE__ */ new Map();
   for (const field2 of fields ?? []) {
@@ -1721,17 +1702,41 @@ function fieldLabelMap(fields) {
   }
   return map;
 }
-function optionLabel(value, labels, fallbackSuffix) {
-  if (!value) return fallbackSuffix ?? t2("echarts.panel.default");
+function optionLabel(value, labels) {
+  if (!value) return t2("echarts.panel.default");
   const name = labels.get(value);
-  const base = name ? `${name}\uFF08${value}\uFF09` : value;
-  return fallbackSuffix ? `${base}${fallbackSuffix}` : base;
+  return name ? `${name}\uFF08${value}\uFF09` : value;
 }
-function dropdownOptions(candidates, current, labels = /* @__PURE__ */ new Map()) {
-  const opts = candidates.map((value) => ({ value, label: optionLabel(value, labels) }));
-  if (current && !candidates.includes(current)) opts.unshift({ value: current, label: optionLabel(current, labels, t2("echarts.panel.current")) });
-  if (!current) opts.unshift({ value: "", label: t2("echarts.panel.defaultFirstArray") });
-  return opts;
+function fieldBindingKey(next) {
+  if (next.binding) return next.binding;
+  const matched = /^\{\s*([^{}]+?)\s*\}$/.exec(next.formatter?.trim() ?? "");
+  return matched?.[1]?.trim() ?? "";
+}
+function fieldPicker(ctx, current, targetPath, fields, labels, onSelect, allowAuto = false) {
+  const row = el("div", "echarts-field-row");
+  const display = el(
+    "span",
+    "echarts-field-current",
+    current ? optionLabel(current, labels) : allowAuto ? t2("echarts.panel.autoSource") : t2("echarts.panel.default")
+  );
+  const picker = el("button", "pd-button small echarts-field-picker", t2("echarts.panel.selectField"));
+  picker.type = "button";
+  picker.addEventListener("click", () => ctx.openExpression({
+    elementId: ctx.element.id,
+    targetPath,
+    value: current ? `{${current}}` : "",
+    binding: current || void 0,
+    fieldOnly: true,
+    fields
+  }, (next) => onSelect(fieldBindingKey(next))));
+  row.append(display, picker);
+  if (allowAuto) {
+    const auto = el("button", "pd-button small echarts-auto-source", t2("echarts.panel.autoSource"));
+    auto.type = "button";
+    auto.addEventListener("click", () => onSelect(""));
+    row.appendChild(auto);
+  }
+  return row;
 }
 function seriesList(option) {
   return Array.isArray(option.series) ? option.series : [];
@@ -1810,84 +1815,6 @@ function selectInput(options, value, onCommit) {
   select.value = value;
   select.addEventListener("change", () => onCommit(select.value));
   return select;
-}
-var activeDropdown = null;
-function composedPathOf(ev) {
-  const composed = typeof ev.composedPath === "function" ? ev.composedPath() : [];
-  return composed.length ? composed : [ev.target];
-}
-function dropdownSelect(options, value, onCommit) {
-  const current = options.find((item) => item.value === value) ?? { value, label: value || t2("echarts.panel.optionDefault") };
-  const trigger = el("button", "echarts-dropdown-trigger");
-  trigger.type = "button";
-  trigger.setAttribute("aria-haspopup", "listbox");
-  trigger.setAttribute("aria-expanded", "false");
-  const valueEl = el("span", "echarts-dropdown-value", current.label);
-  const arrow = el("span", "echarts-dropdown-arrow", "\u25BE");
-  trigger.appendChild(valueEl);
-  trigger.appendChild(arrow);
-  let panel = null;
-  let off = [];
-  const close = () => {
-    off.forEach((fn) => fn());
-    off = [];
-    panel?.remove();
-    panel = null;
-    trigger.setAttribute("aria-expanded", "false");
-    if (activeDropdown?.close === close) activeDropdown = null;
-  };
-  const open = () => {
-    activeDropdown?.close();
-    const root = trigger.getRootNode();
-    const mount = root instanceof ShadowRoot ? root : document.body;
-    panel = el("div", "echarts-dropdown-panel");
-    panel.setAttribute("role", "listbox");
-    for (const item of options) {
-      const optionEl = el("div", `echarts-dropdown-option${item.value === value ? " is-active" : ""}`, item.label);
-      optionEl.setAttribute("role", "option");
-      optionEl.setAttribute("aria-selected", item.value === value ? "true" : "false");
-      optionEl.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        close();
-        onCommit(item.value);
-      });
-      panel.appendChild(optionEl);
-    }
-    mount.appendChild(panel);
-    const rect = trigger.getBoundingClientRect();
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.bottom + 4}px`;
-    panel.style.minWidth = `${rect.width}px`;
-    trigger.setAttribute("aria-expanded", "true");
-    activeDropdown = { close };
-    const onPointerDown = (ev) => {
-      const path = composedPathOf(ev);
-      if (path.includes(trigger) || path.includes(panel)) return;
-      close();
-    };
-    const onKeydown = (ev) => {
-      if (ev.key === "Escape") close();
-    };
-    const onScroll = () => close();
-    document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("keydown", onKeydown);
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onScroll);
-    root.addEventListener("scroll", onScroll, true);
-    off.push(
-      () => document.removeEventListener("pointerdown", onPointerDown, true),
-      () => document.removeEventListener("keydown", onKeydown),
-      () => window.removeEventListener("scroll", onScroll, true),
-      () => window.removeEventListener("resize", onScroll),
-      () => root.removeEventListener("scroll", onScroll, true)
-    );
-  };
-  trigger.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-    if (panel) close();
-    else open();
-  });
-  return trigger;
 }
 var overflowOptions = () => [
   { value: "", label: t2("echarts.panel.overflow.default") },
@@ -2070,60 +1997,67 @@ function renderProperty(ctx) {
   return withTranslator(ctx.t, () => renderPropertyInner(ctx));
 }
 function renderPropertyInner(ctx) {
+  if (!ctx.openExpression) throw new Error("[echarts] \u56FE\u8868\u5C5E\u6027\u9762\u677F\u9700\u8981\u5BBF\u4E3B\u63D0\u4F9B openExpression\uFF08\u5B57\u6BB5\u9009\u62E9\u4EC5\u652F\u6301\u8868\u8FBE\u5F0F\u5F39\u6846\uFF09");
   const element = ctx.element;
   const type = elementType(element);
   const def = getChartKindDefinition(type);
-  const fields = resolveChartPanelFields(type);
-  const has = (key) => fields.includes(key);
+  const panelFields = resolveChartPanelFields(type);
+  const has = (key) => panelFields.includes(key);
   const options = element.options;
   const widthMm = Number(options.width) || 0;
   const heightMm = Number(options.height) || 0;
   const limit = maxValueFields(def);
   const palettes = getChartPalettes();
   const fieldLabels = fieldLabelMap(ctx.fields);
+  const allFields = ctx.fields ?? [];
+  const sourceFields = allFields.filter((field2) => field2.fieldType === "list");
+  const bound = String(options.chartDataSource ?? "");
+  const prefixed = bound ? allFields.filter((field2) => field2.fieldKey.startsWith(`${bound}.`)) : [];
+  const rowFields = prefixed.length > 0 ? prefixed : allFields.filter((field2) => field2.fieldType !== "list");
   const root = el("div", "echarts-property");
   const form = el("form", "pd-form");
   form.addEventListener("submit", (event) => event.preventDefault());
   root.appendChild(form);
   if (has("dataSource")) {
     const wrap = field(t2("echarts.panel.dataSourceTitle"));
-    const current = String(options.chartDataSource ?? "");
-    wrap.appendChild(
-      dropdownSelect(
-        dropdownOptions(dataSourceCandidates(ctx.data, ctx.fields), current, fieldLabels),
-        current,
-        (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value })
-      )
-    );
+    wrap.appendChild(fieldPicker(
+      ctx,
+      String(options.chartDataSource ?? ""),
+      "options.chartDataSource",
+      sourceFields,
+      fieldLabels,
+      (value) => commitOption(ctx, type, panelOption(element), { chartDataSource: value }),
+      true
+    ));
     form.appendChild(wrap);
   }
   if (has("categoryField")) {
     const wrap = field(t2("echarts.panel.categoryField"));
-    const current = String(options.chartCategoryField ?? "");
-    wrap.appendChild(
-      dropdownSelect(
-        dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), current, fieldLabels),
-        current,
-        (value) => commitOption(ctx, type, panelOption(element), { chartCategoryField: value })
-      )
-    );
+    wrap.appendChild(fieldPicker(
+      ctx,
+      String(options.chartCategoryField ?? ""),
+      "options.chartCategoryField",
+      rowFields,
+      fieldLabels,
+      (value) => commitOption(ctx, type, panelOption(element), { chartCategoryField: value })
+    ));
     form.appendChild(wrap);
   }
   if (has("valueFields")) {
     const wrap = field(valueFieldsLabel(def, limit));
     const fieldsNow = readValueFields(element);
     fieldsNow.forEach((value, index) => {
-      const row = el("div", "echarts-field-row");
-      row.appendChild(
-        dropdownSelect(
-          dropdownOptions(dataRowFields(ctx.data, String(options.chartDataSource ?? "")), value, fieldLabels),
-          value,
-          (next) => {
-            const list = readValueFields(element);
-            list[index] = next;
-            syncValueFields(ctx, type, list);
-          }
-        )
+      const row = fieldPicker(
+        ctx,
+        value,
+        `options.chartValueFields.${index}`,
+        rowFields,
+        fieldLabels,
+        (next) => {
+          const list = readValueFields(element);
+          list[index] = next;
+          syncValueFields(ctx, type, list);
+        }
       );
       if (fieldsNow.length > 1) {
         const remove = el("button", "pd-button small", "\u2212");
@@ -2144,12 +2078,14 @@ function renderPropertyInner(ctx) {
   }
   if (has("seriesField")) {
     const wrap = field(t2("echarts.panel.seriesField"));
-    wrap.appendChild(
-      textInput(
-        { value: String(options.chartSeriesField ?? ""), placeholder: t2("echarts.panel.seriesFieldHint") },
-        (value) => commitOption(ctx, type, panelOption(element), { chartSeriesField: value })
-      )
-    );
+    wrap.appendChild(fieldPicker(
+      ctx,
+      String(options.chartSeriesField ?? ""),
+      "options.chartSeriesField",
+      rowFields,
+      fieldLabels,
+      (value) => commitOption(ctx, type, panelOption(element), { chartSeriesField: value })
+    ));
     form.appendChild(wrap);
   }
   if (has("bubble")) {

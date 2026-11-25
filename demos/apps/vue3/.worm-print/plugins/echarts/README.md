@@ -15,7 +15,7 @@ worm-print-platform 插件市场的百度图表插件：**十类 ECharts 图表�
 npx @worm-print-platform/marketplace install echarts
 ```
 
-> npm 上未发布该主包，`auto` 源会在 npm 源失败后自动回退 Gitee（其次 GitHub）；也可显式 `--source gitee` 指定来源。
+> npm 上未发布该主包；更新源严格按 npm → Gitee → GitHub，默认 `auto` 已遵循，也可显式 `--source gitee` 指定来源。
 
 宿主按清单加载插件入口（import 即注册，无需额外调用）：
 
@@ -33,6 +33,10 @@ import '../.worm-print/plugins/echarts/dist/marketplace.js'
 
 存量项目若仍依赖 `@worm-print-platform/echarts`，无需改动：兼容镜像保留全部原有子路径
 （`.`、`/kit`、`/ui`、`/node`、`/browser`、`/browser/executor.iife`）与行为。
+
+## 字段选择
+
+图表的数据源、类目字段、数值字段和系列拆分字段统一通过「选择字段」打开表达式编辑器的字段页签。数据源额外保留「自动」模式，清空后使用顶层第一个数组；选择结果写回原始字段 key，不把 `{字段}` 表达式字符串存进图表配置。宿主未提供表达式弹框能力时，旧版下拉控件仍可使用。
 
 ## 数据标签
 

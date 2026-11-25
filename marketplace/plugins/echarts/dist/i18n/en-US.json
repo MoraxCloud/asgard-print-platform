@@ -63,6 +63,8 @@
     "echarts.panel.labelLine.length2": "Second segment length",
     "echarts.panel.labelLine.smooth": "Smooth label line",
     "echarts.panel.dataSourceTitle": "Data source",
+    "echarts.panel.selectField": "Select field",
+    "echarts.panel.autoSource": "Auto",
     "echarts.panel.categoryField": "Category field",
     "echarts.panel.removeField": "Remove this field",
     "echarts.panel.addField": "+ Add field",

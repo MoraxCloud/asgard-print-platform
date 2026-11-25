@@ -107,7 +107,7 @@ const CHART_UI = defineElementUI({
     box.innerHTML = svgFor(rows, String((element.options as unknown as Record<string, unknown>).chartTitle ?? ''))
     return { node: box, dispose: disposeCanvas }
   },
-  renderProperty: ({ element, fields, update, repaint }) => {
+  renderProperty: ({ element, fields, update, repaint, openExpression }) => {
     const wrap = document.createElement('div')
     wrap.className = 'acme-chart-props'
     const select = document.createElement('select')
@@ -125,7 +125,18 @@ const CHART_UI = defineElementUI({
     rename.className = 'acme-rename'
     rename.textContent = '改标题'
     rename.addEventListener('click', () => repaint())
-    wrap.append(select, rename)
+    const pick = document.createElement('button')
+    pick.type = 'button'
+    pick.className = 'acme-expression'
+    pick.textContent = '选择字段'
+    pick.addEventListener('click', () => openExpression?.({
+      elementId: element.id,
+      targetPath: 'options.dataSource',
+      value: `{${String(element.options.dataSource ?? '')}}`,
+      binding: String(element.options.dataSource ?? ''),
+      fieldOnly: true,
+    }, next => update({ dataSource: next.binding ?? '' })))
+    wrap.append(select, rename, pick)
     return { node: wrap, dispose: disposeProperty }
   },
 })
@@ -241,6 +252,26 @@ describe('第三方图表插件：设计器链路', () => {
     root.querySelector<HTMLButtonElement>('.acme-rename')!.click()
     await frame()
     expect(store.getTemplateJson()).toBe(before)
+  })
+
+  it('插件可请求字段表达式弹框并写回原始 key', async () => {
+    registerChartPlugin()
+    const { root, store } = await mountDesigner({ designData: HOST_DATA, fields: HOST_FIELDS })
+    const chart = addChart(store)
+    await frame()
+    root.querySelector<HTMLButtonElement>('.acme-expression')!.click()
+    await frame()
+    const overlay = root.querySelector<HTMLElement>('.pd-dialog-overlay')!
+    expect(overlay).toBeTruthy()
+    expect(overlay.querySelectorAll('.ee-nav-tab')).toHaveLength(1)
+    const field = [...overlay.querySelectorAll<HTMLElement>('.ee-field-item')]
+      .find(item => item.textContent?.includes('trend'))!
+    field.click()
+    const confirm = [...overlay.querySelectorAll<HTMLButtonElement>('.pd-dialog-footer .pd-button')]
+      .find(button => button.textContent === '确定')!
+    confirm.click()
+    await frame()
+    expect(store.elements.find(element => element.id === chart.id)!.options.dataSource).toBe('trend')
   })
 
   it('插件注销后素材卡消失、实例被 dispose、样式节点回收', async () => {

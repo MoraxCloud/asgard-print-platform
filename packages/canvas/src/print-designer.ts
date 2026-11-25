@@ -40,7 +40,7 @@ import { disposeAllElementUI } from './shell/plugin-ui'
 import { abortTableColResize, renderTableContextMenu } from './shell/table'
 import type { TableMenuState } from './shell/table'
 import { renderExpressionEditor, normalizeFieldDisplay } from './shell/expression-editor'
-import type { ExpressionEditorTarget, FieldDisplayMode } from './shell/expression-editor'
+import type { ExpressionEditorOptions, ExpressionEditorTarget, FieldDisplayMode } from './shell/expression-editor'
 import { mountHelpModal } from './shell/help-modal'
 import { applyPropertySearch } from './shell/property-search'
 import { isExpressionText } from './shell/watermark'
@@ -183,6 +183,7 @@ export class PrintDesignerElement extends HTMLElement {
   private tableMenu: TableMenuState = { visible: false, x: 0, y: 0 }
   private exprTarget: ExpressionEditorTarget | null = null
   private exprMountedFor: ExpressionEditorTarget | null = null
+  private exprApply?: ExpressionEditorOptions['onApply']
   /** 帮助弹窗：Vue 3 轨的 helpVisible（showHelp 为 false 时强制收起，见 set showHelp） */
   private helpVisible = false
   private helpInitialTab: string | undefined
@@ -651,13 +652,15 @@ export class PrintDesignerElement extends HTMLElement {
   // ─── 表达式编辑器 ───
   // Vue 3 轨用 v-model 控制弹窗显隐；这里按 target 对象身份挂载/卸载：
   // 外壳重绘不清空 root 上的遮罩节点，避免打字过程中被 repaint 打断而丢光标。
-  private openExpression(target: ExpressionEditorTarget) {
+  private openExpression(target: ExpressionEditorTarget, onApply?: ExpressionEditorOptions['onApply']) {
     this.exprTarget = target
+    this.exprApply = onApply
     this.syncExpression()
   }
 
   private closeExpression() {
     this.exprTarget = null
+    this.exprApply = undefined
     this.syncExpression()
   }
 
@@ -672,11 +675,14 @@ export class PrintDesignerElement extends HTMLElement {
     stale.forEach(n => n.remove())
     const target = this.exprTarget
     render(renderExpressionEditor({
-      fields: this.store.fields,
+      fields: [...(target.fields ?? this.store.fields)],
       fieldDisplay: this.state.fieldDisplay,
       t: this.ctx.t,
       onClose: () => this.closeExpression(),
-      onApply: next => this.applyExpression(target, next),
+      onApply: next => {
+        if (this.exprApply) this.exprApply(next)
+        else this.applyExpression(target, next)
+      },
     }, target), this.root)
     this.exprMountedFor = target
   }
@@ -1077,6 +1083,11 @@ export class PrintDesignerElement extends HTMLElement {
         })); break
       }
       case 'open-expression': this.openExpression(arg as ExpressionEditorTarget); break
+      case 'open-plugin-expression': {
+        const request = arg as { target: ExpressionEditorTarget; onApply: ExpressionEditorOptions['onApply'] }
+        this.openExpression(request.target, request.onApply)
+        break
+      }
       case 'drop': this.onDrop(arg as DragEvent); break
       case 'wheel': this.onWheel(arg as WheelEvent); break
       case 'scroll': this.onScroll(); break

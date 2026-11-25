@@ -6,6 +6,7 @@
 // - 宿主通过 update(partial) 写回 element.options，历史记录与画布重绘由宿主负责，插件不直接碰 store。
 import type { ElementOptions, PrintBusinessField, RuntimeElement } from '@worm-print-platform/core/designer'
 import type { Translate } from '@worm-print-platform/core/i18n'
+import type { ExpressionEditorTarget } from './expression-editor.js'
 
 /** 插件产出的可视内容：HTML 字符串或真实 DOM 节点 */
 export type ElementUINode = string | Node
@@ -39,7 +40,7 @@ export interface ElementUIPropertyContext {
   data?: readonly Record<string, unknown>[]
   /**
    * 宿主的业务字段清单（fieldKey / fieldLabel / fieldType）。
-   * 图表类插件据此生成「数据源 / 类目 / 数值字段」下拉，不必再从 demo 数据的键里猜；
+   * 图表类插件据此生成「数据源 / 类目 / 数值字段」选择器，不必再从 demo 数据的键里猜；
    * 未注入时为 undefined 或空数组，插件应自行回落到 data[0] 的键。
    */
   fields?: readonly PrintBusinessField[]
@@ -49,6 +50,11 @@ export interface ElementUIPropertyContext {
   repaint(): void
   /** 当前 locale 的翻译函数；缺省用全局 t */
   t?: Translate
+  /** 必填：请求宿主打开表达式编辑器；图表等字段选择场景可限制为字段页签（无下拉框回退） */
+  openExpression: (
+    target: ExpressionEditorTarget,
+    onApply: (next: { formatter?: string; binding?: string; title?: string }) => void,
+  ) => void
 }
 
 /**

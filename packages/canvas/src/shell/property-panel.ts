@@ -568,6 +568,7 @@ function customPane(ctx: ShellCtx, el: RuntimeElement, custom: PluginPropertyTab
         fields: ctx.host.fields ?? [],
         update: partial => ctx.store.updateElement(el.id, partial),
         repaint: () => ctx.repaint(),
+        openExpression: (target, onApply) => ctx.fire('open-plugin-expression', { target, onApply }),
         // 插件 UI 用契约里的 t 取词；不传会退回 core 全局 locale（与实例 lang 脱节）
         t: ctx.t ?? trG,
       }), content)

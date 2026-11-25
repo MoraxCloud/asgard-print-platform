@@ -63,6 +63,8 @@
     "echarts.panel.labelLine.length2": "第二段长度",
     "echarts.panel.labelLine.smooth": "平滑引导线",
     "echarts.panel.dataSourceTitle": "数据源",
+    "echarts.panel.selectField": "选择字段",
+    "echarts.panel.autoSource": "自动",
     "echarts.panel.categoryField": "类目字段",
     "echarts.panel.removeField": "删除该字段",
     "echarts.panel.addField": "+ 添加字段",

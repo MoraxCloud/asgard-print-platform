@@ -63,6 +63,8 @@
     "echarts.panel.labelLine.length2": "ความยาวท่อนที่สอง",
     "echarts.panel.labelLine.smooth": "เส้นป้ายโค้ง",
     "echarts.panel.dataSourceTitle": "แหล่งข้อมูล",
+    "echarts.panel.selectField": "เลือกฟิลด์",
+    "echarts.panel.autoSource": "อัตโนมัติ",
     "echarts.panel.categoryField": "ฟิลด์หมวดหมู่",
     "echarts.panel.removeField": "ลบฟิลด์นี้",
     "echarts.panel.addField": "+ เพิ่มฟิลด์",

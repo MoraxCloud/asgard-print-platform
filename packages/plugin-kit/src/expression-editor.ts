@@ -97,6 +97,10 @@ export interface ExpressionEditorTarget {
   value: string
   /** 可选：字段绑定模式的初始字段 key */
   binding?: string
+  /** 仅显示字段页签，用于图表等只需选择字段的场景 */
+  fieldOnly?: boolean
+  /** 可选字段清单；缺省使用宿主完整业务字段 */
+  fields?: readonly PrintBusinessField[]
 }
 
 /** 字段行显示模式：中文名 / key / 两者（默认 both，保持既有行为） */
@@ -125,12 +129,13 @@ export interface ExpressionEditorOptions {
 type TabKey = 'field' | 'variable' | 'function'
 
 /** 与 Vue 3 轨的 .ee-nav-tab 顺序严格一致（重绘时按下标取元素，不额外加属性） */
-function getTabs(): { key: TabKey; text: string }[] {
-  return [
-    { key: 'field', text: tr('expression.tabField') },
-    { key: 'variable', text: tr('expression.tabVariable') },
-    { key: 'function', text: tr('expression.tabFunction') },
+function getTabs(fieldOnly = false): { key: TabKey; text: string }[] {
+  const tabs = [
+    { key: 'field' as const, text: tr('expression.tabField') },
+    { key: 'variable' as const, text: tr('expression.tabVariable') },
+    { key: 'function' as const, text: tr('expression.tabFunction') },
   ]
+  return fieldOnly ? tabs.slice(0, 1) : tabs
 }
 
 function getPlaceholder(): Record<TabKey, string> {
@@ -380,7 +385,22 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
         nodes.push(h('div', {
           class: 'ee-list-item ee-field-item',
           style: { paddingLeft: group.key ? '22px' : '10px' },
+          onClick: (ev: MouseEvent) => {
+            if (!target.fieldOnly) return
+            state.expression = `{${field.fieldKey}}`
+            const root = scope(ev)
+            const textarea = query<HTMLTextAreaElement>(root, '.ee-textarea')
+            if (textarea) {
+              textarea.value = state.expression
+              textarea.focus()
+              textarea.selectionStart = textarea.selectionEnd = state.expression.length
+            }
+            state.keyHint = hasChineseKey(field.fieldKey) ? chineseKeyHint(field.fieldKey) : ''
+            updatePreview(root)
+            updateKeyHint(root)
+          },
           onDblclick: (ev: Event) => {
+            if (target.fieldOnly) return
             const { insideParens } = region(ev)
             // 按住 Ctrl（Mac 为 ⌘）双击：插入字段中文名当静态文本；参数内自动加引号
             // macOS 上 Ctrl+点击会被 Chromium 当作右键（实测不派发 dblclick），故同时认 metaKey
@@ -419,7 +439,7 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
   /** 显式重绘：页签高亮 / 搜索框 / 列表 / 文本域 / 预览（Vue 3 轨 的响应式更新在无框架版的等价物） */
   const repaint = (root: ParentNode) => {
     const tabs = Array.from(root.querySelectorAll<HTMLElement>('.ee-nav-tab'))
-    tabs.forEach((el, i) => el.classList.toggle('active', getTabs()[i]?.key === state.activeTab))
+    tabs.forEach((el, i) => el.classList.toggle('active', getTabs(target.fieldOnly)[i]?.key === state.activeTab))
     const search = query<HTMLInputElement>(root, '.ee-content-search .pd-input')
     if (search) {
       const placeholder = getPlaceholder()[state.activeTab]
@@ -496,11 +516,11 @@ export function renderExpressionEditor(opts: ExpressionEditorOptions, target: Ex
 
   const nav = h('div', { class: 'ee-nav' }, [
     h('div', { class: 'ee-nav-title', text: tr('expression.k29') }),
-    h('div', { class: 'ee-nav-tabs' }, getTabs().map((tab, i) => h('div', {
+    h('div', { class: 'ee-nav-tabs' }, getTabs(target.fieldOnly).map((tab, i) => h('div', {
       class: `ee-nav-tab${state.activeTab === tab.key ? ' active' : ''}`,
       text: tab.text,
       onClick: (ev: MouseEvent) => {
-        state.activeTab = getTabs()[i]!.key
+        state.activeTab = getTabs(target.fieldOnly)[i]!.key
         repaint(scope(ev))
       },
     }))),

@@ -17,6 +17,8 @@ description: 用于在各类宿主中集成 @worm-print-platform/canvas（零框
 - 打印插件更新源严格按 **npm → Gitee → GitHub**；`marketplace install <id> --force` 默认 `auto` 已遵循该顺序，npm 可用时不得手动切到 Git 源。
 - 市场插件的 `dist` 是运行产物，必须随宿主提交；不要用通用 `dist/` 或整个 `.worm-print/` 忽略。入口由 `src/main.js/ts` 静态 import，不写进 Vite `optimizeDeps.include`。
 - `--force` 使用暂存与原子切换，失败恢复旧插件、旧语言与旧清单；验收必须同时检查入口可导入、旧文件消失和三语 label/group 随 locale 切换。
+- 图表数据源候选以宿主 `fields` 中的列表字段为权威，仅在没有列表字段时回退示例数据数组键；宿主还必须把真实 `printData` 注入 `PrintDesigner.designData`，避免 demo 数据混入业务下拉。
+- 图表数据源、类目、数值与系列字段通过表达式编辑器字段页签选择，回写原始字段 key；数据源保留自动模式。旧宿主不支持 `openExpression` 时保留下拉兼容。
 
 ## 1. 先确认集成场景
 
