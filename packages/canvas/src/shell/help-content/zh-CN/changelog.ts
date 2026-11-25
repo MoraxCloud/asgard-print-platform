@@ -4,6 +4,18 @@ export default {
   id: 'changelog',
   title: '更新记录',
   content: `
+<h2>V1.6.5<small>(2026-11-25)</small></h2>
+
+<h3>修复</h3>
+<ul>
+  <li><strong>混合方向多页预览</strong>：预览截图按目标页纸张出图，消除 page=N 串页与纸张尺寸按首页计算的问题；单页路径回退行为不变。</li>
+</ul>
+
+<h3>改进</h3>
+<ul>
+  <li><strong>图表字段选择</strong>：统一为表达式弹框（仅字段页签），取消默认赋值，避免未绑定字段被写入模板。</li>
+</ul>
+
 <h2>V1.6.4<small>(2026-11-24)</small></h2>
 
 <h3>修复</h3>

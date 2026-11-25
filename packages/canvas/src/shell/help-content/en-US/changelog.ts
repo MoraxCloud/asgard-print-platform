@@ -3,6 +3,18 @@ export default {
   id: 'changelog',
   title: 'Release Notes',
   content: `
+<h2>V1.6.5<small>(2026-11-25)</small></h2>
+
+<h3>Fixed</h3>
+<ul>
+  <li><strong>Mixed-orientation previews</strong>: screenshots now use the target page's paper size, eliminating cross-page results and wrong dimensions when requesting page=N; single-page behavior is unchanged.</li>
+</ul>
+
+<h3>Changed</h3>
+<ul>
+  <li><strong>Chart field selection</strong>: unified into the expression editor dialog (field tab only), with no default values assigned automatically.</li>
+</ul>
+
 <h2>V1.6.4<small>(2026-11-24)</small></h2>
 
 <h3>Fixed</h3>

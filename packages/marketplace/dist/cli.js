@@ -6,12 +6,12 @@ import {
   localize,
   removePlugin,
   validateIndex
-} from "./chunk-ODWCP3I7.js";
+} from "./chunk-SIIHBJ4M.js";
 
 // src/cli.ts
 import { realpathSync } from "fs";
 import { pathToFileURL } from "url";
-var VERSION = true ? "1.6.4" : "1.6.4";
+var VERSION = true ? "1.6.5" : "1.6.5";
 var SOURCES = /* @__PURE__ */ new Set(["npm", "github", "gitee", "auto", "local"]);
 var PLUGIN_TYPES = /* @__PURE__ */ new Set(["element", "functional", "export"]);
 var VALUE_FLAGS = /* @__PURE__ */ new Set([
